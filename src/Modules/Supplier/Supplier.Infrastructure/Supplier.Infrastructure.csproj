@@ -5,5 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+     <ItemGroup>
+    <ProjectReference Include="..\Supplier.Application\Supplier.Application.csproj" />
+    <ProjectReference Include="..\Supplier.Domain\Supplier.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Platform\SharedKernel\LoggerManager\LoggerManager.csproj" />
+    <ProjectReference Include="..\..\..\Platform\SharedKernel\ExceptionHandler\ExceptionHandler.csproj" />
+    
+  </ItemGroup>
 
 </Project>
