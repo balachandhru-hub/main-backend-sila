@@ -8,8 +8,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Identity.Domain\Identity.Domain.csproj" />
-     <ProjectReference Include="..\..\Platform\SharedKernel\ExceptionHandler\ExceptionHandler.csproj" />
-      <ProjectReference Include="..\..\Platform\SharedKernel\LoggerManager\LoggerManager.csproj" />
+     <ProjectReference Include="..\..\..\Platform\SharedKernel\ExceptionHandler\ExceptionHandler.csproj" />
+      <ProjectReference Include="..\..\..\Platform\SharedKernel\LoggerManager\LoggerManager.csproj" />
+   
   </ItemGroup>
 
 </Project>
