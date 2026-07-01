@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+   <ItemGroup>
+    <ProjectReference Include="..\Buyer.Application\Buyer.Application.csproj" />
+    <ProjectReference Include="..\Buyer.Domain\Buyer.Domain.csproj" />
+    <ProjectReference Include="..\..\Platform\SharedKernel\LoggerManager\LoggerManager.csproj" />
+    <ProjectReference Include="..\..\Platform\SharedKernel\ExceptionHandler\ExceptionHandler.csproj" />
+    
+  </ItemGroup>
+
+</Project>
