@@ -37,7 +37,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identity.Application", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identity.Domain", "src\Platform\Identity\Identity.Domain\Identity.Domain.csproj", "{8A405B55-3D71-4A80-B112-97E30279E4AA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identity.Infrastucture", "src\Platform\Identity\Identity.Infrastucture\Identity.Infrastucture.csproj", "{8362EB92-14A0-4379-B0B7-FFFBDD685587}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identity.Infrastructure", "src\Platform\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj", "{8362EB92-14A0-4379-B0B7-FFFBDD685587}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedKernel", "src\Platform\SharedKernel\SharedKernel.csproj", "{59834E93-185E-4428-9FF3-2C679C2534AB}"
 EndProject
