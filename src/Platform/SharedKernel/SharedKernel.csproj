@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Compile only DTOs -->
+    <Compile Remove="LoggerManager\**\*.cs" />
+    <Compile Remove="ExceptionHandler\**\*.cs" />
+  </ItemGroup>
+
 </Project>

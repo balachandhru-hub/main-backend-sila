@@ -1,5 +1,5 @@
 ﻿
-namespace LoggerService
+namespace Contracts
 {
     /// <summary>
     /// Interface <c>ILoggerManager</c>.

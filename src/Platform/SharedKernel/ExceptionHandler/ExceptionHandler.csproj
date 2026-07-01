@@ -23,6 +23,7 @@
   <ItemGroup>
   
     <ProjectReference Include="..\LoggerManager\LoggerManager.csproj" />
+    <ProjectReference Include="..\SharedKernel.csproj" />
  
   </ItemGroup>
 
