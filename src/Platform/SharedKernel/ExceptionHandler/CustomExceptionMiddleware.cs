@@ -4,8 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Net;
 using System.Threading.Tasks;
-using Contracts.IServices;
-using Contracts;
+using LoggerService;
 
 namespace ExceptionHandler
 {

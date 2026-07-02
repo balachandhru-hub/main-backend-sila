@@ -1,5 +1,4 @@
-﻿using Contracts;
-// using Entities.Common;
+﻿// using Entities.Common;
 using NLog;
 using System.Web;
 using System.Net;
