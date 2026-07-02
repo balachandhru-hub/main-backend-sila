@@ -4,11 +4,13 @@ using MasterData.Domain.Dto;
 using MasterData.Domain.Entities;
 using MasterData.Infrastructure.Persistence;
 
+namespace MasterData.Infrastructure.Repository;
+
 public class UnspscRepository : IUnspscRepository
 {
-    private readonly AppDbContext _context;
+    private readonly RepositoryContext _context;
 
-    public UnspscRepository(AppDbContext context)
+    public UnspscRepository(RepositoryContext context)
     {
         _context = context;
     }
@@ -22,64 +24,66 @@ public class UnspscRepository : IUnspscRepository
     {
         await _context.UnspscCategories.AddRangeAsync(entities);
     }
-   public async Task<List<UnspscDto>> GetAsync(
-    int pageIndex,
-    int pageSize)
-{
-    return await _context.UnspscCategories
-        .OrderBy(x => x.Id)
-        .Skip((pageIndex - 1) * pageSize)
-        .Take(pageSize)
-        .Select(x => new UnspscDto
-        {
-            Version = x.Version,
-            Key = x.Key,
-            Segment = x.Segment,
-            SegmentTitle = x.SegmentTitle,
-            SegmentDefinition = x.SegmentDefinition,
-            Family = x.Family,
-            FamilyTitle = x.FamilyTitle,
-            FamilyDefinition = x.FamilyDefinition,
-            Class = x.Class,
-            ClassTitle = x.ClassTitle,
-            ClassDefinition = x.ClassDefinition,
-            Commodity = x.Commodity,
-            CommodityTitle = x.CommodityTitle,
-            CommodityDefinition = x.CommodityDefinition,
-            Synonym = x.Synonym,
-            Acronym = x.Acronym
-        })
-        .ToListAsync();
-}
-public async Task<List<UnspscDto>> GetByVersionAsync(
-    string version,
-    int pageIndex,
-    int pageSize)
-{
-    return await _context.UnspscCategories
-        .Where(x => x.Version == version)
-        .OrderBy(x => x.Id)
-        .Skip((pageIndex - 1) * pageSize)
-        .Take(pageSize)
-        .Select(x => new UnspscDto
-        {
-            Version = x.Version,
-            Key = x.Key,
-            Segment = x.Segment,
-            SegmentTitle = x.SegmentTitle,
-            SegmentDefinition = x.SegmentDefinition,
-            Family = x.Family,
-            FamilyTitle = x.FamilyTitle,
-            FamilyDefinition = x.FamilyDefinition,
-            Class = x.Class,
-            ClassTitle = x.ClassTitle,
-            ClassDefinition = x.ClassDefinition,
-            Commodity = x.Commodity,
-            CommodityTitle = x.CommodityTitle,
-            CommodityDefinition = x.CommodityDefinition,
-            Synonym = x.Synonym,
-            Acronym = x.Acronym
-        })
-        .ToListAsync();
-}
+
+    public async Task<List<UnspscDto>> GetAsync(
+        int pageIndex,
+        int pageSize)
+    {
+        return await _context.UnspscCategories
+            .OrderBy(x => x.Id)
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new UnspscDto
+            {
+                Version = x.Version,
+                Key = x.Key,
+                Segment = x.Segment,
+                SegmentTitle = x.SegmentTitle,
+                SegmentDefinition = x.SegmentDefinition,
+                Family = x.Family,
+                FamilyTitle = x.FamilyTitle,
+                FamilyDefinition = x.FamilyDefinition,
+                Class = x.Class,
+                ClassTitle = x.ClassTitle,
+                ClassDefinition = x.ClassDefinition,
+                Commodity = x.Commodity,
+                CommodityTitle = x.CommodityTitle,
+                CommodityDefinition = x.CommodityDefinition,
+                Synonym = x.Synonym,
+                Acronym = x.Acronym
+            })
+            .ToListAsync();
+    }
+
+    public async Task<List<UnspscDto>> GetByVersionAsync(
+        string version,
+        int pageIndex,
+        int pageSize)
+    {
+        return await _context.UnspscCategories
+            .Where(x => x.Version == version)
+            .OrderBy(x => x.Id)
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new UnspscDto
+            {
+                Version = x.Version,
+                Key = x.Key,
+                Segment = x.Segment,
+                SegmentTitle = x.SegmentTitle,
+                SegmentDefinition = x.SegmentDefinition,
+                Family = x.Family,
+                FamilyTitle = x.FamilyTitle,
+                FamilyDefinition = x.FamilyDefinition,
+                Class = x.Class,
+                ClassTitle = x.ClassTitle,
+                ClassDefinition = x.ClassDefinition,
+                Commodity = x.Commodity,
+                CommodityTitle = x.CommodityTitle,
+                CommodityDefinition = x.CommodityDefinition,
+                Synonym = x.Synonym,
+                Acronym = x.Acronym
+            })
+            .ToListAsync();
+    }
 }

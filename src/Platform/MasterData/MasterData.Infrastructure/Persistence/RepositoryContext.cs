@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MasterData.Infrastructure.Persistence;
 
-public class AppDbContext : DbContext
+public class RepositoryContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
+    public RepositoryContext(DbContextOptions<RepositoryContext> options)
         : base(options)
     {
     }

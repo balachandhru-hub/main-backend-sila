@@ -5,10 +5,10 @@ namespace MasterData.Infrastructure.Repository;
 
 public class RepositoryWrapper : IRepositoryWrapper
 {
-    private readonly AppDbContext _context;
+    private readonly RepositoryContext _context;
 
     public RepositoryWrapper(
-        AppDbContext context,
+        RepositoryContext context,
         IUnspscRepository unspscRepository)
     {
         _context = context;

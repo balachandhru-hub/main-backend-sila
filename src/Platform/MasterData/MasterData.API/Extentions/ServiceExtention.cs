@@ -11,7 +11,7 @@ public static class ServiceExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options =>
+        services.AddDbContext<RepositoryContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection")));
     }
@@ -20,5 +20,6 @@ public static class ServiceExtensions
     {
         services.AddScoped<IUnspscRepository, UnspscRepository>();
         services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
+        services.AddScoped<IBulkInsertHelper, BulkInsertHelper>();
     }
 }
