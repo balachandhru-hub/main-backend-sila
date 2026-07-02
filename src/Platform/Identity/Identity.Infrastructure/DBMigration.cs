@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Entities
+namespace Identity.Infrastructure
 {
     /// <summary>
     /// Class <c>DBMigration</c> static class is used for DB migrations

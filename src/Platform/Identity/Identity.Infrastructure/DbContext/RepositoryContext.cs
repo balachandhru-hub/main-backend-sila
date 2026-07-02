@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 using SharedKernel.Util;
 using Identity.Domain.Common;
-using Entities.Models;
 
 namespace Identity.Infrastructure.DbContext
 {
