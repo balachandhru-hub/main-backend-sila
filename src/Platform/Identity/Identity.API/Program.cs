@@ -7,7 +7,6 @@ using Identity.Domain.Common;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Http.Features;
 using Identity.Infrastructure;
-using NLog.Web; 
 
 namespace Identity.API
 {
@@ -19,28 +18,27 @@ namespace Identity.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Host.UseNLog();
 
             var env = builder.Environment.EnvironmentName;
             IConfiguration configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
-                .Build(); 
+                .Build();
             builder.WebHost.ConfigureKestrel(options =>
-            {
+             {
                 // Disable the minimum data rate limits for requests and responses
-                options.Limits.MinRequestBodyDataRate = null;
-                options.Limits.MinResponseDataRate = null;
-                if (long.TryParse(configuration[Common.MAX_REQUEST_SIZE], out long maxSize))
-                {
-                    options.Limits.MaxRequestBodySize = maxSize;
-                }
-                else
-                {
-                    options.Limits.MaxRequestBodySize = 104857600;
-                }
-            });
+                 options.Limits.MinRequestBodyDataRate = null;
+                 options.Limits.MinResponseDataRate = null;
+                 if (long.TryParse(configuration[Common.MAX_REQUEST_SIZE], out long maxSize))
+                 {
+                     options.Limits.MaxRequestBodySize = maxSize;
+                 }
+                 else
+                 {
+                     options.Limits.MaxRequestBodySize = 104857600;
+                 }
+             });
            
             builder.Services.ConfigureRateLimiting();
             builder.Services.ConfigureCors(configuration);
@@ -71,20 +69,20 @@ namespace Identity.API
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1.0", new OpenApiInfo
-                {
-                    Title = "Identity System APIs",
-                    Version = "v1.0",
-                    Description = "REST APIs"
-                });
+{
+    c.SwaggerDoc("v1.0", new OpenApiInfo
+    {
+        Title = "Identity System APIs",
+        Version = "v1.0",
+        Description = "REST APIs"
+    });
 
 
     // Set the comments path for the Swagger JSON and UI.
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                c.IncludeXmlComments(xmlPath);
-            });
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+});
             builder.Services.ConfigureScheduler();
             var app = builder.Build();
 
@@ -123,7 +121,7 @@ namespace Identity.API
             app.UseAuthorization();
             app.MapControllers();
           
-          
+
             app.Run();
         }
     }
