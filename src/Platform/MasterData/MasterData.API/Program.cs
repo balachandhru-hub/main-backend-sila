@@ -43,6 +43,7 @@ public partial class Program
 
         builder.Services.ConfigureDatabase(configuration);
         builder.Services.ConfigureRepositoryWrapper();
+        builder.Services.ConfigureServiceWrapper();
 
        builder.Services.ConfigureMediatR();
         builder.Services.AddHttpClient();

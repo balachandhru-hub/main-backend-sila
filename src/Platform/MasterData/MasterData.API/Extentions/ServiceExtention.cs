@@ -24,9 +24,15 @@ public static class ServiceExtensions
         this IServiceCollection services)
     {
         services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
+      
+    }
+    public static void ConfigureServiceWrapper(
+            this IServiceCollection services)
+    {
         services.AddScoped<IBulkInsertHelper, BulkInsertHelper>();
         services.AddScoped<IUserIdentityService, UserIdentityService>();
         services.AddScoped<IUserContext, UserContext>();
+         _ = services.AddControllers();
     }
     public static void ConfigureLoggerService(
     this IServiceCollection services)
