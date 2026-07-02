@@ -6,7 +6,6 @@ using Repository;
 using Services;
 using Quartz;
 using Quartz.Spi;
-using Entities;
 using AutoMapper;
 using Identity.Domain.Common;
 // using Identity.Infrastructure.Migrastions;
