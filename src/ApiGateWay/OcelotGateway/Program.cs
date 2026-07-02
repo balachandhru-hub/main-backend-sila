@@ -4,6 +4,10 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Http.Features;
 using NLog.Web;
+using Ocelot.DependencyInjection;
+using Ocelot.Middleware;
+using MMLib.SwaggerForOcelot.DependencyInjection;
+using MMLib.SwaggerForOcelot.Middleware;
 
 namespace OcelotGateway
 {
@@ -11,7 +15,7 @@ namespace OcelotGateway
     {
         protected Program() { }
 
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +35,11 @@ namespace OcelotGateway
                 // Commented out 'Common.MAX_REQUEST_SIZE' because 'Common' is missing in Gateway
                 options.Limits.MaxRequestBodySize = 104857600;
             });
+
+            builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true)
+                                 .AddJsonFile("ocelot.SwaggerEndPoints.json", optional: false, reloadOnChange: true);
+            builder.Services.AddOcelot(builder.Configuration);
+            builder.Services.AddSwaggerForOcelot(builder.Configuration);
            
             // --- COMMENTED OUT: Extension methods not found in OcelotGateway project ---
             // builder.Services.ConfigureRateLimiting();
@@ -55,19 +64,6 @@ namespace OcelotGateway
             });
 
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1.0", new OpenApiInfo
-                {
-                    Title = "Ocelot Gateway API",
-                    Version = "v1.0",
-                    Description = "REST APIs"
-                });
-
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                if (File.Exists(xmlPath)) c.IncludeXmlComments(xmlPath);
-            });
             
             var app = builder.Build();
 
@@ -78,19 +74,16 @@ namespace OcelotGateway
                 KnownProxies = { },
                 ForwardLimit = null
             });
-
-            // Commented out 'Common.UAT_ENVIRONMENT'
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Gateway API v1.0");
-                    c.RoutePrefix = "swagger";
-                });
-            }
             
             app.UseRouting();
+            app.UseSwagger();
+
+            app.UseSwaggerForOcelotUI(opt =>
+            {
+                opt.PathToSwaggerGenerator = "/swagger/docs";
+            });
+
+            await app.UseOcelot();
             // app.UseCors("CorsPolicy"); 
             // app.UseMiddleware<CustomExceptionMiddleware>();
             app.UseHttpsRedirection();

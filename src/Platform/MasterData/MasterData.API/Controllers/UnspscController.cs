@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MasterData.Application.Features.Unspsc.Commands;
 using MasterData.Application.Features.Unspsc.Queries;
 using SharedKernel.LoggerServices;
+using System.ComponentModel.DataAnnotations;
 
 namespace MasterData.API.Controllers;
 
@@ -20,7 +21,7 @@ public class UnspscController : ControllerBase
     }
 
     [HttpPost("upload")]
-    public async Task<IActionResult> Upload([FromForm] IFormFile file)
+    public async Task<IActionResult> Upload([Required] IFormFile file)
     {
         _logger.LogInfo($"Starting UNSPSC upload process.");
         var recordsInserted = await _mediator.Send(

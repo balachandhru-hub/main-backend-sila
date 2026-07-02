@@ -42,6 +42,7 @@ public partial class Program
         builder.Services.AddControllers();
 
         builder.Services.ConfigureDatabase(configuration);
+        builder.Services.ConfigureServiceWrapper();
         builder.Services.ConfigureRepositoryWrapper();
         builder.Services.ConfigureServiceWrapper();
 
@@ -64,10 +65,10 @@ public partial class Program
 
         builder.Services.AddSwaggerGen(c =>
         {
-            c.SwaggerDoc("v1.0", new OpenApiInfo
+            c.SwaggerDoc("v1", new OpenApiInfo
             {
                 Title = "MasterData APIs",
-                Version = "v1.0",
+                Version = "v1",
                 Description = "REST APIs"
             });
 
@@ -103,7 +104,7 @@ public partial class Program
 
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "MasterData APIs v1.0");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "MasterData APIs v1");
                 c.RoutePrefix = "swagger";
             });
         }

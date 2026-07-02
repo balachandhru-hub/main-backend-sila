@@ -19,5 +19,9 @@
   </PackageReference>
   <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
 </ItemGroup>
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn> <!-- Optional: suppress missing XML comment warnings -->
+  </PropertyGroup>
 
 </Project>

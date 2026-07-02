@@ -70,10 +70,10 @@ namespace Identity.API
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1.0", new OpenApiInfo
+    c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Identity System APIs",
-        Version = "v1.0",
+        Version = "v1",
         Description = "REST APIs"
     });
 
@@ -108,7 +108,7 @@ namespace Identity.API
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
-                    c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Identity System API's v1.0");
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Identity System API's v1");
                     c.RoutePrefix = "swagger";
                 });
             }

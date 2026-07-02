@@ -20,12 +20,7 @@ public static class ServiceExtensions
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection")));
     }
-    public static void ConfigureRepositoryWrapper(
-        this IServiceCollection services)
-    {
-        services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
-      
-    }
+
     public static void ConfigureServiceWrapper(
             this IServiceCollection services)
     {
@@ -36,14 +31,22 @@ public static class ServiceExtensions
     }
     public static void ConfigureLoggerService(
     this IServiceCollection services)
-        {
-            services.AddSingleton<ILoggerManager, LoggerManager>();
-        }
-         public static void ConfigureMediatR(this IServiceCollection services)
+    {
+        services.AddSingleton<ILoggerManager, LoggerManager>();
+    }
+    public static void ConfigureMediatR(this IServiceCollection services)
     {
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(typeof(UploadUnspscCommand).Assembly);
         });
+    }
+
+    /// <summary>
+    /// This method is used to inject the entity repository as scoped instance.
+    /// </summary>
+    public static void ConfigureRepositoryWrapper(this IServiceCollection services)
+    {
+        _ = services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
     }
 }
