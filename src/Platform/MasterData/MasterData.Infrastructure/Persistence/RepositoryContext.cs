@@ -21,19 +21,11 @@ public class RepositoryContext : DbContext
 
     public DbSet<UnspscCategory> UnspscCategories { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
     {
-       
+        _ = modelBuilder.HasDefaultSchema(_configuration[MasterData.Domain.Common.Common.APPLICATION_SCHEMA]);
 
-        _ = modelBuilder.Entity<UnspscCategory>()
-            .HasIndex(x => new
-            {
-                x.IsActive,
-                x.Segment,
-                x.Family,
-                x.Class,
-                x.Commodity
-            });
+        _ = modelBuilder.Entity<UnspscCategory>().HasIndex(x => new{x.IsActive,x.Segment,x.Family,x.Class,x.Commodity});
 
         base.OnModelCreating(modelBuilder);
 
