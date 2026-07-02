@@ -1,6 +1,6 @@
 using ExceptionHandler;
 using System.Reflection;
-using TicketSystemAPI.Extensions;
+using Identity.API.Extensions;
 using Microsoft.OpenApi.Models;
 using HashingSystem;
 using Identity.Domain.Common;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Http.Features;
 using Identity.Infrastructure;
 
-namespace TicketSystemAPI
+namespace Identity.API
 {
     public partial class Program
     {
@@ -72,7 +72,7 @@ namespace TicketSystemAPI
 {
     c.SwaggerDoc("v1.0", new OpenApiInfo
     {
-        Title = "TICKET System APIs",
+        Title = "Identity System APIs",
         Version = "v1.0",
         Description = "REST APIs"
     });
@@ -89,7 +89,7 @@ namespace TicketSystemAPI
             using (var scope = app.Services.CreateScope())
             {
                 DBMigration.UpdateDatabase(scope.ServiceProvider);
-             
+                SeedData.Initialize(scope.ServiceProvider);
             }
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions
@@ -108,7 +108,7 @@ namespace TicketSystemAPI
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
-                    c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Ticket System API's v1.0");
+                    c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Identity System API's v1.0");
                     c.RoutePrefix = "swagger";
                 });
             }
