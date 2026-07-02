@@ -1,10 +1,11 @@
 using ClosedXML.Excel;
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using MasterData.Application.Contracts.IRepository;
+using MasterData.Infrastructure.Contracts.IRepository;
 using MasterData.Domain.Dto;
 using MasterData.Domain.Entities;
 using ExceptionHandler;
+using SharedKernel.LoggerServices;
 
 namespace MasterData.Application.Features.Unspsc.Commands;
 
@@ -12,21 +13,25 @@ public class UploadUnspscCommandHandler
     : IRequestHandler<UploadUnspscCommand, ExcelUploadResultDto>
 {
     private readonly IRepositoryWrapper _repository;
+    private readonly ILoggerManager _logger;
     
 private readonly IBulkInsertHelper _bulkInsertHelper;
 
     public UploadUnspscCommandHandler(
         IRepositoryWrapper repository,
-        IBulkInsertHelper bulkInsertHelper)
+        IBulkInsertHelper bulkInsertHelper,
+        ILoggerManager logger)
     {
         _repository = repository;
-           _bulkInsertHelper = bulkInsertHelper;
+        _bulkInsertHelper = bulkInsertHelper;
+        _logger = logger;
     }
 
     public async Task<ExcelUploadResultDto> Handle(
         UploadUnspscCommand request,
         CancellationToken cancellationToken)
     {
+        _logger.LogInfo("Starting UNSPSC upload process.");
         ValidateFile(request.File);
 
         using var stream = request.File.OpenReadStream();
@@ -45,6 +50,7 @@ private readonly IBulkInsertHelper _bulkInsertHelper;
 
    private static void ValidateFile(IFormFile file)
 {
+    
     if (file == null)
     {
         throw new BadRequestCustomException(
@@ -70,8 +76,10 @@ private readonly IBulkInsertHelper _bulkInsertHelper;
 
     private static void ValidateHeaders(IXLWorksheet worksheet)
 {
+    
     string[] expectedHeaders =
     {
+        
         "Version",
         "Key",
         "Segment",

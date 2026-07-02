@@ -1,5 +1,5 @@
 using MediatR;
-using MasterData.Application.Contracts.IRepository;
+using MasterData.Infrastructure.Contracts.IRepository;
 using MasterData.Domain.Dto;
 
 namespace MasterData.Application.Features.Unspsc.Queries;

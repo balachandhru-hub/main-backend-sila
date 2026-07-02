@@ -1,5 +1,5 @@
 using EFCore.BulkExtensions;
-using MasterData.Application.Contracts.IRepository;
+using MasterData.Infrastructure.Contracts.IRepository;
 using MasterData.Domain.Entities;
 using MasterData.Infrastructure.Persistence;
 

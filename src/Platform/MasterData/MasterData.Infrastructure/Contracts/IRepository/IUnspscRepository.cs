@@ -1,7 +1,7 @@
 using MasterData.Domain.Dto;
 using MasterData.Domain.Entities;
 
-namespace MasterData.Application.Contracts.IRepository;
+namespace MasterData.Infrastructure.Contracts.IRepository;
 
 public interface IUnspscRepository
 {

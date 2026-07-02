@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
-using MasterData.Application.Contracts.IRepository;
+using MasterData.Infrastructure.Contracts.IRepository;
 using MasterData.Infrastructure.Persistence;
 
 namespace MasterData.Infrastructure.Repository;

@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace MasterData.Application.Contracts.IRepository;
+namespace MasterData.Infrastructure.Contracts.IRepository;
 
 public interface IRepositoryBase<T>
     where T : class

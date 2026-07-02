@@ -1,4 +1,4 @@
-using MasterData.Application.Contracts.IRepository;
+using MasterData.Infrastructure.Contracts.IRepository;
 using MasterData.Infrastructure.Persistence;
 using MasterData.Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore;

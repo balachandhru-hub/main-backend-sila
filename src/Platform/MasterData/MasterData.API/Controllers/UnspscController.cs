@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using MasterData.Application.Features.Unspsc.Commands;
 using MasterData.Application.Features.Unspsc.Queries;
+using SharedKernel.LoggerServices;
 
 namespace MasterData.API.Controllers;
 
@@ -10,9 +11,9 @@ namespace MasterData.API.Controllers;
 public class UnspscController : ControllerBase
 {
     private readonly IMediator _mediator;
-    private readonly ILogger<UnspscController> _logger;
+    private readonly ILoggerManager _logger;
 
-    public UnspscController(IMediator mediator, ILogger<UnspscController> logger)
+    public UnspscController(IMediator mediator, ILoggerManager logger)
     {
         _mediator = mediator;
         _logger = logger;
@@ -21,10 +22,10 @@ public class UnspscController : ControllerBase
     [HttpPost("upload")]
     public async Task<IActionResult> Upload([FromForm] IFormFile file)
     {
-        _logger.LogInformation("Received file upload request: {FileName}", file.FileName);
+        _logger.LogInfo($"Starting UNSPSC upload process.");
         var recordsInserted = await _mediator.Send(
             new UploadUnspscCommand(file));
-
+_logger.LogInfo($"UNSPSC upload process completed. Records inserted: {recordsInserted}");
         return Ok(new
         {
             Message = "Upload successful.",
@@ -37,10 +38,10 @@ public class UnspscController : ControllerBase
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 10)
     {
-        _logger.LogInformation("Received request to get UNSPSC data: PageIndex={PageIndex}, PageSize={PageSize}", pageIndex, pageSize);
+      _logger.LogInfo($"Received request to get UNSPSC data: PageIndex:{pageIndex}, PageSize:{pageSize}");
         var result = await _mediator.Send(
             new GetUnspscQuery(pageIndex, pageSize));
-
+_logger.LogInfo($"Retrieved {result.Count} UNSPSC records.");
         return Ok(result);
     }
     [HttpGet("by-version")]
@@ -49,13 +50,13 @@ public async Task<IActionResult> GetByVersion(
     [FromQuery] int pageIndex = 1,
     [FromQuery] int pageSize = 10)
 {
-    _logger.LogInformation("Received request to get UNSPSC data by version: Version={Version}, PageIndex={PageIndex}, PageSize={PageSize}", version, pageIndex, pageSize);
+    _logger.LogInfo($"Received request to get UNSPSC data by version: Version={version}, PageIndex={pageIndex}, PageSize={pageSize}");
     var result = await _mediator.Send(
         new GetUnspscByVersionQuery(
             version,
             pageIndex,
             pageSize));
-
+        _logger.LogInfo($"Retrieved {result.Count} UNSPSC records for version {version}.");
     return Ok(result);
 }
 }
