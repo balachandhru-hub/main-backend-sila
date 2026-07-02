@@ -23,8 +23,6 @@ public static class ServiceExtensions
     public static void ConfigureRepositoryWrapper(
         this IServiceCollection services)
     {
-        services.AddScoped<IUnspscRepository, UnspscRepository>();
-        services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
         services.AddScoped<IBulkInsertHelper, BulkInsertHelper>();
         services.AddScoped<IUserIdentityService, UserIdentityService>();
         services.AddScoped<IUserContext, UserContext>();
