@@ -39,6 +39,7 @@ public partial class Program
         builder.Services.AddHttpClient();
 
         builder.Services.AddHttpContextAccessor();
+        builder.Services.ConfigureLoggerService();
 
         builder.Services.AddMemoryCache();
 
