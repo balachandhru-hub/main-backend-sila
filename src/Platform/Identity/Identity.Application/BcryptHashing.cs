@@ -1,5 +1,6 @@
 ﻿using System;
 
+
 namespace HashingSystem
 {
     public class BcryptHashing : IBcryptHashing
