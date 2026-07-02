@@ -40,21 +40,9 @@ namespace OcelotGateway
                                  .AddJsonFile("ocelot.SwaggerEndPoints.json", optional: false, reloadOnChange: true);
             builder.Services.AddOcelot(builder.Configuration);
             builder.Services.AddSwaggerForOcelot(builder.Configuration);
-           
-            // --- COMMENTED OUT: Extension methods not found in OcelotGateway project ---
-            // builder.Services.ConfigureRateLimiting();
-            // builder.Services.ConfigureCors(configuration);
-            // builder.Services.ConfigureDBContext(configuration);
-            // builder.Services.ConfigureLoggerService();
-            // builder.Services.ConfigureRepositoryWrapper();
-            // builder.Services.ConfigureServiceWrapper();
             
             builder.Services.AddHttpClient();
             builder.Services.AddControllers();
-            // builder.Services.AddSignalR...
-
-            // --- COMMENTED OUT: KeySpecs is missing in Gateway ---
-            // KeySpecs keys = ...
 
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddMemoryCache();
@@ -84,11 +72,7 @@ namespace OcelotGateway
             });
 
             await app.UseOcelot();
-            // app.UseCors("CorsPolicy"); 
-            // app.UseMiddleware<CustomExceptionMiddleware>();
             app.UseHttpsRedirection();
-            // app.UseAuthentication();
-            // app.UseAuthorization();
             app.MapControllers();
           
             app.Run();
