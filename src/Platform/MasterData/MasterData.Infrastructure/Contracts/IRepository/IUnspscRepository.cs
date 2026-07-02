@@ -9,7 +9,7 @@ public interface IUnspscRepository
 
     Task CreateRangeAsync(IEnumerable<UnspscCategory> entities);
 
-    Task<List<UnspscDto>> GetAsync(
+    Task<List<SegmentDto>> GetAsync(
         int pageIndex,
         int pageSize);
 

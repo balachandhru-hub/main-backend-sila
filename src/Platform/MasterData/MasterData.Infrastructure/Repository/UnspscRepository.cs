@@ -29,36 +29,45 @@ public class UnspscRepository : IUnspscRepository
         await _context.UnspscCategories.AddRangeAsync(entities);
     }
 
-    public async Task<List<UnspscDto>> GetAsync(
-        int pageIndex,
-        int pageSize)
-    {
-        _logger.LogInfo($"Retrieving UNSPSC categories. PageIndex: {pageIndex}, PageSize: {pageSize}");
-        return await _context.UnspscCategories
-            .OrderBy(x => x.Id)
-            .Skip((pageIndex - 1) * pageSize)
-            .Take(pageSize)
-            .Select(x => new UnspscDto
-            {
-                Version = x.Version,
-                Key = x.Key,
-                Segment = x.Segment,
-                SegmentTitle = x.SegmentTitle,
-                SegmentDefinition = x.SegmentDefinition,
-                Family = x.Family,
-                FamilyTitle = x.FamilyTitle,
-                FamilyDefinition = x.FamilyDefinition,
-                Class = x.Class,
-                ClassTitle = x.ClassTitle,
-                ClassDefinition = x.ClassDefinition,
-                Commodity = x.Commodity,
-                CommodityTitle = x.CommodityTitle,
-                CommodityDefinition = x.CommodityDefinition,
-                Synonym = x.Synonym,
-                Acronym = x.Acronym
-            })
-            .ToListAsync();
-    }
+    public async Task<List<SegmentDto>> GetAsync(
+    int pageIndex,
+    int pageSize)
+{
+    _logger.LogInfo($"Retrieving UNSPSC categories. PageIndex: {pageIndex}, PageSize: {pageSize}");
+
+    var data = await _context.UnspscCategories
+        .OrderBy(x => x.Segment)
+        .Skip((pageIndex - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
+    return data
+        .GroupBy(x => new
+        {
+            x.Segment,
+            x.SegmentTitle
+        })
+        .Select(segment => new SegmentDto
+        {
+            Segment = segment.Key.Segment,
+            Title = segment.Key.SegmentTitle,
+
+            Family = segment
+                .Where(x => x.Family.HasValue)
+                .GroupBy(x => new
+                {
+                    x.Family,
+                    x.FamilyTitle
+                })
+                .Select(f => new FamilyDto
+                {
+                    Code = f.Key.Family,
+                    Title = f.Key.FamilyTitle
+                })
+                .ToList()
+        })
+        .ToList();
+}
 
     public async Task<List<UnspscDto>> GetByVersionAsync(
         string version,

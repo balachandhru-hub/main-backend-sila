@@ -13,24 +13,34 @@ public class RepositoryWrapper : IRepositoryWrapper
     private readonly ILoggerManager _logger;
     private readonly IConfiguration _configuration;
     private readonly string _dbConnectionString;
+    private readonly IUnspscRepository _unspscRepository;
 
     public RepositoryWrapper(
         RepositoryContext repositoryContext,
-        IUnspscRepository unspscRepository,
         IUserIdentityService userIdentityService,
         ILoggerManager logger,
-        IConfiguration configuration)
+        IConfiguration configuration
+        )
        
     {
         _context = repositoryContext;
-        Unspsc = unspscRepository;
         _userIdentityService = userIdentityService;
         _logger = logger;
         _configuration = configuration;
          _dbConnectionString = configuration.GetConnectionString("DefaultConnection")!;
     }
 
-    public IUnspscRepository Unspsc { get; }
+  public IUnspscRepository Unspsc
+    {
+        get
+        {
+            if (_unspscRepository == null)
+            {
+                return new UnspscRepository(_context, _logger);
+            }
+            return _unspscRepository;
+        }
+    }
 
     public bool Save()
     {
