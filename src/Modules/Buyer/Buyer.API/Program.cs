@@ -1,37 +1,166 @@
-var builder = WebApplication.CreateBuilder(args);
+// using TicketSystemAPI;
+// using Entities;
+// using ExceptionHandler;
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+// using TicketSystemAPI.Extensions;
+// using Microsoft.OpenApi.Models; // Commented out to fix CS0246 OpenApiInfo error
+// using HashingSystem;
+// using Entities.Common;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Http.Features;
+using NLog;
+using NLog.Web;
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-
-
-app.UseHttpsRedirection();
-
-var summaries = new[]
+namespace Buyer.API
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    public partial class Program
+    {
+        protected Program() { }
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+        public static void Main(string[] args)
+        {
+            // Early init of NLog to catch setup errors
+            var logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
+            logger.Debug("init main");
 
-app.Run();
+            try
+            {
+                var builder = WebApplication.CreateBuilder(args);
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+                // Setup NLog as the logging provider
+                builder.Logging.ClearProviders();
+                builder.Host.UseNLog();
+
+                var env = builder.Environment.EnvironmentName;
+                IConfiguration configuration = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                    .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
+                    .Build();
+
+                builder.WebHost.ConfigureKestrel(options =>
+                {
+                    // Disable the minimum data rate limits for requests and responses
+                    options.Limits.MinRequestBodyDataRate = null;
+                    options.Limits.MinResponseDataRate = null;
+
+                    // Default fallback value if common settings are stripped out
+                    options.Limits.MaxRequestBodySize = 104857600;
+                });
+
+                // --- COMMENTED OUT UNWANTED SERVICES ---
+                // builder.Services.ConfigureRateLimiting();
+                // builder.Services.ConfigureCors(configuration);
+                builder.Services.AddCors(options =>
+                {
+                    options.AddPolicy("CorsPolicy", policy =>
+                    {
+                        policy.AllowAnyOrigin()
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
+                });
+                // builder.Services.ConfigureDBContext(configuration);
+                // builder.Services.ConfigureLoggerService(); 
+                // builder.Services.ConfigureRepositoryWrapper();
+                // builder.Services.ConfigureAutoMapper();
+                // builder.Services.ConfigureAuthentication();
+                // builder.Services.ConfigureServiceWrapper();
+                
+                builder.Services.AddControllers(); 
+                builder.Services.AddHttpClient();
+                // builder.Services.AddSignalR(options => { options.EnableDetailedErrors = true; });
+
+                // KeySpecs keys = new KeySpecs()
+                // {
+                //     Salt = configuration["Hashing:Salt"],
+                //     WorkFactor = Int32.TryParse(configuration["Hashing:WorkFactor"], out int numValue) ? numValue : 11
+                // };
+                // builder.Services.RegisterHashing(keys);
+
+                builder.Services.AddHttpContextAccessor();
+                builder.Services.AddMemoryCache();
+                builder.Services.Configure<FormOptions>(options =>
+                {
+                    options.MultipartBodyLengthLimit = 104857600; 
+                });
+
+                // --- COMMENTED OUT TO FIX CS0246 OPENAPIINFO ERROR ---
+                // builder.Services.AddEndpointsApiExplorer();
+                // builder.Services.AddSwaggerGen(c =>
+                // {
+                //     c.SwaggerDoc("v1.0", new OpenApiInfo
+                //     {
+                //         Title = "Buyer APIs",
+                //         Version = "v1.0",
+                //         Description = "REST APIs"
+                //     });
+                //     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                //     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                //     if (File.Exists(xmlPath)) 
+                //     {
+                //         c.IncludeXmlComments(xmlPath);
+                //     }
+                // });
+                // builder.Services.ConfigureScheduler();
+
+                var app = builder.Build();
+
+                app.Logger.LogInformation("ProcurementSuite Buyer API started successfully!");
+
+                // --- COMMENTED OUT UNWANTED DB MIGRATION / SEEDING ---
+                // using (var scope = app.Services.CreateScope())
+                // {
+                //     DBMigration.UpdateDatabase(scope.ServiceProvider);
+                //     SeedData.Initialize(scope.ServiceProvider);
+                // }
+
+                app.UseForwardedHeaders(new ForwardedHeadersOptions
+                {
+                    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                    KnownNetworks = { },
+                    KnownProxies = { },
+                    ForwardLimit = null
+                });
+
+                // --- COMMENTED OUT SWAGGER MIDDLEWARE ---
+                // if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "UAT")
+                // {
+                //     app.UseSwagger();
+                //     app.UseSwaggerUI(c =>
+                //     {
+                //         c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Buyer API v1.0");
+                //         c.RoutePrefix = "swagger";
+                //     });
+                // }
+
+                app.UseRouting();
+                app.UseCors("CorsPolicy");
+                // app.UseMiddleware<CustomExceptionMiddleware>();
+                // app.UseRateLimiter();
+
+                if (!app.Environment.IsDevelopment())
+                {
+                    app.UseHttpsRedirection(); 
+                }
+
+                // app.UseAuthentication();
+                // app.UseAuthorization();
+                app.MapControllers();
+                // app.MapHub<TicketMessageHub>("/ticket-message-hub").RequireCors("CorsPolicy");
+
+                app.Run();
+            }
+            catch (Exception exception)
+            {
+                logger.Error(exception, "Stopped program because of exception");
+                throw;
+            }
+            finally
+            {
+                LogManager.Shutdown();
+            }
+        }
+    }
 }
