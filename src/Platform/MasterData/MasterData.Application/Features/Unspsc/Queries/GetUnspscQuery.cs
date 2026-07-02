@@ -6,4 +6,4 @@ namespace MasterData.Application.Features.Unspsc.Queries;
 public record GetUnspscQuery(
     int PageIndex,
     int PageSize
-) : IRequest<List<UnspscDto>>;
+) : IRequest<List<SegmentDto>>;

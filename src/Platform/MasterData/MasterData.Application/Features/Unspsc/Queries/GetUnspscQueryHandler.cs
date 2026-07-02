@@ -5,7 +5,7 @@ using MasterData.Domain.Dto;
 namespace MasterData.Application.Features.Unspsc.Queries;
 
 public class GetUnspscQueryHandler
-    : IRequestHandler<GetUnspscQuery, List<UnspscDto>>
+    : IRequestHandler<GetUnspscQuery, List<SegmentDto>>
 {
     private readonly IRepositoryWrapper _repository;
 
@@ -14,7 +14,7 @@ public class GetUnspscQueryHandler
         _repository = repository;
     }
 
-    public async Task<List<UnspscDto>> Handle(
+     public async Task<List<SegmentDto>> Handle(
         GetUnspscQuery request,
         CancellationToken cancellationToken)
     {
