@@ -5,18 +5,14 @@ using Microsoft.EntityFrameworkCore;
 using Repository;
 using Services;
 using Quartz;
-using Quartz.Spi;
-using Entities;
-using AutoMapper;
 using Identity.Domain.Common;
-// using Identity.Infrastructure.Migrastions;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Identity.Infrastructure.Contracts.IServices;
 using Identity.Infrastructure.DbContext;
 using SharedKernel.LoggerServices;
 using Identity.Application.Services;
-namespace TicketSystemAPI.Extensions
+namespace Identity.API.Extensions
 {
     /// <summary>
     /// Class <c>Service Extenstions</c> is static consists of service extensions.

@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using System;
-using System.ComponentModel.DataAnnotations.Schema;
 using SharedKernel.Models;
+
 namespace Identity.Domain.Entities
 {
     public class RoleFeatureMapping : BaseModel
