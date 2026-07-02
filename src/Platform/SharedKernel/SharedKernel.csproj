@@ -7,9 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Compile only DTOs -->
-    <Compile Remove="LoggerManager\**\*.cs" />
-    <Compile Remove="ExceptionHandler\**\*.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="NLog" Version="6.1.3" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="6.1.3" />
   </ItemGroup>
-
+  
+   
 </Project>

@@ -1,10 +1,10 @@
-﻿using Contracts;
+﻿
 // using Entities.Common;
 using NLog;
 using System.Web;
 using System.Net;
 
-namespace LoggerService
+namespace  SharedKernel.LoggerServices
 {
     /// <summary>
     /// Class <c>LoggerManager</c>.

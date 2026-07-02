@@ -7,9 +7,8 @@
   </PropertyGroup>
    <ItemGroup>
     <ProjectReference Include="..\Buyer.Domain\Buyer.Domain.csproj" />
-  
-    <ProjectReference Include="..\..\..\Platform\SharedKernel\LoggerManager\LoggerManager.csproj" />
-    <ProjectReference Include="..\..\..\Platform\SharedKernel\ExceptionHandler\ExceptionHandler.csproj" />
+    <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
+    <ProjectReference Include="..\Buyer.Infrastructure\Buyer.Infrastructure.csproj" />
     
   </ItemGroup>
 
