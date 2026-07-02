@@ -1,14 +1,12 @@
-using TicketSystemAPI;
-using Entities;
 using ExceptionHandler;
 using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
 using TicketSystemAPI.Extensions;
 using Microsoft.OpenApi.Models;
 using HashingSystem;
 using Identity.Domain.Common;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Http.Features;
+using Identity.Infrastructure;
 
 namespace TicketSystemAPI
 {

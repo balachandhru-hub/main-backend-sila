@@ -12,11 +12,11 @@ namespace Identity.Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "ticketsystem");
+                name: "identitysystem");
 
             migrationBuilder.CreateTable(
                 name: "email_verification",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -41,7 +41,7 @@ namespace Identity.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "feature",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -59,7 +59,7 @@ namespace Identity.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "organizations",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -88,7 +88,7 @@ namespace Identity.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "role",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -106,7 +106,7 @@ namespace Identity.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "role_feature_mapping",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -125,7 +125,7 @@ namespace Identity.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "person",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -147,7 +147,7 @@ namespace Identity.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "fk_person_organizations_organization_id",
                         column: x => x.organization_id,
-                        principalSchema: "ticketsystem",
+                        principalSchema: "identitysystem",
                         principalTable: "organizations",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -155,7 +155,7 @@ namespace Identity.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "user",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -178,7 +178,7 @@ namespace Identity.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "fk_user_person_person_id",
                         column: x => x.person_id,
-                        principalSchema: "ticketsystem",
+                        principalSchema: "identitysystem",
                         principalTable: "person",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -186,7 +186,7 @@ namespace Identity.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "refresh_token",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -206,7 +206,7 @@ namespace Identity.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "fk_refresh_token_user_user_id",
                         column: x => x.user_id,
-                        principalSchema: "ticketsystem",
+                        principalSchema: "identitysystem",
                         principalTable: "user",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -214,7 +214,7 @@ namespace Identity.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "user_role_mapping",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -232,7 +232,7 @@ namespace Identity.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "fk_user_role_mapping_user_user_id",
                         column: x => x.user_id,
-                        principalSchema: "ticketsystem",
+                        principalSchema: "identitysystem",
                         principalTable: "user",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -240,79 +240,79 @@ namespace Identity.Infrastructure.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "ix_email_verification_is_active",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "email_verification",
                 column: "is_active");
 
             migrationBuilder.CreateIndex(
                 name: "ix_feature_is_active",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "feature",
                 column: "is_active");
 
             migrationBuilder.CreateIndex(
                 name: "ix_organizations_is_active",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "organizations",
                 column: "is_active");
 
             migrationBuilder.CreateIndex(
                 name: "ix_person_is_active",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "person",
                 column: "is_active");
 
             migrationBuilder.CreateIndex(
                 name: "ix_person_organization_id",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "person",
                 column: "organization_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_refresh_token_is_active",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "refresh_token",
                 column: "is_active");
 
             migrationBuilder.CreateIndex(
                 name: "ix_refresh_token_user_id",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "refresh_token",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_role_is_active",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "role",
                 column: "is_active");
 
             migrationBuilder.CreateIndex(
                 name: "ix_role_feature_mapping_is_active",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "role_feature_mapping",
                 column: "is_active");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_is_active",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "user",
                 column: "is_active");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_person_id",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "user",
                 column: "person_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_role_mapping_is_active",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "user_role_mapping",
                 column: "is_active");
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_role_mapping_user_id",
-                schema: "ticketsystem",
+                schema: "identitysystem",
                 table: "user_role_mapping",
                 column: "user_id");
         }
@@ -322,39 +322,39 @@ namespace Identity.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "email_verification",
-                schema: "ticketsystem");
+                schema: "identitysystem");
 
             migrationBuilder.DropTable(
                 name: "feature",
-                schema: "ticketsystem");
+                schema: "identitysystem");
 
             migrationBuilder.DropTable(
                 name: "refresh_token",
-                schema: "ticketsystem");
+                schema: "identitysystem");
 
             migrationBuilder.DropTable(
                 name: "role",
-                schema: "ticketsystem");
+                schema: "identitysystem");
 
             migrationBuilder.DropTable(
                 name: "role_feature_mapping",
-                schema: "ticketsystem");
+                schema: "identitysystem");
 
             migrationBuilder.DropTable(
                 name: "user_role_mapping",
-                schema: "ticketsystem");
+                schema: "identitysystem");
 
             migrationBuilder.DropTable(
                 name: "user",
-                schema: "ticketsystem");
+                schema: "identitysystem");
 
             migrationBuilder.DropTable(
                 name: "person",
-                schema: "ticketsystem");
+                schema: "identitysystem");
 
             migrationBuilder.DropTable(
                 name: "organizations",
-                schema: "ticketsystem");
+                schema: "identitysystem");
         }
     }
 }

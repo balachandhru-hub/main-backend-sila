@@ -1,7 +1,7 @@
 using SharedKernel.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace Entities.Models
+namespace Identity.Domain.Entities
 {
     public class Role : BaseModel
     {

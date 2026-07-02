@@ -17,52 +17,11 @@ namespace Identity.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("ticketsystem")
+                .HasDefaultSchema("identitysystem")
                 .HasAnnotation("ProductVersion", "8.0.17")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Entities.Models.Role", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_created");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_updated");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<Guid>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("updated_by");
-
-                    b.Property<string>("UserRole")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("user_role");
-
-                    b.HasKey("Id")
-                        .HasName("pk_role");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_role_is_active");
-
-                    b.ToTable("role", "ticketsystem");
-                });
 
             modelBuilder.Entity("Identity.Domain.Entities.EmailVerification", b =>
                 {
@@ -131,7 +90,7 @@ namespace Identity.Infrastructure.Migrations
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_email_verification_is_active");
 
-                    b.ToTable("email_verification", "ticketsystem");
+                    b.ToTable("email_verification", "identitysystem");
                 });
 
             modelBuilder.Entity("Identity.Domain.Entities.Feature", b =>
@@ -172,7 +131,7 @@ namespace Identity.Infrastructure.Migrations
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_feature_is_active");
 
-                    b.ToTable("feature", "ticketsystem");
+                    b.ToTable("feature", "identitysystem");
                 });
 
             modelBuilder.Entity("Identity.Domain.Entities.Organization", b =>
@@ -264,7 +223,7 @@ namespace Identity.Infrastructure.Migrations
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_organizations_is_active");
 
-                    b.ToTable("organizations", "ticketsystem");
+                    b.ToTable("organizations", "identitysystem");
                 });
 
             modelBuilder.Entity("Identity.Domain.Entities.Person", b =>
@@ -332,7 +291,7 @@ namespace Identity.Infrastructure.Migrations
                     b.HasIndex("OrganizationId")
                         .HasDatabaseName("ix_person_organization_id");
 
-                    b.ToTable("person", "ticketsystem");
+                    b.ToTable("person", "identitysystem");
                 });
 
             modelBuilder.Entity("Identity.Domain.Entities.RefreshToken", b =>
@@ -388,7 +347,48 @@ namespace Identity.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_refresh_token_user_id");
 
-                    b.ToTable("refresh_token", "ticketsystem");
+                    b.ToTable("refresh_token", "identitysystem");
+                });
+
+            modelBuilder.Entity("Identity.Domain.Entities.Role", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<string>("UserRole")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("user_role");
+
+                    b.HasKey("Id")
+                        .HasName("pk_role");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_role_is_active");
+
+                    b.ToTable("role", "identitysystem");
                 });
 
             modelBuilder.Entity("Identity.Domain.Entities.RoleFeatureMapping", b =>
@@ -432,7 +432,7 @@ namespace Identity.Infrastructure.Migrations
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_role_feature_mapping_is_active");
 
-                    b.ToTable("role_feature_mapping", "ticketsystem");
+                    b.ToTable("role_feature_mapping", "identitysystem");
                 });
 
             modelBuilder.Entity("Identity.Domain.Entities.User", b =>
@@ -499,7 +499,7 @@ namespace Identity.Infrastructure.Migrations
                     b.HasIndex("PersonId")
                         .HasDatabaseName("ix_user_person_id");
 
-                    b.ToTable("user", "ticketsystem");
+                    b.ToTable("user", "identitysystem");
                 });
 
             modelBuilder.Entity("Identity.Domain.Entities.UserRoleMapping", b =>
@@ -546,7 +546,7 @@ namespace Identity.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_user_role_mapping_user_id");
 
-                    b.ToTable("user_role_mapping", "ticketsystem");
+                    b.ToTable("user_role_mapping", "identitysystem");
                 });
 
             modelBuilder.Entity("Identity.Domain.Entities.Person", b =>
