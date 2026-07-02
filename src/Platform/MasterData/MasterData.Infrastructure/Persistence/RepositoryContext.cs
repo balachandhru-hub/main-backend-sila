@@ -3,6 +3,7 @@ using MasterData.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
+using SharedKernel.Util;
 
 namespace MasterData.Infrastructure.Persistence;
 
@@ -36,8 +37,34 @@ public class RepositoryContext : DbContext
 
         base.OnModelCreating(modelBuilder);
 
-       
-    }
+        foreach (Microsoft.EntityFrameworkCore.Metadata.IMutableEntityType entity in modelBuilder.Model.GetEntityTypes())
+            {
+
+                entity.SetTableName(entity.GetTableName()!.ConvertToSnakeCase());
+                var storeObjectIdentifier = StoreObjectIdentifier.Table(entity.GetTableName()!, entity.GetSchema());
+                foreach (Microsoft.EntityFrameworkCore.Metadata.IMutableProperty property in entity.GetProperties())
+                {
+
+                    property.SetColumnName(property.GetColumnName(storeObjectIdentifier)!.ConvertToSnakeCase());
+                }
+
+                foreach (Microsoft.EntityFrameworkCore.Metadata.IMutableKey key in entity.GetKeys())
+                {
+                    key.SetName(key.GetName()!.ConvertToSnakeCase());
+                }
+
+                foreach (Microsoft.EntityFrameworkCore.Metadata.IMutableForeignKey key in entity.GetForeignKeys())
+                {
+                    key.SetConstraintName(key.GetConstraintName()!.ConvertToSnakeCase());
+                }
+
+                foreach (Microsoft.EntityFrameworkCore.Metadata.IMutableIndex index in entity.GetIndexes())
+                {
+                    index.SetDatabaseName(index.GetDatabaseName()!.ConvertToSnakeCase());
+                }
+            }
+        }
+    
 
     public void OnBeforeSaving(Guid userId)
     {
