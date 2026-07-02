@@ -6,5 +6,6 @@ public interface IRepositoryWrapper
 {
     IUnspscRepository Unspsc { get; }
 
-    Task SaveAsync();
+    bool Save();
+    Task<bool> SaveAsync();
 }

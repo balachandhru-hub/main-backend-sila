@@ -1,7 +1,6 @@
 using System.Reflection;
 using ExceptionHandler;
 using MasterData.API.Extensions;
-using MasterData.Application.Features.Unspsc.Commands;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi.Models;
@@ -25,17 +24,27 @@ public partial class Program
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
             .Build();
+ builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Limits.MinRequestBodyDataRate = null;
+            options.Limits.MinResponseDataRate = null;
 
+            if (long.TryParse(configuration[Common.MAX_REQUEST_SIZE], out long maxSize))
+            {
+                options.Limits.MaxRequestBodySize = maxSize;
+            }
+            else
+            {
+                options.Limits.MaxRequestBodySize = 104857600;
+            }
+        });
+        
         builder.Services.AddControllers();
 
         builder.Services.ConfigureDatabase(configuration);
         builder.Services.ConfigureRepositoryWrapper();
 
-        builder.Services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(typeof(UploadUnspscCommand).Assembly);
-        });
-
+       builder.Services.ConfigureMediatR();
         builder.Services.AddHttpClient();
 
         builder.Services.AddHttpContextAccessor();
@@ -47,6 +56,8 @@ public partial class Program
         {
             options.MultipartBodyLengthLimit = 104857600;
         });
+
+       
 
         builder.Services.AddEndpointsApiExplorer();
 
@@ -61,11 +72,8 @@ public partial class Program
 
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-
-            if (File.Exists(xmlPath))
-            {
-                c.IncludeXmlComments(xmlPath);
-            }
+              c.IncludeXmlComments(xmlPath);
+            
         });
 
         var app = builder.Build();
@@ -88,8 +96,7 @@ public partial class Program
             ForwardLimit = null
         });
 
-        if (app.Environment.IsDevelopment() )
-           // app.Environment.EnvironmentName == Common.UAT_ENVIRONMENT)
+        if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == Common.UAT_ENVIRONMENT)
         {
             app.UseSwagger();
 
@@ -99,13 +106,14 @@ public partial class Program
                 c.RoutePrefix = "swagger";
             });
         }
-
+            app.UseRouting();
+            app.UseCors("CorsPolicy");
         app.UseHttpsRedirection();
 
         app.UseMiddleware<CustomExceptionMiddleware>();
-
+        app.UseHttpsRedirection();
         app.UseAuthorization();
-
+        app.UseAuthentication();
         app.MapControllers();
 
         app.Run();
