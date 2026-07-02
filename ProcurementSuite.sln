@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.4.11513.90 insiders
+VisualStudioVersion = 18.4.11513.90
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
@@ -44,10 +44,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MasterData", "MasterData", "{B0485CFE-4748-0206-2A8F-58A67C534C71}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MasterData.API", "src\Platform\MasterData\MasterData.API\MasterData.API.csproj", "{0DCC5AB2-A1D3-499C-BF38-9EFFA8244022}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoggerManager", "src\Platform\SharedKernel\LoggerManager\LoggerManager.csproj", "{A553B59C-BE18-4800-A759-B0F0E9A1B688}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExceptionHandler", "src\Platform\SharedKernel\ExceptionHandler\ExceptionHandler.csproj", "{D5447573-F5ED-436E-B8D3-25E5EE4B227C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MasterData.Infrastructure", "src\Platform\MasterData\MasterData.Infrastructure\MasterData.Infrastructure.csproj", "{ED001B17-6622-4EFB-8538-E174C10E695E}"
 EndProject
@@ -233,30 +229,6 @@ Global
 		{0DCC5AB2-A1D3-499C-BF38-9EFFA8244022}.Release|x64.Build.0 = Release|Any CPU
 		{0DCC5AB2-A1D3-499C-BF38-9EFFA8244022}.Release|x86.ActiveCfg = Release|Any CPU
 		{0DCC5AB2-A1D3-499C-BF38-9EFFA8244022}.Release|x86.Build.0 = Release|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Debug|x64.Build.0 = Debug|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Debug|x86.Build.0 = Debug|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Release|x64.ActiveCfg = Release|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Release|x64.Build.0 = Release|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Release|x86.ActiveCfg = Release|Any CPU
-		{A553B59C-BE18-4800-A759-B0F0E9A1B688}.Release|x86.Build.0 = Release|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Debug|x64.Build.0 = Debug|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Debug|x86.Build.0 = Debug|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Release|x64.ActiveCfg = Release|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Release|x64.Build.0 = Release|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Release|x86.ActiveCfg = Release|Any CPU
-		{D5447573-F5ED-436E-B8D3-25E5EE4B227C}.Release|x86.Build.0 = Release|Any CPU
 		{ED001B17-6622-4EFB-8538-E174C10E695E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ED001B17-6622-4EFB-8538-E174C10E695E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED001B17-6622-4EFB-8538-E174C10E695E}.Debug|x64.ActiveCfg = Debug|Any CPU
