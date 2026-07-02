@@ -2,6 +2,7 @@ using MasterData.Infrastructure.Contracts.IRepository;
 using MasterData.Infrastructure.Persistence;
 using MasterData.Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.LoggerServices;
 
 namespace MasterData.API.Extensions;
 
@@ -22,4 +23,9 @@ public static class ServiceExtensions
         services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
         services.AddScoped<IBulkInsertHelper, BulkInsertHelper>();
     }
+    public static void ConfigureLoggerService(
+    this IServiceCollection services)
+        {
+            services.AddSingleton<ILoggerManager, LoggerManager>();
+        }
 }
