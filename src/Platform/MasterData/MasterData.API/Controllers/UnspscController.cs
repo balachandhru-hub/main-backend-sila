@@ -7,6 +7,8 @@ using System.ComponentModel.DataAnnotations;
 using Swashbuckle.AspNetCore.Annotations;
 using ExceptionHandler;
 using SharedKernel.Dto;
+using SharedKernel.Attributes;
+
 
 
 namespace MasterData.API.Controllers;
@@ -29,6 +31,7 @@ public class UnspscController : ControllerBase
     /// </summary>
     [HttpPost]
     [Route("api/v1/unspsc/upload")]
+    [ValidateModelState]
     [SwaggerOperation("UploadUnspsc")]
     [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Upload successful")]
     [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
@@ -53,6 +56,7 @@ public class UnspscController : ControllerBase
     /// </summary>
     [HttpGet]
     [Route("api/v1/unspsc")]
+    [ValidateModelState]
     [SwaggerOperation("GetUnspsc")]
     [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Data retrieved successfully")]
     [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
@@ -74,6 +78,7 @@ public class UnspscController : ControllerBase
     /// </summary>
     [HttpGet]
     [Route("api/v1/unspsc/class-commodity")]
+    [ValidateModelState]
     [SwaggerOperation("GetUnspscByVersion")]
     [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Data retrieved successfully")]
     [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
