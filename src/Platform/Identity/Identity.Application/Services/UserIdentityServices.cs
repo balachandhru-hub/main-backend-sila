@@ -1,5 +1,5 @@
 
-using ExceptionHandler;
+using SharedKernel.ExceptionHandler;
 using Microsoft.Extensions.Configuration;
 
 using System.Security.Claims;

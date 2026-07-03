@@ -10,7 +10,7 @@ using Dto;
 
 
 
-namespace ExceptionHandler
+namespace SharedKernel.ExceptionHandler
 {
     /// <summary>
     /// 

@@ -16,6 +16,9 @@ namespace Repository
         private readonly IConfiguration _configuration;
         private readonly string _dbConnectionString;
         private IEmailVerificationRepository _emailVerificationRepository;
+        private IOrganizationRepository _organizationRepository;
+        private IUserRepository _userRepository;
+        private IPersonRepository _personRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -34,6 +37,39 @@ namespace Repository
                     _emailVerificationRepository = new EmailVerificationRepository(_context);
                 }
                 return _emailVerificationRepository;
+            }
+        }
+        public IOrganizationRepository Organization
+        {
+            get
+            {
+                if (_organizationRepository == null)
+                {
+                    _organizationRepository = new OrganizationRepository(_context);
+                }
+                return _organizationRepository;
+            }
+        }
+        public IUserRepository User
+        {
+            get
+            {
+                if (_userRepository == null)
+                {
+                    _userRepository = new UserRepository(_context);
+                }
+                return _userRepository;
+            }
+        }
+        public IPersonRepository Person
+        {
+            get
+            {
+                if (_personRepository == null)
+                {
+                    _personRepository = new PersonRepository(_context);
+                }
+                return _personRepository;
             }
         }
 

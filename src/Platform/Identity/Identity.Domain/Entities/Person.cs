@@ -16,8 +16,10 @@ namespace Identity.Domain.Entities
         [ForeignKey("Organization")]
         public Guid OrganizationId { get; set; }
         public Organization Organization { get; set; }
-        public string Designation { get; set; }
-        public string Department { get; set; }
+        public string? Designation { get; set; }
+        public string? Country {get; set;}
+        public string? AddressLine {get; set;}
+        public string? Department { get; set; }
         public Person(){}
     }
 }

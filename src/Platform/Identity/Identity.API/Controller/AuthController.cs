@@ -1,13 +1,14 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using ExceptionHandler;
+using SharedKernel.ExceptionHandler;
 using Identity.Application.Features.Auth.Commands.SendEmailVerification;
 using SharedKernel.LoggerServices;
 using Identity.Application.Features.Auth.Commands.VerifyOtp;
 using System.ComponentModel.DataAnnotations;
 using Dto;
 using SharedKernel.Attributes;
+using Identity.API.Attributes;
 
 
 namespace Identity.API.Controllers
@@ -33,6 +34,7 @@ namespace Identity.API.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("api/v1/auth/send-otp")]
+        [ApiKeyAuthorization]
         [ValidateModelState]
         [SwaggerOperation("SendOtp")]
         [SwaggerResponse(200, type: typeof(Dto.SuccessResponseDto), description: "OTP generated successfully")]
@@ -52,9 +54,17 @@ namespace Identity.API.Controllers
                 Description = "OTP generated successfully."
             });
         }
+        
+        /// <summary>
+        /// Verifies the OTP for email verification.
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
+
         [HttpPost]
         [Route("api/v1/auth/verify-otp")]
         [ValidateModelState]
+        [ApiKeyAuthorization]
         [SwaggerOperation("VerifyOtp")]
         [SwaggerResponse(200, type: typeof(Dto.SuccessResponseDto), description: "OTP verified successfully.")]
         [SwaggerResponse(400, type: typeof(Dto.ErrorResponseDto), description: "Invalid OTP or OTP expired.")]
@@ -63,13 +73,22 @@ namespace Identity.API.Controllers
         {
             var result = await _mediator.Send(command);
 
-             return Ok(new Dto.SuccessResponseDto
-            {
-                StatusCode = 200,
-                Message = result.Message,
-                Description = "OTP verified successfully.",
-                Id = result.TemporaryVerificationToken
-            });
+           Response.Cookies.Append(
+        "VerificationToken",
+        result.TemporaryVerificationToken!,
+        new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,          // Use true in HTTPS
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddMinutes(30)
+        });
+
+    return Ok(new
+    {
+        Success = true,
+        Message = result.Message
+    });
         }
     }
 }

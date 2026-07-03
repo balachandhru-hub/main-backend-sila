@@ -1,6 +1,6 @@
 
 using Contracts.IRepository;
-using ExceptionHandler;
+using SharedKernel.ExceptionHandler;
 using Microsoft.EntityFrameworkCore;
 using Repository;
 using Services;

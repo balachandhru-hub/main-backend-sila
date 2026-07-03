@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace ExceptionHandler
+namespace SharedKernel.ExceptionHandler
 {
     /// <summary>
     /// 

@@ -1,4 +1,4 @@
-using ExceptionHandler;
+using SharedKernel.ExceptionHandler;
 using System.Reflection;
 using Identity.API.Extensions;
 using Microsoft.OpenApi.Models;
@@ -106,7 +106,7 @@ namespace Identity.API
             });
 
             // Configure the HTTP request pipeline
-            if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == Common.UAT_ENVIRONMENT)
+            if (app.Environment.IsDevelopment() )
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>

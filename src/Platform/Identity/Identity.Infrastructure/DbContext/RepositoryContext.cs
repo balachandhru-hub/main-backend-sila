@@ -29,6 +29,7 @@ namespace Identity.Infrastructure.DbContext
         public DbSet<Feature> Feature {get;set;}
         public DbSet<RefreshToken> RefreshToken {get;set;}
         public DbSet<EmailVerification> EmailVerification {get;set;}
+        public DbSet<ApiKey> ApiKey {get;set;}
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
             _ = modelBuilder.HasDefaultSchema(_configuration[Common.APPLICATION_SCHEMA]);
@@ -41,6 +42,7 @@ namespace Identity.Infrastructure.DbContext
             _ = modelBuilder.Entity<RefreshToken>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<Feature>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<EmailVerification>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<ApiKey>().HasIndex(a => a.IsActive);
 
              base.OnModelCreating(modelBuilder);
 
