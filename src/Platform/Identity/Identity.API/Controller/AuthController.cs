@@ -7,6 +7,7 @@ using SharedKernel.LoggerServices;
 using Identity.Application.Features.Auth.Commands.VerifyOtp;
 using System.ComponentModel.DataAnnotations;
 using Dto;
+using SharedKernel.Attributes;
 
 
 namespace Identity.API.Controllers
@@ -32,7 +33,7 @@ namespace Identity.API.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("api/v1/auth/send-otp")]
-      
+        [ValidateModelState]
         [SwaggerOperation("SendOtp")]
         [SwaggerResponse(200, type: typeof(Dto.SuccessResponseDto), description: "OTP generated successfully")]
         [SwaggerResponse(400, type: typeof(Dto.ErrorResponseDto), description: "Bad request")]
@@ -44,17 +45,6 @@ namespace Identity.API.Controllers
             command.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
             bool result = await _mediator.Send(command);
-
-            if (!result)
-            {
-                return BadRequest(new Dto.ErrorResponseDto
-                {
-                    StatusCode = 400,
-                    Message = "Unable to generate OTP.",
-                    Description = "OTP generation failed."
-                });
-            }
-
             return Ok(new Dto.SuccessResponseDto
             {
                 StatusCode = 200,
@@ -64,6 +54,7 @@ namespace Identity.API.Controllers
         }
         [HttpPost]
         [Route("api/v1/auth/verify-otp")]
+        [ValidateModelState]
         [SwaggerOperation("VerifyOtp")]
         [SwaggerResponse(200, type: typeof(Dto.SuccessResponseDto), description: "OTP verified successfully.")]
         [SwaggerResponse(400, type: typeof(Dto.ErrorResponseDto), description: "Invalid OTP or OTP expired.")]
@@ -72,17 +63,7 @@ namespace Identity.API.Controllers
         {
             var result = await _mediator.Send(command);
 
-            if (!result.Success)
-            {
-                return BadRequest(new Dto.ErrorResponseDto
-                {
-                    StatusCode = 400,
-                    Message = result.Message,
-                    Description = result.Message
-                });
-            }
-
-            return Ok(new Dto.SuccessResponseDto
+             return Ok(new Dto.SuccessResponseDto
             {
                 StatusCode = 200,
                 Message = result.Message,
