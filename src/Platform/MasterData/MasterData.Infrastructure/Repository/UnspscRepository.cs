@@ -61,7 +61,7 @@ public class UnspscRepository : IUnspscRepository
                 })
                 .Select(f => new FamilyDto
                 {
-                    Code = f.Key.Family,
+                    Family = f.Key.Family,
                     Title = f.Key.FamilyTitle
                 })
                 .ToList()
@@ -69,36 +69,47 @@ public class UnspscRepository : IUnspscRepository
         .ToList();
 }
 
-    public async Task<List<UnspscDto>> GetByVersionAsync(
-        string version,
-        int pageIndex,
-        int pageSize)
-    {
-        _logger.LogInfo($"Retrieving UNSPSC categories by version: {version}. PageIndex: {pageIndex}, PageSize: {pageSize}");
-        return await _context.UnspscCategories
-            .Where(x => x.Version == version)
-            .OrderBy(x => x.Id)
-            .Skip((pageIndex - 1) * pageSize)
-            .Take(pageSize)
-            .Select(x => new UnspscDto
-            {
-                Version = x.Version,
-                Key = x.Key,
-                Segment = x.Segment,
-                SegmentTitle = x.SegmentTitle,
-                SegmentDefinition = x.SegmentDefinition,
-                Family = x.Family,
-                FamilyTitle = x.FamilyTitle,
-                FamilyDefinition = x.FamilyDefinition,
-                Class = x.Class,
-                ClassTitle = x.ClassTitle,
-                ClassDefinition = x.ClassDefinition,
-                Commodity = x.Commodity,
-                CommodityTitle = x.CommodityTitle,
-                CommodityDefinition = x.CommodityDefinition,
-                Synonym = x.Synonym,
-                Acronym = x.Acronym
-            })
-            .ToListAsync();
-    }
+   public async Task<List<ClassDto>> GetByVersionAsync(
+    long segment,
+    long family,
+    int pageIndex,
+    int pageSize)
+{
+    _logger.LogInfo($"Retrieving classes for Segment={segment}, Family={family}");
+
+    var data = await _context.UnspscCategories
+        .Where(x => x.Segment == segment &&
+                    x.Family == family)
+        .OrderBy(x => x.Class)
+        .Skip((pageIndex - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
+    return data
+        .GroupBy(x => new
+        {
+            x.Class,
+            x.ClassTitle
+        })
+        .Select(c => new ClassDto
+        {
+            Class = c.Key.Class,
+            Title = c.Key.ClassTitle,
+
+            Commodity = c
+                .Where(x => x.Commodity.HasValue)
+                .GroupBy(x => new
+                {
+                    x.Commodity,
+                    x.CommodityTitle
+                })
+                .Select(cm => new CommodityDto
+                {
+                    Commodity = cm.Key.Commodity,
+                    Title = cm.Key.CommodityTitle
+                })
+                .ToList()
+        })
+        .ToList();
+}
 }

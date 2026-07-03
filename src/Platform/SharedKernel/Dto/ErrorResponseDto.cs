@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 
-namespace Dto;
+namespace SharedKernel.Dto;
 
 /// <summary>
 /// ErrorResponse model used to bind the error message for API response.

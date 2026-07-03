@@ -1,6 +1,6 @@
 using System.Runtime.Serialization;
 
-namespace Dto;
+namespace SharedKernel.Dto;
 
 /// <summary>
 /// Success response model.
