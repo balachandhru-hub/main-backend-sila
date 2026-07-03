@@ -1,10 +1,11 @@
 using MediatR;
 using Contracts.IRepository;
 using Identity.Domain.Entities;
+using ExceptionHandler;
 
 namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
 {
-    public class SendEmailVerificationCommandHandler : IRequestHandler<SendEmailVerificationCommand , bool>
+    public class SendEmailVerificationCommandHandler : IRequestHandler<SendEmailVerificationCommand, bool>
     {
         private readonly IRepositoryWrapper _repository;
 
@@ -17,27 +18,37 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
             SendEmailVerificationCommand request,
             CancellationToken cancellationToken)
         {
-          var existingOtp = _repository.EmailVerification
-    .FindByConditionAsync(x =>
-        x.Email == request.Email &&
-        x.IsActive)
-    .FirstOrDefault();
+            var existingOtp = _repository.EmailVerification
+      .FindByConditionAsync(x =>
+          x.Email == request.Email && x.IsVerified == false &&
+          x.IsActive)
+      .FirstOrDefault();
 
-if (existingOtp != null)
-{
-    // OTP expired
-    if (existingOtp.TemporaryVerificationTokenExpiresOn  <= DateTime.UtcNow)
-    {
-        existingOtp.IsActive = false;
-        _repository.EmailVerification.Update(existingOtp);
-        await _repository.SaveAsync();
-    }
-    else
-    {
-        // Active OTP still valid
-        return true;
-    }
-}
+            if (existingOtp != null)
+            {
+                // Active OTP is still valid
+                if (existingOtp.ExpiresOn >= DateTime.UtcNow)
+                {
+                    throw new BadRequestCustomException(
+                "An OTP has already been sent. Please verify your OTP and complete your registration.", "An OTP has already been sent for this email address.");
+                }
+
+                // OTP expired - generate a new OTP and update the existing record
+                string otps = Random.Shared.Next(100000, 1000000).ToString();
+
+                existingOtp.OtpHash = otps;
+                existingOtp.ExpiresOn = DateTime.UtcNow.AddMinutes(10);
+                existingOtp.AttemptCount = 0;
+                existingOtp.IsVerified = false;
+                existingOtp.IpAddress = request.IpAddress;
+                existingOtp.TemporaryVerificationToken = null;
+                existingOtp.TemporaryVerificationTokenExpiresOn = null;
+
+
+                _repository.EmailVerification.Update(existingOtp);
+
+                return await _repository.SaveAsync();
+            }
             // Generate 6-digit OTP
             string otp = Random.Shared.Next(100000, 1000000).ToString();
 
