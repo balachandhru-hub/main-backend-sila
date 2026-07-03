@@ -7,6 +7,7 @@ using Identity.Domain.Common;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Http.Features;
 using Identity.Infrastructure;
+using MediatR;
 
 namespace Identity.API
 {
@@ -46,6 +47,7 @@ namespace Identity.API
             builder.Services.ConfigureLoggerService();
             builder.Services.ConfigureRepositoryWrapper();
             builder.Services.ConfigureServiceWrapper();
+            builder.Services.ConfigureMediatR();
             builder.Services.AddHttpClient();
             builder.Services.AddSignalR(options =>
             {
@@ -62,6 +64,7 @@ namespace Identity.API
 
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddMemoryCache();
+
             builder.Services.Configure<FormOptions>(options =>
             {
                options.MultipartBodyLengthLimit = 104857600; // Set the maximum request body size to 100 MB 

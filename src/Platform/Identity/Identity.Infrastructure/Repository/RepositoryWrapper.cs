@@ -15,6 +15,7 @@ namespace Repository
         private readonly ILoggerManager _logger;
         private readonly IConfiguration _configuration;
         private readonly string _dbConnectionString;
+        private IEmailVerificationRepository _emailVerificationRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -23,6 +24,17 @@ namespace Repository
             _logger = logger;
             _configuration = configuration;
             _dbConnectionString = configuration.GetConnectionString("DefaultConnection")!;
+        }
+          public IEmailVerificationRepository EmailVerification
+        {
+            get
+            {
+                if (_emailVerificationRepository == null)
+                {
+                    _emailVerificationRepository = new EmailVerificationRepository(_context);
+                }
+                return _emailVerificationRepository;
+            }
         }
 
         public bool Save()
