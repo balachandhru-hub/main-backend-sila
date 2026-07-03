@@ -12,6 +12,10 @@ using Identity.Infrastructure.Contracts.IServices;
 using Identity.Infrastructure.DbContext;
 using SharedKernel.LoggerServices;
 using Identity.Application.Services;
+using MediatR;
+using Identity.Application.Features.Auth.Commands;
+using Identity.Application.Features.Auth.Commands.SendEmailVerification;
+using Identity.Application.Features.Auth.Commands.VerifyOtp;
 namespace Identity.API.Extensions
 {
     /// <summary>
@@ -166,6 +170,14 @@ namespace Identity.API.Extensions
         {
             return builder.UseMiddleware<CustomExceptionMiddleware>();
         }
+            public static void ConfigureMediatR(this IServiceCollection services)
+    {
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(typeof(SendEmailVerificationCommand).Assembly);
+            cfg.RegisterServicesFromAssembly(typeof(VerifyOtpCommand).Assembly);
+        });
+    }
 
       
     }

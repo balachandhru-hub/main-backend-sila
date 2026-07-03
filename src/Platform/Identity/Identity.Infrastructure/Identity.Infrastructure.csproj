@@ -34,6 +34,7 @@
     <EmbeddedResource Include="Migrations\UserRoleMapping.csv" />
     <EmbeddedResource Include="Migrations\RoleFeatureMapping.csv" />
     <EmbeddedResource Include="Migrations\Feature.csv" />
+    <EmbeddedResource Include="Migrations\Organization.csv"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -66,6 +67,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Identity.Infrastructure\Migrations\Feature.csv</Link>
     </Content>
+    <Content Include="Migrations\Organization.csv" >
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Identity.Infrastructure\Migrations\Organization.csv</Link>
+    </Content>
+
 
   </ItemGroup>
 

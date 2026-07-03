@@ -267,6 +267,48 @@ namespace Identity.Infrastructure
                 csvReader.Dispose();
             }
         }
+          public static void CreateOrganization(Stream stream, RepositoryContext context)
+        {
+            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                var conf = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HeaderValidated = null,
+                    MissingFieldFound = null,
+                    IgnoreReferences = true
+                };
+                CsvReader csvReader = new CsvReader(reader, conf);
+                System.Collections.Generic.IEnumerable<Organization> entries = csvReader.GetRecords<Organization>();
+                List<Organization> csvCount = entries.ToList();
+                foreach (Organization entry in csvCount)
+                {
+                    var existingEntry = context.Organizations.Find(entry.Id);
+
+                    if (existingEntry != null)
+                    {
+                        // Backup original values
+                        var originalValues = context.Entry(existingEntry).OriginalValues;
+
+                        // Update existing entry
+                        context.Entry(existingEntry).CurrentValues.SetValues(entry);
+
+                        // Restore original values for specific fields
+                        existingEntry.DateCreated = originalValues.GetValue<DateTime>("DateCreated");
+                        existingEntry.CreatedBy = originalValues.GetValue<Guid>("CreatedBy");
+                        existingEntry.IsActive = originalValues.GetValue<bool>("IsActive");
+
+                    }
+                    else
+                    {
+                        // Add new entry
+                        _ = context.Organizations.Add(entry);
+                    }
+                }
+                SaveEntities(context);
+                csvReader.Dispose();
+            }
+        }
+
 
 
 
@@ -282,6 +324,9 @@ namespace Identity.Infrastructure
             Stream stream = new FileStream(Path.Combine(basePath, "Role.csv"), FileMode.Open, FileAccess.Read);
 
             CreateRole(stream, context);
+            stream = new FileStream(Path.Combine(basePath, "Organization.csv"), FileMode.Open, FileAccess.Read);
+
+            CreateOrganization(stream, context);
 
             stream = new FileStream(Path.Combine(basePath, "Person.csv"), FileMode.Open, FileAccess.Read);
 
@@ -302,6 +347,7 @@ namespace Identity.Infrastructure
             stream = new FileStream(Path.Combine(basePath, "Feature.csv"), FileMode.Open, FileAccess.Read);
 
             CreateFeature(stream, context);
+           
 
         }
 

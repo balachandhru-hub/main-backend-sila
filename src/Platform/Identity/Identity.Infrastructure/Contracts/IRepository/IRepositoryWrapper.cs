@@ -5,6 +5,7 @@ namespace Contracts.IRepository
     /// </summary>
     public interface IRepositoryWrapper
     {
+        IEmailVerificationRepository EmailVerification { get; }
 
       
         bool Save();
