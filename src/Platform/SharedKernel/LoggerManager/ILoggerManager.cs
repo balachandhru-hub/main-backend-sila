@@ -1,5 +1,5 @@
 ﻿
-namespace LoggerService
+namespace SharedKernel.LoggerServices
 {
     /// <summary>
     /// Interface <c>ILoggerManager</c>.

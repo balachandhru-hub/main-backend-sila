@@ -12,9 +12,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Identity.Domain\Identity.Domain.csproj" />
-     <ProjectReference Include="..\..\..\Platform\SharedKernel\ExceptionHandler\ExceptionHandler.csproj" />
-      <ProjectReference Include="..\..\..\Platform\SharedKernel\LoggerManager\LoggerManager.csproj" />
+    <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
+   <ProjectReference Include="..\Identity.Infrastructure\Identity.Infrastructure.csproj" />
+   
+  </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <PackageReference Include="MediatR" Version="12.4.1" />
   </ItemGroup>
 
 </Project>

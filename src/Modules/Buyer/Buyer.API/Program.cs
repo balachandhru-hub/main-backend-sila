@@ -1,41 +1,134 @@
-var builder = WebApplication.CreateBuilder(args);
+// using ExceptionHandler;
+using System.Reflection;
+// using Identity.API.Extensions;
+// using Microsoft.OpenApi.Models;
+// using HashingSystem;
+// using Identity.Domain.Common;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Http.Features;
+// using Identity.Infrastructure;
+using NLog.Web;
 
-// Add services to the container.
-// AddOpenApi/MapOpenApi are .NET 9 template APIs; this project targets net8.0.
-builder.Services.AddEndpointsApiExplorer();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+namespace Buyer.API
 {
+    public partial class Program
+    {
+        protected Program() { }
 
-}
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-app.UseHttpsRedirection();
+            builder.Host.UseNLog();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+            var env = builder.Environment.EnvironmentName;
+            IConfiguration configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
+                .Build();
+            // builder.WebHost.ConfigureKestrel(options =>
+            // {
+            //     // Disable the minimum data rate limits for requests and responses
+            //     options.Limits.MinRequestBodyDataRate = null;
+            //     options.Limits.MinResponseDataRate = null;
+            //     if (long.TryParse(configuration[Common.MAX_REQUEST_SIZE], out long maxSize))
+            //     {
+            //         options.Limits.MaxRequestBodySize = maxSize;
+            //     }
+            //     else
+            //     {
+            //         options.Limits.MaxRequestBodySize = 104857600;
+            //     }
+            // });
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+            // builder.Services.ConfigureRateLimiting();
+            // builder.Services.ConfigureCors(configuration);
+            // builder.Services.ConfigureDBContext(configuration);
+            // builder.Services.ConfigureLoggerService();
+            // builder.Services.ConfigureRepositoryWrapper();
+            // builder.Services.ConfigureServiceWrapper();
+            builder.Services.AddHttpClient();
+            builder.Services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
 
-app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+            // KeySpecs keys = new KeySpecs()
+            // {
+            //     Salt = configuration["Hashing:Salt"],
+            //     WorkFactor = Int32.TryParse(configuration["Hashing:WorkFactor"], out int numValue) ? numValue : 11
+            // };
+            // builder.Services.RegisterHashing(keys);
+
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddMemoryCache();
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 104857600; // Set the maximum request body size to 100 MB 
+            });
+
+            builder.Services.AddEndpointsApiExplorer();
+            // builder.Services.AddSwaggerGen(c =>
+            // {
+            //     c.SwaggerDoc("v1.0", new OpenApiInfo
+            //     {
+            //         Title = "Identity System APIs",
+            //         Version = "v1.0",
+            //         Description = "REST APIs"
+            //     });
+
+
+            //     // Set the comments path for the Swagger JSON and UI.
+            //     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            //     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            //     c.IncludeXmlComments(xmlPath);
+            // });
+            // builder.Services.ConfigureScheduler();
+
+            builder.Services.AddControllers();
+            
+           
+            var app = builder.Build();
+
+            // using (var scope = app.Services.CreateScope())
+            // {
+            //     DBMigration.UpdateDatabase(scope.ServiceProvider);
+            //     SeedData.Initialize(scope.ServiceProvider);
+            // }
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+
+                // Required for LB / Docker / Cloud
+                KnownNetworks = { },
+                KnownProxies = { },
+                ForwardLimit = null
+            });
+
+            // Configure the HTTP request pipeline
+            // if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == Common.UAT_ENVIRONMENT)
+            // {
+            //     app.UseSwagger();
+            //     app.UseSwaggerUI(c =>
+            //     {
+            //         c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "Identity System API's v1.0");
+            //         c.RoutePrefix = "swagger";
+            //     });
+            // }
+            app.UseRouting();
+            app.UseCors("CorsPolicy");
+            // app.UseMiddleware<CustomExceptionMiddleware>();
+            // app.UseRateLimiter();
+            app.UseHttpsRedirection();
+            app.UseAuthentication();
+            app.UseAuthorization();
+            app.MapControllers();
+
+
+            app.Run();
+        }
+    }
 }

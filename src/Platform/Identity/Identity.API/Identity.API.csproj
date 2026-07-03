@@ -4,14 +4,41 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
     <ProjectReference Include="..\Identity.Infrastructure\Identity.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\Platform\SharedKernel\LoggerManager\LoggerManager.csproj" />
-    <ProjectReference Include="..\..\..\Platform\SharedKernel\ExceptionHandler\ExceptionHandler.csproj" />
+    <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
 
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageReference Include="MediatR" Version="12.4.1" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.17">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="NLog.Web.AspNetCore" Version="6.1.3" />
+    <PackageReference Include="Quartz" Version="3.18.2" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.18.2" />
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.18.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="nlog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn> <!-- Optional: suppress missing XML comment warnings -->
+  </PropertyGroup>
 
 </Project>
