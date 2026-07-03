@@ -11,8 +11,12 @@ namespace MasterData.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.EnsureSchema(
+                name: "masterdata");
+
             migrationBuilder.CreateTable(
                 name: "unspsc_categories",
+                schema: "masterdata",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -45,6 +49,7 @@ namespace MasterData.Infrastructure.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "ix_unspsc_categories_is_active_segment_family_class_commodity",
+                schema: "masterdata",
                 table: "unspsc_categories",
                 columns: new[] { "is_active", "segment", "family", "class", "commodity" });
         }
@@ -53,7 +58,8 @@ namespace MasterData.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "unspsc_categories");
+                name: "unspsc_categories",
+                schema: "masterdata");
         }
     }
 }
