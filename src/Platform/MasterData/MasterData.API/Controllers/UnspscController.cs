@@ -4,11 +4,15 @@ using MasterData.Application.Features.Unspsc.Commands;
 using MasterData.Application.Features.Unspsc.Queries;
 using SharedKernel.LoggerServices;
 using System.ComponentModel.DataAnnotations;
+using Swashbuckle.AspNetCore.Annotations;
+using ExceptionHandler;
+using SharedKernel.Dto;
+
 
 namespace MasterData.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+
 public class UnspscController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -20,13 +24,23 @@ public class UnspscController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("upload")]
+    /// <summary>
+    /// Uploads UNSPSC Excel file.
+    /// </summary>
+    [HttpPost]
+    [Route("api/v1/unspsc/upload")]
+    [SwaggerOperation("UploadUnspsc")]
+    [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Upload successful")]
+    [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+    [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
     public async Task<IActionResult> Upload([Required] IFormFile file)
     {
-        _logger.LogInfo($"Starting UNSPSC upload process.");
-        var recordsInserted = await _mediator.Send(
-            new UploadUnspscCommand(file));
-_logger.LogInfo($"UNSPSC upload process completed. Records inserted: {recordsInserted}");
+        _logger.LogInfo("Starting UNSPSC upload process.");
+
+        var recordsInserted = await _mediator.Send(new UploadUnspscCommand(file));
+
+        _logger.LogInfo($"UNSPSC upload completed. Records inserted: {recordsInserted}");
+
         return Ok(new
         {
             Message = "Upload successful.",
@@ -34,30 +48,52 @@ _logger.LogInfo($"UNSPSC upload process completed. Records inserted: {recordsIns
         });
     }
 
+    /// <summary>
+    /// Returns Segment and Family hierarchy.
+    /// </summary>
     [HttpGet]
+    [Route("api/v1/unspsc")]
+    [SwaggerOperation("GetUnspsc")]
+    [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Data retrieved successfully")]
+    [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
     public async Task<IActionResult> Get(
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 10)
     {
-      _logger.LogInfo($"Received request to get UNSPSC data: PageIndex:{pageIndex}, PageSize:{pageSize}");
+        _logger.LogInfo($"Received request to get UNSPSC data: PageIndex={pageIndex}, PageSize={pageSize}");
+
         var result = await _mediator.Send(
             new GetUnspscQuery(pageIndex, pageSize));
-_logger.LogInfo($"Retrieved {result.Count} UNSPSC records.");
+
+        _logger.LogInfo($"Retrieved {result.Count} segments.");
+
         return Ok(result);
     }
-    [HttpGet("by-version")]
-public async Task<IActionResult> GetByVersion(
-    [FromQuery] string version,
-    [FromQuery] int pageIndex = 1,
-    [FromQuery] int pageSize = 10)
-{
-    _logger.LogInfo($"Received request to get UNSPSC data by version: Version={version}, PageIndex={pageIndex}, PageSize={pageSize}");
-    var result = await _mediator.Send(
-        new GetUnspscByVersionQuery(
-            version,
-            pageIndex,
-            pageSize));
-        _logger.LogInfo($"Retrieved {result.Count} UNSPSC records for version {version}.");
-    return Ok(result);
-}
+    /// <summary>
+    /// Returns Classes and Commodities for a Segment and Family.
+    /// </summary>
+    [HttpGet]
+    [Route("api/v1/unspsc/class-commodity")]
+    [SwaggerOperation("GetUnspscByVersion")]
+    [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Data retrieved successfully")]
+    [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+    public async Task<IActionResult> GetByVersion(
+        [FromQuery] long segment,
+        [FromQuery] long family,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        _logger.LogInfo($"Received request. Segment={segment}, Family={family}");
+
+        var result = await _mediator.Send(
+            new GetUnspscByVersionQuery(
+                segment,
+                family,
+                pageIndex,
+                pageSize));
+
+        _logger.LogInfo($"Retrieved {result.Count} classes.");
+
+        return Ok(result);
+    }
 }
