@@ -22,4 +22,4 @@ jobs:
         run: docker rm vosox-backend-container || true
 
       - name: Run Docker container
-        run: docker run -d --name vosox-backend-container -p 5014:8080 vosox-backend
+        run: docker run -d --name vosox-backend-container -p 5014:8000 vosox-backend
