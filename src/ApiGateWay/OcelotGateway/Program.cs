@@ -1,44 +1,81 @@
-var builder = WebApplication.CreateBuilder(args);
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Http.Features;
+using NLog.Web;
+using Ocelot.DependencyInjection;
+using Ocelot.Middleware;
+using MMLib.SwaggerForOcelot.DependencyInjection;
+using MMLib.SwaggerForOcelot.Middleware;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+namespace OcelotGateway
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    public partial class Program
+    {
+        protected Program() { }
 
-app.UseHttpsRedirection();
+        public static async Task Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+            builder.Host.UseNLog();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+            var env = builder.Environment.EnvironmentName;
+            IConfiguration configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
+                .Build(); 
+            
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MinRequestBodyDataRate = null;
+                options.Limits.MinResponseDataRate = null;
+                // Commented out 'Common.MAX_REQUEST_SIZE' because 'Common' is missing in Gateway
+                options.Limits.MaxRequestBodySize = 104857600;
+            });
 
-app.Run();
+            builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true)
+                                 .AddJsonFile("ocelot.SwaggerEndPoints.json", optional: false, reloadOnChange: true);
+            builder.Services.AddOcelot(builder.Configuration);
+            builder.Services.AddSwaggerForOcelot(builder.Configuration);
+            
+            builder.Services.AddHttpClient();
+            builder.Services.AddControllers();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddMemoryCache();
+            builder.Services.Configure<FormOptions>(options =>
+            {
+               options.MultipartBodyLengthLimit = 104857600;
+            });
+
+            builder.Services.AddEndpointsApiExplorer();
+            
+            var app = builder.Build();
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                KnownNetworks = { },
+                KnownProxies = { },
+                ForwardLimit = null
+            });
+            
+            app.UseRouting();
+            app.UseSwagger();
+
+            app.UseSwaggerForOcelotUI(opt =>
+            {
+                opt.PathToSwaggerGenerator = "/swagger/docs";
+            });
+
+            await app.UseOcelot();
+            app.UseHttpsRedirection();
+            app.MapControllers();
+          
+            app.Run();
+        }
+    }
 }
