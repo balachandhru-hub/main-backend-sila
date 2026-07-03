@@ -1,11 +1,11 @@
 using MediatR;
-using MasterData.Infrastructure.Contracts.IRepository;
 using MasterData.Domain.Dto;
+using MasterData.Infrastructure.Contracts.IRepository;
 
 namespace MasterData.Application.Features.Unspsc.Queries;
 
 public class GetUnspscByVersionQueryHandler
-    : IRequestHandler<GetUnspscByVersionQuery, List<UnspscDto>>
+    : IRequestHandler<GetUnspscByVersionQuery, List<ClassDto>>
 {
     private readonly IRepositoryWrapper _repository;
 
@@ -15,12 +15,13 @@ public class GetUnspscByVersionQueryHandler
         _repository = repository;
     }
 
-    public async Task<List<UnspscDto>> Handle(
+    public async Task<List<ClassDto>> Handle(
         GetUnspscByVersionQuery request,
         CancellationToken cancellationToken)
     {
         return await _repository.Unspsc.GetByVersionAsync(
-            request.Version,
+            request.Segment,
+            request.Family,
             request.PageIndex,
             request.PageSize);
     }

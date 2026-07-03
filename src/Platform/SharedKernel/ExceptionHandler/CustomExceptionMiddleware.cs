@@ -5,7 +5,7 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using SharedKernel.LoggerServices;
-using Dto;
+using SharedKernel.Dto;
 
 
 
@@ -51,7 +51,7 @@ namespace SharedKernel.ExceptionHandler
                 HttpResponse response = context.Response;
                 response.ContentType = "application/json";
                 response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                await response.WriteAsync(JsonConvert.SerializeObject(new Dto.ErrorResponseDto
+                await response.WriteAsync(JsonConvert.SerializeObject(new ErrorResponseDto
                 {
                     StatusCode = (int)HttpStatusCode.InternalServerError,
                     Message = "An error has occured",
@@ -75,7 +75,7 @@ namespace SharedKernel.ExceptionHandler
             string description = customException.Description;
             response.ContentType = "application/json";
             response.StatusCode = statusCode;
-            await response.WriteAsync(JsonConvert.SerializeObject(new Dto.ErrorResponseDto
+            await response.WriteAsync(JsonConvert.SerializeObject(new ErrorResponseDto
             {
                 StatusCode = statusCode,
                 Message = message,

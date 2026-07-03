@@ -17,6 +17,7 @@ namespace MasterData.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("masterdata")
                 .HasAnnotation("ProductVersion", "8.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -121,7 +122,7 @@ namespace MasterData.Infrastructure.Migrations
                     b.HasIndex("IsActive", "Segment", "Family", "Class", "Commodity")
                         .HasDatabaseName("ix_unspsc_categories_is_active_segment_family_class_commodity");
 
-                    b.ToTable("unspsc_categories");
+                    b.ToTable("unspsc_categories", "masterdata");
                 });
 #pragma warning restore 612, 618
         }
