@@ -54,7 +54,7 @@ namespace Identity.API.Controllers
                 Description = "OTP generated successfully."
             });
         }
-        
+
         /// <summary>
         /// Verifies the OTP for email verification.
         /// </summary>
@@ -73,22 +73,22 @@ namespace Identity.API.Controllers
         {
             var result = await _mediator.Send(command);
 
-           Response.Cookies.Append(
-        "VerificationToken",
-        result.TemporaryVerificationToken!,
-        new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,          // Use true in HTTPS
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTimeOffset.UtcNow.AddMinutes(30)
-        });
+            Response.Cookies.Append(
+         "VerificationToken",
+         result.TemporaryVerificationToken!,
+         new CookieOptions
+         {
+             HttpOnly = true,
+             Secure = true,          // Use true in HTTPS
+             SameSite = SameSiteMode.Strict,
+             Expires = DateTimeOffset.UtcNow.AddMinutes(30)
+         });
 
-    return Ok(new
-    {
-        Success = true,
-        Message = result.Message
-    });
+            return Ok(new
+            {
+                Success = true,
+                Message = result.Message
+            });
         }
     }
 }

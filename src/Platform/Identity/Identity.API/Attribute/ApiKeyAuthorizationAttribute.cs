@@ -14,7 +14,7 @@ namespace Identity.API.Attributes
     /// </summary>
     public class ApiKeyAuthorizationAttribute : Attribute, IAuthorizationFilter
     {
-  
+
 
         /// <summary>
         /// Check whether the user is Authorized to access the API or not
@@ -22,8 +22,8 @@ namespace Identity.API.Attributes
         /// <param name="context"></param>
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            
-            
+
+
             if (context.HttpContext.Request.Headers["X-API-KEY"].FirstOrDefault() != null)
             {
                 string? apiKey = context.HttpContext.Request.Headers["X-API-KEY"].FirstOrDefault();
