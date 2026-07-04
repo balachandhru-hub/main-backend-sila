@@ -7,5 +7,11 @@ namespace MasterData.Domain.Common
         public static readonly string MAX_REQUEST_SIZE = "MaxRequestBodySize";
         public static readonly string UAT_ENVIRONMENT = "UAT";
         public static readonly string EMAIL_API_CREDENTIAL_DESCRIPTION = "EmailCredentials";
+
+ public static readonly string OTP_PLACEHOLDER = "{OTP}";
+        public static readonly string OTP_VALIDITY_PLACEHOLDER = "{OTP_VALIDITY}";
+        public static readonly string COMPANY_NAME_PLACEHOLDER = "{COMPANY_NAME}";
+        public static readonly string SUPPORT_EMAIL_PLACEHOLDER = "{SUPPORT_EMAIL}";
+
 }
 }

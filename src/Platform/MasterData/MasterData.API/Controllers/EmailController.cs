@@ -2,9 +2,9 @@ using MasterData.Application.Features.Email.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel.LoggerServices;
-using Dto;
-using Swashbuckle.AspNetCore.Annotations; 
-// using SharedKernel.Attributes;
+using Swashbuckle.AspNetCore.Annotations;
+using ExceptionHandler;
+using SharedKernel.Attributes;
 
 namespace MasterData.API.Controllers;
 
@@ -25,7 +25,7 @@ public class EmailController : ControllerBase
     /// </summary>
     [HttpPost]
     [Route("api/v1/email/send")]
-    // [ValidateModelState]
+    [ValidateModelState]
     [SwaggerOperation("SendEmail")]
     [SwaggerResponse(200, Description = "Email transaction completed successfully")]
     [SwaggerResponse(400, Description = "Bad Request")]
@@ -36,21 +36,8 @@ public class EmailController : ControllerBase
         _logger.LogInfo(
             $"Sending email to {command.ToEmail}");
 
-        bool result =
-            await _mediator.Send(command);
 
-
-        if (!result)
-        {
-            return BadRequest(
-                new ErrorResponseDto
-                {
-                    StatusCode = 400,
-                    Message = "Email sending failed",
-                    Description = "Unable to send email"
-                });
-        }
-
+        await _mediator.Send(command);
 
         return Ok("Email sent successfully");
     }

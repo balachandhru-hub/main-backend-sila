@@ -6,6 +6,7 @@ using MasterData.Infrastructure.Contracts.IRepository;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using SharedKernel.LoggerServices;
+using ExceptionHandler;
 
 namespace MasterData.Application.Features.Email.Commands;
 
@@ -37,16 +38,18 @@ public class SendEmailCommandHandler :
         try
         {
             template =
-                await _repository.EmailContent
-                .FindFirstByConditionAsync(x =>
-                    x.IsActive &&
-                    x.Key == request.EmailKey);
+    await _repository.EmailContent
+    .FindFirstByConditionAsync(x =>
+        x.IsActive &&
+        x.Key == request.EmailKey);
 
 
             if (template == null)
             {
                 _logger.LogError("Email template not found");
-                return false;
+                throw new NotFoundCustomException(
+                    "Email template not found",
+                    "Email template configuration missing");
             }
 
 
@@ -61,7 +64,10 @@ public class SendEmailCommandHandler :
             if (apiConfig == null)
             {
                 _logger.LogError("Email configuration missing");
-                return false;
+
+                throw new NotFoundCustomException(
+                    "Email configuration missing",
+                    "Email API configuration not found");
             }
 
 
@@ -123,6 +129,7 @@ public class SendEmailCommandHandler :
 
 
             await smtp.SendMailAsync(message);
+            _logger.LogInfo("Email sent successfully");
             EmailFailedDetail? failed =
     await _repository.EmailFailedDetail
     .FindFirstByConditionAsync(x =>
@@ -147,41 +154,26 @@ public class SendEmailCommandHandler :
 
             return true;
         }
+        catch (BaseCustomException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.LogError(
                 $"Email failed : {ex.Message}");
 
-
             await CreateEmailFailedDetails(
                 request,
                 template);
-
-
-            return false;
+            _logger.LogError($"Email failed : {ex.Message}");
+            throw new InternalServerCustomException(
+                "Email sending failed",
+                ex.Message);
         }
     }
 
 
-
-    // private string ReplacePlaceholders(
-    // string input,
-    // SendEmailCommand request)
-    // {
-    //     _logger.LogInfo("Replacing email placeholders");
-
-    //     string content = input
-    //         .Replace("{OTP}", request.Otp ?? "")
-    //         .Replace("{OTP_VALIDITY}", request.OtpValidity ?? "")
-    //         .Replace("{COMPANY_NAME}",
-    //             _configuration["EmailSettings:CompanyName"] ?? "")
-    //         .Replace("{SUPPORT_EMAIL}",
-    //             _configuration["EmailSettings:SupportEmail"] ?? "");
-
-    //     _logger.LogInfo("Replaced email placeholders");
-
-    //     return content;
-    // }
 
     private string ReplacePlaceholders(
     string input,
@@ -189,23 +181,20 @@ public class SendEmailCommandHandler :
     {
         _logger.LogInfo("Replacing email placeholders");
 
-        request.Parameters?
-            .ToList()
-            .ForEach(x =>
-                input = input.Replace(
-                    "{" + x.Key + "}",
-                    x.Value));
-
-        input = input
-            .Replace("{COMPANY_NAME}",
+        string content = input
+            .Replace(Common.OTP_PLACEHOLDER,
+                request.Parameters?.GetValueOrDefault("OTP") ?? "")
+            .Replace(Common.OTP_VALIDITY_PLACEHOLDER,
+                request.Parameters?.GetValueOrDefault("OTP_VALIDITY") ?? "")
+            .Replace(Common.COMPANY_NAME_PLACEHOLDER,
                 _configuration["EmailSettings:CompanyName"] ?? "")
-            .Replace("{SUPPORT_EMAIL}",
+            .Replace(Common.SUPPORT_EMAIL_PLACEHOLDER,
                 _configuration["EmailSettings:SupportEmail"] ?? "");
 
-        return input;
+        _logger.LogInfo("Replaced email placeholders");
+
+        return content;
     }
-
-
 
 
 
