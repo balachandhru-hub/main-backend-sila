@@ -16,6 +16,7 @@ using MediatR;
 using Identity.Application.Features.Auth.Commands;
 using Identity.Application.Features.Auth.Commands.SendEmailVerification;
 using Identity.Application.Features.Auth.Commands.VerifyOtp;
+using HashingSystem;
 namespace Identity.API.Extensions
 {
     /// <summary>
@@ -137,7 +138,7 @@ namespace Identity.API.Extensions
          
             _ = services.AddScoped<IUserIdentityService, UserIdentityService>();
             _ = services.AddScoped<IUserContext, UserContext>();
-           
+           _ = services.AddScoped<IBcryptHashing, BcryptHashing>();
             _ = services.AddControllers();
 
         }

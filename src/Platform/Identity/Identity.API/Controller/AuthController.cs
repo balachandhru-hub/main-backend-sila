@@ -9,6 +9,7 @@ using System.ComponentModel.DataAnnotations;
 using SharedKernel.Dto;
 using SharedKernel.Attributes;
 using Identity.API.Attributes;
+using Identity.Application.Features.Commands.Login;
 
 
 namespace Identity.API.Controllers
@@ -90,5 +91,51 @@ namespace Identity.API.Controllers
                 Message = result.Message
             });
         }
+        /// <summary>
+/// Login
+/// </summary>
+/// <param name="command"></param>
+/// <returns></returns>
+[HttpPost]
+[Route("api/v1/auth/login")]
+[ApiKeyAuthorization]
+[ValidateModelState]
+[SwaggerOperation("Login")]
+[SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Login successful.")]
+[SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+[SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+[SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+public async Task<IActionResult> Login([FromBody] LoginCommand command)
+{
+    _logger.LogInfo($"Login request received for {command.UserName}");
+
+    var result = await _mediator.Send(command);
+
+    if (!result.Success)
+    {
+        return Unauthorized(new
+        {
+            Success = false,
+            Message = result.Message
+        });
+    }
+
+    Response.Cookies.Append(
+        "access_token",
+        result.AccessToken!,
+        new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,          // false for local HTTP, true for HTTPS
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddHours(1)
+        });
+
+    return Ok(new
+    {
+        Success = true,
+        Message = result.Message
+    });
+}
     }
 }

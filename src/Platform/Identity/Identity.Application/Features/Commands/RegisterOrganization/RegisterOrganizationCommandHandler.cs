@@ -3,6 +3,7 @@ using Identity.Domain.Entities;
 using Identity.Domain.Enum;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using HashingSystem;
 
 namespace Identity.Application.Features.Commands.RegisterOrganization
 {
@@ -10,11 +11,15 @@ namespace Identity.Application.Features.Commands.RegisterOrganization
         : IRequestHandler<RegisterOrganizationCommand, Guid>
     {
         private readonly IRepositoryWrapper _repository;
+        private readonly IBcryptHashing _hashing;
+
 
         public RegisterOrganizationCommandHandler(
-            IRepositoryWrapper repository)
+            IRepositoryWrapper repository,
+            IBcryptHashing hashing)
         {
             _repository = repository;
+            _hashing = hashing;
         }
 
         public async Task<Guid> Handle(
@@ -88,8 +93,6 @@ namespace Identity.Application.Features.Commands.RegisterOrganization
 
             await _repository.Person.CreateAsync(person);
 
-            // Hash Password
-            var passwordHasher = new PasswordHasher<User>();
 
             var user = new User
             {
@@ -101,7 +104,7 @@ namespace Identity.Application.Features.Commands.RegisterOrganization
                 LastFailedLogin = null
             };
 
-            user.UserSecret = passwordHasher.HashPassword(user, request.Password);
+            user.UserSecret = _hashing.HashStringWithSalt(request.Password);
 
             await _repository.User.CreateAsync(user);
 

@@ -28,7 +28,7 @@ namespace Identity.API
                 .Build();
             builder.WebHost.ConfigureKestrel(options =>
              {
-                // Disable the minimum data rate limits for requests and responses
+                 // Disable the minimum data rate limits for requests and responses
                  options.Limits.MinRequestBodyDataRate = null;
                  options.Limits.MinResponseDataRate = null;
                  if (long.TryParse(configuration[Common.MAX_REQUEST_SIZE], out long maxSize))
@@ -40,7 +40,7 @@ namespace Identity.API
                      options.Limits.MaxRequestBodySize = 104857600;
                  }
              });
-           
+
             builder.Services.ConfigureRateLimiting();
             builder.Services.ConfigureCors(configuration);
             builder.Services.ConfigureDBContext(configuration);
@@ -48,18 +48,24 @@ namespace Identity.API
             builder.Services.ConfigureRepositoryWrapper();
             builder.Services.ConfigureServiceWrapper();
             builder.Services.ConfigureMediatR();
-            builder.Services.AddHttpClient();
+            builder.Services.AddHttpClient(); KeySpecs keys = new KeySpecs()
+            {
+                Salt = configuration["Hashing:Salt"],
+                WorkFactor = Int32.TryParse(configuration["Hashing:WorkFactor"], out int numValue) ? numValue : 11
+            };
+
+            builder.Services.AddSingleton(keys);
             builder.Services.AddSignalR(options =>
             {
                 options.EnableDetailedErrors = true;
             });
 
 
-            KeySpecs keys = new KeySpecs()
-            {
-                Salt = configuration["Hashing:Salt"],
-                WorkFactor = Int32.TryParse(configuration["Hashing:WorkFactor"], out int numValue) ? numValue : 11
-            };
+            // KeySpecs keys = new KeySpecs()
+            // {
+            //     Salt = configuration["Hashing:Salt"],
+            //     WorkFactor = Int32.TryParse(configuration["Hashing:WorkFactor"], out int numValue) ? numValue : 11
+            // };
             // builder.Services.RegisterHashing(keys);
 
             builder.Services.AddHttpContextAccessor();
@@ -67,7 +73,7 @@ namespace Identity.API
 
             builder.Services.Configure<FormOptions>(options =>
             {
-               options.MultipartBodyLengthLimit = 104857600; // Set the maximum request body size to 100 MB 
+                options.MultipartBodyLengthLimit = 104857600; // Set the maximum request body size to 100 MB 
             });
 
             builder.Services.AddEndpointsApiExplorer();
@@ -106,7 +112,7 @@ namespace Identity.API
             });
 
             // Configure the HTTP request pipeline
-            if (app.Environment.IsDevelopment() )
+            if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
@@ -123,7 +129,7 @@ namespace Identity.API
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
-          
+
 
             app.Run();
         }
