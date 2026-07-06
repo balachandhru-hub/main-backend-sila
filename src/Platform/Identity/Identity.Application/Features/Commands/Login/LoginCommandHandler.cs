@@ -183,7 +183,16 @@ namespace Identity.Application.Features.Auth.Commands.Login
                 };
 
                 _repository.LoginRecord.Create(loginRecord);
+                RefreshToken refreshToken = new RefreshToken
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Token = accessToken.RefreshToken.ToString(),
+                    ExpiresOn = expirationTime.AddDays(7),
+                    Revoked=false
+                };
 
+                _repository.RefreshToken.Create(refreshToken);
                 _repository.Save();
 
                 _logger.LogInfo($"Access token created for user: {user.Id}");
