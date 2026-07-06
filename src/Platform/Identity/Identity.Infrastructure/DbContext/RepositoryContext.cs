@@ -31,7 +31,7 @@ namespace Identity.Infrastructure.DbContext
         public DbSet<EmailVerification> EmailVerification {get;set;}
         public DbSet<ApiKey> ApiKey {get;set;}
         public DbSet<LoginRecord> LoginRecord {get;set;}
-        public DbSet<AccessToken> AccessToken {get;set;}
+      
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
             _ = modelBuilder.HasDefaultSchema(_configuration[Common.APPLICATION_SCHEMA]);
@@ -46,7 +46,6 @@ namespace Identity.Infrastructure.DbContext
             _ = modelBuilder.Entity<EmailVerification>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<ApiKey>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<LoginRecord>().HasIndex(a => a.IsActive);
-            _ = modelBuilder.Entity<AccessToken>().HasIndex(a => a.IsActive);
 
              base.OnModelCreating(modelBuilder);
 
