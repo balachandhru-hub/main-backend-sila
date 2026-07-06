@@ -1,5 +1,6 @@
 using Contracts.IRepository;
 using MediatR;
+using HashingSystem;
 
 namespace Identity.Application.Features.Auth.Commands.VerifyOtp
 {
@@ -7,10 +8,12 @@ namespace Identity.Application.Features.Auth.Commands.VerifyOtp
         : IRequestHandler<VerifyOtpCommand, VerifyOtpResponse>
     {
         private readonly IRepositoryWrapper _repository;
+        private readonly IBcryptHashing _hashing;
 
-        public VerifyOtpCommandHandler(IRepositoryWrapper repository)
+        public VerifyOtpCommandHandler(IRepositoryWrapper repository, IBcryptHashing hashing)
         {
             _repository = repository;
+            _hashing = hashing;
         }
 
         public async Task<VerifyOtpResponse> Handle(
@@ -30,7 +33,7 @@ namespace Identity.Application.Features.Auth.Commands.VerifyOtp
             }
 
             // OTP does not match
-            if (otp.OtpHash != request.Otp)
+            if (!_hashing.VerifyHash(request.Otp, otp.OtpHash))
             {
                 if (otp.ExpiresOn <= DateTime.UtcNow)
                 {
