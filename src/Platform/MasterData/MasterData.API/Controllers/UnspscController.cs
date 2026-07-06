@@ -5,7 +5,7 @@ using MasterData.Application.Features.Unspsc.Queries;
 using SharedKernel.LoggerServices;
 using System.ComponentModel.DataAnnotations;
 using Swashbuckle.AspNetCore.Annotations;
-using ExceptionHandler;
+using SharedKernel.ExceptionHandler;
 using SharedKernel.Dto;
 using SharedKernel.Attributes;
 
