@@ -1,7 +1,7 @@
 using MediatR;
 using Contracts.IRepository;
 using Identity.Domain.Entities;
-using ExceptionHandler;
+using SharedKernel.ExceptionHandler;
 
 namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
 {

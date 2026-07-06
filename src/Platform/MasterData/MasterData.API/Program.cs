@@ -1,5 +1,5 @@
 using System.Reflection;
-using ExceptionHandler;
+using SharedKernel.ExceptionHandler;
 using MasterData.API.Extensions;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;

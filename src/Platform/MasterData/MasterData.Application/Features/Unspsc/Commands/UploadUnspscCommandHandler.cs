@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 using MasterData.Infrastructure.Contracts.IRepository;
 using MasterData.Domain.Dto;
 using MasterData.Domain.Entities;
-using ExceptionHandler;
+using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
 namespace MasterData.Application.Features.Unspsc.Commands;
