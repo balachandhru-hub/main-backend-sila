@@ -45,7 +45,7 @@ public partial class Program
         builder.Services.ConfigureDatabase(configuration);
         builder.Services.ConfigureServiceWrapper();
         builder.Services.ConfigureRepositoryWrapper();
-        
+
 
         builder.Services.ConfigureMediatR();
         builder.Services.AddHttpClient();
@@ -114,7 +114,7 @@ public partial class Program
         app.UseHttpsRedirection();
 
         app.UseMiddleware<CustomExceptionMiddleware>();
-        
+
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

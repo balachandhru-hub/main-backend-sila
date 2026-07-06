@@ -107,7 +107,7 @@ namespace Identity.API
             });
 
             // Configure the HTTP request pipeline
-            if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == Common.UAT_ENVIRONMENT)
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>

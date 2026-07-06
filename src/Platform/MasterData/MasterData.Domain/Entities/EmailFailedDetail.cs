@@ -16,7 +16,7 @@ namespace MasterData.Domain.Entities
 
         [Required]
         public string? EmailType { get; set; }
-        public int TriggerCount { get; set; } 
+        public int TriggerCount { get; set; }
         public string? Subject { get; set; }
         public string? Body { get; set; }
 

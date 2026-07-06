@@ -13,10 +13,10 @@ namespace MasterData.Domain.Entities
         public string? Key { get; set; }
 
         [Required]
-        public string? Subject { get; set; } 
+        public string? Subject { get; set; }
 
         [Required]
-        public string? Body { get; set; } 
+        public string? Body { get; set; }
 
         public EmailContent() { }
     }

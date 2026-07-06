@@ -14,9 +14,9 @@
     <ProjectReference Include="..\MasterData.Domain\MasterData.Domain.csproj" />
     <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
   </ItemGroup>
-<ItemGroup>
-  <ProjectReference Include="..\MasterData.Infrastructure\MasterData.Infrastructure.csproj" />
-</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MasterData.Infrastructure\MasterData.Infrastructure.csproj" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="MediatR" Version="12.4.1" />
