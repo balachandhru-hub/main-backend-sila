@@ -11,6 +11,8 @@ using SharedKernel.Attributes;
 using Identity.API.Attributes;
 using Identity.Application.Features.Commands.Login;
 using Identity.Application.Features.Commands.RegisterOrganization;
+using Identity.Application.Features.Commands.RefreshToken.RefreshToken;
+using Identity.Domain.Common;
 
 
 namespace Identity.API.Controllers
@@ -112,7 +114,7 @@ namespace Identity.API.Controllers
             _logger.LogInfo($"Login request received for {command.UserName}");
 
             var result = await _mediator.Send(command);
-            Response.Cookies.Append("access_token",result.Token!,
+            Response.Cookies.Append(Common.COOKIE_ACCESS_TOKEN_KEY, result.Token!,
                 new CookieOptions
                 {
                     HttpOnly = true,
@@ -120,7 +122,16 @@ namespace Identity.API.Controllers
                     SameSite = SameSiteMode.Strict,
                     Expires = DateTimeOffset.UtcNow.AddHours(1)
                 });
-
+                Response.Cookies.Append(
+                    Common.COOKIE_REFRESH_TOKEN_KEY,
+                    result.RefreshToken.ToString(),
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = DateTimeOffset.UtcNow.AddDays(7)
+                    });
 
             return Ok(new SuccessResponseDto { StatusCode = 200, Message = "Token Generated Successfully", Description = "Successfully Created Token and Refresh Token" });
 
@@ -153,5 +164,57 @@ namespace Identity.API.Controllers
             });
         }
 
-    }
-}
+        /// <summary>
+            /// Refresh Access Token
+            /// </summary>
+            /// <returns></returns>
+            [HttpPost]
+            [Route("api/v1/auth/refresh-token")]
+            [ApiKeyAuthorization]
+            [SwaggerOperation("RefreshToken")]
+            [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Token refreshed successfully.")]
+            [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+            [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+            public async Task<IActionResult> RefreshToken()
+            {
+                _logger.LogInfo("Refresh token request received.");
+
+                string? refreshToken = Request.Cookies["refresh_token"];
+
+                Guid.TryParse(refreshToken, out Guid parsedRefreshToken);
+
+                var result = await _mediator.Send(new RefreshTokenCommand
+                {
+                    RefreshToken = parsedRefreshToken
+                });
+
+                Response.Cookies.Append(
+                    Common.COOKIE_ACCESS_TOKEN_KEY,
+                    result.Token!,
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = DateTimeOffset.UtcNow.AddHours(1)
+                    });
+
+                Response.Cookies.Append(
+                    Common.COOKIE_REFRESH_TOKEN_KEY,
+                    result.RefreshToken.ToString(),
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = DateTimeOffset.UtcNow.AddDays(7)
+                    });
+
+                return Ok(new SuccessResponseDto
+                {
+                    StatusCode = 200,
+                    Message = "Token refreshed successfully.",
+                    Description = "Successfully refreshed Access Token and Refresh Token."
+                });
+            }
+    }}

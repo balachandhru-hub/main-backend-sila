@@ -51,7 +51,7 @@ namespace Identity.Application.Features.Auth.Commands.Login
         {
             int maxAttempts = int.TryParse(_configuration["LoginSecurity:MaxFailedAttempts"], out int m) ? m : 5;
             int lockoutMinutes = int.TryParse(_configuration["LoginSecurity:LockoutMinutes"], out int l) ? l : 2;
-            int maxActiveSessions = int.TryParse(_configuration["TokenSecurity:MaxActiveSessions"], out int s) ? s : 3;
+          
 
             _logger.LogInfo($"Authentication request received for user: {request.UserName}");
 
@@ -143,47 +143,20 @@ namespace Identity.Application.Features.Auth.Commands.Login
                 DateTime expirationTime = DateTime.UtcNow.AddSeconds(number);
                 string jwtToken = GenerateToken(claims, expirationTime);
 
-                var activeTokens = _repository.AccessToken
-                   .FindByCondition(x => x.UserId == user.Id && x.IsActive)
-                   .OrderByDescending(x => x.ExpiredTime)
-                   .ToList();
+            
+                        Guid refreshTokenValue = Guid.NewGuid();
 
-                if (activeTokens.Count > maxActiveSessions)
-                {
-                    var tokensToDeactivate = activeTokens.Skip(maxActiveSessions).ToList();
+                string hashedRefreshToken = _hashing.HashStringWithSalt(refreshTokenValue.ToString());
 
-                    foreach (var token in tokensToDeactivate)
-                    {
-                        token.IsActive = false;
-
-                    }
-                    _repository.AccessToken.UpdateRange(tokensToDeactivate);
-                }
-                AccessToken accessToken = new AccessToken
-                {
-                    Id = Guid.NewGuid(),
-                    AccessTokenValue = jwtToken,
-                    ExpiredTime = expirationTime,
-                    UserId = user.Id,
-                    RefreshToken = Guid.NewGuid(),
-                };
-
-                _repository.AccessToken.Create(accessToken);
-
-
-                LoginRecord loginRecord = new LoginRecord
+                RefreshToken refreshToken = new RefreshToken
                 {
                     Id = Guid.NewGuid(),
                     UserId = user.Id,
-                    OrganizationId = person.OrganizationId,
-                    LoginTime = DateTime.UtcNow,
-                    EntityType = Common.LOGIN_ATTRIBUTE_LOGIN,
-                    IpAddress = ipAddress,
-                    AttributeId = user.Id.ToString()
+                    Token = hashedRefreshToken,
+                    ExpiresOn = DateTime.UtcNow.AddDays(7),
                 };
-
-                _repository.LoginRecord.Create(loginRecord);
-
+ 
+                _repository.RefreshToken.Create(refreshToken);
                 _repository.Save();
 
                 _logger.LogInfo($"Access token created for user: {user.Id}");
@@ -191,7 +164,7 @@ namespace Identity.Application.Features.Auth.Commands.Login
                 return new LoginResponse
                 {
                     Token = jwtToken,
-                    RefreshToken = accessToken.RefreshToken
+                    RefreshToken = refreshTokenValue
                 };
             }
         }
