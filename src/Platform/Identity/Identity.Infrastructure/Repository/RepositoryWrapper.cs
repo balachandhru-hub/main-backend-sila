@@ -19,6 +19,11 @@ namespace Repository
         private IOrganizationRepository _organizationRepository;
         private IUserRepository _userRepository;
         private IPersonRepository _personRepository;
+        private IUserRoleMappingRepository _userRoleMappingRepository;
+        private IRoleRepository _roleRepository;
+        private IAccessTokenRepository _accessTokenRepository;
+        private IRefreshTokenRepository _refreshTokenRepository;
+        private ILoginRecordRepository _loginRecordRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -70,6 +75,61 @@ namespace Repository
                     _personRepository = new PersonRepository(_context);
                 }
                 return _personRepository;
+            }
+        }
+        public IUserRoleMappingRepository UserRoleMapping
+        {
+            get
+            {
+                if (_userRoleMappingRepository == null)
+                {
+                    _userRoleMappingRepository = new UserRoleMappingRepository(_context);
+                }
+                return _userRoleMappingRepository;
+            }
+        }
+        public IRoleRepository Role
+        {
+            get
+            {
+                if (_roleRepository == null)
+                {
+                    _roleRepository = new RoleRepository(_context);
+                }
+                return _roleRepository;
+            }
+        }
+        public IAccessTokenRepository AccessToken
+        {
+            get
+            {
+                if (_accessTokenRepository == null)
+                {
+                    _accessTokenRepository = new AccessTokenRepository(_context);
+                }
+                return _accessTokenRepository;
+            }
+        }
+        public IRefreshTokenRepository RefreshToken
+        {
+            get
+            {
+                if (_refreshTokenRepository == null)
+                {
+                    _refreshTokenRepository = new RefreshTokenRepository(_context);
+                }
+                return _refreshTokenRepository;
+            }
+        }
+        public ILoginRecordRepository LoginRecord
+        {
+            get
+            {
+                if (_loginRecordRepository == null)
+                {
+                    _loginRecordRepository = new LoginRecordRepository(_context);
+                }
+                return _loginRecordRepository;
             }
         }
 

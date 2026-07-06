@@ -78,7 +78,7 @@ namespace Identity.Application.Features.Commands.RegisterOrganization
             };
 
             await _repository.Organization.CreateAsync(organization);
-             // Create Person
+            // Create Person
             var person = new Person
             {
                 Id = Guid.NewGuid(),
@@ -88,7 +88,7 @@ namespace Identity.Application.Features.Commands.RegisterOrganization
                 Phone = request.Phone,
                 Country = request.Country,
                 AddressLine = request.AddressLine1
-               
+
             };
 
             await _repository.Person.CreateAsync(person);
@@ -100,17 +100,33 @@ namespace Identity.Application.Features.Commands.RegisterOrganization
                 PersonId = person.Id,
                 UserName = request.UserName,
                 FailedLoginAttempts = 0,
-                LockoutEnd = null,
-                LastFailedLogin = null
+
             };
 
             user.UserSecret = _hashing.HashStringWithSalt(request.Password);
 
             await _repository.User.CreateAsync(user);
+            string roleName = request.OrganizationType switch
+            {
+                OrganizationType.Supplier => "SUPPLIER_ADMINISTRATOR",
+                OrganizationType.Buyer => "BUYER_ADMINISTRATOR",
+                OrganizationType.Platform => "PLATFORM_ADMINISTRATOR",
+                _ => throw new Exception("Invalid organization type.")
+            };
+            var role = _repository.Role
+                .FindByConditionAsync(x => x.UserRole == roleName)
+                .FirstOrDefault();
+            var userRoleMapping = new UserRoleMapping
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                RoleId = role.Id
 
-            // Clear verification token after successful registration
-            emailVerification.TemporaryVerificationToken = null;
-            emailVerification.TemporaryVerificationTokenExpiresOn = null;
+            };
+
+            await _repository.UserRoleMapping.CreateAsync(userRoleMapping);
+
+
 
             _repository.EmailVerification.Update(emailVerification);
 

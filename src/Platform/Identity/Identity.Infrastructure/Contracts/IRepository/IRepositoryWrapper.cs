@@ -9,6 +9,11 @@ namespace Contracts.IRepository
         IOrganizationRepository Organization { get; }
         IUserRepository User { get; }
         IPersonRepository Person { get; }
+        IUserRoleMappingRepository UserRoleMapping { get; }
+        IRoleRepository Role { get; }
+        IAccessTokenRepository AccessToken { get; }
+        IRefreshTokenRepository RefreshToken { get; }
+        ILoginRecordRepository LoginRecord { get; }
 
       
         bool Save();

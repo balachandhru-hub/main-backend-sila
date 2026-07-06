@@ -61,12 +61,7 @@ namespace Identity.API
             });
 
 
-            // KeySpecs keys = new KeySpecs()
-            // {
-            //     Salt = configuration["Hashing:Salt"],
-            //     WorkFactor = Int32.TryParse(configuration["Hashing:WorkFactor"], out int numValue) ? numValue : 11
-            // };
-            // builder.Services.RegisterHashing(keys);
+        
 
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddMemoryCache();
