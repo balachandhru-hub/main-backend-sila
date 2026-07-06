@@ -11,6 +11,7 @@ using SharedKernel.Attributes;
 using Identity.API.Attributes;
 using Identity.Application.Features.Commands.Login;
 using Identity.Application.Features.Commands.RegisterOrganization;
+using Identity.Domain.Common;
 
 
 namespace Identity.API.Controllers
@@ -20,13 +21,20 @@ namespace Identity.API.Controllers
     {
         private readonly IMediator _mediator;
         private readonly ILoggerManager _logger;
+        private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+
 
         public AuthController(
             IMediator mediator,
-            ILoggerManager logger)
+            ILoggerManager logger,
+            HttpClient httpClient,
+            IConfiguration configuration)
         {
             _mediator = mediator;
             _logger = logger;
+            _httpClient = httpClient;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -48,7 +56,19 @@ namespace Identity.API.Controllers
 
             command.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
-            bool result = await _mediator.Send(command);
+            var result = await _mediator.Send(command);
+            string masterDataUrl = _configuration["InterCallService:MasterDataUrl"]!;
+
+            await _httpClient.PostAsJsonAsync(
+                $"{masterDataUrl}/api/v1/email/send",
+                new
+                {
+                    ToEmail = command.Email,
+                    EmailKey = Common.EMAIL_VERIFICATION,
+                    Parameters = new Dictionary<string, string>
+                    {{ Common.EMAIL_OTP, result.Otp },{ Common.EMAIL_OTP_VALIDITY, $"{result.ValidityMinutes} minutes" }
+                    }
+                });
             return Ok(new SuccessResponseDto
             {
                 StatusCode = 200,
@@ -112,7 +132,7 @@ namespace Identity.API.Controllers
             _logger.LogInfo($"Login request received for {command.UserName}");
 
             var result = await _mediator.Send(command);
-            Response.Cookies.Append("access_token",result.Token!,
+            Response.Cookies.Append("access_token", result.Token!,
                 new CookieOptions
                 {
                     HttpOnly = true,

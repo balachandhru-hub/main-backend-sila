@@ -2,19 +2,23 @@ using MediatR;
 using Contracts.IRepository;
 using Identity.Domain.Entities;
 using SharedKernel.ExceptionHandler;
+using HashingSystem;
+using Identity.Domain.Dto;
 
 namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
 {
-    public class SendEmailVerificationCommandHandler : IRequestHandler<SendEmailVerificationCommand, bool>
+    public class SendEmailVerificationCommandHandler : IRequestHandler<SendEmailVerificationCommand, SendEmailVerificationResponseDto>
     {
         private readonly IRepositoryWrapper _repository;
+        private readonly IBcryptHashing _hashing;
 
-        public SendEmailVerificationCommandHandler(IRepositoryWrapper repository)
+        public SendEmailVerificationCommandHandler(IRepositoryWrapper repository, IBcryptHashing hashing)
         {
             _repository = repository;
+            _hashing = hashing;
         }
 
-        public async Task<bool> Handle(
+        public async Task<SendEmailVerificationResponseDto> Handle(
             SendEmailVerificationCommand request,
             CancellationToken cancellationToken)
         {
@@ -36,7 +40,8 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
                 // OTP expired - generate a new OTP and update the existing record
                 string otps = Random.Shared.Next(100000, 1000000).ToString();
 
-                existingOtp.OtpHash = otps;
+                existingOtp.OtpHash = _hashing.HashStringWithSalt(otps);
+
                 existingOtp.ExpiresOn = DateTime.UtcNow.AddMinutes(10);
                 existingOtp.AttemptCount = 0;
                 existingOtp.IsVerified = false;
@@ -46,8 +51,14 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
 
 
                 _repository.EmailVerification.Update(existingOtp);
+                await _repository.SaveAsync();
 
-                return await _repository.SaveAsync();
+                return new SendEmailVerificationResponseDto
+                {
+                    Success = true,
+                    Otp = otps,
+                    ValidityMinutes = 10
+                };
             }
             // Generate 6-digit OTP
             string otp = Random.Shared.Next(100000, 1000000).ToString();
@@ -56,7 +67,7 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
             {
                 Id = Guid.NewGuid(),
                 Email = request.Email,
-                OtpHash = otp,   // Later replace with hashed OTP
+
                 ExpiresOn = DateTime.UtcNow.AddMinutes(10),
                 AttemptCount = 0,
                 IsVerified = false,
@@ -64,10 +75,18 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
                 TemporaryVerificationToken = null,
                 TemporaryVerificationTokenExpiresOn = null
             };
+            emailVerification.OtpHash = _hashing.HashStringWithSalt(otp);
+
 
             await _repository.EmailVerification.CreateAsync(emailVerification);
+            await _repository.SaveAsync();
 
-            return await _repository.SaveAsync();
+            return new SendEmailVerificationResponseDto
+            {
+                Success = true,
+                Otp = otp,
+                ValidityMinutes = 10
+            };
         }
     }
 }

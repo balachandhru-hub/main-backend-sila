@@ -17,5 +17,8 @@ namespace Identity.Domain.Common
                 public static readonly string COOKIE_ACCESS_TOKEN_KEY = "access_token";
                 public static readonly string COOKIE_REFRESH_TOKEN_KEY = "refresh_token";
                 public static readonly string TOKEN_KEY = "Tokens:key";
+                public static readonly string EMAIL_VERIFICATION="OTP_VERIFICATION";
+                public static readonly string EMAIL_OTP="OTP";
+                public static readonly string EMAIL_OTP_VALIDITY="OTP_VALIDITY";
         }
 }

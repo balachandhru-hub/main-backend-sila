@@ -183,7 +183,7 @@ namespace Identity.Application.Features.Auth.Commands.Login
                 };
 
                 _repository.LoginRecord.Create(loginRecord);
-
+               
                 _repository.Save();
 
                 _logger.LogInfo($"Access token created for user: {user.Id}");
