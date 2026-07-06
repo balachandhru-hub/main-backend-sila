@@ -39,7 +39,7 @@ public class EmailController : ControllerBase
 
 
         await _mediator.Send(command);
-        
+
 
         return Ok(new SuccessResponseDto
         {

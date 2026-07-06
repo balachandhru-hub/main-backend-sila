@@ -15,5 +15,5 @@ public class SendEmailCommand : IRequest
 
     public List<string>? CcEmail { get; set; }
 
-    public Dictionary<string,string>? Parameters { get; set; }
+    public Dictionary<string, string>? Parameters { get; set; }
 }

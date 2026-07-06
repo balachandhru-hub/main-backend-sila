@@ -27,7 +27,7 @@ public static class ServiceExtensions
         services.AddScoped<IBulkInsertHelper, BulkInsertHelper>();
         services.AddScoped<IUserIdentityService, UserIdentityService>();
         services.AddScoped<IUserContext, UserContext>();
-         _ = services.AddControllers();
+        _ = services.AddControllers();
     }
     public static void ConfigureLoggerService(
     this IServiceCollection services)

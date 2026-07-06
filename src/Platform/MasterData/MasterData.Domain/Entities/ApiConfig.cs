@@ -13,7 +13,7 @@ namespace MasterData.Domain.Entities
         public string? Description { get; set; }
 
         [Required]
-        public string BaseUrl { get; set; } 
+        public string BaseUrl { get; set; }
 
         [Required]
         public string? Username { get; set; }
