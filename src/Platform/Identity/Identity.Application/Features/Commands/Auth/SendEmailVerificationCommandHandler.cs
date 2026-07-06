@@ -100,7 +100,7 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
         }
         private async Task SendOtpEmailAsync(string email, string otp, int validityMinutes)
 {
-    string masterDataUrl = _configuration["InterCallService:MasterDataUrl"]!;
+    string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
 
     var response = await _httpClient.PostAsJsonAsync(
         $"{masterDataUrl}/api/v1/email/send",
