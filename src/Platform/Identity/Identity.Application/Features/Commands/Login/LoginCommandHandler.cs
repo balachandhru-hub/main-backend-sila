@@ -147,7 +147,29 @@ namespace Identity.Application.Features.Auth.Commands.Login
                         Guid refreshTokenValue = Guid.NewGuid();
 
                 string hashedRefreshToken = _hashing.HashStringWithSalt(refreshTokenValue.ToString());
+ int maxActiveSessions = int.TryParse(
+                    _configuration[Common.MAX_ACTIVE_SESSIONS],
+                    out int maxSessions)
+                    ? maxSessions
+                    : 3;
 
+                var activeTokens = _repository.RefreshToken
+                    .FindByCondition(x => x.UserId == user.Id && x.IsActive)
+                    .OrderBy(x => x.DateCreated)
+                    .ToList();
+
+                if (activeTokens.Count >= maxActiveSessions)
+                {
+                    int tokensToDeactivate = activeTokens.Count - maxActiveSessions + 1;
+
+                    foreach (var token in activeTokens.Take(tokensToDeactivate))
+                    {
+                        token.IsActive = false;
+   
+
+                        _repository.RefreshToken.Update(token);
+                    }
+                }
                 RefreshToken refreshToken = new RefreshToken
                 {
                     Id = Guid.NewGuid(),
