@@ -2,7 +2,7 @@ using MediatR;
 using System.ComponentModel.DataAnnotations;
 namespace MasterData.Application.Features.Email.Commands;
 
-public class SendEmailCommand : IRequest<bool>
+public class SendEmailCommand : IRequest
 {
     [Required]
     [EmailAddress]

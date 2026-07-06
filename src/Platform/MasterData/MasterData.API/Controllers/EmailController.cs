@@ -5,6 +5,7 @@ using SharedKernel.LoggerServices;
 using Swashbuckle.AspNetCore.Annotations;
 using ExceptionHandler;
 using SharedKernel.Attributes;
+using Dto;
 
 namespace MasterData.API.Controllers;
 
@@ -27,9 +28,9 @@ public class EmailController : ControllerBase
     [Route("api/v1/email/send")]
     [ValidateModelState]
     [SwaggerOperation("SendEmail")]
-    [SwaggerResponse(200, Description = "Email transaction completed successfully")]
-    [SwaggerResponse(400, Description = "Bad Request")]
-    [SwaggerResponse(500, Description = "Internal Server Error")]
+    [SwaggerResponse(200, type: typeof(SuccessResponseDto), Description = "Email sent successfully")]
+    [SwaggerResponse(400, type: typeof(ErrorResponseDto), Description = "Bad Request")]
+    [SwaggerResponse(500, type: typeof(ErrorResponseDto), Description = "Internal Server Error")]
     public async Task<IActionResult> SendEmail(
     [FromBody] SendEmailCommand command)
     {
@@ -38,7 +39,13 @@ public class EmailController : ControllerBase
 
 
         await _mediator.Send(command);
+        
 
-        return Ok("Email sent successfully");
+        return Ok(new SuccessResponseDto
+        {
+            StatusCode = 200,
+            Message = "Email sent successfully",
+            Description = "Email sent successfully"
+        });
     }
 }

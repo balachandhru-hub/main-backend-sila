@@ -11,7 +11,7 @@ using ExceptionHandler;
 namespace MasterData.Application.Features.Email.Commands;
 
 public class SendEmailCommandHandler :
-    IRequestHandler<SendEmailCommand, bool>
+    IRequestHandler<SendEmailCommand>
 {
     private readonly IRepositoryWrapper _repository;
     private readonly IConfiguration _configuration;
@@ -29,7 +29,7 @@ public class SendEmailCommandHandler :
     }
 
 
-    public async Task<bool> Handle(
+    public async Task Handle(
         SendEmailCommand request,
         CancellationToken cancellationToken)
     {
@@ -152,7 +152,7 @@ public class SendEmailCommandHandler :
             await CreateEmailSentDetails(request);
 
 
-            return true;
+            
         }
         catch (BaseCustomException)
         {
