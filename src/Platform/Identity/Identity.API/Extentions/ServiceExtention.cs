@@ -34,28 +34,20 @@ namespace Identity.API.Extensions
         {
             _ = services.AddCors(options =>
             {
-                // options.AddPolicy(
-                //     "CorsPolicy",
-                //     builder =>
-                //         builder
-                //             .SetIsOriginAllowed(origin =>
+                options.AddPolicy(
+                    "CorsPolicy",
+                    builder =>
+                        builder
+                            .SetIsOriginAllowed(origin =>
 
-                //         origin.Equals(config[Common.DEFAULT_FRONT_END_ORIGIN_LOCAL]!, StringComparison.OrdinalIgnoreCase)
+                        origin.Equals(config[Common.DEFAULT_FRONT_END_ORIGIN_LOCAL]!, StringComparison.OrdinalIgnoreCase)
                    
-                //     )
-                //             .AllowAnyMethod()
-                //             .AllowAnyHeader()
-                //             .AllowCredentials()
-                //             .WithExposedHeaders("Content-Disposition")
-                // );
-
-                options.AddPolicy("CorsPolicy", policy =>
-                {
-                    policy
-                        .AllowAnyOrigin()
-                        .AllowAnyHeader()
-                        .AllowAnyMethod();
-                });
+                    )
+                            .AllowAnyMethod()
+                            .AllowAnyHeader()
+                            .AllowCredentials()
+                            .WithExposedHeaders("Content-Disposition")
+                );
             });
         }
         /// <summary>
