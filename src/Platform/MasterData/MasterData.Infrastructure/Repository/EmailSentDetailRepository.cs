@@ -4,7 +4,7 @@ using MasterData.Infrastructure.Persistence;
 
 namespace MasterData.Infrastructure.Repository;
 
-public class EmailSentDetailRepository 
+public class EmailSentDetailRepository
     : RepositoryBase<EmailSentDetail>,
       IEmailSentDetailRepository
 {

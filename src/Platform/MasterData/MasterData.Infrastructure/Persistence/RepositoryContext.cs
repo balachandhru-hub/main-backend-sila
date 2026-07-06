@@ -32,10 +32,10 @@ public class RepositoryContext : DbContext
 
         _ = modelBuilder.Entity<UnspscCategory>().HasIndex(x => new { x.IsActive, x.Segment, x.Family, x.Class, x.Commodity });
         _ = modelBuilder.Entity<ApiConfig>().HasIndex(x => new { x.IsActive });
-        _ = modelBuilder.Entity<EmailContent>().HasIndex(x => new { x.IsActive});
-        _ = modelBuilder.Entity<EmailSentDetail>().HasIndex(x => new { x.IsActive});
-        _ = modelBuilder.Entity<EmailFailedDetail>().HasIndex(x => new { x.IsActive});
-        _ = modelBuilder.Entity<EmailCCList>().HasIndex(x => new { x.IsActive});
+        _ = modelBuilder.Entity<EmailContent>().HasIndex(x => new { x.IsActive });
+        _ = modelBuilder.Entity<EmailSentDetail>().HasIndex(x => new { x.IsActive });
+        _ = modelBuilder.Entity<EmailFailedDetail>().HasIndex(x => new { x.IsActive });
+        _ = modelBuilder.Entity<EmailCCList>().HasIndex(x => new { x.IsActive });
 
         base.OnModelCreating(modelBuilder);
 
