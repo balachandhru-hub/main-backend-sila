@@ -148,7 +148,7 @@ namespace Identity.Application.Features.Auth.Commands.Login
 
                 string hashedRefreshToken = _hashing.HashStringWithSalt(refreshTokenValue.ToString());
  int maxActiveSessions = int.TryParse(
-                    _configuration["TokenSecurity:MaxActiveSessions"],
+                    _configuration[Common.MAX_ACTIVE_SESSIONS],
                     out int maxSessions)
                     ? maxSessions
                     : 3;
