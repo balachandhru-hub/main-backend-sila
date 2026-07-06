@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi.Models;
 using MasterData.Domain.Common;
 using MasterData.Infrastructure;
+using MasterData.Infrastructure.Persistence;
 
 namespace MasterData.API;
 
@@ -24,29 +25,29 @@ public partial class Program
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
             .Build();
- builder.WebHost.ConfigureKestrel(options =>
-        {
-            options.Limits.MinRequestBodyDataRate = null;
-            options.Limits.MinResponseDataRate = null;
+        builder.WebHost.ConfigureKestrel(options =>
+               {
+                   options.Limits.MinRequestBodyDataRate = null;
+                   options.Limits.MinResponseDataRate = null;
 
-            if (long.TryParse(configuration[Common.MAX_REQUEST_SIZE], out long maxSize))
-            {
-                options.Limits.MaxRequestBodySize = maxSize;
-            }
-            else
-            {
-                options.Limits.MaxRequestBodySize = 104857600;
-            }
-        });
-        
+                   if (long.TryParse(configuration[Common.MAX_REQUEST_SIZE], out long maxSize))
+                   {
+                       options.Limits.MaxRequestBodySize = maxSize;
+                   }
+                   else
+                   {
+                       options.Limits.MaxRequestBodySize = 104857600;
+                   }
+               });
+
         builder.Services.AddControllers();
 
         builder.Services.ConfigureDatabase(configuration);
         builder.Services.ConfigureServiceWrapper();
         builder.Services.ConfigureRepositoryWrapper();
-        builder.Services.ConfigureServiceWrapper();
+        
 
-       builder.Services.ConfigureMediatR();
+        builder.Services.ConfigureMediatR();
         builder.Services.AddHttpClient();
 
         builder.Services.AddHttpContextAccessor();
@@ -59,7 +60,7 @@ public partial class Program
             options.MultipartBodyLengthLimit = 104857600;
         });
 
-       
+
 
         builder.Services.AddEndpointsApiExplorer();
 
@@ -74,8 +75,8 @@ public partial class Program
 
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-              c.IncludeXmlComments(xmlPath);
-            
+            c.IncludeXmlComments(xmlPath);
+
         });
 
         var app = builder.Build();
@@ -84,7 +85,7 @@ public partial class Program
         using (var scope = app.Services.CreateScope())
         {
             DBMigration.UpdateDatabase(scope.ServiceProvider);
-           // SeedData.Initialize(scope.ServiceProvider);
+            SeedData.Initialize(scope.ServiceProvider);
         }
 
         // Forwarded Headers
@@ -108,14 +109,14 @@ public partial class Program
                 c.RoutePrefix = "swagger";
             });
         }
-            app.UseRouting();
-            app.UseCors("CorsPolicy");
+        app.UseRouting();
+        app.UseCors("CorsPolicy");
         app.UseHttpsRedirection();
 
         app.UseMiddleware<CustomExceptionMiddleware>();
-        app.UseHttpsRedirection();
-        app.UseAuthorization();
+        
         app.UseAuthentication();
+        app.UseAuthorization();
         app.MapControllers();
 
         app.Run();
