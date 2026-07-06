@@ -12,6 +12,7 @@ using Identity.API.Attributes;
 using Identity.Application.Features.Commands.Login;
 using Identity.Application.Features.Commands.RegisterOrganization;
 using Identity.Application.Features.Commands.RefreshToken.RefreshToken;
+using Identity.Domain.Common;
 
 
 namespace Identity.API.Controllers
@@ -113,7 +114,7 @@ namespace Identity.API.Controllers
             _logger.LogInfo($"Login request received for {command.UserName}");
 
             var result = await _mediator.Send(command);
-            Response.Cookies.Append("access_token",result.Token!,
+            Response.Cookies.Append(Common.COOKIE_ACCESS_TOKEN_KEY, result.Token!,
                 new CookieOptions
                 {
                     HttpOnly = true,
@@ -122,7 +123,7 @@ namespace Identity.API.Controllers
                     Expires = DateTimeOffset.UtcNow.AddHours(1)
                 });
                 Response.Cookies.Append(
-                    "refresh_token",
+                    Common.COOKIE_REFRESH_TOKEN_KEY,
                     result.RefreshToken.ToString(),
                     new CookieOptions
                     {
@@ -188,7 +189,7 @@ namespace Identity.API.Controllers
                 });
 
                 Response.Cookies.Append(
-                    "access_token",
+                    Common.COOKIE_ACCESS_TOKEN_KEY,
                     result.Token!,
                     new CookieOptions
                     {
@@ -199,7 +200,7 @@ namespace Identity.API.Controllers
                     });
 
                 Response.Cookies.Append(
-                    "refresh_token",
+                    Common.COOKIE_REFRESH_TOKEN_KEY,
                     result.RefreshToken.ToString(),
                     new CookieOptions
                     {

@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Identity.Domain.Common;
+using HashingSystem;
 
 namespace Identity.Application.Features.Commands.RefreshToken.RefreshToken;
 
@@ -19,15 +20,18 @@ public class RefreshTokenCommandHandler
     private readonly IRepositoryWrapper _repository;
     private readonly IConfiguration _configuration;
     private readonly ILoggerManager _logger;
+    private readonly IBcryptHashing _hashing;
 
     public RefreshTokenCommandHandler(
         IRepositoryWrapper repository,
         IConfiguration configuration,
-        ILoggerManager logger)
+        ILoggerManager logger,
+        IBcryptHashing hashing)
     {
         _repository = repository;
         _configuration = configuration;
         _logger = logger;
+        _hashing = hashing;
     }
 
     public async Task<LoginResponse> Handle(
@@ -37,10 +41,12 @@ public class RefreshTokenCommandHandler
     _logger.LogInfo("Refresh token request received.");
 
    
-    var refreshToken = _repository.RefreshToken
-        .FindFirstByCondition(x =>
-            x.Token == request.RefreshToken.ToString() &&
-            x.IsActive);
+   var refreshTokens = _repository.RefreshToken
+    .FindByCondition(x => x.IsActive)
+    .ToList();
+
+var refreshToken = refreshTokens.FirstOrDefault(x =>
+    _hashing.VerifyHash(request.RefreshToken.ToString(), x.Token));
 
     if (refreshToken == null)
     {
@@ -65,22 +71,13 @@ public class RefreshTokenCommandHandler
     }
 
    
-var accessToken = _repository.AccessToken
-    .FindFirstByCondition(x =>
-        x.UserId == refreshToken.UserId &&
-        x.IsActive);
-    if (accessToken == null)
-    {
-        throw new UnAuthorizedCustomException(
-            "Unauthorized",
-            "Access token not found.");
-    }
 
-    
-    var user = _repository.User
-        .FindFirstByCondition(x =>
-           x.Id == accessToken.UserId &&
-            x.IsActive);
+
+
+   var user = _repository.User
+    .FindFirstByCondition(x =>
+        x.Id == refreshToken.UserId &&
+        x.IsActive);
 
     if (user == null)
     {
@@ -135,16 +132,12 @@ var accessToken = _repository.AccessToken
   
     Guid newRefreshToken = Guid.NewGuid();
 
-   
-    accessToken.AccessTokenValue = jwtToken;
-    accessToken.ExpiredTime = expirationTime;
-    accessToken.RefreshToken = newRefreshToken;
-
-    _repository.AccessToken.Update(accessToken);
+  string hashedRefreshToken =
+    _hashing.HashStringWithSalt(newRefreshToken.ToString());
 
   
-    refreshToken.Token = newRefreshToken.ToString();
-    refreshToken.ExpiresOn = DateTime.UtcNow.AddDays(7);
+   refreshToken.Token = hashedRefreshToken;
+refreshToken.ExpiresOn = DateTime.UtcNow.AddDays(7);
 
     _repository.RefreshToken.Update(refreshToken);
 
