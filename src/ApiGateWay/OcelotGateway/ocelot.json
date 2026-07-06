@@ -5,7 +5,7 @@
       "SwaggerKey": "identity",
       "UpstreamPathTemplate": "/api/v1/{everything}",
       "DownstreamPathTemplate": "/api/v1/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -20,7 +20,7 @@
       "SwaggerKey": "masterdata",
       "UpstreamPathTemplate": "/api/v1/unspsc/{everything}",
       "DownstreamPathTemplate": "/api/v1/unspsc/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH" ],
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
