@@ -11,6 +11,7 @@ using SharedKernel.Attributes;
 using Identity.API.Attributes;
 using Identity.Application.Features.Commands.Login;
 using Identity.Application.Features.Commands.RegisterOrganization;
+using Identity.Domain.Common;
 
 
 namespace Identity.API.Controllers
@@ -63,9 +64,9 @@ namespace Identity.API.Controllers
                 new
                 {
                     ToEmail = command.Email,
-                    EmailKey = "OTP_VERIFICATION",
+                    EmailKey = Common.EMAIL_VERIFICATION,
                     Parameters = new Dictionary<string, string>
-                    {{ "OTP", result.Otp },{ "OTP_VALIDITY", $"{result.ValidityMinutes} minutes" }
+                    {{ Common.EMAIL_OTP, result.Otp },{ Common.EMAIL_OTP_VALIDITY, $"{result.ValidityMinutes} minutes" }
                     }
                 });
             return Ok(new SuccessResponseDto
