@@ -9,7 +9,7 @@ namespace MasterData.Infrastructure.Repository;
 public class UnspscRepository : IUnspscRepository
 {
     private readonly RepositoryContext _context;
-     private readonly ILoggerManager _logger;
+    private readonly ILoggerManager _logger;
 
     public UnspscRepository(RepositoryContext context, ILoggerManager logger)
     {
@@ -32,73 +32,116 @@ public class UnspscRepository : IUnspscRepository
     public async Task<List<SegmentDto>> GetAsync(
     int pageIndex,
     int pageSize)
-{
-    _logger.LogInfo($"Retrieving UNSPSC categories. PageIndex: {pageIndex}, PageSize: {pageSize}");
-
-    var data = await _context.UnspscCategories
-        .OrderBy(x => x.Segment)
-        .Skip((pageIndex - 1) * pageSize)
-        .Take(pageSize)
-        .ToListAsync();
-
-    return data
-        .GroupBy(x => new
-        {
-            x.Segment,
-            x.SegmentTitle
-        })
-        .Select(segment => new SegmentDto
-        {
-            Segment = segment.Key.Segment,
-            Title = segment.Key.SegmentTitle,
-
-            Family = segment
-                .Where(x => x.Family.HasValue)
-                .GroupBy(x => new
-                {
-                    x.Family,
-                    x.FamilyTitle
-                })
-                .Select(f => new FamilyDto
-                {
-                    Code = f.Key.Family,
-                    Title = f.Key.FamilyTitle
-                })
-                .ToList()
-        })
-        .ToList();
-}
-
-    public async Task<List<UnspscDto>> GetByVersionAsync(
-        string version,
-        int pageIndex,
-        int pageSize)
     {
-        _logger.LogInfo($"Retrieving UNSPSC categories by version: {version}. PageIndex: {pageIndex}, PageSize: {pageSize}");
-        return await _context.UnspscCategories
-            .Where(x => x.Version == version)
-            .OrderBy(x => x.Id)
+        _logger.LogInfo($"Retrieving UNSPSC categories. PageIndex: {pageIndex}, PageSize: {pageSize}");
+
+       
+        var segments = await _context.UnspscCategories
+            .Select(x => new
+            {
+                x.Segment,
+                x.SegmentTitle
+            })
+            .Distinct()
+            .OrderBy(x => x.Segment)
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
-            .Select(x => new UnspscDto
-            {
-                Version = x.Version,
-                Key = x.Key,
-                Segment = x.Segment,
-                SegmentTitle = x.SegmentTitle,
-                SegmentDefinition = x.SegmentDefinition,
-                Family = x.Family,
-                FamilyTitle = x.FamilyTitle,
-                FamilyDefinition = x.FamilyDefinition,
-                Class = x.Class,
-                ClassTitle = x.ClassTitle,
-                ClassDefinition = x.ClassDefinition,
-                Commodity = x.Commodity,
-                CommodityTitle = x.CommodityTitle,
-                CommodityDefinition = x.CommodityDefinition,
-                Synonym = x.Synonym,
-                Acronym = x.Acronym
-            })
             .ToListAsync();
+
+        
+        var segmentIds = segments.Select(x => x.Segment).ToList();
+
+        var data = await _context.UnspscCategories
+            .Where(x => segmentIds.Contains(x.Segment))
+            .ToListAsync();
+
+        
+        return data
+            .GroupBy(x => new
+            {
+                x.Segment,
+                x.SegmentTitle
+            })
+            .Select(segment => new SegmentDto
+            {
+                Segment = segment.Key.Segment,
+                Title = segment.Key.SegmentTitle,
+
+                Family = segment
+                    .Where(x => x.Family.HasValue)
+                    .GroupBy(x => new
+                    {
+                        x.Family,
+                        x.FamilyTitle
+                    })
+                    .Select(f => new FamilyDto
+                    {
+                        Family = f.Key.Family,
+                        Title = f.Key.FamilyTitle
+                    })
+                    .ToList()
+            })
+            .ToList();
+    }
+
+    public async Task<List<ClassDto>> GetByVersionAsync(
+     long segment,
+     long family,
+     int pageIndex,
+     int pageSize)
+    {
+        _logger.LogInfo($"Retrieving classes for Segment={segment}, Family={family}");
+
+        
+        var classes = await _context.UnspscCategories
+            .Where(x => x.Segment == segment &&
+                        x.Family == family)
+            .Select(x => new
+            {
+                x.Class,
+                x.ClassTitle
+            })
+            .Distinct()
+            .OrderBy(x => x.Class)
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+       
+        var classIds = classes.Select(x => x.Class).ToList();
+
+        var data = await _context.UnspscCategories
+            .Where(x => x.Segment == segment &&
+                        x.Family == family &&
+                        classIds.Contains(x.Class))
+            .ToListAsync();
+
+       
+        return data
+            .GroupBy(x => new
+            {
+                x.Class,
+                x.ClassTitle
+            })
+            .Select(c => new ClassDto
+            {
+                Class = c.Key.Class,
+                Title = c.Key.ClassTitle,
+
+                Commodity = c
+                    .Where(x => x.Commodity.HasValue)
+                    .GroupBy(x => new
+                    {
+                        x.Commodity,
+                        x.CommodityTitle
+                    })
+                    .Select(cm => new CommodityDto
+                    {
+                        Commodity = cm.Key.Commodity,
+                        Title = cm.Key.CommodityTitle
+                    })
+                    .ToList()
+            })
+            .ToList();
     }
 }

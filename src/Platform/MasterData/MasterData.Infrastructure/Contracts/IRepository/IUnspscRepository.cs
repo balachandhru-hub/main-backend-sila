@@ -13,8 +13,9 @@ public interface IUnspscRepository
         int pageIndex,
         int pageSize);
 
-    Task<List<UnspscDto>> GetByVersionAsync(
-        string version,
+     Task<List<ClassDto>> GetByVersionAsync(
+        long segment,
+        long family,
         int pageIndex,
         int pageSize);
 }

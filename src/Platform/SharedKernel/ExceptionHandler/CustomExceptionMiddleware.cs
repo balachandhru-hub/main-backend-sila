@@ -51,7 +51,7 @@ namespace ExceptionHandler
                 HttpResponse response = context.Response;
                 response.ContentType = "application/json";
                 response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                await response.WriteAsync(JsonConvert.SerializeObject(new SharedKernel.Dto.ErrorResponseDto
+                await response.WriteAsync(JsonConvert.SerializeObject(new ErrorResponseDto
                 {
                     StatusCode = (int)HttpStatusCode.InternalServerError,
                     Message = "An error has occured",
@@ -75,7 +75,7 @@ namespace ExceptionHandler
             string description = customException.Description;
             response.ContentType = "application/json";
             response.StatusCode = statusCode;
-            await response.WriteAsync(JsonConvert.SerializeObject(new SharedKernel.Dto.ErrorResponseDto
+            await response.WriteAsync(JsonConvert.SerializeObject(new ErrorResponseDto
             {
                 StatusCode = statusCode,
                 Message = message,

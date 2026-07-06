@@ -1,0 +1,25 @@
+name: Deploy VOSOX Backend
+
+on:
+  push:
+    branches: [ integration ]
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, dev]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t vosox-backend .
+
+      - name: Stop existing container if running
+        run: docker stop vosox-backend-container || true
+
+      - name: Remove existing container if exists
+        run: docker rm vosox-backend-container || true
+
+      - name: Run Docker container
+        run: docker run -d --name vosox-backend-container -p 5014:8080 vosox-backend

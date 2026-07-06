@@ -2,11 +2,13 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using ExceptionHandler;
-using Identity.Domain.Dtos;
 using Identity.Application.Features.Auth.Commands.SendEmailVerification;
 using SharedKernel.LoggerServices;
 using Identity.Application.Features.Auth.Commands.VerifyOtp;
 using System.ComponentModel.DataAnnotations;
+using SharedKernel.Dto;
+using SharedKernel.Attributes;
+
 
 namespace Identity.API.Controllers
 {
@@ -31,7 +33,7 @@ namespace Identity.API.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("api/v1/auth/send-otp")]
-      
+        [ValidateModelState]
         [SwaggerOperation("SendOtp")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "OTP generated successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
@@ -43,17 +45,6 @@ namespace Identity.API.Controllers
             command.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
             bool result = await _mediator.Send(command);
-
-            if (!result)
-            {
-                return BadRequest(new ErrorResponseDto
-                {
-                    StatusCode = 400,
-                    Message = "Unable to generate OTP.",
-                    Description = "OTP generation failed."
-                });
-            }
-
             return Ok(new SuccessResponseDto
             {
                 StatusCode = 200,
@@ -63,6 +54,7 @@ namespace Identity.API.Controllers
         }
         [HttpPost]
         [Route("api/v1/auth/verify-otp")]
+        [ValidateModelState]
         [SwaggerOperation("VerifyOtp")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "OTP verified successfully.")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Invalid OTP or OTP expired.")]
@@ -71,17 +63,7 @@ namespace Identity.API.Controllers
         {
             var result = await _mediator.Send(command);
 
-            if (!result.Success)
-            {
-                return BadRequest(new ErrorResponseDto
-                {
-                    StatusCode = 400,
-                    Message = result.Message,
-                    Description = result.Message
-                });
-            }
-
-            return Ok(new SuccessResponseDto
+             return Ok(new SuccessResponseDto
             {
                 StatusCode = 200,
                 Message = result.Message,

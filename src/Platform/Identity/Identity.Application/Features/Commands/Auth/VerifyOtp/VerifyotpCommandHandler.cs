@@ -70,6 +70,7 @@ namespace Identity.Application.Features.Auth.Commands.VerifyOtp
 
             // OTP verified successfully
             otp.IsVerified = true;
+            otp.AttemptCount += 1;
             otp.TemporaryVerificationToken = Guid.NewGuid().ToString();
             otp.TemporaryVerificationTokenExpiresOn = DateTime.UtcNow.AddMinutes(30);
 
