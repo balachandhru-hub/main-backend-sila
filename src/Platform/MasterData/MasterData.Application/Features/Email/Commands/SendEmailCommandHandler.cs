@@ -38,10 +38,7 @@ public class SendEmailCommandHandler :
         try
         {
             template =
-    await _repository.EmailContent
-    .FindFirstByConditionAsync(x =>
-        x.IsActive &&
-        x.Key == request.EmailKey);
+            await _repository.EmailContent.FindFirstByConditionAsync(x => x.IsActive && x.Key == request.EmailKey);
 
 
             if (template == null)
@@ -71,16 +68,10 @@ public class SendEmailCommandHandler :
             }
 
 
-            string body =
-    ReplacePlaceholders(
-        template.Body!,
-        request);
+            string body = ReplacePlaceholders(template.Body!, request);
 
 
-            string subject =
-    ReplacePlaceholders(
-        template.Subject!,
-        request);
+            string subject = ReplacePlaceholders(template.Subject!, request);
 
 
 
@@ -95,12 +86,7 @@ public class SendEmailCommandHandler :
             message.To.Add(request.ToEmail);
 
 
-            request.CcEmail?
-    .Where(email => !string.IsNullOrWhiteSpace(email))
-    .ToList()
-    .ForEach(email =>
-        message.CC.Add(
-            new MailAddress(email)));
+            request.CcEmail?.Where(email => !string.IsNullOrWhiteSpace(email)).ToList().ForEach(email => message.CC.Add(new MailAddress(email)));
 
 
             message.Subject = subject;
@@ -131,11 +117,8 @@ public class SendEmailCommandHandler :
             await smtp.SendMailAsync(message);
             _logger.LogInfo("Email sent successfully");
             EmailFailedDetail? failed =
-    await _repository.EmailFailedDetail
-    .FindFirstByConditionAsync(x =>
-        x.IsActive &&
-        x.EntityId == request.EntityId &&
-        x.EmailType == request.EmailKey);
+                await _repository.EmailFailedDetail
+                .FindFirstByConditionAsync(x => x.IsActive && x.EntityId == request.EntityId && x.EmailType == request.EmailKey);
 
 
             if (failed != null)
@@ -152,7 +135,7 @@ public class SendEmailCommandHandler :
             await CreateEmailSentDetails(request);
 
 
-            
+
         }
         catch (BaseCustomException)
         {

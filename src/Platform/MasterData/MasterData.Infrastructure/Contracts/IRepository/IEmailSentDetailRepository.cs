@@ -2,7 +2,7 @@ using MasterData.Domain.Entities;
 
 namespace MasterData.Infrastructure.Contracts.IRepository;
 
-public interface IEmailSentDetailRepository 
+public interface IEmailSentDetailRepository
     : IRepositoryBase<EmailSentDetail>
 {
 }

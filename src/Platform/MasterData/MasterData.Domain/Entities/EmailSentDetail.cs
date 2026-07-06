@@ -12,7 +12,7 @@ namespace MasterData.Domain.Entities
         [Required]
         public string? Email { get; set; }
         public string? EntityType { get; set; }
-        public Guid? EntityId { get; set; } 
+        public Guid? EntityId { get; set; }
 
         [Required]
         public string? EmailType { get; set; }
