@@ -4,6 +4,10 @@ using Identity.Domain.Entities;
 using SharedKernel.ExceptionHandler;
 using HashingSystem;
 using Identity.Domain.Dto;
+using Microsoft.Extensions.Configuration;
+using Identity.Domain.Common;
+using System.Net.Http.Json;
+
 
 namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
 {
@@ -11,11 +15,15 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
     {
         private readonly IRepositoryWrapper _repository;
         private readonly IBcryptHashing _hashing;
+        private readonly IConfiguration _configuration;
+        private readonly HttpClient _httpClient;
 
-        public SendEmailVerificationCommandHandler(IRepositoryWrapper repository, IBcryptHashing hashing)
+        public SendEmailVerificationCommandHandler(IRepositoryWrapper repository, IBcryptHashing hashing, IConfiguration configuration, HttpClient httpClient)
         {
             _repository = repository;
             _hashing = hashing;
+            _configuration = configuration;
+            _httpClient = httpClient;
         }
 
         public async Task<SendEmailVerificationResponseDto> Handle(
@@ -52,6 +60,7 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
 
                 _repository.EmailVerification.Update(existingOtp);
                 await _repository.SaveAsync();
+                await SendOtpEmailAsync(request.Email, otps, 10);
 
                 return new SendEmailVerificationResponseDto
                 {
@@ -80,6 +89,7 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
 
             await _repository.EmailVerification.CreateAsync(emailVerification);
             await _repository.SaveAsync();
+            await SendOtpEmailAsync(request.Email, otp, 10);
 
             return new SendEmailVerificationResponseDto
             {
@@ -88,5 +98,24 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
                 ValidityMinutes = 10
             };
         }
+        private async Task SendOtpEmailAsync(string email, string otp, int validityMinutes)
+{
+    string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
+
+    var response = await _httpClient.PostAsJsonAsync(
+        $"{masterDataUrl}/api/v1/email/send",
+        new
+        {
+            ToEmail = email,
+            EmailKey = Common.EMAIL_VERIFICATION,
+            Parameters = new Dictionary<string, string>
+            {
+                { Common.EMAIL_OTP, otp },
+                { Common.EMAIL_OTP_VALIDITY, $"{validityMinutes} minutes" }
+            }
+        });
+
+    response.EnsureSuccessStatusCode();
+}
     }
 }
