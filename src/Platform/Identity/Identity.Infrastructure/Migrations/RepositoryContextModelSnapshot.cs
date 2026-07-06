@@ -23,6 +23,100 @@ namespace Identity.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Identity.Domain.Entities.AccessToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AccessTokenValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("access_token_value");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<DateTime>("ExpiredTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("expired_time");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("RefreshToken")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("refresh_token");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_access_token");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_access_token_is_active");
+
+                    b.ToTable("access_token", "identitysystem");
+                });
+
+            modelBuilder.Entity("Identity.Domain.Entities.ApiKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ApiKeyValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("api_key_value");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_api_key");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_api_key_is_active");
+
+                    b.ToTable("api_key", "identitysystem");
+                });
+
             modelBuilder.Entity("Identity.Domain.Entities.EmailVerification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -134,6 +228,70 @@ namespace Identity.Infrastructure.Migrations
                     b.ToTable("feature", "identitysystem");
                 });
 
+            modelBuilder.Entity("Identity.Domain.Entities.LoginRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AttributeId")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("attribute_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<string>("EntityType")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ip_address");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime>("LoginTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("login_time");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("organization_id");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("user_name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_login_record");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_login_record_is_active");
+
+                    b.ToTable("login_record", "identitysystem");
+                });
+
             modelBuilder.Entity("Identity.Domain.Entities.Organization", b =>
                 {
                     b.Property<Guid>("Id")
@@ -233,6 +391,14 @@ namespace Identity.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
+                    b.Property<string>("AddressLine")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("address_line");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("country");
+
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by");
@@ -246,12 +412,10 @@ namespace Identity.Infrastructure.Migrations
                         .HasColumnName("date_updated");
 
                     b.Property<string>("Department")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("department");
 
                     b.Property<string>("Designation")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("designation");
 

@@ -1,13 +1,16 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using ExceptionHandler;
+using SharedKernel.ExceptionHandler;
 using Identity.Application.Features.Auth.Commands.SendEmailVerification;
 using SharedKernel.LoggerServices;
 using Identity.Application.Features.Auth.Commands.VerifyOtp;
 using System.ComponentModel.DataAnnotations;
 using SharedKernel.Dto;
 using SharedKernel.Attributes;
+using Identity.API.Attributes;
+using Identity.Application.Features.Commands.Login;
+using Identity.Application.Features.Commands.RegisterOrganization;
 
 
 namespace Identity.API.Controllers
@@ -33,6 +36,7 @@ namespace Identity.API.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("api/v1/auth/send-otp")]
+        [ApiKeyAuthorization]
         [ValidateModelState]
         [SwaggerOperation("SendOtp")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "OTP generated successfully")]
@@ -52,9 +56,17 @@ namespace Identity.API.Controllers
                 Description = "OTP generated successfully."
             });
         }
+
+        /// <summary>
+        /// Verifies the OTP for email verification.
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
+
         [HttpPost]
         [Route("api/v1/auth/verify-otp")]
         [ValidateModelState]
+        [ApiKeyAuthorization]
         [SwaggerOperation("VerifyOtp")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "OTP verified successfully.")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Invalid OTP or OTP expired.")]
@@ -63,13 +75,83 @@ namespace Identity.API.Controllers
         {
             var result = await _mediator.Send(command);
 
-             return Ok(new SuccessResponseDto
+            Response.Cookies.Append(
+         "VerificationToken",
+         result.TemporaryVerificationToken!,
+         new CookieOptions
+         {
+             HttpOnly = true,
+             Secure = true,          // Use true in HTTPS
+             SameSite = SameSiteMode.Strict,
+             Expires = DateTimeOffset.UtcNow.AddMinutes(30)
+         });
+
+            return Ok(new SuccessResponseDto
             {
-                StatusCode = 200,
                 Message = result.Message,
                 Description = "OTP verified successfully.",
-                Id = result.TemporaryVerificationToken
+                StatusCode = 200
             });
         }
+        /// <summary>
+        /// Login
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/v1/auth/login")]
+        [ApiKeyAuthorization]
+        [ValidateModelState]
+        [SwaggerOperation("Login")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Login successful.")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> Login([FromBody] LoginCommand command)
+        {
+            _logger.LogInfo($"Login request received for {command.UserName}");
+
+            var result = await _mediator.Send(command);
+            Response.Cookies.Append("access_token",result.Token!,
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,          // false for local HTTP, true for HTTPS
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddHours(1)
+                });
+
+
+            return Ok(new SuccessResponseDto { StatusCode = 200, Message = "Token Generated Successfully", Description = "Successfully Created Token and Refresh Token" });
+
+        }
+
+        /// <summary>
+        /// Creates a new organization.
+        /// </summary>
+
+        [HttpPost]
+        [Route("api/v1/organizations/create")]
+        [ValidateModelState]
+        [SwaggerOperation("createOrganization")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Organization created successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> CreateOrganization([FromBody] RegisterOrganizationCommand command)
+        {
+            _logger.LogInfo($"Creating organization for {command.Email}");
+            var verificationToken = Request.Cookies["VerificationToken"];
+            command.VerificationToken = verificationToken;
+
+            var organizationId = await _mediator.Send(command);
+
+            return Ok(new SuccessResponseDto
+            {
+                Message = "Organization registered successfully.",
+                Description = $"Organization Id: {organizationId}",
+                StatusCode = 200
+            });
+        }
+
     }
 }

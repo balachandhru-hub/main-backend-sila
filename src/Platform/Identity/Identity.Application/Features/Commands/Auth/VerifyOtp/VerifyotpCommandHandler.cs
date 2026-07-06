@@ -17,8 +17,8 @@ namespace Identity.Application.Features.Auth.Commands.VerifyOtp
             VerifyOtpCommand request,
             CancellationToken cancellationToken)
         {
-            var otp =  _repository.EmailVerification
-                  .FindByConditionAsync(x => x.Email == request.Email &&x.IsActive).FirstOrDefault();
+            var otp = _repository.EmailVerification
+                  .FindByConditionAsync(x => x.Email == request.Email && x.IsActive).FirstOrDefault();
 
             if (otp == null)
             {
