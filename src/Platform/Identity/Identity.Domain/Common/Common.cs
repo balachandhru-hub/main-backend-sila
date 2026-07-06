@@ -21,5 +21,6 @@ namespace Identity.Domain.Common
                 public static readonly string EMAIL_OTP="OTP";
                 public static readonly string EMAIL_OTP_VALIDITY="OTP_VALIDITY";
                 public static readonly string MASTER_DATA_URL = "InterCallService:MasterDataUrl";
+                public static readonly string MAX_ACTIVE_SESSIONS = "TokenSecurity:MaxActiveSessions";
         }
 }
