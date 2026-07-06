@@ -6,7 +6,7 @@ using MasterData.Infrastructure.Contracts.IRepository;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using SharedKernel.LoggerServices;
-using ExceptionHandler;
+using SharedKernel.ExceptionHandler;
 
 namespace MasterData.Application.Features.Email.Commands;
 

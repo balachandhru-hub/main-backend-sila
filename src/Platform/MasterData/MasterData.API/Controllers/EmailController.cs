@@ -3,9 +3,9 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel.LoggerServices;
 using Swashbuckle.AspNetCore.Annotations;
-using ExceptionHandler;
+using SharedKernel.ExceptionHandler;
 using SharedKernel.Attributes;
-using Dto;
+using SharedKernel.Dto;
 
 namespace MasterData.API.Controllers;
 
