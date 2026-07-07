@@ -161,7 +161,7 @@ namespace Identity.API.Controllers
         /// </summary>
 
         [HttpPost]
-        [Route("api/v1/register")]
+        [Route("api/v1/auth/register")]
         [ValidateModelState]
         [SwaggerOperation("createOrganization")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Organization created successfully")]
