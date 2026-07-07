@@ -7,6 +7,7 @@ using Identity.Domain.Dto;
 using Microsoft.Extensions.Configuration;
 using Identity.Domain.Common;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
 
 
 namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
@@ -16,20 +17,23 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
         private readonly IRepositoryWrapper _repository;
         private readonly IBcryptHashing _hashing;
         private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly HttpClient _httpClient;
 
-        public SendEmailVerificationCommandHandler(IRepositoryWrapper repository, IBcryptHashing hashing, IConfiguration configuration, HttpClient httpClient)
+        public SendEmailVerificationCommandHandler(IRepositoryWrapper repository, IBcryptHashing hashing, IConfiguration configuration, HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
         {
             _repository = repository;
             _hashing = hashing;
             _configuration = configuration;
             _httpClient = httpClient;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<SendEmailVerificationResponseDto> Handle(
             SendEmailVerificationCommand request,
             CancellationToken cancellationToken)
         {
+            string? ipAddress = _httpContextAccessor.HttpContext?.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',')[0].Trim() ?? _httpContextAccessor.HttpContext?.Request.Headers["X-Real-IP"].FirstOrDefault() ?? _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.MapToIPv4()?.ToString();
             var existingOtp = _repository.EmailVerification
       .FindByConditionAsync(x =>
           x.Email == request.Email && x.IsVerified == false &&
@@ -53,7 +57,7 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
                 existingOtp.ExpiresOn = DateTime.UtcNow.AddMinutes(10);
                 existingOtp.AttemptCount = 0;
                 existingOtp.IsVerified = false;
-                existingOtp.IpAddress = request.IpAddress;
+                existingOtp.IpAddress = ipAddress;
                 existingOtp.TemporaryVerificationToken = null;
                 existingOtp.TemporaryVerificationTokenExpiresOn = null;
 
@@ -80,7 +84,7 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
                 ExpiresOn = DateTime.UtcNow.AddMinutes(10),
                 AttemptCount = 0,
                 IsVerified = false,
-                IpAddress = request.IpAddress,
+                IpAddress = ipAddress,
                 TemporaryVerificationToken = null,
                 TemporaryVerificationTokenExpiresOn = null
             };
@@ -98,7 +102,7 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
                 ValidityMinutes = 10
             };
         }
-        private async Task SendOtpEmailAsync(string email, string otp, int validityMinutes)
+      private async Task SendOtpEmailAsync(string email, string otp, int validityMinutes)
 {
     string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
 
@@ -115,7 +119,13 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
             }
         });
 
-    response.EnsureSuccessStatusCode();
+    string responseBody = await response.Content.ReadAsStringAsync();
+
+    if (!response.IsSuccessStatusCode)
+    {
+        throw new Exception(
+            $"Email API failed. Status: {(int)response.StatusCode}, Response: {responseBody}");
+    }
 }
     }
 }

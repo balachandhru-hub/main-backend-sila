@@ -83,7 +83,7 @@ namespace Identity.Application.Features.Commands.Register
                 Id = Guid.NewGuid(),
                 OrganizationId = organization.Id,
                 Name = request.PersonName,
-                Email = request.Email,
+                Email = request.PersonEmail,
                 Phone = request.Phone,
                 Country = request.Country,
                 AddressLine = request.AddressLine1

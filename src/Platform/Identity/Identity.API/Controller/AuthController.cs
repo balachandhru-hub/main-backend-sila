@@ -55,21 +55,8 @@ namespace Identity.API.Controllers
         {
             _logger.LogInfo($"Generating OTP for {command.Email}");
 
-            command.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
-
-            var result = await _mediator.Send(command);
-            string masterDataUrl = _configuration["InterCallService:MasterDataUrl"]!;
-
-            await _httpClient.PostAsJsonAsync(
-                $"{masterDataUrl}/api/v1/email/send",
-                new
-                {
-                    ToEmail = command.Email,
-                    EmailKey = Common.EMAIL_VERIFICATION,
-                    Parameters = new Dictionary<string, string>
-                    {{ Common.EMAIL_OTP, result.Otp },{ Common.EMAIL_OTP_VALIDITY, $"{result.ValidityMinutes} minutes" }
-                    }
-                });
+             var result = await _mediator.Send(command);
+          
             return Ok(new SuccessResponseDto
             {
                 StatusCode = 200,
