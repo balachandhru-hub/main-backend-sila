@@ -4,7 +4,7 @@ using System.Security.Claims;
 
 namespace Identity.API.Controllers
 {
-    [ApiController]
+  
     public abstract class BaseController : ControllerBase
     {
         protected Guid GetOrganizationId()
