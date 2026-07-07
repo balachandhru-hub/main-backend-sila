@@ -1,6 +1,7 @@
 using Contracts.IRepository;
 using MediatR;
 using HashingSystem;
+using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Application.Features.Auth.Commands.VerifyOtp
 {
@@ -20,8 +21,9 @@ namespace Identity.Application.Features.Auth.Commands.VerifyOtp
             VerifyOtpCommand request,
             CancellationToken cancellationToken)
         {
-            var otp = _repository.EmailVerification
-                  .FindByConditionAsync(x => x.Email == request.Email && x.IsActive).FirstOrDefault();
+            var otp = await _repository.EmailVerification
+           .FindByConditionAsync(x => x.Email == request.Email && x.IsActive)
+           .FirstOrDefaultAsync(cancellationToken);
 
             if (otp == null)
             {
