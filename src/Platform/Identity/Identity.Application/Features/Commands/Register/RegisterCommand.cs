@@ -1,9 +1,9 @@
 using MediatR;
 using Identity.Domain.Enum;
 
-namespace Identity.Application.Features.Commands.RegisterOrganization
+namespace Identity.Application.Features.Commands.Register
 {
-    public class RegisterOrganizationCommand : IRequest<Guid>
+    public class RegisterCommand : IRequest<Guid>
     {
         public string OrganizationName { get; set; }
 
