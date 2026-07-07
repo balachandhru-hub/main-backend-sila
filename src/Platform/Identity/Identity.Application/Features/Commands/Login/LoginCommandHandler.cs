@@ -13,6 +13,8 @@ using SharedKernel.ExceptionHandler;
 using Microsoft.AspNetCore.Http;
 using Identity.Domain.Common;
 using SharedKernel.LoggerServices;
+using System.Text.Json;
+using Contracts.IRepository;
 
 
 namespace Identity.Application.Features.Auth.Commands.Login
@@ -128,13 +130,26 @@ namespace Identity.Application.Features.Auth.Commands.Login
                     _logger.LogError($"Person Not Found for userId : {user.Id}");
                     throw new UnAuthorizedCustomException("Unauthorized", "Person Not Found.");
                 }
+              var permissions = (
+    from roleFeature in _repository.RoleFeatureMapping.FindByConditionAsync(rf => rf.IsActive)
+    join feature in _repository.Feature.FindByConditionAsync(f => f.IsActive)
+        on roleFeature.FeatureId equals feature.Id
+    where roleFeature.RoleId == userRoleMapping.RoleId
+          && roleFeature.IsActive
+          && feature.IsActive
+    select feature.Key
+).ToList();
+
+string permissionJson = JsonSerializer.Serialize(permissions);
+                
 
                 var claims = new[]
                 {
                     new Claim(ClaimTypes.Role, userRoleMapping.RoleId.ToString()),
                     new Claim("PersonId", user.PersonId.ToString()),
                     new Claim("UserId", user.Id.ToString()),
-                    new Claim("OrganizationId", person.OrganizationId.ToString())
+                    new Claim("OrganizationId", person.OrganizationId.ToString()),
+                    new Claim("Permissions", permissionJson)
                 };
 
                 int number = int.TryParse(_configuration[Common.TOKEN_EXPIRY], out int result)
