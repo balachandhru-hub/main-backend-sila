@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Contracts;
 using SharedKernel.LoggerServices;
 using Identity.Infrastructure.Contracts.IServices;
+using Identity.Domain.Entities;
 
 
 namespace Repository
@@ -21,9 +22,11 @@ namespace Repository
         private IPersonRepository _personRepository;
         private IUserRoleMappingRepository _userRoleMappingRepository;
         private IRoleRepository _roleRepository;
-        private IAccessTokenRepository _accessTokenRepository;
+   
         private IRefreshTokenRepository _refreshTokenRepository;
         private ILoginRecordRepository _loginRecordRepository;
+        private IRoleFeatureMappingRepository _roleFeatureMapping;
+        private IFeatureRepository _featureRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -99,17 +102,7 @@ namespace Repository
                 return _roleRepository;
             }
         }
-        public IAccessTokenRepository AccessToken
-        {
-            get
-            {
-                if (_accessTokenRepository == null)
-                {
-                    _accessTokenRepository = new AccessTokenRepository(_context);
-                }
-                return _accessTokenRepository;
-            }
-        }
+      
         public IRefreshTokenRepository RefreshToken
         {
             get
@@ -130,6 +123,28 @@ namespace Repository
                     _loginRecordRepository = new LoginRecordRepository(_context);
                 }
                 return _loginRecordRepository;
+            }
+        }
+        public IRoleFeatureMappingRepository RoleFeatureMapping
+        {
+            get
+            {
+                if(_roleFeatureMapping ==null)
+                {
+                    _roleFeatureMapping =new RoleFeatureMappingRepository(_context);
+                }
+                return _roleFeatureMapping;
+            }
+        }
+        public IFeatureRepository Feature
+        {
+            get
+            {
+                if(_featureRepository ==null)
+                {
+                    _featureRepository =new FeatureRepository(_context);
+                }
+                return _featureRepository;
             }
         }
 

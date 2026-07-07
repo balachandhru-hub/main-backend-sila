@@ -73,7 +73,6 @@ namespace Identity.Application.Features.Commands.RegisterOrganization
                 City = request.City,
                 State = request.State,
                 PinCode = request.PinCode,
-                Status = OrganizationStatus.Active,
                 EmailVerified = true
             };
 

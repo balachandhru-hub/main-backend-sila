@@ -3,9 +3,9 @@ using Identity.Domain.Entities;
 namespace Contracts.IRepository
 {
     /// <summary>
-    /// IEmailVerificationRepository
+    /// IRoleRepository
     /// </summary>
-    public interface IAccessTokenRepository : IRepositoryBase<AccessToken>
+    public interface IRoleFeatureMappingRepository : IRepositoryBase<RoleFeatureMapping>
     {
 
     }

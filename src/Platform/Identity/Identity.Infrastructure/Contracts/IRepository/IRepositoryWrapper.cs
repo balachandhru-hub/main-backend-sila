@@ -11,9 +11,11 @@ namespace Contracts.IRepository
         IPersonRepository Person { get; }
         IUserRoleMappingRepository UserRoleMapping { get; }
         IRoleRepository Role { get; }
-        IAccessTokenRepository AccessToken { get; }
+       
         IRefreshTokenRepository RefreshToken { get; }
         ILoginRecordRepository LoginRecord { get; }
+        IFeatureRepository Feature {get;}
+        IRoleFeatureMappingRepository RoleFeatureMapping {get;}
 
       
         bool Save();

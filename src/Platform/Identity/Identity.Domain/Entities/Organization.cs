@@ -21,7 +21,7 @@ namespace Identity.Domain.Entities
 
         public string Country { get; set; } 
 
-        public OrganizationStatus Status { get; set; }
+    
 
         public bool EmailVerified { get; set; }
         public string AddressLine1 { get; set; }
