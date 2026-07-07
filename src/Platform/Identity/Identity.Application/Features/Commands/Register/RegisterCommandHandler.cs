@@ -5,16 +5,16 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using HashingSystem;
 
-namespace Identity.Application.Features.Commands.RegisterOrganization
+namespace Identity.Application.Features.Commands.Register
 {
-    public class RegisterOrganizationCommandHandler
-        : IRequestHandler<RegisterOrganizationCommand, Guid>
+    public class RegisterCommandHandler
+        : IRequestHandler<RegisterCommand, Guid>
     {
         private readonly IRepositoryWrapper _repository;
         private readonly IBcryptHashing _hashing;
 
 
-        public RegisterOrganizationCommandHandler(
+        public RegisterCommandHandler(
             IRepositoryWrapper repository,
             IBcryptHashing hashing)
         {
@@ -23,7 +23,7 @@ namespace Identity.Application.Features.Commands.RegisterOrganization
         }
 
         public async Task<Guid> Handle(
-            RegisterOrganizationCommand request,
+            RegisterCommand request,
             CancellationToken cancellationToken)
         {
             // Check if organization already exists
