@@ -10,7 +10,7 @@ using SharedKernel.Dto;
 using SharedKernel.Attributes;
 using Identity.API.Attributes;
 using Identity.Application.Features.Commands.Login;
-using Identity.Application.Features.Commands.RegisterOrganization;
+using Identity.Application.Features.Commands.Register;
 using Identity.Application.Features.Commands.RefreshToken.RefreshToken;
 using Identity.Domain.Common;
 
@@ -161,13 +161,13 @@ namespace Identity.API.Controllers
         /// </summary>
 
         [HttpPost]
-        [Route("api/v1/organizations/create")]
+        [Route("api/v1/auth/register")]
         [ValidateModelState]
         [SwaggerOperation("createOrganization")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Organization created successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> CreateOrganization([FromBody] RegisterOrganizationCommand command)
+        public async Task<IActionResult> CreateOrganization([FromBody] RegisterCommand command)
         {
             _logger.LogInfo($"Creating organization for {command.Email}");
             var verificationToken = Request.Cookies["VerificationToken"];
