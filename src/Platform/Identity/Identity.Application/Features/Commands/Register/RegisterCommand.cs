@@ -28,6 +28,7 @@ namespace Identity.Application.Features.Commands.Register
         // Token received after OTP verification
         public string? VerificationToken { get; set; }
         public string PersonName { get; set; }
+        public string PersonEmail { get; set; }
     
         // User
         public string UserName { get; set; }
