@@ -7,10 +7,11 @@ using SharedKernel.Dto;
 using SharedKernel.LoggerServices;
 using Swashbuckle.AspNetCore.Annotations;
 
+
 namespace Identity.API.Controllers
 {
     [ApiController]
-    public class OnboardingController : ControllerBase
+    public class OnboardingController : BaseController
     {
         private readonly IMediator _mediator;
         private readonly ILoggerManager _logger;
@@ -23,9 +24,6 @@ namespace Identity.API.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Get onboarding details.
-        /// </summary>
         [HttpGet]
         [Route("api/v1/onboarding")]
         [ApiAuthorization(Name = "GetOnboarding")]
@@ -36,9 +34,15 @@ namespace Identity.API.Controllers
         {
             _logger.LogInfo("Fetching onboarding details.");
 
-            var result = await _mediator.Send(
-                new GetOnboardingQuery());
+            Guid organizationId = GetOrganizationId();
+
+            var result = await _mediator.Send(new GetOnboardingQuery
+            {
+                OrganizationId = organizationId
+            });
+
             _logger.LogInfo("Onboarding details fetched successfully.");
+
             return Ok(result);
         }
     }
