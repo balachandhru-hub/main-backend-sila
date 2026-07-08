@@ -13,7 +13,6 @@ using Identity.Application.Features.Commands.RefreshToken.RefreshToken;
 using Identity.Domain.Common;
 using Identity.Domain.Dto;
 using Contracts.IServices;
-using SharedKernel.ExceptionHandler;
 
 
 namespace Identity.API.Controllers
@@ -60,8 +59,8 @@ namespace Identity.API.Controllers
         {
             _logger.LogInfo($"Generating OTP for {command.Email}");
 
-             var result = await _mediator.Send(command);
-          
+            var result = await _mediator.Send(command);
+
             return Ok(new SuccessResponseDto
             {
                 StatusCode = 200,
@@ -88,16 +87,17 @@ namespace Identity.API.Controllers
         {
             var result = await _mediator.Send(command);
 
-            Response.Cookies.Append(
-         "VerificationToken",
-         result.TemporaryVerificationToken!,
-         new CookieOptions
-         {
-             HttpOnly = true,
-             Secure = true,          // Use true in HTTPS
-             SameSite = SameSiteMode.Strict,
-             Expires = DateTimeOffset.UtcNow.AddMinutes(30)
-         });
+            Response.Cookies.Append(Common.VERIFICATION_TOKEN_COOKIE_NAME, result.TemporaryVerificationToken!,
+            new CookieOptions
+            {
+                Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                Path = "/",
+                HttpOnly = true,
+                Secure = true,          // Use true in HTTPS
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(30),
+                IsEssential = true
+            });
 
             return Ok(new SuccessResponseDto
             {
@@ -128,21 +128,27 @@ namespace Identity.API.Controllers
             Response.Cookies.Append(Common.COOKIE_ACCESS_TOKEN_KEY, result.Token!,
                 new CookieOptions
                 {
+                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    Path = "/",
                     HttpOnly = true,
                     Secure = true,          // false for local HTTP, true for HTTPS
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddHours(1)
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTimeOffset.UtcNow.AddHours(1),
+                    IsEssential = true
                 });
-                Response.Cookies.Append(
-                    Common.COOKIE_REFRESH_TOKEN_KEY,
-                    result.RefreshToken.ToString(),
-                    new CookieOptions
-                    {
-                        HttpOnly = true,
-                        Secure = true,
-                        SameSite = SameSiteMode.Strict,
-                        Expires = DateTimeOffset.UtcNow.AddDays(7)
-                    });
+            Response.Cookies.Append(
+                Common.COOKIE_REFRESH_TOKEN_KEY,
+                result.RefreshToken.ToString(),
+                new CookieOptions
+                {
+                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7),
+                    IsEssential = true
+                });
 
             return Ok(new SuccessResponseDto { StatusCode = 200, Message = "Token Generated Successfully", Description = "Successfully Created Token and Refresh Token" });
 
@@ -163,7 +169,7 @@ namespace Identity.API.Controllers
         public async Task<IActionResult> CreateOrganization([FromBody] RegisterCommand command)
         {
             _logger.LogInfo($"Creating organization for {command.Email}");
-            var verificationToken = Request.Cookies["VerificationToken"];
+            var verificationToken = Request.Cookies[Common.VERIFICATION_TOKEN_COOKIE_NAME];
             command.VerificationToken = verificationToken;
 
             var organizationId = await _mediator.Send(command);
@@ -177,74 +183,81 @@ namespace Identity.API.Controllers
         }
 
         /// <summary>
-            /// Refresh Access Token
-            /// </summary>
-            /// <returns></returns>
-            [HttpPost]
-            [Route("api/v1/auth/refresh-token")]
-            [ApiKeyAuthorization]
-            [SwaggerOperation("RefreshToken")]
-            [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Token refreshed successfully.")]
-            [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
-            [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-            public async Task<IActionResult> RefreshToken()
+        /// Refresh Access Token
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/v1/auth/refresh-token")]
+        [ApiKeyAuthorization]
+        [SwaggerOperation("RefreshToken")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Token refreshed successfully.")]
+        [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> RefreshToken()
+        {
+            _logger.LogInfo("Refresh token request received.");
+
+            string? refreshToken = Request.Cookies["refresh_token"];
+
+            Guid.TryParse(refreshToken, out Guid parsedRefreshToken);
+
+            var result = await _mediator.Send(new RefreshTokenCommand
             {
-                _logger.LogInfo("Refresh token request received.");
+                RefreshToken = parsedRefreshToken
+            });
 
-                string? refreshToken = Request.Cookies["refresh_token"];
-
-                Guid.TryParse(refreshToken, out Guid parsedRefreshToken);
-
-                var result = await _mediator.Send(new RefreshTokenCommand
+            Response.Cookies.Append(
+                Common.COOKIE_ACCESS_TOKEN_KEY,
+                result.Token!,
+                new CookieOptions
                 {
-                    RefreshToken = parsedRefreshToken
+                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTimeOffset.UtcNow.AddHours(1),
+                    IsEssential = true
                 });
 
-                Response.Cookies.Append(
-                    Common.COOKIE_ACCESS_TOKEN_KEY,
-                    result.Token!,
-                    new CookieOptions
-                    {
-                        HttpOnly = true,
-                        Secure = true,
-                        SameSite = SameSiteMode.Strict,
-                        Expires = DateTimeOffset.UtcNow.AddHours(1)
-                    });
-
-                Response.Cookies.Append(
-                    Common.COOKIE_REFRESH_TOKEN_KEY,
-                    result.RefreshToken.ToString(),
-                    new CookieOptions
-                    {
-                        HttpOnly = true,
-                        Secure = true,
-                        SameSite = SameSiteMode.Strict,
-                        Expires = DateTimeOffset.UtcNow.AddDays(7)
-                    });
-
-                return Ok(new SuccessResponseDto
+            Response.Cookies.Append(
+                Common.COOKIE_REFRESH_TOKEN_KEY,
+                result.RefreshToken.ToString(),
+                new CookieOptions
                 {
-                    StatusCode = 200,
-                    Message = "Token refreshed successfully.",
-                    Description = "Successfully refreshed Access Token and Refresh Token."
+                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7),
+                    IsEssential = true
                 });
-            }
-            /// <summary>
-            /// Token Claims
-            /// </summary>
-            /// <returns></returns>
-            [HttpGet]
-            [Route("api/v1/token-claim")]
-            [ValidateModelState]
-            [ApiAuthorization(Name ="GET_ALL_CLAIMS")]
-            [SwaggerOperation("GetAllClaim")]
-            [SwaggerResponse(200, type: typeof(TokenClaimDto), description: "Fetches logged in user claims")]
-            [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
-            public IActionResult GetAllClaim()
-            {
-                string? token = Request.Cookies[Common.COOKIE_ACCESS_TOKEN_KEY];
-                TokenClaimDto result = _authService.GetClaim(token);
 
-                return Ok(result);
-            }
-    }}
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Token refreshed successfully.",
+                Description = "Successfully refreshed Access Token and Refresh Token."
+            });
+        }
+        /// <summary>
+        /// Token Claims
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/v1/token-claim")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_ALL_CLAIMS")]
+        [SwaggerOperation("GetAllClaim")]
+        [SwaggerResponse(200, type: typeof(TokenClaimDto), description: "Fetches logged in user claims")]
+        [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+        public IActionResult GetAllClaim()
+        {
+            string? token = Request.Cookies[Common.COOKIE_ACCESS_TOKEN_KEY];
+            TokenClaimDto result = _authService.GetClaim(token);
+
+            return Ok(result);
+        }
+    }
+}
