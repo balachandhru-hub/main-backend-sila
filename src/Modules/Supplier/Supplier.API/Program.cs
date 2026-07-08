@@ -43,15 +43,14 @@ public partial class Program
         builder.Services.AddControllers();
 
         builder.Services.ConfigureDatabase(configuration);
-      //  builder.Services.ConfigureServiceWrapper();
-      //  builder.Services.ConfigureRepositoryWrapper();
+   
 
 
-      //  builder.Services.ConfigureMediatR();
+   
         builder.Services.AddHttpClient();
 
         builder.Services.AddHttpContextAccessor();
-      //  builder.Services.ConfigureLoggerService();
+      
 
         builder.Services.AddMemoryCache();
 
@@ -85,7 +84,7 @@ public partial class Program
         using (var scope = app.Services.CreateScope())
         {
             DBMigration.UpdateDatabase(scope.ServiceProvider);
-           // SeedData.Initialize(scope.ServiceProvider);
+          
         }
 
         // Forwarded Headers

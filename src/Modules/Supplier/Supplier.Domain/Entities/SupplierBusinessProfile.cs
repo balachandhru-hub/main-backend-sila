@@ -11,7 +11,7 @@ namespace Supplier.Domain.Entities
 
         public Guid OrganizationId { get; set; }
 
-        // Company Information
+       
         public string OrganizationName { get; set; }
 
         public OrganizationType OrganizationType { get; set; }

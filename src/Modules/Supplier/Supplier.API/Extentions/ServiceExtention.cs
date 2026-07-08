@@ -28,19 +28,5 @@ public static class ServiceExtensions
     {
         services.AddSingleton<ILoggerManager, LoggerManager>();
     }
-    // public static void ConfigureMediatR(this IServiceCollection services)
-    // {
-    //     services.AddMediatR(cfg =>
-    //     {
-    //         cfg.RegisterServicesFromAssembly(typeof(UploadUnspscCommand).Assembly);
-    //     });
-    // }
-
-    /// <summary>
-    /// This method is used to inject the entity repository as scoped instance.
-    // /// </summary>
-    // public static void ConfigureRepositoryWrapper(this IServiceCollection services)
-    // {
-    //     _ = services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
-    // }
+   
 }
