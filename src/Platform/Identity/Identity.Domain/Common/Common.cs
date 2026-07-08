@@ -11,7 +11,7 @@ namespace Identity.Domain.Common
                 public static readonly string MAX_REQUEST_SIZE = "MaxRequestBodySize";
                 public static readonly string UAT_ENVIRONMENT = "UAT";
                 public static readonly string TOKEN_EXPIRY = "Tokens:TokenExpirationTimeInSeconds";
-                public static int TOKEN_EXPIRY_TIME_DEFAULT = 1200;
+                public static int TOKEN_EXPIRY_TIME_DEFAULT = 3600;
                 public static readonly string LOGIN_ATTRIBUTE_LOGIN = "LOGIN";
                 public const string TOKEN_ISSUER = "Tokens:Issuer";
                 public static readonly string COOKIE_ACCESS_TOKEN_KEY = "access_token";

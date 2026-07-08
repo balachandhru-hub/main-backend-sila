@@ -53,7 +53,7 @@ namespace Identity.Application.Features.Auth.Commands.Login
         {
             int maxAttempts = int.TryParse(_configuration["LoginSecurity:MaxFailedAttempts"], out int m) ? m : 5;
             int lockoutMinutes = int.TryParse(_configuration["LoginSecurity:LockoutMinutes"], out int l) ? l : 2;
-          
+
 
             _logger.LogInfo($"Authentication request received for user: {request.UserName}");
 
@@ -130,18 +130,18 @@ namespace Identity.Application.Features.Auth.Commands.Login
                     _logger.LogError($"Person Not Found for userId : {user.Id}");
                     throw new UnAuthorizedCustomException("Unauthorized", "Person Not Found.");
                 }
-              var permissions = (
-    from roleFeature in _repository.RoleFeatureMapping.FindByConditionAsync(rf => rf.IsActive)
-    join feature in _repository.Feature.FindByConditionAsync(f => f.IsActive)
-        on roleFeature.FeatureId equals feature.Id
-    where roleFeature.RoleId == userRoleMapping.RoleId
-          && roleFeature.IsActive
-          && feature.IsActive
-    select feature.Key
-).ToList();
+                var permissions = (
+                    from roleFeature in _repository.RoleFeatureMapping.FindByConditionAsync(rf => rf.IsActive)
+                    join feature in _repository.Feature.FindByConditionAsync(f => f.IsActive)
+                        on roleFeature.FeatureId equals feature.Id
+                    where roleFeature.RoleId == userRoleMapping.RoleId
+                            && roleFeature.IsActive
+                            && feature.IsActive
+                    select feature.Key
+                ).ToList();
 
-string permissionJson = JsonSerializer.Serialize(permissions);
-                
+                string permissionJson = JsonSerializer.Serialize(permissions);
+
 
                 var claims = new[]
                 {
@@ -158,15 +158,15 @@ string permissionJson = JsonSerializer.Serialize(permissions);
                 DateTime expirationTime = DateTime.UtcNow.AddSeconds(number);
                 string jwtToken = GenerateToken(claims, expirationTime);
 
-            
-                        Guid refreshTokenValue = Guid.NewGuid();
+
+                Guid refreshTokenValue = Guid.NewGuid();
 
                 string hashedRefreshToken = _hashing.HashStringWithSalt(refreshTokenValue.ToString());
- int maxActiveSessions = int.TryParse(
-                    _configuration[Common.MAX_ACTIVE_SESSIONS],
-                    out int maxSessions)
-                    ? maxSessions
-                    : 3;
+                int maxActiveSessions = int.TryParse(
+                                   _configuration[Common.MAX_ACTIVE_SESSIONS],
+                                   out int maxSessions)
+                                   ? maxSessions
+                                   : 3;
 
                 var activeTokens = _repository.RefreshToken
                     .FindByCondition(x => x.UserId == user.Id && x.IsActive)
@@ -180,7 +180,7 @@ string permissionJson = JsonSerializer.Serialize(permissions);
                     foreach (var token in activeTokens.Take(tokensToDeactivate))
                     {
                         token.IsActive = false;
-   
+
 
                         _repository.RefreshToken.Update(token);
                     }
@@ -192,7 +192,7 @@ string permissionJson = JsonSerializer.Serialize(permissions);
                     Token = hashedRefreshToken,
                     ExpiresOn = DateTime.UtcNow.AddDays(7),
                 };
- 
+
                 _repository.RefreshToken.Create(refreshToken);
                 _repository.Save();
 
