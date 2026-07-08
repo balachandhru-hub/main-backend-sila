@@ -8,8 +8,20 @@
      <ItemGroup>
     <ProjectReference Include="..\Supplier.Application\Supplier.Application.csproj" />
     <ProjectReference Include="..\Supplier.Domain\Supplier.Domain.csproj" />
-    <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
+<ProjectReference Include="..\..\..\Platform\SharedKernel\SharedKernel.csproj" />
     
   </ItemGroup>
+     <ItemGroup>
+       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.17" />
+       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.17">
+         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+         <PrivateAssets>all</PrivateAssets>
+       </PackageReference>
+       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.17" />
+       <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.17">
+         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+         <PrivateAssets>all</PrivateAssets>
+       </PackageReference>
+     </ItemGroup>
 
 </Project>
