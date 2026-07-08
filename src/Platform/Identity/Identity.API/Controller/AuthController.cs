@@ -12,7 +12,9 @@ using Identity.Application.Features.Commands.Register;
 using Identity.Application.Features.Commands.RefreshToken.RefreshToken;
 using Identity.Domain.Common;
 using Identity.Domain.Dto;
-using Contracts.IServices;
+using Identity.Application.Features.Auth.Queries.GetClaim;
+
+
 
 
 namespace Identity.API.Controllers
@@ -24,22 +26,22 @@ namespace Identity.API.Controllers
         private readonly ILoggerManager _logger;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
-        private readonly IAuthService _authService;
+       
 
 
         public AuthController(
             IMediator mediator,
             ILoggerManager logger,
             HttpClient httpClient,
-            IConfiguration configuration,
-            IAuthService authService
+            IConfiguration configuration
+          
             )
         {
             _mediator = mediator;
             _logger = logger;
             _httpClient = httpClient;
             _configuration = configuration;
-            _authService = authService;
+   
         }
 
         /// <summary>
@@ -233,29 +235,25 @@ namespace Identity.API.Controllers
                     Expires = DateTimeOffset.UtcNow.AddDays(7),
                     IsEssential = true
                 });
-
-            return Ok(new SuccessResponseDto
+            }
+            /// <summary>
+            /// Token Claims
+            /// </summary>
+            /// <returns></returns>
+            [HttpGet]
+            [Route("api/v1/token-claim")]
+            [ValidateModelState]
+            [ApiAuthorization(Name ="GET_ALL_CLAIMS")]
+            [SwaggerOperation("GetAllClaim")]
+            [SwaggerResponse(200, type: typeof(TokenClaimDto), description: "Fetches logged in user claims")]
+            [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+            public async Task<IActionResult> GetAllClaim()
             {
-                StatusCode = 200,
-                Message = "Token refreshed successfully.",
-                Description = "Successfully refreshed Access Token and Refresh Token."
-            });
-        }
-        /// <summary>
-        /// Token Claims
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        [Route("api/v1/token-claim")]
-        [ValidateModelState]
-        [ApiAuthorization(Name = "GET_ALL_CLAIMS")]
-        [SwaggerOperation("GetAllClaim")]
-        [SwaggerResponse(200, type: typeof(TokenClaimDto), description: "Fetches logged in user claims")]
-        [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
-        public IActionResult GetAllClaim()
-        {
-            string? token = Request.Cookies[Common.COOKIE_ACCESS_TOKEN_KEY];
-            TokenClaimDto result = _authService.GetClaim(token);
+                string? token = Request.Cookies[Common.COOKIE_ACCESS_TOKEN_KEY];
+                TokenClaimDto result = await _mediator.Send(new GetClaimQuery
+                {
+                    Token = token
+                });
 
             return Ok(result);
         }
