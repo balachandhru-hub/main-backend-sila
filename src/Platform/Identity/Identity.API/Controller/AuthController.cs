@@ -235,6 +235,8 @@ namespace Identity.API.Controllers
                     Expires = DateTimeOffset.UtcNow.AddDays(_configuration.GetValue<int>(Common.REFRESH_TOKEN_EXPIRATION_TIME)),
                     IsEssential = true
                 });
+
+                return Ok(new SuccessResponseDto { StatusCode = 200, Message = "Token Generated Successfully", Description = "Successfully Created Token and Refresh Token" });
             }
             /// <summary>
             /// Token Claims
