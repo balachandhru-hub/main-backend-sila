@@ -87,6 +87,55 @@ namespace MasterData.Infrastructure.Persistence
                 csvReader.Dispose();
             }
         }
+
+        public static void CreateMetadata(Stream stream, RepositoryContext context)
+        {
+            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                var conf = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HeaderValidated = null,
+                    MissingFieldFound = null,
+                    IgnoreReferences = true
+                };
+
+                CsvReader csvReader = new CsvReader(reader, conf);
+
+                IEnumerable<Metadata> entries = csvReader.GetRecords<Metadata>();
+
+                List<Metadata> csvCount = entries.ToList();
+
+                foreach (Metadata entry in csvCount)
+                {
+                    var existingEntry = context.Metadata.Find(entry.Id);
+
+                    if (existingEntry != null)
+                    {
+                        var originalValues = context.Entry(existingEntry).OriginalValues;
+
+                        context.Entry(existingEntry)
+                            .CurrentValues.SetValues(entry);
+
+                        existingEntry.DateCreated =
+                            originalValues.GetValue<DateTime>("DateCreated");
+
+                        existingEntry.CreatedBy =
+                            originalValues.GetValue<Guid>("CreatedBy");
+
+                        existingEntry.IsActive =
+                            originalValues.GetValue<bool>("IsActive");
+                    }
+                    else
+                    {
+                        _ = context.Metadata.Add(entry);
+                    }
+                }
+
+                SaveEntities(context);
+
+                csvReader.Dispose();
+            }
+        }
         public static void Initialize(IServiceProvider serviceProvider)
         {
             RepositoryContext context = serviceProvider.GetRequiredService<RepositoryContext>();
@@ -99,6 +148,9 @@ namespace MasterData.Infrastructure.Persistence
 
             stream = new FileStream(Path.Combine(basePath, "EmailContent.csv"), FileMode.Open, FileAccess.Read);
             CreateEmailContent(stream, context);
+
+            stream = new FileStream(Path.Combine(basePath, "Metadata.csv"), FileMode.Open, FileAccess.Read);
+            CreateMetadata(stream, context);
         }
 
         public static void SaveEntities(RepositoryContext repositoryContext)

@@ -45,6 +45,11 @@
       <Link>MasterData.Infrastructure\Migrations\EmailContent.csv</Link>
     </Content>
 
+    <Content Include="Migrations\Metadata.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MasterData.Infrastructure\Migrations\Metadata.csv</Link>
+    </Content>
+
   </ItemGroup>
 
 </Project>
