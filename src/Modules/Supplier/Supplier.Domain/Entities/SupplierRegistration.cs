@@ -8,7 +8,7 @@ public class SupplierRegistration : BaseModel
     
     public Guid Id { get; set; }
 
-    public Guid OrganizationId { get; set; }
+    public Guid SupplierId { get; set; }
 
     public Guid RegistrationType { get; set; }
 

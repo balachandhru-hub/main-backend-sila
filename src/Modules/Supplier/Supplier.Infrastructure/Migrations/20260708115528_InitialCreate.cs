@@ -20,7 +20,7 @@ namespace Supplier.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    organization_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    supplier_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     account_holder_name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     bank_name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     branch_name = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -85,7 +85,7 @@ namespace Supplier.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    organization_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    supplier_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     location_name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     address_line1 = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     address_line2 = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -114,7 +114,7 @@ namespace Supplier.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    organization_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    supplier_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     registration_type = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     registration_number = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     registration_name = table.Column<string>(type: "nvarchar(max)", nullable: true),

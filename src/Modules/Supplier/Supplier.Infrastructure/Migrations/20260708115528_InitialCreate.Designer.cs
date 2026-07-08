@@ -12,7 +12,7 @@ using Supplier.Infrastructure.DbContext;
 namespace Supplier.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    [Migration("20260708113836_InitialCreate")]
+    [Migration("20260708115528_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -91,13 +91,13 @@ namespace Supplier.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_verified");
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("organization_id");
-
                     b.Property<string>("SWIFTCode")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("swiftcode");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_id");
 
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
@@ -302,10 +302,6 @@ namespace Supplier.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("location_name");
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("organization_id");
-
                     b.Property<string>("PinCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -315,6 +311,10 @@ namespace Supplier.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("state");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_id");
 
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
@@ -364,10 +364,6 @@ namespace Supplier.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_verified");
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("organization_id");
-
                     b.Property<string>("RegistrationName")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("registration_name");
@@ -380,6 +376,10 @@ namespace Supplier.Infrastructure.Migrations
                     b.Property<Guid>("RegistrationType")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("registration_type");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_id");
 
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")

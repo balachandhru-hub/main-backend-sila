@@ -7,7 +7,7 @@ public class SupplierBankAccount : BaseModel
     
     public Guid Id { get; set; }
 
-    public Guid OrganizationId { get; set; }
+    public Guid SupplierId { get; set; }
 
     public string AccountHolderName { get; set; }
 
