@@ -196,10 +196,6 @@ namespace Supplier.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("organization_name");
 
-                    b.Property<int>("OrganizationType")
-                        .HasColumnType("int")
-                        .HasColumnName("organization_type");
-
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")

@@ -50,7 +50,6 @@ namespace Supplier.Infrastructure.Migrations
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     organization_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     organization_name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    organization_type = table.Column<int>(type: "int", nullable: false),
                     email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     phone = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     email_verified = table.Column<bool>(type: "bit", nullable: false),

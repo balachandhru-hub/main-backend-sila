@@ -10,19 +10,13 @@ namespace Supplier.Domain.Entities
         public Guid Id { get; set; }
 
         public Guid OrganizationId { get; set; }
-
-       
         public string OrganizationName { get; set; }
-
-        public OrganizationType OrganizationType { get; set; }
 
         public string Email { get; set; }
 
         public string Phone { get; set; }
 
         public bool EmailVerified { get; set; }
-
-    
         public string Country { get; set; }
 
         public string AddressLine1 { get; set; }

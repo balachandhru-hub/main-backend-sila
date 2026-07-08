@@ -12,7 +12,7 @@ using Supplier.Infrastructure.DbContext;
 namespace Supplier.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    [Migration("20260708115528_InitialCreate")]
+    [Migration("20260708120103_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -198,10 +198,6 @@ namespace Supplier.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("organization_name");
-
-                    b.Property<int>("OrganizationType")
-                        .HasColumnType("int")
-                        .HasColumnName("organization_type");
 
                     b.Property<string>("Phone")
                         .IsRequired()
