@@ -24,5 +24,6 @@ namespace Identity.Domain.Common
                 public static readonly string MAX_ACTIVE_SESSIONS = "TokenSecurity:MaxActiveSessions";
                 public static readonly string DOMAIN_COOKIE_NAME = "Domain:DomainName";
                 public static readonly string VERIFICATION_TOKEN_COOKIE_NAME = "VerificationToken";
+                public static readonly string REFRESH_TOKEN_EXPIRATION_DAYS = "TokenExpiration:RefreshTokenExpirationDays";
         }
 }

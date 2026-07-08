@@ -146,7 +146,7 @@ namespace Identity.API.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Expires = DateTimeOffset.UtcNow.AddDays(7),
+                    Expires = DateTimeOffset.UtcNow.AddDays(_configuration.GetValue<int>(Common.REFRESH_TOKEN_EXPIRATION_DAYS)),
                     IsEssential = true
                 });
 
@@ -230,7 +230,7 @@ namespace Identity.API.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Expires = DateTimeOffset.UtcNow.AddDays(7),
+                    Expires = DateTimeOffset.UtcNow.AddDays(_configuration.GetValue<int>(Common.REFRESH_TOKEN_EXPIRATION_DAYS)),
                     IsEssential = true
                 });
 
