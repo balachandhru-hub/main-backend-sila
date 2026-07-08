@@ -21,11 +21,10 @@ public class GetMetadataByTypeQueryHandler
     }
 
     public Task<List<MetadataDto>> Handle(
-    GetMetadataByTypeQuery request,
-    CancellationToken cancellationToken)
+     GetMetadataByTypeQuery request,
+     CancellationToken cancellationToken)
     {
-        _logger.LogInfo(
-            $"Fetching metadata for type: {string.Join(",", request.Type)}");
+        _logger.LogInfo($"Fetching metadata for type: {request.Type}");
 
         var result = _repository.Metadata
             .FindByCondition(x =>
@@ -42,16 +41,14 @@ public class GetMetadataByTypeQueryHandler
 
         if (!result.Any())
         {
-            _logger.LogError(
-                $"No metadata found for type: {string.Join(",", request.Type)}");
+            _logger.LogError($"No metadata found for type: {request.Type}");
 
             throw new NotFoundCustomException(
-                $"No metadata found for type: {string.Join(",", request.Type)}",
-                $"No metadata found for type: {string.Join(",", request.Type)}");
+                $"No metadata found for type: {request.Type}",
+                $"No metadata found for type: {request.Type}");
         }
 
-        _logger.LogInfo(
-            $"Fetched metadata for type: {string.Join(",", request.Type)}");
+        _logger.LogInfo($"Fetched metadata for type: {request.Type}");
 
         return Task.FromResult(result);
     }

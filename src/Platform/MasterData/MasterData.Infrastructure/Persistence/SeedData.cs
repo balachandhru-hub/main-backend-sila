@@ -112,18 +112,10 @@ namespace MasterData.Infrastructure.Persistence
                     if (existingEntry != null)
                     {
                         var originalValues = context.Entry(existingEntry).OriginalValues;
-
-                        context.Entry(existingEntry)
-                            .CurrentValues.SetValues(entry);
-
-                        existingEntry.DateCreated =
-                            originalValues.GetValue<DateTime>("DateCreated");
-
-                        existingEntry.CreatedBy =
-                            originalValues.GetValue<Guid>("CreatedBy");
-
-                        existingEntry.IsActive =
-                            originalValues.GetValue<bool>("IsActive");
+                        context.Entry(existingEntry).CurrentValues.SetValues(entry);
+                        existingEntry.DateCreated =originalValues.GetValue<DateTime>("DateCreated");
+                        existingEntry.CreatedBy =originalValues.GetValue<Guid>("CreatedBy");
+                        existingEntry.IsActive =originalValues.GetValue<bool>("IsActive");
                     }
                     else
                     {

@@ -32,18 +32,9 @@ public class MetadataController : ControllerBase
     [Route("api/v1/metadata/reference-list")]
     [ValidateModelState]
     [SwaggerOperation("GetReferenceList")]
-    [SwaggerResponse(
-        200,
-        "Fetched Metadata",
-        typeof(List<MetadataDto>))]
-    [SwaggerResponse(
-        400,
-        "Bad Request",
-        typeof(ErrorResponseDto))]
-    [SwaggerResponse(
-        404,
-        "Not Found",
-        typeof(ErrorResponseDto))]
+    [SwaggerResponse(200, "Fetched Metadata", typeof(List<MetadataDto>))]
+    [SwaggerResponse(400, "Bad Request", typeof(ErrorResponseDto))]
+    [SwaggerResponse(404, "Not Found", typeof(ErrorResponseDto))]
     public async Task<IActionResult> GetReferenceList(
         [FromBody] List<string> type)
     {
