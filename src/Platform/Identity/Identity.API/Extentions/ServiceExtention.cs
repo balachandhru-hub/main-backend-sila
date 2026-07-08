@@ -17,7 +17,7 @@ using Identity.Application.Features.Auth.Commands;
 using Identity.Application.Features.Auth.Commands.SendEmailVerification;
 using Identity.Application.Features.Auth.Commands.VerifyOtp;
 using HashingSystem;
-using Contracts.IServices;
+
 
 namespace Identity.API.Extensions
 {
@@ -140,8 +140,8 @@ namespace Identity.API.Extensions
          
             _ = services.AddScoped<IUserIdentityService, UserIdentityService>();
             _ = services.AddScoped<IUserContext, UserContext>();
-           _ = services.AddScoped<IBcryptHashing, BcryptHashing>();
-           _ = services.AddScoped<IAuthService, AuthService>();
+            _ = services.AddScoped<IBcryptHashing, BcryptHashing>();
+
             _ = services.AddControllers();
 
         }
