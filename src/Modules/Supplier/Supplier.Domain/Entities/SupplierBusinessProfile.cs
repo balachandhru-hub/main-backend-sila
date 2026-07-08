@@ -1,6 +1,6 @@
 using SharedKernel.Models;
 using System.ComponentModel.DataAnnotations;
-using Supplier.Domain.Enum;
+
 
 namespace Supplier.Domain.Entities
 {
