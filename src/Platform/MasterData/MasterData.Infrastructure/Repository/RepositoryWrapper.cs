@@ -20,6 +20,7 @@ public class RepositoryWrapper : IRepositoryWrapper
     private IEmailSentDetailRepository _emailSentDetail;
     private IEmailFailedDetailRepository _emailFailedDetail;
     private IEmailCCListRepository _emailCCList;
+    private IMetadataRepository _metadata;
 
     public RepositoryWrapper(
         RepositoryContext repositoryContext,
@@ -103,6 +104,16 @@ public class RepositoryWrapper : IRepositoryWrapper
                 _emailCCList = new EmailCCListRepository(_context);
 
             return _emailCCList;
+        }
+    }
+    public IMetadataRepository Metadata
+    {
+        get
+        {
+            if (_metadata == null)
+                _metadata = new MetadataRepository(_context);
+
+            return _metadata;
         }
     }
 
