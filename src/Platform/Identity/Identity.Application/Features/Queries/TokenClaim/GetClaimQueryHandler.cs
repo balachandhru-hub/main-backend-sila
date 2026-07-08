@@ -1,26 +1,26 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
-using Contracts.IServices;
 using Identity.Domain.Dto;
+using MediatR;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
-namespace Identity.Application.Services
+namespace Identity.Application.Features.Auth.Queries.GetClaim
 {
-    public class AuthService : IAuthService
+    public class GetClaimQueryHandler : IRequestHandler<GetClaimQuery, TokenClaimDto>
     {
         private readonly ILoggerManager _logger;
 
-        public AuthService(ILoggerManager logger)
+        public GetClaimQueryHandler(ILoggerManager logger)
         {
             _logger = logger;
         }
 
-        public TokenClaimDto GetClaim(string token)
+        public Task<TokenClaimDto> Handle(GetClaimQuery request, CancellationToken cancellationToken)
         {
             _logger.LogInfo("Fetching Claim Details");
 
-            if (string.IsNullOrWhiteSpace(token))
+            if (string.IsNullOrWhiteSpace(request.Token))
             {
                 throw new UnAuthorizedCustomException(
                     "Unauthorized",
@@ -28,7 +28,7 @@ namespace Identity.Application.Services
             }
 
             JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
-            JwtSecurityToken jwtToken = handler.ReadJwtToken(token);
+            JwtSecurityToken jwtToken = handler.ReadJwtToken(request.Token);
 
             Dictionary<string, string> claims =
                 jwtToken.Claims.ToDictionary(c => c.Type, c => c.Value);
@@ -50,7 +50,7 @@ namespace Identity.Application.Services
 
             _logger.LogInfo("Fetched Claim Details");
 
-            return dto;
+            return Task.FromResult(dto);
         }
     }
 }
