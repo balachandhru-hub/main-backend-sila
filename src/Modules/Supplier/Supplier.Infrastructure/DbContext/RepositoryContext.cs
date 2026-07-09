@@ -23,6 +23,7 @@ namespace Supplier.Infrastructure.DbContext
         public DbSet<SupplierBusinessProfile> SupplierBusinessProfiles { get; set; }
         public DbSet<SupplierDispatchLocation> SupplierDispatchLocations { get; set; }
        public DbSet<SupplierRegistration> SupplierRegistrations { get; set; }
+       public DbSet<Asset>Assets {get;set;}
       
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
@@ -31,6 +32,7 @@ namespace Supplier.Infrastructure.DbContext
             _ = modelBuilder.Entity<SupplierBusinessProfile>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<SupplierDispatchLocation>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<SupplierRegistration>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<Asset>().HasIndex(a=> a.IsActive);
 
              base.OnModelCreating(modelBuilder);
 
