@@ -88,9 +88,23 @@ namespace Buyer.Application.Features.Assets.Commands
             Asset asset = new Asset
             {
                 Id = assetId,
-                AssetType = request.assetUploadDto.AssetType == null ? null : metadataList.FirstOrDefault(x => x.Key == Common.ASSET_TYPE)?.Id,
+                  AssetType = request.assetUploadDto.AssetType == null
+        ? null
+        : metadataList
+            .FirstOrDefault(x =>
+                x.Type == Common.ASSET_TYPE &&
+                x.Key.Equals(request.assetUploadDto.AssetType,
+                    StringComparison.OrdinalIgnoreCase))
+            ?.Id,
                 AssetName = request.assetUploadDto.FileName,
-                EntityType = request.assetUploadDto.EntityType == null ? null : metadataList.FirstOrDefault(x => x.Key == Common.ENTITY_TYPE)?.Id,
+              EntityType = request.assetUploadDto.EntityType == null
+        ? null
+        : metadataList
+            .FirstOrDefault(x =>
+                x.Type == Common.ENTITY_TYPE &&
+                x.Key.Equals(request.assetUploadDto.EntityType,
+                    StringComparison.OrdinalIgnoreCase))
+            ?.Id,
                 EntityId = request.assetUploadDto.EntityId,
                 FileName = request.assetUploadDto.FileName!,
                 FileType = (Guid)metadataList?.FirstOrDefault(x => x.Type == Common.FILE_TYPE && x.Key == fileExtension)?.Id,

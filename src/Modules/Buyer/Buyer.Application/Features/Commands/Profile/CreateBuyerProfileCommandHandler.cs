@@ -88,8 +88,12 @@ namespace Buyer.Application.Features.Profile.Commands
                     BranchName = bankAccount.BranchName,
                     AccountNumber = bankAccount.AccountNumber,
                     IFSCCode = bankAccount.IFSCCode,
-                    SWIFTCode = bankAccount.SWIFTCode
-                };
+                    SWIFTCode = bankAccount.SWIFTCode,
+                Currency = bankAccount.Currency,
+        IsPrimary = bankAccount.IsPrimary
+    };
+
+    buyerBankAccounts.Add(buyerBankAccount);
             }
             await _repository.BuyerBankAccount.CreateRangeAsync(buyerBankAccounts);
             List<BuyerRegistration> buyerDocumentRegistrations = new List<BuyerRegistration>();
@@ -130,7 +134,9 @@ namespace Buyer.Application.Features.Profile.Commands
                     City = location.City,
                     ContactPerson = location.ContactPerson,
                     ContactPhone = location.ContactPhone,
-                    IsDefault = location.IsDefault
+                    IsDefault = location.IsDefault,
+                    PinCode=location.PinCode,
+                    State=location.State
                 };
                 buyerDeliveryLocations.Add(buyerDeliveryLocation);
             }

@@ -1,3 +1,4 @@
+using SharedKernel.Dto;
 namespace Buyer.Domain.Dto
 {
     public class OrganizationDto
@@ -35,5 +36,6 @@ namespace Buyer.Domain.Dto
         public string? Website { get; set; }
 
         public string? Description { get; set; }
+        public AssetDto? RegistrationDocument { get; set; }
     }
 }

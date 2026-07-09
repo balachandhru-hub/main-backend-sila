@@ -92,8 +92,8 @@ namespace Identity.API.Controllers
             Response.Cookies.Append(Common.VERIFICATION_TOKEN_COOKIE_NAME, result.TemporaryVerificationToken!,
             new CookieOptions
             {
-                Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
-                Path = "/",
+                // Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                // Path = "/",
                 HttpOnly = true,
                 Secure = true,          // Use true in HTTPS
                 SameSite = SameSiteMode.None,

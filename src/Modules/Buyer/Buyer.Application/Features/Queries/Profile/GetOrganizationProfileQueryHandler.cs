@@ -3,6 +3,7 @@ using Buyer.Domain.Dto;
 using Buyer.Application.Features.Queries.GetOrganizationProfile;
 using Buyer.Infrastructure.Contracts.IRepository;
 using SharedKernel.ExceptionHandler;
+using SharedKernel.Dto;
 
 public class GetOrganizationProfileQueryHandler
     : IRequestHandler<GetOrganizationProfileQuery, OrganizationDto>
@@ -51,7 +52,26 @@ public class GetOrganizationProfileQueryHandler
             Description = organization.Description
 
         };
+        var registration = _repositoryWrapper.BuyerRegistration
+    .FindFirstByCondition(x => x.BuyerId == organization.Id);
 
+if (registration != null && registration.AssetId.HasValue)
+{
+    var asset = _repositoryWrapper.Asset
+        .FindFirstByCondition(x => x.Id == registration.AssetId.Value);
+
+    if (asset != null)
+    {
+        dto.RegistrationDocument = new AssetDto
+        {
+            Id = asset.Id,
+            AssetType = asset.AssetType?.ToString(),
+            AssetName = asset.AssetName,
+            FileType = asset.FileType.ToString(),
+            FileName = asset.FileName
+        };
+    }
+}
         return dto;
     }
 }
