@@ -35,7 +35,6 @@ public class GetOrganizationProfileQueryHandler
         
             Email = organization.Email,
             Phone = organization.Phone,
-            EmailVerified = organization.EmailVerified,
             Country = organization.Country,
             AddressLine1 = organization.AddressLine1,
             AddressLine2 = organization.AddressLine2,

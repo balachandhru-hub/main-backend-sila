@@ -26,8 +26,6 @@ namespace Buyer.Domain.Entities
     public long? Commodity { get; set; }
 
     public string? CommodityTitle { get; set; }
-
-    public bool IsActive { get; set; }
     public BuyerCategory()
     {
     }

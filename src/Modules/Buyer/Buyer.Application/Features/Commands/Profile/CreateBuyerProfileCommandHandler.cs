@@ -1,3 +1,4 @@
+using Buyer.Application.Features.Assets.Commands;
 using Buyer.Domain.Dto;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
@@ -11,11 +12,13 @@ namespace Buyer.Application.Features.Profile.Commands
     {
         private readonly ILoggerManager _logger;
         private readonly IRepositoryWrapper _repository;
+        private readonly IMediator _mediator;
 
-        public CreateBuyerProfileCommandHandler(ILoggerManager logger, IRepositoryWrapper repository)
+        public CreateBuyerProfileCommandHandler(ILoggerManager logger, IRepositoryWrapper repository, IMediator mediator)
         {
             _repository = repository;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task<Guid> Handle(CreateBuyerProfileCommand request, CancellationToken cancellationToken)
@@ -98,10 +101,16 @@ namespace Buyer.Application.Features.Profile.Commands
                     Id = Guid.NewGuid(),
                     BuyerId = buyerBusinessProfile.Id,
                     RegistrationNumber = registration.RegistrationNumber,
-                    // RegistrationName = registration.RegistrationName,
+                    RegistrationName = registration.RegistrationName,
                     ExpiryDate = registration.ExpiryDate,
-                    // RegistrationType = registration.RegistrationType
+                    RegistrationType = registration.RegistrationType
                 };
+
+                if (registration.RegistrationDocument != null)
+                {
+                    Guid assetId = await _mediator.Send(new UploadAssetCommand(registration.RegistrationDocument));
+                    buyerRegistration.AssetId = assetId;
+                }
                 buyerDocumentRegistrations.Add(buyerRegistration);
             }
             await _repository.BuyerRegistration.CreateRangeAsync(buyerDocumentRegistrations);

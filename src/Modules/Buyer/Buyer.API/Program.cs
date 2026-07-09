@@ -1,16 +1,13 @@
 using SharedKernel.ExceptionHandler;
 using System.Reflection;
-using Identity.API.Extensions;
 using Microsoft.OpenApi.Models;
-// using HashingSystem;
-
 using Buyer.Domain.Common;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Http.Features;
 using Buyer.Infrastructure;
-using MediatR;
+using Buyer.API.Extensions;
 
-namespace Identity.API
+namespace Buyer.API
 {
     public partial class Program
     {
@@ -50,20 +47,13 @@ namespace Identity.API
             builder.Services.ConfigureServiceWrapper();
             builder.Services.ConfigureMediatR();
             builder.Services.AddHttpClient();
-            // builder.Services.AddHttpClient(); KeySpecs keys = new KeySpecs()
-            // {
-            //     Salt = configuration["Hashing:Salt"],
-            //     WorkFactor = Int32.TryParse(configuration["Hashing:WorkFactor"], out int numValue) ? numValue : 11
-            // };
-
-            // builder.Services.AddSingleton(keys);
             builder.Services.AddSignalR(options =>
             {
                 options.EnableDetailedErrors = true;
             });
 
 
-        
+
 
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddMemoryCache();
@@ -78,7 +68,7 @@ namespace Identity.API
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Identity System APIs",
+        Title = "Buyer System APIs",
         Version = "v1",
         Description = "REST APIs"
     });
@@ -114,7 +104,7 @@ namespace Identity.API
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Identity System API's v1");
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Buyer System API's v1");
                     c.RoutePrefix = "swagger";
                 });
             }

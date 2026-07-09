@@ -17,23 +17,25 @@ namespace Buyer.Infrastructure.DbContext
         {
             _configuration = configuration;
         }
-        public DbSet<BuyerCategory> BuyerCategory {get;set;}
-        public DbSet<BuyerDeliveryLocation> BuyerDeliveryLocation {get;set;}
-        public DbSet<BuyerBankAccount> BuyerBankAccount {get;set;}
-        public DbSet<BuyerBusinessProfile> BuyerBusinessProfile {get;set;}
-        public DbSet<BuyerRegistration> BuyerRegistration {get;set;}
+        public DbSet<BuyerCategory> BuyerCategory { get; set; }
+        public DbSet<BuyerDeliveryLocation> BuyerDeliveryLocation { get; set; }
+        public DbSet<BuyerBankAccount> BuyerBankAccount { get; set; }
+        public DbSet<BuyerBusinessProfile> BuyerBusinessProfile { get; set; }
+        public DbSet<BuyerRegistration> BuyerRegistration { get; set; }
+        public DbSet<Asset> Asset { get; set; }
 
-      
+
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
             _ = modelBuilder.HasDefaultSchema(_configuration[Common.APPLICATION_SCHEMA]);
             _ = modelBuilder.Entity<BuyerCategory>().HasIndex(a => a.IsActive);
-            _ = modelBuilder.Entity<BuyerBankAccount>().HasIndex(a=>a.IsActive);
-            _ = modelBuilder.Entity<BuyerBusinessProfile>().HasIndex(a=>a.IsActive);
-            _ = modelBuilder.Entity<BuyerDeliveryLocation>().HasIndex(a=>a.IsActive);
-            _ = modelBuilder.Entity<BuyerRegistration>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<BuyerBankAccount>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<BuyerBusinessProfile>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<BuyerDeliveryLocation>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<BuyerRegistration>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<Asset>().HasIndex(a => a.IsActive);
 
-             base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(modelBuilder);
 
             foreach (Microsoft.EntityFrameworkCore.Metadata.IMutableEntityType entity in modelBuilder.Model.GetEntityTypes())
             {
@@ -62,7 +64,7 @@ namespace Buyer.Infrastructure.DbContext
                 }
             }
         }
-             public void OnBeforeSaving(Guid UserId)
+        public void OnBeforeSaving(Guid UserId)
         {
             System.Collections.Generic.IEnumerable<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry> entries = ChangeTracker.Entries();
             foreach (Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry in entries)
@@ -97,8 +99,8 @@ namespace Buyer.Infrastructure.DbContext
             }
         }
 
-  
 
-     
+
+
     }
 }

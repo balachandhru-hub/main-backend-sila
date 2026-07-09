@@ -8,8 +8,6 @@ namespace Buyer.Domain.Dto
 
         public string Phone { get; set; } 
 
-        public bool EmailVerified { get; set; }
-
         public string Country { get; set; } 
 
         public string AddressLine1 { get; set; } 

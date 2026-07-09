@@ -1,10 +1,6 @@
-
-using Contracts.IRepository;
 using SharedKernel.ExceptionHandler;
 using Microsoft.EntityFrameworkCore;
-using Repository;
 using Services;
-// using Quartz;
 using Buyer.Domain.Common;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
@@ -12,13 +8,14 @@ using Buyer.Infrastructure.Contracts.IServices;
 using Buyer.Infrastructure.DbContext;
 using SharedKernel.LoggerServices;
 using Buyer.Application.Services;
-using MediatR;
 using Buyer.Application.Features.Queries.GetOrganizationProfile;
+using Buyer.Infrastructure.Contracts.IRepository;
+using Buyer.Infrastructure.Repository;
 
 
 
 
-namespace Identity.API.Extensions
+namespace Buyer.API.Extensions
 {
     /// <summary>
     /// Class <c>Service Extenstions</c> is static consists of service extensions.
@@ -136,11 +133,9 @@ namespace Identity.API.Extensions
             this IServiceCollection services
         )
         {
-         
             _ = services.AddScoped<IUserIdentityService, UserIdentityService>();
             _ = services.AddScoped<IUserContext, UserContext>();
-        
-
+            _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
             _ = services.AddControllers();
 
         }

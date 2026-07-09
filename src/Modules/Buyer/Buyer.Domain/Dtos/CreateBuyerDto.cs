@@ -1,3 +1,5 @@
+using SharedKernel.Dto;
+
 namespace Buyer.Domain.Dto
 {
     public class CreateBuyerDto
@@ -70,6 +72,7 @@ namespace Buyer.Domain.Dto
         public string RegistrationName { get; set; }
         public DateTime? ExpiryDate { get; set; }
         public string? RegistrationType { get; set; }
+        public AssetUploadDto? RegistrationDocument { get; set; }
     }
 
     public class BuyerDeliveryLocationDto
