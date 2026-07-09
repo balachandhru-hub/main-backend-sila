@@ -1,3 +1,5 @@
+using SharedKernel.Dto;
+
 namespace Supplier.Domain.Dto
 {
     public class SupplierRegistrationResponseDto

@@ -1,4 +1,5 @@
 using MediatR;
+using SharedKernel.Dto;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 using Supplier.Domain.Dto;

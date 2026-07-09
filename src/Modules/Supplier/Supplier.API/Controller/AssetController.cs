@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-  using SharedKernel.Controllers;
+using SharedKernel.Controllers;
 using SharedKernel.LoggerServices;
 using SharedKernel.Attributes;
 using SharedKernel.Dto;
 using MediatR;
-using  Supplier.Application.Features.Commands.Asset;
+using Supplier.Application.Features.Commands.Asset;
 using Supplier.Domain.Dto;
 
 namespace Buyer.API.Controllers
@@ -71,7 +71,7 @@ namespace Buyer.API.Controllers
         {
             _logger.LogDebug($"Downloading document for asset with Id: {assetId}");
 
-          
+
             _logger.LogDebug($"Document downloaded successfully for asset with Id: {assetId}");
 
             return Ok("assetDownloadDto");
