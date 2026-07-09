@@ -29,49 +29,104 @@ public class GetOrganizationProfileQueryHandler
                 $"Organization with ID {request.OrganizationId} not found.");
         }
 
-        var dto = new OrganizationDto
+        var response = new OrganizationDto
         {
+            Id = organization.Id,
             OrganizationId = organization.OrganizationId,
-            OrganizationName = organization.OrganizationName,
-        
-            Email = organization.Email,
-            Phone = organization.Phone,
-            Country = organization.Country,
-            AddressLine1 = organization.AddressLine1,
-            AddressLine2 = organization.AddressLine2,
-            City = organization.City,
-            State = organization.State,
-            PinCode = organization.PinCode,
-            Industry = organization.Industry,
-            BusinessType = organization.BusinessType,
-            EmployeeCount = organization.EmployeeCount,
-            AnnualTurnover = organization.AnnualTurnover,
-            Currency = organization.Currency,
-            YearEstablished = organization.YearEstablished,
-            Website = organization.Website,
-            Description = organization.Description
-
+            BusinessProfile = new BusinessProfileDto
+            {
+                OrganizationName = organization.OrganizationName,
+                Email = organization.Email,
+                Phone = organization.Phone,
+                Country = organization.Country,
+                AddressLine1 = organization.AddressLine1,
+                AddressLine2 = organization.AddressLine2,
+                City = organization.City,
+                State = organization.State,
+                PinCode = organization.PinCode,
+                Industry = organization.Industry,
+                BusinessType = organization.BusinessType,
+                EmployeeCount = organization.EmployeeCount,
+                AnnualTurnover = organization.AnnualTurnover,
+                Currency = organization.Currency,
+                YearEstablished = organization.YearEstablished,
+                Website = organization.Website,
+                Description = organization.Description
+            }
         };
-        var registration = _repositoryWrapper.BuyerRegistration
-    .FindFirstByCondition(x => x.BuyerId == organization.Id);
 
-if (registration != null && registration.AssetId.HasValue)
-{
-    var asset = _repositoryWrapper.Asset
-        .FindFirstByCondition(x => x.Id == registration.AssetId.Value);
+        // Registrations
+        var registrations = _repositoryWrapper.BuyerRegistration
+            .FindByCondition(x => x.BuyerId == organization.Id && x.IsActive)
+            .ToList();
 
-    if (asset != null)
-    {
-        dto.RegistrationDocument = new AssetDto
+        foreach (var registration in registrations)
         {
-            Id = asset.Id,
-            AssetType = asset.AssetType?.ToString(),
-            AssetName = asset.AssetName,
-            FileType = asset.FileType.ToString(),
-            FileName = asset.FileName
-        };
-    }
-}
-        return dto;
+            AssetDto? assetDto = null;
+
+            if (registration.AssetId.HasValue)
+            {
+                var asset = _repositoryWrapper.Asset
+                    .FindFirstByCondition(x => x.Id == registration.AssetId.Value);
+
+                if (asset != null)
+                {
+                    assetDto = new AssetDto
+                    {
+                        Id = asset.Id,
+                        AssetType = asset.AssetType?.ToString(),
+                        AssetName = asset.AssetName,
+                        FileType = asset.FileType.ToString(),
+                        FileName = asset.FileName
+                    };
+                }
+            }
+
+            response.Registrations.Add(new RegistrationDto
+            {
+                RegistrationType = registration.RegistrationType,
+                RegistrationNumber = registration.RegistrationNumber,
+                RegistrationName = registration.RegistrationName,
+                ExpiryDate = registration.ExpiryDate,
+                Asset = assetDto
+            });
+        }
+
+        // Bank Accounts
+        response.BankAccounts = _repositoryWrapper.BuyerBankAccount
+            .FindByCondition(x => x.BuyerId == organization.Id && x.IsActive)
+            .Select(x => new BankAccountDto
+            {
+                AccountHolderName = x.AccountHolderName,
+                BankName = x.BankName,
+                BranchName = x.BranchName,
+                AccountNumber = x.AccountNumber,
+                IFSCCode = x.IFSCCode,
+                SWIFTCode = x.SWIFTCode,
+                Currency = x.Currency,
+                IsPrimary = x.IsPrimary,
+                IsVerified = x.IsVerified
+            })
+            .ToList();
+
+        // Delivery Locations
+        response.DispatchLocations = _repositoryWrapper.BuyerDeliveryLocation
+            .FindByCondition(x => x.BuyerId == organization.Id && x.IsActive)
+            .Select(x => new DeliveryLocationDto
+            {
+                LocationName = x.LocationName,
+                AddressLine1 = x.AddressLine1,
+                AddressLine2 = x.AddressLine2,
+                City = x.City,
+                State = x.State,
+                Country = x.Country,
+                PinCode = x.PinCode,
+                ContactPerson = x.ContactPerson,
+                ContactPhone = x.ContactPhone,
+                IsDefault = x.IsDefault
+            })
+            .ToList();
+
+        return response;
     }
 }
