@@ -7,9 +7,12 @@
   </PropertyGroup>
    <ItemGroup>
     <ProjectReference Include="..\Buyer.Domain\Buyer.Domain.csproj" />
-    <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
+      <ProjectReference Include="..\..\..\Platform\SharedKernel\SharedKernel.csproj" />
     <ProjectReference Include="..\Buyer.Infrastructure\Buyer.Infrastructure.csproj" />
     
   </ItemGroup>
+   <ItemGroup>
+     <PackageReference Include="MediatR" Version="12.4.1" />
+   </ItemGroup>
 
 </Project>
