@@ -41,18 +41,27 @@ public partial class Program
                });
 
         builder.Services.AddControllers();
-
+        builder.Services.ConfigureCors(configuration);
         builder.Services.ConfigureDatabase(configuration);
-   
+   builder.Services.ConfigureDBContext(configuration);
+ builder.Services.ConfigureServiceWrapper();
+        builder.Services.ConfigureRepositoryWrapper();
 
+
+        builder.Services.ConfigureMediatR();
 
    
         builder.Services.AddHttpClient();
 
         builder.Services.AddHttpContextAccessor();
-      
-
+       builder.Services.ConfigureLoggerService();
+builder.Services.ConfigureAuthentication();
         builder.Services.AddMemoryCache();
+        builder.Services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
+
 
         builder.Services.Configure<FormOptions>(options =>
         {

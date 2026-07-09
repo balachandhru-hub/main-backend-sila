@@ -1,21 +1,14 @@
-using SharedKernel.Models;
-using System.ComponentModel.DataAnnotations;
-
-
-namespace Supplier.Domain.Entities
+namespace Supplier.Domain.Dto
 {
-    public class SupplierBusinessProfile : BaseModel
+    public class SupplierBusinessProfileDto
     {
-
-        public Guid Id { get; set; }
-
-        public Guid OrganizationId { get; set; }
         public string OrganizationName { get; set; }
 
         public string Email { get; set; }
 
         public string Phone { get; set; }
 
+        public bool EmailVerified { get; set; }
 
         public string Country { get; set; }
 
@@ -30,7 +23,9 @@ namespace Supplier.Domain.Entities
         public string PinCode { get; set; }
 
         public string Industry { get; set; }
+
         public string BusinessType { get; set; }
+
         public int? EmployeeCount { get; set; }
 
         public decimal? AnnualTurnover { get; set; }
@@ -42,6 +37,5 @@ namespace Supplier.Domain.Entities
         public string? Website { get; set; }
 
         public string? Description { get; set; }
-        public SupplierBusinessProfile() { }
     }
 }
