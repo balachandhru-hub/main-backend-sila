@@ -1,0 +1,19 @@
+using Supplier.Infrastructure.Contracts.IRepository;
+
+namespace Supplier.Infrastructure.Contracts.IRepository;
+
+public interface IRepositoryWrapper
+{
+   
+    ISupplierBusinessProfileRepository SupplierBusinessProfile { get; }
+
+    ISupplierRegistrationRepository SupplierRegistration { get; }
+
+    ISupplierBankAccountRepository SupplierBankAccount { get; }
+
+    ISupplierDispatchLocationRepository SupplierDispatchLocation { get; }
+    IAssetRepository Asset { get; }
+
+    bool Save();
+    Task<bool> SaveAsync();
+}
