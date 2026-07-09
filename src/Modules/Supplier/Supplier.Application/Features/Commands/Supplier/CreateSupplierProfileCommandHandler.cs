@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using Supplier.Domain.Common;
 using Microsoft.Extensions.Configuration;
 using Supplier.Application.Features.Commands.Asset;
+using SharedKernel.ExceptionHandler;
 
 namespace Supplier.Application.Features.Commands.Supplier
 {
@@ -32,182 +33,217 @@ namespace Supplier.Application.Features.Commands.Supplier
         }
 
         public async Task<Guid> Handle(
-            CreateSupplierProfileCommand request,
-            CancellationToken cancellationToken)
+    CreateSupplierProfileCommand request,
+    CancellationToken cancellationToken)
+{
+    _logger.LogInfo("Starting supplier profile creation process.");
+
+    var existingProfile = await _repository.SupplierBusinessProfile
+        .FindFirstByConditionAsync(x => x.OrganizationId == request.OrganizationId);
+
+    if (existingProfile != null)
+    {
+        _logger.LogError($"Supplier profile already exists for organization {request.OrganizationId}");
+
+        throw new PreConditionFailedCustomException(
+            "A supplier profile for this organization already exists.",
+            $"A supplier profile already exists for organization {request.OrganizationId}.");
+    }
+
+    _logger.LogInfo("Creating Supplier Business Profile.");
+
+    SupplierBusinessProfile supplierProfile = new SupplierBusinessProfile
+    {
+        Id = Guid.NewGuid(),
+        OrganizationId = request.OrganizationId,
+
+        OrganizationName = request.BusinessProfile.OrganizationName,
+        Email = request.BusinessProfile.Email,
+        Phone = request.BusinessProfile.Phone,
+
+        Country = request.BusinessProfile.Country,
+        AddressLine1 = request.BusinessProfile.AddressLine1,
+        AddressLine2 = request.BusinessProfile.AddressLine2,
+        City = request.BusinessProfile.City,
+        State = request.BusinessProfile.State,
+        PinCode = request.BusinessProfile.PinCode,
+
+        Industry = request.BusinessProfile.Industry,
+        BusinessType = request.BusinessProfile.BusinessType,
+        EmployeeCount = request.BusinessProfile.EmployeeCount,
+        AnnualTurnover = request.BusinessProfile.AnnualTurnover,
+        Currency = request.BusinessProfile.Currency,
+        YearEstablished = request.BusinessProfile.YearEstablished,
+        Website = request.BusinessProfile.Website,
+        Description = request.BusinessProfile.Description
+    };
+
+    await _repository.SupplierBusinessProfile.CreateAsync(supplierProfile);
+
+    //---------------------------------------------------------
+    // Registrations
+    //---------------------------------------------------------
+
+    if (request.Registrations != null && request.Registrations.Any())
+    {
+        _logger.LogInfo("Fetching document metadata.");
+
+        string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
+
+        var response = await _httpClient.PostAsJsonAsync(
+            $"{masterDataUrl}/api/v1/metadata/reference-list",
+            new List<string> { Common.METADATA_DOCUMENT_TYPE },
+            cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
         {
-            _logger.LogInfo("Creating supplier profile.");
+            _logger.LogError("Unable to fetch document metadata.");
 
-           //Business Profile
+            throw new PreConditionFailedCustomException(
+                "Unable to fetch document metadata.",
+                "Unable to fetch document metadata from MasterData.");
+        }
 
-            var supplierProfile = new SupplierBusinessProfile
+        var metadataList = await response.Content.ReadFromJsonAsync<List<MetadataDto>>(
+            cancellationToken: cancellationToken);
+
+        if (metadataList == null || !metadataList.Any())
+        {
+            _logger.LogError("Document metadata not found.");
+
+            throw new NotFoundCustomException(
+                "Document metadata not found.",
+                "Document metadata not found.");
+        }
+
+        var metadataLookup = metadataList.ToDictionary(
+            x => x.Key,
+            x => x.Id,
+            StringComparer.OrdinalIgnoreCase);
+
+        List<SupplierRegistration> registrations = new();
+
+        foreach (var registration in request.Registrations)
+        {
+            if (!metadataLookup.TryGetValue(registration.RegistrationType, out Guid metadataId))
+            {
+                _logger.LogError($"Document type '{registration.RegistrationType}' not found.");
+
+                throw new NotFoundCustomException(
+                    "Registration type not found.",
+                    $"Document type '{registration.RegistrationType}' not found.");
+            }
+
+            Guid? assetId = null;
+
+            if (registration.Asset != null)
+            {
+                _logger.LogInfo($"Uploading asset for {registration.RegistrationName}");
+
+                assetId = await _mediator.Send(
+                    new UploadAssetCommand(registration.Asset),
+                    cancellationToken);
+            }
+
+            SupplierRegistration supplierRegistration = new SupplierRegistration
             {
                 Id = Guid.NewGuid(),
-                OrganizationId = request.OrganizationId,
-
-                OrganizationName = request.BusinessProfile.OrganizationName,
-                Email = request.BusinessProfile.Email,
-                Phone = request.BusinessProfile.Phone,
-            
-
-                Country = request.BusinessProfile.Country,
-                AddressLine1 = request.BusinessProfile.AddressLine1,
-                AddressLine2 = request.BusinessProfile.AddressLine2,
-                City = request.BusinessProfile.City,
-                State = request.BusinessProfile.State,
-                PinCode = request.BusinessProfile.PinCode,
-
-                Industry = request.BusinessProfile.Industry,
-                BusinessType = request.BusinessProfile.BusinessType,
-                EmployeeCount = request.BusinessProfile.EmployeeCount,
-                AnnualTurnover = request.BusinessProfile.AnnualTurnover,
-                Currency = request.BusinessProfile.Currency,
-                YearEstablished = request.BusinessProfile.YearEstablished,
-                Website = request.BusinessProfile.Website,
-                Description = request.BusinessProfile.Description
+                SupplierId = supplierProfile.Id,
+                RegistrationType = metadataId,
+                RegistrationNumber = registration.RegistrationNumber,
+                RegistrationName = registration.RegistrationName,
+                ExpiryDate = registration.ExpiryDate,
+                AssetId = assetId,
+                IsVerified = false
             };
 
-            await _repository.SupplierBusinessProfile.CreateAsync(supplierProfile);
+            registrations.Add(supplierRegistration);
+        }
 
-           
-
-           
-
-         // Registrations
-
-if (request.Registrations != null && request.Registrations.Any())
-{
-    string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
-
-   
-    var response = await _httpClient.PostAsJsonAsync(
-        $"{masterDataUrl}/api/v1/metadata/reference-list",
-        new List<string> { Common.METADATA_DOCUMENT_TYPE },
-        cancellationToken);
-
-    if (!response.IsSuccessStatusCode)
-    {
-        throw new Exception("Unable to fetch document metadata from MasterData.");
+        await _repository.SupplierRegistration.CreateRangeAsync(registrations);
     }
 
-    var metadataList = await response.Content.ReadFromJsonAsync<List<MetadataDto>>(
-        cancellationToken: cancellationToken);
+    //---------------------------------------------------------
+    // Bank Accounts
+    //---------------------------------------------------------
 
-    if (metadataList == null || !metadataList.Any())
+    if (request.BankAccounts != null && request.BankAccounts.Any())
     {
-        throw new Exception("Document metadata not found.");
+        _logger.LogInfo("Creating Supplier Bank Accounts.");
+
+        List<SupplierBankAccount> bankAccounts = new();
+
+        foreach (var account in request.BankAccounts)
+        {
+            SupplierBankAccount bankAccount = new SupplierBankAccount
+            {
+                Id = Guid.NewGuid(),
+                SupplierId = supplierProfile.Id,
+
+                AccountHolderName = account.AccountHolderName,
+                BankName = account.BankName,
+                BranchName = account.BranchName,
+                AccountNumber = account.AccountNumber,
+                IFSCCode = account.IFSCCode,
+                SWIFTCode = account.SWIFTCode,
+                IBAN = account.IBAN,
+                Currency = account.Currency,
+                IsPrimary = account.IsPrimary,
+                IsVerified = false
+            };
+
+            bankAccounts.Add(bankAccount);
+        }
+
+        await _repository.SupplierBankAccount.CreateRangeAsync(bankAccounts);
     }
 
-    
-    var metadataLookup = metadataList.ToDictionary(
-        x => x.Key,
-        x => x.Id,
-        StringComparer.OrdinalIgnoreCase);
+    //---------------------------------------------------------
+    // Dispatch Locations
+    //---------------------------------------------------------
 
-    var registrations = new List<SupplierRegistration>();
-
-    foreach (var item in request.Registrations)
+    if (request.DispatchLocations != null && request.DispatchLocations.Any())
     {
-        _logger.LogInfo($"UI Value: '{item.RegistrationType}'");
-        if (!metadataLookup.TryGetValue(item.RegistrationType, out var metadataId))
+        _logger.LogInfo("Creating Supplier Dispatch Locations.");
+
+        List<SupplierDispatchLocation> dispatchLocations = new();
+
+        foreach (var location in request.DispatchLocations)
         {
-          _logger.LogError($"Document type '{item.RegistrationType}' not found in metadata.");
-            throw new Exception(
-                $"Document type '{item.RegistrationType}' not found.");
-        }
-Guid? assetId = null;
-
-if (item.Asset != null)
-{
-    assetId = await _mediator.Send(
-        new UploadAssetCommand(item.Asset),
-        cancellationToken);
-}
-                registrations.Add(new SupplierRegistration
-        {
-            Id = Guid.NewGuid(),
-            SupplierId = supplierProfile.Id,
-
-            RegistrationType = metadataId,
-
-            RegistrationNumber = item.RegistrationNumber,
-            RegistrationName = item.RegistrationName,
-
-            AssetId = assetId,
-
-            ExpiryDate = item.ExpiryDate,
-            IsVerified = false
-        });
-            }
-
-    await _repository.SupplierRegistration.CreateRangeAsync(registrations);
-}
-            //  Bank Accounts
-
-            if (request.BankAccounts != null && request.BankAccounts.Any())
+            SupplierDispatchLocation dispatchLocation = new SupplierDispatchLocation
             {
-                var bankAccounts = request.BankAccounts
-                    .Select(x => new SupplierBankAccount
-                    {
-                        Id = Guid.NewGuid(),
-                        SupplierId = supplierProfile.Id,
+                Id = Guid.NewGuid(),
+                SupplierId = supplierProfile.Id,
 
-                        AccountHolderName = x.AccountHolderName,
-                        BankName = x.BankName,
-                        BranchName = x.BranchName,
-                        AccountNumber = x.AccountNumber,
-                        IFSCCode = x.IFSCCode,
-                        SWIFTCode = x.SWIFTCode,
-                        IBAN = x.IBAN,
-                        Currency = x.Currency,
-                        IsPrimary = x.IsPrimary,
-                        IsVerified = false
-                    })
-                    .ToList();
+                LocationName = location.LocationName,
+                AddressLine1 = location.AddressLine1,
+                AddressLine2 = location.AddressLine2,
+                City = location.City,
+                State = location.State,
+                Country = location.Country,
+                PinCode = location.PinCode,
 
-                await _repository.SupplierBankAccount
-                    .CreateRangeAsync(bankAccounts);
-            }
+                ContactPerson = location.ContactPerson,
+                ContactEmail = location.ContactEmail,
+                ContactPhone = location.ContactPhone,
+                IsDefault = location.IsDefault
+            };
 
-            //  Dispatch Locations
-
-            if (request.DispatchLocations != null &&
-                request.DispatchLocations.Any())
-            {
-                var dispatchLocations = request.DispatchLocations
-                    .Select(x => new SupplierDispatchLocation
-                    {
-                        Id = Guid.NewGuid(),
-                        SupplierId = supplierProfile.Id,
-
-                        LocationName = x.LocationName,
-                        AddressLine1 = x.AddressLine1,
-                        AddressLine2 = x.AddressLine2,
-                        City = x.City,
-                        State = x.State,
-                        Country = x.Country,
-                        PinCode = x.PinCode,
-
-                        ContactPerson = x.ContactPerson,
-                        ContactEmail = x.ContactEmail,
-                        ContactPhone = x.ContactPhone,
-
-                        IsDefault = x.IsDefault
-                    })
-                    .ToList();
-
-                await _repository.SupplierDispatchLocation
-                    .CreateRangeAsync(dispatchLocations);
-            }
-
-            //  Save Changes
-
-            await _repository.SaveAsync();
-
-            _logger.LogInfo("Supplier profile created successfully.");
-
-            return supplierProfile.Id;
+            dispatchLocations.Add(dispatchLocation);
         }
-    
-   
+
+        await _repository.SupplierDispatchLocation.CreateRangeAsync(dispatchLocations);
+    }
+
+    //---------------------------------------------------------
+    // Save
+    //---------------------------------------------------------
+
+    await _repository.SaveAsync();
+
+    _logger.LogInfo($"Successfully registered Supplier Profile for Organization Id : {request.OrganizationId}");
+
+    return supplierProfile.Id;
 }
+    }
 }

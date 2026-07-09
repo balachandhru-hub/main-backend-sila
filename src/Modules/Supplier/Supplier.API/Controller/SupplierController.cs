@@ -33,6 +33,7 @@ namespace Supplier.API.Controllers
         /// </summary>
         [HttpPost("profile")]
         [Route("api/v1/CreateSupplierProfile")]
+        [ApiAuthorization(Name = "CREATE_SUPPLIER_PROFILE")]
         [ValidateModelState]
         [SwaggerOperation("CreateSupplierProfile")]
        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Upload successful")]       
