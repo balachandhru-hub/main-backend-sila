@@ -3,9 +3,9 @@ using Buyer.Domain.Entities;
 namespace Buyer.Infrastructure.Contracts.IRepository
 {
     /// <summary>
-    /// IBuyerBusinessProfileRepository
+    /// IBuyerDeliveryLocationRepository
     /// </summary>
-    public interface IBuyerBusinessProfileRepository : IRepositoryBase<BuyerBusinessProfile>
+    public interface IBuyerDeliveryLocationRepository : IRepositoryBase<BuyerDeliveryLocation>
     {
 
     }

@@ -1,7 +1,7 @@
 using MediatR;
 using Buyer.Domain.Dto;
 using Buyer.Application.Features.Queries.GetOrganizationProfile;
-using Contracts.IRepository;
+using Buyer.Infrastructure.Contracts.IRepository;
 using SharedKernel.ExceptionHandler;
 
 public class GetOrganizationProfileQueryHandler

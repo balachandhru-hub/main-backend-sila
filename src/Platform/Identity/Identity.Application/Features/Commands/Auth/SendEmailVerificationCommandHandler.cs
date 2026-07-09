@@ -102,30 +102,30 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
                 ValidityMinutes = 10
             };
         }
-      private async Task SendOtpEmailAsync(string email, string otp, int validityMinutes)
-{
-    string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
-
-    var response = await _httpClient.PostAsJsonAsync(
-        $"{masterDataUrl}/api/v1/email/send",
-        new
+        private async Task SendOtpEmailAsync(string email, string otp, int validityMinutes)
         {
-            ToEmail = email,
-            EmailKey = Common.EMAIL_VERIFICATION,
-            Parameters = new Dictionary<string, string>
-            {
+            string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
+
+            var response = await _httpClient.PostAsJsonAsync(
+                $"{masterDataUrl}/api/v1/email/send",
+                new
+                {
+                    ToEmail = email,
+                    EmailKey = Common.EMAIL_VERIFICATION,
+                    Parameters = new Dictionary<string, string>
+                    {
                 { Common.EMAIL_OTP, otp },
                 { Common.EMAIL_OTP_VALIDITY, $"{validityMinutes} minutes" }
+                    }
+                });
+
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception(
+                    $"Email API failed. Status: {(int)response.StatusCode}, Response: {responseBody}");
             }
-        });
-
-    string responseBody = await response.Content.ReadAsStringAsync();
-
-    if (!response.IsSuccessStatusCode)
-    {
-        throw new Exception(
-            $"Email API failed. Status: {(int)response.StatusCode}, Response: {responseBody}");
-    }
-}
+        }
     }
 }

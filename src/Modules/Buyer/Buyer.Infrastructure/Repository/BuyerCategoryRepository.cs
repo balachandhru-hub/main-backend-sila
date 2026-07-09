@@ -6,16 +6,16 @@ using Buyer.Infrastructure.DbContext;
 namespace Buyer.Infrastructure.Repository
 {
     /// <summary>
-    /// Class <c>BuyerBusinessProfileRepository</c> used to implement the methods related for BuyerBusinessProfile.
+    /// Class <c>BuyerCategoryRepository</c> used to implement the methods related for BuyerCategory.
     /// </summary>
-    public class BuyerBusinessProfileRepository : RepositoryBase<BuyerBusinessProfile>, IBuyerBusinessProfileRepository
+    public class BuyerCategoryRepository : RepositoryBase<BuyerCategory>, IBuyerCategoryRepository
     {
         /// <summary>
         /// Constructor for injecting DbContext and ILogger
         /// </summary>
         /// <param name="repositoryContext"></param>
         /// <returns></returns>
-        public BuyerBusinessProfileRepository(RepositoryContext repositoryContext) : base(repositoryContext)
+        public BuyerCategoryRepository(RepositoryContext repositoryContext) : base(repositoryContext)
         {
 
         }

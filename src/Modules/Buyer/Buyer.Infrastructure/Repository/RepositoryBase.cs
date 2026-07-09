@@ -1,9 +1,9 @@
-using Contracts.IRepository;
+using Buyer.Infrastructure.Contracts.IRepository;
 using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
-namespace Repository
+namespace Buyer.Infrastructure.Repository
 {
     /// <summary>
     ///

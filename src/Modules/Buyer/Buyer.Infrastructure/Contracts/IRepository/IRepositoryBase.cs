@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace Contracts.IRepository
+namespace Buyer.Infrastructure.Contracts.IRepository
 {
     /// <summary>
     /// Interface <c>IRepositoryBase</c> used to define the methods related for repository base.
