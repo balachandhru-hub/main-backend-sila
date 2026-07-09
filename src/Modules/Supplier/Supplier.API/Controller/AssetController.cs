@@ -38,7 +38,7 @@ namespace Buyer.API.Controllers
         /// <response code="400">Invalid file.</response>
         /// <response code="401">Unauthorized.</response>
         [HttpPost]
-        [Route("api/v1/buyer/asset")]
+        [Route("api/v1/supplier/asset")]
         [ApiAuthorization(Name = "ASSET_CREATE")]
         [SwaggerOperation("UploadDocuments")]
         [SwaggerResponse(statusCode: 201, "File Uploaded successfully", typeof(SuccessResponseDto))]
@@ -61,7 +61,7 @@ namespace Buyer.API.Controllers
         /// <response code="404">File not found.</response>
         /// <response code="500">Internal server error.</response>
         [HttpGet]
-        [Route("api/v1/buyer/asset/{assetId}")]
+        [Route("api/v1/supplier/asset/{assetId}")]
         [ApiAuthorization(Name = "ASSET_DOWNLOAD")]
         [SwaggerOperation("GetDocument")]
         [SwaggerResponse(statusCode: 200, "Fetched the File Details", typeof(AssetDownloadDto))]

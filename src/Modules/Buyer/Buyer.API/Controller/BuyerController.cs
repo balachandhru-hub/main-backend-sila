@@ -40,7 +40,7 @@ namespace Buyer.API.Controllers
         }
 
         [HttpPost]
-        [Route("api/v1/buyer")]
+        [Route("api/v1/buyer/register")]
         [ValidateModelState]
         [ApiAuthorization(Name = "CREATE_BUYER_PROFILE")]
         [SwaggerOperation("CreateProfile")]

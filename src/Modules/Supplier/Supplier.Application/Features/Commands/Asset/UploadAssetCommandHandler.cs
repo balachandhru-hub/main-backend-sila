@@ -8,7 +8,7 @@ using SharedKernel.ExceptionHandler;
 using Supplier.Domain.Dto;
 using Supplier.Application.Features.Commands.Asset;
 
-namespace Buyer.Application.Features.Assets.Commands
+namespace supplier.Application.Features.Assets.Commands
 {
     public class UploadAssetCommandHandler : IRequestHandler<UploadAssetCommand, Guid>
     {
