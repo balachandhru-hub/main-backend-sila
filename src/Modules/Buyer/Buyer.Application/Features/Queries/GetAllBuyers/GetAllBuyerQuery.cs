@@ -5,8 +5,8 @@ namespace Buyer.Application.Features.Queries.GetAllBuyers
 {
     public class GetAllBuyersQuery : IRequest<List<OrganizationDto>>
     {
-        public int Index { get; set; } = 1;
+        public int Index { get; set; } 
 
-        public int Limit { get; set; } = 10;
+        public int Limit { get; set; } 
     }
 }

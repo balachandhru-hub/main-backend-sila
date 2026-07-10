@@ -9,6 +9,7 @@ using Buyer.Domain.Dto;
 using Buyer.Application.Features.Profile.Commands;
 using SharedKernel.Controllers;
 using Buyer.Application.Features.Queries.GetAllBuyers;
+using Buyer.Application.Features.StatusUpdate.Commands;
 
 namespace Buyer.API.Controllers
 {
@@ -65,18 +66,32 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(200, type: typeof(List<OrganizationDto>), description: "Buyers retrieved successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetAllBuyers( [FromQuery] int index = 1,[FromQuery] int limit = 10)
+        public async Task<IActionResult> GetAllBuyers([FromBody] GetAllBuyersQuery query)
         {
             _logger.LogInfo("Fetching Buyer Profiles");
-            var result = await _mediator.Send(new GetAllBuyersQuery
-            {
-                Index = index,
-                Limit = limit
-            });
+            var result = await _mediator.Send(query);
 
             _logger.LogInfo("Buyer Profiles retrieved successfully");
 
             return Ok(result);
         }
+        [HttpPut]
+[Route("api/v1/buyer/status")]
+[ValidateModelState]
+[ApiAuthorization(Name = "UPDATE_BUYER_STATUS")]
+[SwaggerOperation("UpdateBuyerStatus")]
+[SwaggerResponse(200, type: typeof(bool), description: "Buyer status updated successfully")]
+[SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+[SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+public async Task<IActionResult> UpdateBuyerStatus([FromBody] UpdateBuyerStatusCommand command)
+{
+    _logger.LogInfo($"Updating Buyer Status. BuyerId: {command.BuyerId}, Status: {command.Status}");
+
+    var result = await _mediator.Send(command);
+
+    _logger.LogInfo($"Buyer Status updated successfully. BuyerId: {command.BuyerId}");
+
+    return Ok(result);
+}
     }
 }
