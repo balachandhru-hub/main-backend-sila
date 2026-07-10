@@ -34,10 +34,10 @@ namespace Supplier.Application.Features.Queries.Supplier
 
             if (supplier == null)
             {
-                throw new NotFoundCustomException(
-                    "Supplier not found.",
-                    "Supplier profile does not exist.");
-            }
+                    throw new NoContentCustomException(
+                        "No supplier profile data found.",
+                        "Supplier profile exists, but no related data is available.");
+                }
 
             var registrations = _repository.SupplierRegistration
                 .FindByCondition(x =>
