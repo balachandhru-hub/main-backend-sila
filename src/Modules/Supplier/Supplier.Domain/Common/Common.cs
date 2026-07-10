@@ -9,12 +9,16 @@ namespace Supplier.Domain.Common
         public static readonly string EMAIL_API_CREDENTIAL_DESCRIPTION = "EmailCredentials";
         public static readonly string MASTER_DATA_URL = "InterCallService:MasterDataUrl";
         public static readonly string METADATA_DOCUMENT_TYPE = "DOCUMENT_TYPE";
-          public static readonly string ASSET_TYPE = "ASSET_TYPE";
-                public static readonly string ENTITY_TYPE = "ENTITY_TYPE";
-                public static readonly string FILE_TYPE = "FILE_TYPE";
-                 public static readonly string BASE_FOLDER_PATH = "FolderPath:BasePath";
-                  public static readonly string COOKIE_ACCESS_TOKEN_KEY = "access_token";
-        
-        }
+        public static readonly string ASSET_TYPE = "ASSET_TYPE";
+        public static readonly string ENTITY_TYPE = "ENTITY_TYPE";
+        public static readonly string FILE_TYPE = "FILE_TYPE";
+        public static readonly string BASE_FOLDER_PATH = "FolderPath:BasePath";
+        public static readonly string COOKIE_ACCESS_TOKEN_KEY = "access_token";
+        public static readonly string PENDING_STATUS = "PENDING_VERIFICATION";
+        public static readonly string METADATA_STATUS_TYPE = "STATUS";
+        public static readonly string VERIFIED_STATUS = "VERIFIED";
+        public static readonly string REJECTED_STATUS = "REJECTED";
 
-}  
+    }
+
+}
