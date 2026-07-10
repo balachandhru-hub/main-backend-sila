@@ -48,7 +48,7 @@ namespace Buyer.Application.Features.Commands.UpdateBuyerStatus
                 .FindByCondition(x => x.BuyerId == buyer.Id && x.IsActive)
                 .ToList();
 
-            if (request.Status.Equals("Rejected", StringComparison.OrdinalIgnoreCase) &&
+            if (request.Status.Equals(Common.REJECTED_STATUS, StringComparison.OrdinalIgnoreCase) &&
                 string.IsNullOrWhiteSpace(request.Comments))
             {
                 throw new NotFoundCustomException(

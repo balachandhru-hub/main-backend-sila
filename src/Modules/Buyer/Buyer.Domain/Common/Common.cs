@@ -19,8 +19,8 @@ namespace Buyer.Domain.Common
                 public static readonly string FILE_TYPE = "FILE_TYPE";
                 public static readonly string PENDING_STATUS="PENDING_VERIFICATION";
                  public static readonly string METADATA_STATUS_TYPE = "STATUS";
-                public static readonly string VERIFIED_STATUS="Verified";
-                public static readonly string REJECTED_STATUS="Rejected";
+                public static readonly string VERIFIED_STATUS="VERIFIED";
+                public static readonly string REJECTED_STATUS="REJECTED";
                
         }
 }
