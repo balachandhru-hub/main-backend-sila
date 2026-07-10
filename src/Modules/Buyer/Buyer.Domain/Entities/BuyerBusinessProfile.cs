@@ -48,6 +48,8 @@ namespace Buyer.Domain.Entities
         public string? Website { get; set; }
 
         public string? Description { get; set; }
+        public string Status {get;set;}
+        public string? Comment {get;set;}
         public BuyerBusinessProfile()
         {
         }
