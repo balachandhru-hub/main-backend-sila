@@ -21,8 +21,8 @@ namespace Buyer.Application.Features.Queries.GetAllBuyers
         {
             var buyers = _repositoryWrapper.BuyerBusinessProfile
                 .FindByCondition(x => x.IsActive)
-                .OrderBy(x => x.OrganizationName)
-                .Skip((request.Index - 1) * request.Limit)
+                .OrderBy(x => x.DateUpdated)
+                .Skip(request.Index)
                 .Take(request.Limit)
                 .ToList();
 

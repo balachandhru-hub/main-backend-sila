@@ -17,6 +17,10 @@ namespace Buyer.Domain.Common
                 public static readonly string ASSET_TYPE = "ASSET_TYPE";
                 public static readonly string ENTITY_TYPE = "ENTITY_TYPE";
                 public static readonly string FILE_TYPE = "FILE_TYPE";
+                public static readonly string PENDING_STATUS="PENDING_VERIFICATION";
+                 public static readonly string METADATA_STATUS_TYPE = "STATUS";
+                public static readonly string VERIFIED_STATUS="VERIFIED";
+                public static readonly string REJECTED_STATUS="REJECTED";
                
         }
 }
