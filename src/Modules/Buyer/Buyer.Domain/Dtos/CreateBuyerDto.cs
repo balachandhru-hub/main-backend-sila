@@ -22,6 +22,8 @@ namespace Buyer.Domain.Dto
         public int? YearEstablished { get; set; }
         public string? Website { get; set; }
         public string? Description { get; set; }
+        public string Status {get;set;}
+        
         public List<BuyerCategoryDto> BuyerCategories { get; set; }
         public List<BuyerBankAccountDto> BuyerBankAccounts { get; set; }
         public List<BuyerDocumentRegistrationDto> BuyerDocumentRegistrations { get; set; }

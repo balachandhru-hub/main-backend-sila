@@ -1,4 +1,5 @@
 using Buyer.Application.Features.Assets.Commands;
+using Buyer.Domain.Common;
 using Buyer.Domain.Dto;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
@@ -51,7 +52,8 @@ namespace Buyer.Application.Features.Profile.Commands
                 Currency = request.CreateBuyerDto.Currency,
                 YearEstablished = request.CreateBuyerDto.YearEstablished,
                 Website = request.CreateBuyerDto.Website,
-                Description = request.CreateBuyerDto.Description
+                Description = request.CreateBuyerDto.Description,
+                Status=Common.PENDING_STATUS
             };
             await _repository.BuyerBusinessProfile.CreateAsync(buyerBusinessProfile);
 
