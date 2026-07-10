@@ -8,6 +8,7 @@ using SharedKernel.Attributes;
 using Buyer.Domain.Dto;
 using Buyer.Application.Features.Profile.Commands;
 using SharedKernel.Controllers;
+using Buyer.Application.Features.Queries.GetAllBuyers;
 
 namespace Buyer.API.Controllers
 {
@@ -53,6 +54,28 @@ namespace Buyer.API.Controllers
             createBuyerDto.OrganizationId = GetOrganizationId();
             var result = await _mediator.Send(new CreateBuyerProfileCommand(createBuyerDto));
             _logger.LogInfo($"Created Organization Profile for Organization: {createBuyerDto.OrganizationName}");
+            return Ok(result);
+        }
+        
+        [HttpGet]
+        [Route("api/v1/buyer/getAllbuyer")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_ALL_BUYER")]
+        [SwaggerOperation("GetAllBuyers")]
+        [SwaggerResponse(200, type: typeof(List<OrganizationDto>), description: "Buyers retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetAllBuyers( [FromQuery] int index = 1,[FromQuery] int limit = 10)
+        {
+            _logger.LogInfo("Fetching Buyer Profiles");
+            var result = await _mediator.Send(new GetAllBuyersQuery
+            {
+                Index = index,
+                Limit = limit
+            });
+
+            _logger.LogInfo("Buyer Profiles retrieved successfully");
+
             return Ok(result);
         }
     }
