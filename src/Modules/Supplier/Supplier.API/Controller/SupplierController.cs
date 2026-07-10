@@ -9,6 +9,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using Supplier.Application.Features.Queries.Supplier;
 using Supplier.Domain.Dto;
 using SharedKernel.Controllers;
+using Supplier.Application.Features.StatusUpdate.Commands;
 
 
 namespace Supplier.API.Controllers
@@ -100,5 +101,28 @@ namespace Supplier.API.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Update Supplier Status
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("api/v1/Supplier/status")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_SUPPLIER_STATUS")]
+        [SwaggerOperation("UpdateSupplierStatus")]
+        [SwaggerResponse(200, type: typeof(bool), description: "Supplier status updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateSupplierStatus([FromBody] UpdateSupplierStatusCommand command)
+        {
+            _logger.LogInfo($"Updating Supplier Status. SupplierId: {command.SupplierId}, Status: {command.Status}");
+
+            var result = await _mediator.Send(command);
+
+            _logger.LogInfo($"Supplier Status updated successfully. SupplierId: {command.SupplierId}");
+
+            return Ok(result);
+        }
     }
 }
