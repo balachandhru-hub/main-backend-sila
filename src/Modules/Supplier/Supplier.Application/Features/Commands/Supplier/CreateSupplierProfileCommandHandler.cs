@@ -75,7 +75,8 @@ namespace Supplier.Application.Features.Commands.Supplier
         Currency = request.BusinessProfile.Currency,
         YearEstablished = request.BusinessProfile.YearEstablished,
         Website = request.BusinessProfile.Website,
-        Description = request.BusinessProfile.Description
+        Description = request.BusinessProfile.Description,
+        Status = Common.PENDING_STATUS
     };
 
     await _repository.SupplierBusinessProfile.CreateAsync(supplierProfile);
@@ -91,7 +92,7 @@ namespace Supplier.Application.Features.Commands.Supplier
         string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
 
         var response = await _httpClient.PostAsJsonAsync(
-            $"{masterDataUrl}/api/v1/metadata/reference-list",
+            $"{masterDataUrl}/api/v1/masterdata/metadata/reference-list",
             new List<string> { Common.METADATA_DOCUMENT_TYPE },
             cancellationToken);
 
