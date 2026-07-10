@@ -77,5 +77,28 @@ namespace Supplier.API.Controllers
 
             return Ok(result);
         }
+
+        /// <summary>
+        /// Get All Supplier Profiles
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/supplier/getAllSupplier")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_ALL_SUPPLIER")]
+        [SwaggerOperation("GetAllSuppliers")]
+        [SwaggerResponse(200, type: typeof(List<SupplierProfileDto>), description: "Suppliers retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetAllSuppliers([FromBody] GetAllSuppliersQuery query)
+        {
+            _logger.LogInfo("Fetching Supplier Profiles");
+
+            var result = await _mediator.Send(query);
+
+            _logger.LogInfo("Supplier Profiles retrieved successfully");
+
+            return Ok(result);
+        }
+
     }
 }
