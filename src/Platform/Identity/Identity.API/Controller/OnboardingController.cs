@@ -26,7 +26,7 @@ namespace Identity.API.Controllers
 
         [HttpGet]
         [Route("api/v1/onboarding")]
-        [ApiAuthorization(Name = "GetOnboarding")]
+        [ApiAuthorization(Name = "GET_ONBOARDING")]
         [SwaggerResponse(200, type: typeof(OnboardingResponse), description: "Onboarding details fetched successfully.")]
         [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
         [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Onboarding details not found")]
