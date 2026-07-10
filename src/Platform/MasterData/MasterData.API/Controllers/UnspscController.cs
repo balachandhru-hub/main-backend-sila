@@ -29,7 +29,7 @@ public class UnspscController : ControllerBase
     /// Uploads UNSPSC Excel file.
     /// </summary>
     [HttpPost]
-    [Route("api/v1/unspsc/upload")]
+    [Route("api/v1/masterdata/unspsc/upload")]
     [ValidateModelState]
     [SwaggerOperation("UploadUnspsc")]
     [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Upload successful")]
@@ -54,7 +54,7 @@ public class UnspscController : ControllerBase
     /// Returns Segment and Family hierarchy.
     /// </summary>
     [HttpGet]
-    [Route("api/v1/unspsc")]
+    [Route("api/v1/masterdata/unspsc")]
     [ValidateModelState]
     [SwaggerOperation("GetUnspsc")]
     [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Data retrieved successfully")]
@@ -76,7 +76,7 @@ public class UnspscController : ControllerBase
     /// Returns Classes and Commodities for a Segment and Family.
     /// </summary>
     [HttpGet]
-    [Route("api/v1/unspsc/class-commodity")]
+    [Route("api/v1/masterdata/unspsc/class-commodity")]
     [ValidateModelState]
     [SwaggerOperation("GetUnspscByVersion")]
     [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Data retrieved successfully")]

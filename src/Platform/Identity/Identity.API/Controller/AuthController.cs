@@ -50,7 +50,7 @@ namespace Identity.API.Controllers
         /// <param name="command"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("api/v1/auth/send-otp")]
+        [Route("api/v1/identity/auth/send-otp")]
         [ApiKeyAuthorization]
         [ValidateModelState]
         [SwaggerOperation("SendOtp")]
@@ -78,7 +78,7 @@ namespace Identity.API.Controllers
         /// <returns></returns>
 
         [HttpPost]
-        [Route("api/v1/auth/verify-otp")]
+        [Route("api/v1/identity/auth/verify-otp")]
         [ValidateModelState]
         [ApiKeyAuthorization]
         [SwaggerOperation("VerifyOtp")]
@@ -114,7 +114,7 @@ namespace Identity.API.Controllers
         /// <param name="command"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("api/v1/auth/login")]
+        [Route("api/v1/identity/auth/login")]
         [ApiKeyAuthorization]
         [ValidateModelState]
         [SwaggerOperation("Login")]
@@ -161,7 +161,7 @@ namespace Identity.API.Controllers
         /// </summary>
 
         [HttpPost]
-        [Route("api/v1/auth/register")]
+        [Route("api/v1/identity/auth/register")]
         [ValidateModelState]
         [ApiKeyAuthorization]
         [SwaggerOperation("createOrganization")]
@@ -189,7 +189,7 @@ namespace Identity.API.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [Route("api/v1/auth/refresh-token")]
+        [Route("api/v1/identity/auth/refresh-token")]
         [ApiKeyAuthorization]
         [SwaggerOperation("RefreshToken")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Token refreshed successfully.")]
@@ -243,7 +243,7 @@ namespace Identity.API.Controllers
             /// </summary>
             /// <returns></returns>
             [HttpGet]
-            [Route("api/v1/token-claim")]
+            [Route("api/v1/identity/token-claim")]
             [ValidateModelState]
             [ApiAuthorization(Name ="GET_ALL_CLAIMS")]
             [SwaggerOperation("GetAllClaim")]

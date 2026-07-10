@@ -107,7 +107,7 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
             string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
 
             var response = await _httpClient.PostAsJsonAsync(
-                $"{masterDataUrl}/api/v1/email/send",
+                $"{masterDataUrl}/api/v1/masterdata/email/send",
                 new
                 {
                     ToEmail = email,

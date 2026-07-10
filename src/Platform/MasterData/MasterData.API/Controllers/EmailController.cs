@@ -25,7 +25,7 @@ public class EmailController : ControllerBase
     /// Transmits outbound email notifications using template processing.
     /// </summary>
     [HttpPost]
-    [Route("api/v1/email/send")]
+    [Route("api/v1/masterdata/email/send")]
     [ValidateModelState]
     [SwaggerOperation("SendEmail")]
     [SwaggerResponse(200, type: typeof(SuccessResponseDto), Description = "Email sent successfully")]
