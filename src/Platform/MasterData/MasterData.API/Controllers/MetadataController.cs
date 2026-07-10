@@ -30,7 +30,7 @@ public class MetadataController : ControllerBase
     /// Get metadata reference list.
     /// </summary>
     [HttpPost]
-    [Route("api/v1/metadata/reference-list")]
+    [Route("api/v1/masterdata/metadata/reference-list")]
     [ValidateModelState]
     [SwaggerOperation("GetReferenceList")]
     [SwaggerResponse(200, "Fetched Metadata", typeof(List<MetadataDto>))]
@@ -54,7 +54,7 @@ public class MetadataController : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpPost]
-    [Route("api/v1/metadata/by-keys")]
+    [Route("api/v1/masterdata/metadata/by-keys")]
     [ValidateModelState]
     [SwaggerOperation("GetMetadataByKeys")]
     [SwaggerResponse(200, "Fetched Metadata", typeof(List<GetMetadataByKeysRequestDto>))]
