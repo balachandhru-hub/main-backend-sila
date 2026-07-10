@@ -23,7 +23,7 @@ namespace Supplier.Application.Features.Queries.Supplier
             var suppliers = _repositoryWrapper.SupplierBusinessProfile
                 .FindByCondition(x => x.IsActive)
                 .OrderBy(x => x.DateUpdated)
-                .Skip((request.Index - 1) * request.Limit)
+                .Skip(request.Index)
                 .Take(request.Limit)
                 .ToList();
 
