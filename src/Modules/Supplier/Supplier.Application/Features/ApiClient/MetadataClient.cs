@@ -20,7 +20,7 @@ public class MetadataApiClient : IMetadataApiClient
     {
         string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
         var response = await _httpClient.PostAsync(
-            $"{masterDataUrl}/api/v1/metadata/reference-list",
+            $"{masterDataUrl}/api/v1/masterdata/metadata/reference-list",
             new StringContent(JsonSerializer.Serialize(key), Encoding.UTF8, "application/json"));
 
         response.EnsureSuccessStatusCode();
