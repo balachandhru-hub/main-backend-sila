@@ -66,14 +66,10 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(200, type: typeof(List<OrganizationDto>), description: "Buyers retrieved successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetAllBuyers( [FromQuery] int index = 1,[FromQuery] int limit = 10)
+        public async Task<IActionResult> GetAllBuyers([FromBody] GetAllBuyersQuery query)
         {
             _logger.LogInfo("Fetching Buyer Profiles");
-            var result = await _mediator.Send(new GetAllBuyersQuery
-            {
-                Index = index,
-                Limit = limit
-            });
+            var result = await _mediator.Send(query);
 
             _logger.LogInfo("Buyer Profiles retrieved successfully");
 
@@ -89,11 +85,11 @@ namespace Buyer.API.Controllers
 [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
 public async Task<IActionResult> UpdateBuyerStatus([FromBody] UpdateBuyerStatusCommand command)
 {
-    _logger.LogInfo($"Updating Buyer Status. BuyerId: {command.OrganizationId}, Status: {command.Status}");
+    _logger.LogInfo($"Updating Buyer Status. BuyerId: {command.BuyerId}, Status: {command.Status}");
 
     var result = await _mediator.Send(command);
 
-    _logger.LogInfo($"Buyer Status updated successfully. BuyerId: {command.OrganizationId}");
+    _logger.LogInfo($"Buyer Status updated successfully. BuyerId: {command.BuyerId}");
 
     return Ok(result);
 }

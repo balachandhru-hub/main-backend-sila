@@ -31,11 +31,11 @@ namespace Buyer.Application.Features.Commands.UpdateBuyerStatus
             _logger = logger;
         }
         public async Task<bool> Handle(
-    UpdateBuyerStatusCommand request,
-    CancellationToken cancellationToken)
+     UpdateBuyerStatusCommand request,
+     CancellationToken cancellationToken)
         {
             var buyer = _repositoryWrapper.BuyerBusinessProfile
-                .FindFirstByCondition(x => x.OrganizationId == request.OrganizationId && x.IsActive);
+                .FindFirstByCondition(x => x.Id == request.BuyerId && x.IsActive);
 
             if (buyer == null)
             {
@@ -44,40 +44,9 @@ namespace Buyer.Application.Features.Commands.UpdateBuyerStatus
                     "Buyer not found.");
             }
 
-            string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
-
-            var response = await _httpClient.PostAsJsonAsync(
-                $"{masterDataUrl}/api/v1/metadata/reference-list",
-                new List<string> { Common.METADATA_STATUS_TYPE },
-                cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new PreConditionFailedCustomException(
-                    "Unable to fetch Buyer Status metadata.",
-                    "Unable to fetch Buyer Status metadata.");
-            }
-
-            var metadataList = await response.Content.ReadFromJsonAsync<List<MetadataDto>>(
-                cancellationToken: cancellationToken);
-
-            if (metadataList == null || !metadataList.Any())
-            {
-                throw new NotFoundCustomException(
-                    "Buyer Status metadata not found.",
-                    "Buyer Status metadata not found.");
-            }
-
-            // Validate status against MasterData
-            var statusExists = metadataList.Any(x =>
-                x.Key.Equals(request.Status, StringComparison.OrdinalIgnoreCase));
-
-            if (!statusExists)
-            {
-                throw new NotFoundCustomException(
-                    "Invalid Buyer Status.",
-                    $"'{request.Status}' is not a valid Buyer Status.");
-            }
+            var registrations = _repositoryWrapper.BuyerRegistration
+                .FindByCondition(x => x.BuyerId == buyer.Id && x.IsActive)
+                .ToList();
 
             if (request.Status.Equals("Rejected", StringComparison.OrdinalIgnoreCase) &&
                 string.IsNullOrWhiteSpace(request.Comments))
@@ -90,7 +59,22 @@ namespace Buyer.Application.Features.Commands.UpdateBuyerStatus
             buyer.Status = request.Status;
             buyer.Comment = request.Comments;
 
+            // If Approved, verify all registrations
+            if (request.Status.Equals(Common.VERIFIED_STATUS, StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (var registration in registrations)
+                {
+                    registration.IsVerified = true;
+                    registration.VerifiedOn = DateTime.UtcNow;
+
+                    _repositoryWrapper.BuyerRegistration.Update(registration);
+                }
+            }
+
+
+
             _repositoryWrapper.BuyerBusinessProfile.Update(buyer);
+
             await _repositoryWrapper.SaveAsync();
 
             return true;
