@@ -33,7 +33,7 @@ namespace Supplier.API.Controllers
         /// Create Supplier Profile
         /// </summary>
         [HttpPost]
-        [Route("api/v1/CreateSupplierProfile")]
+        [Route("api/v1/supplier/register")]
         [ApiAuthorization(Name = "CREATE_SUPPLIER_PROFILE")]
         [ValidateModelState]
         [SwaggerOperation("CreateSupplierProfile")]
@@ -61,7 +61,7 @@ namespace Supplier.API.Controllers
         /// Get Supplier Profile
         /// </summary>
         [HttpGet]
-        [Route("api/v1/GetSupplierProfile")]
+        [Route("api/v1/supplier/profile")]
         [ApiAuthorization(Name = "GET_SUPPLIER_PROFILE")]
         [ValidateModelState]
         [SwaggerOperation("GetSupplierProfile")]
@@ -83,7 +83,7 @@ namespace Supplier.API.Controllers
         /// Get All Supplier Profiles
         /// </summary>
         [HttpGet]
-        [Route("api/v1/supplier/getAllSupplier")]
+        [Route("api/v1/supplier/get-all-supplier")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_ALL_SUPPLIER")]
         [SwaggerOperation("GetAllSuppliers")]
@@ -107,7 +107,7 @@ namespace Supplier.API.Controllers
         /// <param name="command"></param>
         /// <returns></returns>
         [HttpPut]
-        [Route("api/v1/Supplier/status")]
+        [Route("api/v1/supplier/status")]
         [ValidateModelState]
         [ApiAuthorization(Name = "UPDATE_SUPPLIER_STATUS")]
         [SwaggerOperation("UpdateSupplierStatus")]
