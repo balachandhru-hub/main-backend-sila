@@ -29,7 +29,7 @@ namespace Buyer.API.Controllers
         /// </summary>
 
         [HttpGet]
-        [Route("api/v1/buyer/get-profile")]
+        [Route("api/v1/buyer/profile")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_MY_BUYER_PROFILE")]
         [SwaggerOperation("GetProfile")]
