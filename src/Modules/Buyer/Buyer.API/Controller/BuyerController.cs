@@ -58,7 +58,7 @@ namespace Buyer.API.Controllers
             return Ok(result);
         }
         
-        [HttpGet]
+        [HttpPost]
         [Route("api/v1/buyer/getAllbuyer")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_ALL_BUYER")]
