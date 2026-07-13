@@ -8,5 +8,8 @@ namespace Buyer.Application.Features.Queries.GetAllBuyers
         public int Index { get; set; } 
 
         public int Limit { get; set; } 
+        public string? OrganizationName { get; set; }
+
+        public string? Status { get; set; }
     }
 }

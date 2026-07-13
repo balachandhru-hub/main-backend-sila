@@ -19,9 +19,22 @@ namespace Buyer.Application.Features.Queries.GetAllBuyers
             GetAllBuyersQuery request,
             CancellationToken cancellationToken)
         {
-            var buyers = _repositoryWrapper.BuyerBusinessProfile
-                .FindByCondition(x => x.IsActive)
-                .OrderBy(x => x.DateUpdated)
+           var query = _repositoryWrapper.BuyerBusinessProfile.FindByCondition(x => x.IsActive);
+
+            if (!string.IsNullOrWhiteSpace(request.OrganizationName))
+            {
+                query = query.Where(x =>
+                    x.OrganizationName.Contains(request.OrganizationName));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                query = query.Where(x =>
+                    x.Status == request.Status);
+            }
+
+            var buyers = query
+                .OrderByDescending(x     => x.DateUpdated)
                 .Skip(request.Index)
                 .Take(request.Limit)
                 .ToList();
