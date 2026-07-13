@@ -54,7 +54,7 @@ public class MetadataController : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpPost]
-    [Route("api/v1/masterdata/metadata/by-keys")]
+    [Route("api/v1/masterdata/metadata/key")]
     [ValidateModelState]
     [SwaggerOperation("GetMetadataByKeys")]
     [SwaggerResponse(200, "Fetched Metadata", typeof(List<GetMetadataByKeysRequestDto>))]
