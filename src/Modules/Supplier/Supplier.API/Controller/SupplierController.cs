@@ -82,7 +82,7 @@ namespace Supplier.API.Controllers
         /// <summary>
         /// Get All Supplier Profiles
         /// </summary>
-        [HttpGet]
+        [HttpPost]
         [Route("api/v1/supplier/get-all-supplier")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_ALL_SUPPLIER")]

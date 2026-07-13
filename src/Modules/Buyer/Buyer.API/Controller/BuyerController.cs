@@ -69,8 +69,8 @@ namespace Buyer.API.Controllers
         /// Get all buyer
         /// </summary>
         
-        [HttpGet]
-        [Route("api/v1/buyer/get-all-buyer")]
+        [HttpPost]
+        [Route("api/v1/buyer/getAllbuyer")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_ALL_BUYER")]
         [SwaggerOperation("GetAllBuyers")]
