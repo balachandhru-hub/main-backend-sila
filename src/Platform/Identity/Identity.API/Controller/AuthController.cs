@@ -115,7 +115,6 @@ namespace Identity.API.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("api/v1/identity/auth/login")]
-        [ApiKeyAuthorization]
         [ValidateModelState]
         [SwaggerOperation("Login")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Login successful.")]
@@ -190,7 +189,6 @@ namespace Identity.API.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("api/v1/identity/auth/refresh-token")]
-        [ApiKeyAuthorization]
         [SwaggerOperation("RefreshToken")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Token refreshed successfully.")]
         [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
