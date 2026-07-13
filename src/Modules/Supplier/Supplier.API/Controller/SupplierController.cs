@@ -61,7 +61,7 @@ namespace Supplier.API.Controllers
         /// Get Supplier Profile
         /// </summary>
         [HttpGet]
-        [Route("api/v1/supplier/getsupplierprofile")]
+        [Route("api/v1/supplier/profile")]
         [ApiAuthorization(Name = "GET_SUPPLIER_PROFILE")]
         [ValidateModelState]
         [SwaggerOperation("GetSupplierProfile")]
@@ -83,7 +83,7 @@ namespace Supplier.API.Controllers
         /// Get All Supplier Profiles
         /// </summary>
         [HttpGet]
-        [Route("api/v1/supplier/getallsupplier")]
+        [Route("api/v1/supplier/get-all-supplier")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_ALL_SUPPLIER")]
         [SwaggerOperation("GetAllSuppliers")]
