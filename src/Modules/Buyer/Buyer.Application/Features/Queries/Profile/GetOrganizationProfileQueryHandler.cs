@@ -24,7 +24,7 @@ public class GetOrganizationProfileQueryHandler
 
         if (organization == null)
         {
-            throw new NotFoundCustomException(
+            throw new  NoContentCustomException(
                 "Organization Not Found",
                 $"Organization with ID {request.OrganizationId} not found.");
         }
