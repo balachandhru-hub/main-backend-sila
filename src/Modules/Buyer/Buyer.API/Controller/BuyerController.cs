@@ -24,22 +24,30 @@ namespace Buyer.API.Controllers
             _mediator = mediator;
             _logger = logger;
         }
+        /// <summary>
+        /// Get buyer Profile
+        /// </summary>
 
         [HttpGet]
-        [Route("api/v1/buyer/{organizationId}")]
+        [Route("api/v1/buyer/get-profile")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_MY_BUYER_PROFILE")]
         [SwaggerOperation("GetProfile")]
         [SwaggerResponse(200, type: typeof(OrganizationDto), description: "Fetched the Organization Profile successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetOrganizationProfile(Guid organizationId)
+        public async Task<IActionResult> GetOrganizationProfile()
         {
+            Guid organizationId = GetOrganizationId();
             _logger.LogInfo($"Fetching the Organization Profile for ID: {organizationId}");
             var result = await _mediator.Send(new GetOrganizationProfileQuery(organizationId));
             _logger.LogInfo($"Fetched the Organization Profile for ID: {organizationId}");
             return Ok(result);
         }
+
+        /// <summary>
+        /// buyer register
+        /// </summary>
 
         [HttpPost]
         [Route("api/v1/buyer/register")]
@@ -57,9 +65,12 @@ namespace Buyer.API.Controllers
             _logger.LogInfo($"Created Organization Profile for Organization: {createBuyerDto.OrganizationName}");
             return Ok(result);
         }
+        /// <summary>
+        /// Get all buyer
+        /// </summary>
         
         [HttpGet]
-        [Route("api/v1/buyer/getAllbuyer")]
+        [Route("api/v1/buyer/get-all-buyer")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_ALL_BUYER")]
         [SwaggerOperation("GetAllBuyers")]
@@ -75,23 +86,28 @@ namespace Buyer.API.Controllers
 
             return Ok(result);
         }
+
+        /// <summary>
+        /// approve/reject
+        /// </summary>
+
         [HttpPut]
-[Route("api/v1/buyer/status")]
-[ValidateModelState]
-[ApiAuthorization(Name = "UPDATE_BUYER_STATUS")]
-[SwaggerOperation("UpdateBuyerStatus")]
-[SwaggerResponse(200, type: typeof(bool), description: "Buyer status updated successfully")]
-[SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
-[SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-public async Task<IActionResult> UpdateBuyerStatus([FromBody] UpdateBuyerStatusCommand command)
-{
-    _logger.LogInfo($"Updating Buyer Status. BuyerId: {command.BuyerId}, Status: {command.Status}");
+        [Route("api/v1/buyer/status")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_BUYER_STATUS")]
+        [SwaggerOperation("UpdateBuyerStatus")]
+        [SwaggerResponse(200, type: typeof(bool), description: "Buyer status updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateBuyerStatus([FromBody] UpdateBuyerStatusCommand command)
+        {
+            _logger.LogInfo($"Updating Buyer Status. BuyerId: {command.BuyerId}, Status: {command.Status}");
 
-    var result = await _mediator.Send(command);
+            var result = await _mediator.Send(command);
 
-    _logger.LogInfo($"Buyer Status updated successfully. BuyerId: {command.BuyerId}");
+            _logger.LogInfo($"Buyer Status updated successfully. BuyerId: {command.BuyerId}");
 
-    return Ok(result);
-}
+            return Ok(result);
+        }
     }
 }
