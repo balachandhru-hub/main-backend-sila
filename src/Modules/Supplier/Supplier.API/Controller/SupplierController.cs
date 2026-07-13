@@ -90,7 +90,7 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(200, type: typeof(List<SupplierProfileDto>), description: "Suppliers retrieved successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetAllSuppliers([FromBody] GetAllSuppliersQuery query)
+        public async Task<IActionResult> GetAllSuppliers([FromQuery] GetAllSuppliersQuery query)
         {
             _logger.LogInfo("Fetching Supplier Profiles");
 
