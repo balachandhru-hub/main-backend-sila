@@ -6,17 +6,37 @@ namespace Supplier.Domain.Dto
     {
         public Guid SupplierId { get; set; }
 
-        public UpdateSupplierBusinessProfileDto BusinessProfile { get; set; } 
+        public UpdateSupplierBusinessProfileDto BusinessProfile { get; set; }
 
-        public List<UpdateSupplierRegistrationDto> Registrations { get; set; } 
+        public List<UpdateSupplierRegistrationDto>? Registrations { get; set; }
 
-        public List<UpdateSupplierBankAccountDto> BankAccounts { get; set; } 
+        public List<UpdateSupplierBankAccountDto>? BankAccounts { get; set; }
 
-        public List<UpdateSupplierDispatchLocationDto> DispatchLocations { get; set; } 
+        public List<UpdateSupplierDispatchLocationDto>? DispatchLocations { get; set; }
     }
- 
+
     public class UpdateSupplierBusinessProfileDto
     {
+        // Organization fields
+        public string? OrganizationName { get; set; }
+
+        public string? Email { get; set; }
+
+        public string? Phone { get; set; }
+
+        public string? Country { get; set; }
+
+        public string? AddressLine1 { get; set; }
+
+        public string? AddressLine2 { get; set; }
+
+        public string? City { get; set; }
+
+        public string? State { get; set; }
+
+        public string? PinCode { get; set; }
+
+        // Supplier fields
         public string? Industry { get; set; }
 
         public string? BusinessType { get; set; }
@@ -33,9 +53,8 @@ namespace Supplier.Domain.Dto
 
         public string? Description { get; set; }
     }
-   
 
-  
+
     public class UpdateSupplierRegistrationDto
     {
         public Guid Id { get; set; }

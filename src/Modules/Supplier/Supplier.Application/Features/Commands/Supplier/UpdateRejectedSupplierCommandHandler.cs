@@ -6,6 +6,10 @@ using Supplier.Application.Features.Commands.Asset;
 using Supplier.Domain.Common;
 using Supplier.Infrastructure.Contracts.IRepository;
 using System.Net.Http.Json;
+using Supplier.Domain.Dto;
+using Microsoft.AspNetCore.Http;
+using System.Net.Http.Headers;
+
 
 namespace Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier
 {
@@ -17,26 +21,29 @@ namespace Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier
         private readonly IConfiguration _configuration;
         private readonly IMediator _mediator;
         private readonly ILoggerManager _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UpdateRejectedSupplierCommandHandler(
             IRepositoryWrapper repository,
             HttpClient httpClient,
             IConfiguration configuration,
             IMediator mediator,
-            ILoggerManager logger)
+            ILoggerManager logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _repository = repository;
             _httpClient = httpClient;
             _configuration = configuration;
             _mediator = mediator;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<bool> Handle(
             UpdateRejectedSupplierCommand request,
             CancellationToken cancellationToken)
         {
-            
+
 
             var supplier = _repository.SupplierBusinessProfile
                 .FindFirstByCondition(x =>
@@ -50,7 +57,7 @@ namespace Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier
                     "Supplier does not exist.");
             }
 
-          
+
 
             if (!supplier.Status.Equals(Common.REJECTED_STATUS,
                 StringComparison.OrdinalIgnoreCase))
@@ -60,16 +67,108 @@ namespace Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier
                     "Only rejected suppliers can edit their profile.");
             }
 
-         
 
-            supplier.Industry = request.Supplier.BusinessProfile.Industry;
-            supplier.BusinessType = request.Supplier.BusinessProfile.BusinessType;
-            supplier.EmployeeCount = request.Supplier.BusinessProfile.EmployeeCount;
-            supplier.AnnualTurnover = request.Supplier.BusinessProfile.AnnualTurnover;
-            supplier.Currency = request.Supplier.BusinessProfile.Currency;
-            supplier.YearEstablished = request.Supplier.BusinessProfile.YearEstablished;
-            supplier.Website = request.Supplier.BusinessProfile.Website;
-            supplier.Description = request.Supplier.BusinessProfile.Description;
+
+            var profile = request.Supplier.BusinessProfile;
+
+            bool organizationChanged =
+                   supplier.OrganizationName != profile.OrganizationName
+                || supplier.Email != profile.Email
+                || supplier.Phone != profile.Phone
+                || supplier.Country != profile.Country
+                || supplier.AddressLine1 != profile.AddressLine1
+                || supplier.AddressLine2 != profile.AddressLine2
+                || supplier.City != profile.City
+                || supplier.State != profile.State
+                || supplier.PinCode != profile.PinCode;
+            //-------------------------------------------------
+            // Update Identity Organization if required
+            //-------------------------------------------------
+
+
+
+            if (organizationChanged)
+            {
+                var identityUrl = _configuration[Common.IDENTITY_SERVICE_BASE_URL];
+
+                var identityRequest = new
+                {
+                    organization = new UpdateOrganizationRequestDto
+                    {
+                        OrganizationId = supplier.OrganizationId,
+                        OrganizationName = profile.OrganizationName,
+                        Email = profile.Email,
+                        Phone = profile.Phone,
+                        Country = profile.Country,
+                        AddressLine1 = profile.AddressLine1,
+                        AddressLine2 = profile.AddressLine2,
+                        City = profile.City,
+                        State = profile.State,
+                        PinCode = profile.PinCode
+                    }
+                };
+
+                //-------------------------------------------------
+                // Forward same JWT token to Identity API
+                //-------------------------------------------------
+
+                var token = _httpContextAccessor.HttpContext?
+                    .Request.Cookies["access_token"];
+
+                _logger.LogInfo($"Incoming Token : {token}");
+
+                var requestMessage = new HttpRequestMessage(
+                    HttpMethod.Put,
+                    $"{identityUrl}/api/v1/identity/update-organization");
+
+                requestMessage.Content = JsonContent.Create(identityRequest);
+
+                if (!string.IsNullOrWhiteSpace(token))
+                {
+                    
+                    requestMessage.Headers.Add("Cookie", $"access_token={token}");
+
+               
+                    requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
+                var response = await _httpClient.SendAsync(
+                    requestMessage,
+                    cancellationToken);
+
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInfo($"Identity Response : {responseBody}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new BadRequestCustomException(
+                        "Unable to update organization.",
+                        responseBody);
+                }
+            }
+            //--------------------------------------
+            // Update Supplier Business Profile
+            //--------------------------------------
+
+            supplier.OrganizationName = profile.OrganizationName;
+            supplier.Email = profile.Email;
+            supplier.Phone = profile.Phone;
+
+            supplier.Country = profile.Country;
+            supplier.AddressLine1 = profile.AddressLine1;
+            supplier.AddressLine2 = profile.AddressLine2;
+            supplier.City = profile.City;
+            supplier.State = profile.State;
+            supplier.PinCode = profile.PinCode;
+
+            supplier.Industry = profile.Industry;
+            supplier.BusinessType = profile.BusinessType;
+            supplier.EmployeeCount = profile.EmployeeCount;
+            supplier.AnnualTurnover = profile.AnnualTurnover;
+            supplier.Currency = profile.Currency;
+            supplier.YearEstablished = profile.YearEstablished;
+            supplier.Website = profile.Website;
+            supplier.Description = profile.Description;
 
             //-------------------------------------------------
             // Fetch Metadata once
