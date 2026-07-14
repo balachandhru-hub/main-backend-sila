@@ -67,7 +67,7 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(statusCode: 200, "Fetched the File Details", typeof(AssetDownloadDto))]
         [SwaggerResponse(statusCode: 404, "Not Found", typeof(ErrorResponseDto))]
         [SwaggerResponse(statusCode: 401, "Unauthorized", typeof(ErrorResponseDto))]
-        public async Task<IActionResult> GetDocument(Guid assetId)
+        public async Task<IActionResult> GetDocument([FromRoute] Guid assetId)
         {
             _logger.LogInfo($"Retrieving document for Asset Id: {assetId}");
 

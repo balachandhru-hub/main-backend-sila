@@ -38,6 +38,7 @@ namespace Buyer.Application.Features.Queries.Asset.GetDocument
 
             if (asset == null)
             {
+                _logger.LogError($"Asset not found. AssetId: {request.AssetId}");
                 throw new NotFoundCustomException(
                     "Asset not found",
                     $"Asset with Id {request.AssetId} not found.");
@@ -50,6 +51,7 @@ namespace Buyer.Application.Features.Queries.Asset.GetDocument
 
             if (!File.Exists(filePath))
             {
+                  _logger.LogError($"File does not exist at path: {filePath}");
                 throw new NotFoundCustomException(
                     "File not found",
                     $"File for asset {request.AssetId} not found.");
