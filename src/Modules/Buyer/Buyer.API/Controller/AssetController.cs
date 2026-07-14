@@ -6,6 +6,7 @@ using SharedKernel.Attributes;
 using SharedKernel.Dto;
 using MediatR;
 using Buyer.Application.Features.Assets.Commands;
+using Buyer.Application.Features.Queries.Asset.GetDocument;
 
 namespace Buyer.API.Controllers
 {
@@ -66,14 +67,15 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(statusCode: 200, "Fetched the File Details", typeof(AssetDownloadDto))]
         [SwaggerResponse(statusCode: 404, "Not Found", typeof(ErrorResponseDto))]
         [SwaggerResponse(statusCode: 401, "Unauthorized", typeof(ErrorResponseDto))]
-        public IActionResult GetDocument([FromRoute] Guid assetId)
-        {
-            _logger.LogDebug($"Downloading document for asset with Id: {assetId}");
+       public async Task<IActionResult> GetDocument([FromRoute] Guid assetId)
+{
+    _logger.LogInfo($"Retrieving document for Asset Id: {assetId}");
 
-          
-            _logger.LogDebug($"Document downloaded successfully for asset with Id: {assetId}");
+    var result = await _mediator.Send(new GetDocumentQuery(assetId));
 
-            return Ok("assetDownloadDto");
-        }
+    _logger.LogInfo($"Document retrieved successfully for Asset Id: {assetId}");
+
+    return Ok(result);
+}
     }
 }
