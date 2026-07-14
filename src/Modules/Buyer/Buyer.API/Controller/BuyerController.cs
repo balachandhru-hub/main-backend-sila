@@ -64,7 +64,7 @@ namespace Buyer.API.Controllers
             createBuyerDto.OrganizationId = GetOrganizationId();
             var result = await _mediator.Send(new CreateBuyerProfileCommand(createBuyerDto));
             _logger.LogInfo($"Created Organization Profile for Organization: {createBuyerDto.OrganizationName}");
-            return Ok(result);
+            return Ok(new SuccessResponseDto { Id = result.ToString(), Message = "Buyer Profile created successfully", Description = "Buyer Profile created successfully" , StatusCode = 201 });
         }
         /// <summary>
         /// Get all buyer
