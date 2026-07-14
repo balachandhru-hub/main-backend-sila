@@ -10,6 +10,7 @@ using Supplier.Application.Features.Queries.Supplier;
 using Supplier.Domain.Dto;
 using SharedKernel.Controllers;
 using Supplier.Application.Features.StatusUpdate.Commands;
+using Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier;
 
 
 namespace Supplier.API.Controllers
@@ -123,6 +124,31 @@ namespace Supplier.API.Controllers
             _logger.LogInfo($"Supplier Status updated successfully. SupplierId: {command.SupplierId}");
 
             return Ok(result);
+        }
+        [HttpPut]
+        [Route("api/v1/supplier/update-rejected-supplier")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_REJECTED_SUPPLIER")]
+        [SwaggerOperation("UpdateRejectedSupplier")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier not found")]
+        public async Task<IActionResult> UpdateRejectedSupplier(
+            [FromBody] UpdateRejectedSupplierCommand command)
+        {
+            _logger.LogInfo($"Updating rejected supplier : {command.Supplier.SupplierId}");
+
+            await _mediator.Send(command);
+
+            _logger.LogInfo($"Supplier updated successfully : {command.Supplier.SupplierId}");
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Supplier updated successfully.",
+                Id = command.Supplier.SupplierId.ToString()
+            });
         }
     }
 }

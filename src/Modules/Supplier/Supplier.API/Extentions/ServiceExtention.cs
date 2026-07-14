@@ -11,13 +11,16 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using Supplier.Infrastructure.ApiClients;
+using Supplier.Application.Contracts;
+
 
 namespace Supplier.API.Extensions
 
 {
-public static class ServiceExtensions
-{
-    public static void ConfigureCors(this IServiceCollection services, IConfiguration config)
+    public static class ServiceExtensions
+    {
+        public static void ConfigureCors(this IServiceCollection services, IConfiguration config)
         {
             _ = services.AddCors(options =>
             {
@@ -28,7 +31,7 @@ public static class ServiceExtensions
                             .SetIsOriginAllowed(origin =>
 
                         origin.Equals(config[Common.DEFAULT_FRONT_END_ORIGIN_LOCAL]!, StringComparison.OrdinalIgnoreCase)
-                   
+
                     )
                             .AllowAnyMethod()
                             .AllowAnyHeader()
@@ -37,27 +40,28 @@ public static class ServiceExtensions
                 );
             });
         }
-    public static void ConfigureDatabase(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        services.AddDbContext<RepositoryContext>(options =>
-            options.UseSqlServer(
-                configuration.GetConnectionString("DefaultConnection")));
-    }
-
-    public static void ConfigureServiceWrapper(
-            this IServiceCollection services)
-    {
-          services.AddScoped<IUserIdentityService, UserIdentityService>();
-        services.AddScoped<IUserContext, UserContext>();
-          _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
-        _ = services.AddControllers();
-    }
-   public static void ConfigureDBContext(
+        public static void ConfigureDatabase(
             this IServiceCollection services,
-            IConfiguration config
-        )
+            IConfiguration configuration)
+        {
+            services.AddDbContext<RepositoryContext>(options =>
+                options.UseSqlServer(
+                    configuration.GetConnectionString("DefaultConnection")));
+        }
+
+        public static void ConfigureServiceWrapper(
+                this IServiceCollection services)
+        {
+            services.AddScoped<IUserIdentityService, UserIdentityService>();
+            services.AddScoped<IUserContext, UserContext>();
+            _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
+            _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
+            _ = services.AddControllers();
+        }
+        public static void ConfigureDBContext(
+                 this IServiceCollection services,
+                 IConfiguration config
+             )
         {
             string dbString = config.GetConnectionString("DefaultConnection")!;
             services.AddDbContext<RepositoryContext>(options =>
@@ -65,28 +69,28 @@ public static class ServiceExtensions
                 options.UseSqlServer(dbString);
             });
         }
-    public static void ConfigureLoggerService(
-    this IServiceCollection services)
-    {
-        services.AddSingleton<ILoggerManager, LoggerManager>();
-    }
-     public static void ConfigureMediatR(this IServiceCollection services)
-    {
-        services.AddMediatR(cfg =>
+        public static void ConfigureLoggerService(
+        this IServiceCollection services)
         {
-            cfg.RegisterServicesFromAssembly(typeof(CreateSupplierProfileCommand).Assembly);
-        });
-    }
-    /// <summary>
-    /// This method is used to inject the entity repository as scoped instance.
-    /// </summary>
-    public static void ConfigureRepositoryWrapper(this IServiceCollection services)
-    {
-        _ = services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
-    }
-     public static void ConfigureAuthentication(
-            this IServiceCollection services
-        )
+            services.AddSingleton<ILoggerManager, LoggerManager>();
+        }
+        public static void ConfigureMediatR(this IServiceCollection services)
+        {
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(typeof(CreateSupplierProfileCommand).Assembly);
+            });
+        }
+        /// <summary>
+        /// This method is used to inject the entity repository as scoped instance.
+        /// </summary>
+        public static void ConfigureRepositoryWrapper(this IServiceCollection services)
+        {
+            _ = services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
+        }
+        public static void ConfigureAuthentication(
+               this IServiceCollection services
+           )
         {
             services
                 .AddAuthentication(options =>
@@ -136,3 +140,4 @@ public static class ServiceExtensions
         }
     }
 }
+
