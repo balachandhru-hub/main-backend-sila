@@ -18,6 +18,7 @@ namespace Supplier.Domain.Common
         public static readonly string METADATA_STATUS_TYPE = "STATUS";
         public static readonly string VERIFIED_STATUS = "VERIFIED";
         public static readonly string REJECTED_STATUS = "REJECTED";
+        public static readonly string REVERIFICATION_STATUS = "RE_VERIFICATION";
 
     }
 
