@@ -5,7 +5,7 @@ using Supplier.Infrastructure.Contracts.IRepository;
 
 namespace Supplier.Application.Features.Queries.Supplier
 {
-    public class GetAllSuppliersQueryHandler 
+    public class GetAllSuppliersQueryHandler
         : IRequestHandler<GetAllSuppliersQuery, List<SupplierProfileDto>>
     {
         private readonly IRepositoryWrapper _repositoryWrapper;
@@ -17,18 +17,34 @@ namespace Supplier.Application.Features.Queries.Supplier
 
 
         public async Task<List<SupplierProfileDto>> Handle(
-            GetAllSuppliersQuery request,
-            CancellationToken cancellationToken)
+ GetAllSuppliersQuery request,
+ CancellationToken cancellationToken)
         {
-            var suppliers = _repositoryWrapper.SupplierBusinessProfile
-                .FindByCondition(x => x.IsActive)
-                .OrderBy(x => x.DateUpdated)
+            var query = _repositoryWrapper.SupplierBusinessProfile
+                .FindByCondition(x => x.IsActive);
+
+            // Filter by Organization Name
+            if (!string.IsNullOrWhiteSpace(request.OrganizationName))
+            {
+                query = query.Where(x =>
+                    x.OrganizationName.Contains(request.OrganizationName));
+            }
+
+            // Filter by Status
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                query = query.Where(x =>
+                    x.Status == request.Status);
+            }
+
+            var suppliers = query
+                .OrderByDescending(x => x.DateUpdated)
                 .Skip(request.Index)
                 .Take(request.Limit)
                 .ToList();
 
-
             var result = new List<SupplierProfileDto>();
+
 
 
             foreach (var supplier in suppliers)
@@ -65,8 +81,8 @@ namespace Supplier.Application.Features.Queries.Supplier
 
                 // Registrations
                 var registrations = _repositoryWrapper.SupplierRegistration
-                    .FindByCondition(x => 
-                        x.SupplierId == supplier.Id && 
+                    .FindByCondition(x =>
+                        x.SupplierId == supplier.Id &&
                         x.IsActive)
                     .ToList();
 
