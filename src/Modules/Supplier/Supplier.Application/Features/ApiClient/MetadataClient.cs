@@ -27,4 +27,15 @@ public class MetadataApiClient : IMetadataApiClient
 
         return await response.Content.ReadFromJsonAsync<List<MetadataDto>?>();
     }
+    public async Task<string> GetRefTermKeyById(Guid id)
+    {
+        string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
+
+        var response = await _httpClient.GetAsync(
+            $"{masterDataUrl}/api/v1/masterdata/metadata/{id}");
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadAsStringAsync();
+    }
 }
