@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using Supplier.Infrastructure.ApiClients;
+using Supplier.Application.Contracts;
+
 
 namespace Supplier.API.Extensions
 
@@ -52,6 +55,7 @@ public static class ServiceExtensions
           services.AddScoped<IUserIdentityService, UserIdentityService>();
         services.AddScoped<IUserContext, UserContext>();
           _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
+         _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
         _ = services.AddControllers();
     }
    public static void ConfigureDBContext(
@@ -136,3 +140,4 @@ public static class ServiceExtensions
         }
     }
 }
+

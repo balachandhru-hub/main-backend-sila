@@ -41,15 +41,50 @@ namespace Identity.Application.Features.Commands.Organization
                     $"Organization {request.Organization.OrganizationId} not found.");
             }
 
-            organization.OrganizationName = request.Organization.OrganizationName;
-            organization.Email = request.Organization.Email;
-            organization.Phone = request.Organization.Phone;
-            organization.Country = request.Organization.Country;
-            organization.AddressLine1 = request.Organization.AddressLine1;
-            organization.AddressLine2 = request.Organization.AddressLine2;
-            organization.City = request.Organization.City;
-            organization.State = request.Organization.State;
-            organization.PinCode = request.Organization.PinCode;
+            if (organization.OrganizationName != request.Organization.OrganizationName)
+            {
+                organization.OrganizationName = request.Organization.OrganizationName;
+            }
+
+            if (organization.Email != request.Organization.Email)
+            {
+                organization.Email = request.Organization.Email;
+            }
+
+            if (organization.Phone != request.Organization.Phone)
+            {
+                organization.Phone = request.Organization.Phone;
+            }
+
+            if (organization.Country != request.Organization.Country)
+            {
+                organization.Country = request.Organization.Country;
+            }
+
+            if (organization.AddressLine1 != request.Organization.AddressLine1)
+            {
+                organization.AddressLine1 = request.Organization.AddressLine1;
+            }
+
+            if (organization.AddressLine2 != request.Organization.AddressLine2)
+            {
+                organization.AddressLine2 = request.Organization.AddressLine2;
+            }
+
+            if (organization.City != request.Organization.City)
+            {
+                organization.City = request.Organization.City;
+            }
+
+            if (organization.State != request.Organization.State)
+            {
+                organization.State = request.Organization.State;
+            }
+
+            if (organization.PinCode != request.Organization.PinCode)
+            {
+                organization.PinCode = request.Organization.PinCode;
+            }
 
             _repository.Organization.Update(organization);
 
