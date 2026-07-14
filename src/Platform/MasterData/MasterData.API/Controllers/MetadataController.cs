@@ -7,6 +7,7 @@ using SharedKernel.ExceptionHandler;
 using SharedKernel.Attributes;
 using MasterData.Application.Features.Metadata.Queries;
 using MasterData.Domain.Dto;
+using MasterData.Application.Features.Metadata.Queries.GetRefTermKeyById;
 
 
 namespace MasterData.API.Controllers;
@@ -60,14 +61,30 @@ public class MetadataController : ControllerBase
     [SwaggerResponse(200, "Fetched Metadata", typeof(List<GetMetadataByKeysRequestDto>))]
     [SwaggerResponse(400, "Bad Request", typeof(ErrorResponseDto))]
     [SwaggerResponse(404, "Not Found", typeof(ErrorResponseDto))]
-        public async Task<IActionResult> GetMetadataByKeys(
+    public async Task<IActionResult> GetMetadataByKeys(
             [FromBody] GetMetadataByKeysRequestDto request)
-        {
-            _logger.LogInfo("Fetching metadata by keys");
+    {
+        _logger.LogInfo("Fetching metadata by keys");
 
-            var result = await _mediator.Send(
-                new GetMetadataByKeysQuery(request.Type, request.Keys));
+        var result = await _mediator.Send(
+            new GetMetadataByKeysQuery(request.Type, request.Keys));
 
-            return Ok(result);
-        }
+        return Ok(result);
+    }
+
+    [HttpGet]
+    [Route("api/v1/masterdata/metadata/{id}")]
+    [ValidateModelState]
+    [SwaggerOperation("GetRefTermKeyById")]
+    [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Reference term key retrieved successfully")]
+    [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Reference term not found")]
+    [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+    public async Task<IActionResult> GetRefTermKeyById(Guid id)
+    {
+        _logger.LogInfo($"Fetching reference term key for Id: {id}");
+
+        var result = await _mediator.Send(new GetRefTermKeyByIdQuery(id));
+
+        return Ok(result);
+    }
 }
