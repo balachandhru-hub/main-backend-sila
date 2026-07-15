@@ -10,6 +10,7 @@ using Buyer.Application.Features.Profile.Commands;
 using SharedKernel.Controllers;
 using Buyer.Application.Features.Queries.GetAllBuyers;
 using Buyer.Application.Features.StatusUpdate.Commands;
+using Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer;
 
 namespace Buyer.API.Controllers
 {
@@ -108,6 +109,31 @@ namespace Buyer.API.Controllers
             _logger.LogInfo($"Buyer Status updated successfully. BuyerId: {command.BuyerId}");
 
             return Ok(result);
+        }
+        [HttpPut]
+        [Route("api/v1/buyer/update-rejected-buyer")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_REJECTED_BUYER")]
+        [SwaggerOperation("UpdateRejectedBuyer")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Buyer updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Buyer not found")]
+        public async Task<IActionResult> UpdateRejectedBuyer(
+            [FromBody] UpdateRejectedBuyerCommand command)
+        {
+            _logger.LogInfo($"Updating rejected buyer : {command.Buyer.BuyerId}");
+
+            await _mediator.Send(command);
+
+            _logger.LogInfo($"Buyer updated successfully : {command.Buyer.BuyerId}");
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Buyer updated successfully.",
+                Id = command.Buyer.BuyerId.ToString()
+            });
         }
     }
 }
