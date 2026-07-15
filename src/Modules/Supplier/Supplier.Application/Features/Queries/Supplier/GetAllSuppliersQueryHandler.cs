@@ -74,7 +74,9 @@ namespace Supplier.Application.Features.Queries.Supplier
                         Currency = supplier.Currency,
                         YearEstablished = supplier.YearEstablished,
                         Website = supplier.Website,
-                        Description = supplier.Description
+                        Description = supplier.Description,
+                        Status=supplier.Status,
+                        Comment=supplier.Comment
                     }
                 };
 

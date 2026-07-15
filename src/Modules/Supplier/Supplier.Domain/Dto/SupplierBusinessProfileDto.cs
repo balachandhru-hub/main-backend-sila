@@ -37,5 +37,7 @@ namespace Supplier.Domain.Dto
         public string? Website { get; set; }
 
         public string? Description { get; set; }
+        public string? Status {get;set;}
+        public string? Comment {get;set;}
     }
 }
