@@ -11,6 +11,8 @@ using Buyer.Application.Services;
 using Buyer.Application.Features.Queries.GetOrganizationProfile;
 using Buyer.Infrastructure.Contracts.IRepository;
 using Buyer.Infrastructure.Repository;
+using Buyer.Application.Contracts;
+using Buyer.Infrastructure.ApiClients;
 
 
 
@@ -136,6 +138,7 @@ namespace Buyer.API.Extensions
             _ = services.AddScoped<IUserIdentityService, UserIdentityService>();
             _ = services.AddScoped<IUserContext, UserContext>();
             _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
+            _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
             _ = services.AddControllers();
 
         }
