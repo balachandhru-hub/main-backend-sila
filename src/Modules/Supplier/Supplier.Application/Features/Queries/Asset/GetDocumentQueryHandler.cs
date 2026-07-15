@@ -44,27 +44,18 @@ namespace Supplier.Application.Features.Queries.Asset.GetDocument
                     $"Asset with Id {request.AssetId} not found.");
             }
 
-          var basePath = _configuration[Common.BASE_FOLDER_PATH]!;
+            var filePath = Path.Combine(
+                _configuration[Common.BASE_FOLDER_PATH]!,
+                request.AssetId.ToString(),
+                asset.FileName);
 
-var filePath = Path.Combine(
-    basePath,
-    request.AssetId.ToString(),
-    asset.FileName);
-
-// Debug logs
-_logger.LogInfo($"Base Folder Path: {basePath}");
-_logger.LogInfo($"Asset Id: {request.AssetId}");
-_logger.LogInfo($"File Name: {asset.FileName}");
-_logger.LogInfo($"Expected File Path: {filePath}");
-
-if (!File.Exists(filePath))
-{
-    _logger.LogError($"File does not exist at path: {filePath}");
-
-    throw new NotFoundCustomException(
-        "File not found",
-        $"File for asset {request.AssetId} not found.");
-}
+            if (!File.Exists(filePath))
+            {
+                  _logger.LogError($"File does not exist at path: {filePath}");
+                throw new NotFoundCustomException(
+                    "File not found",
+                    $"File for asset {request.AssetId} not found.");
+            }
             
 
             var fileBytes = await File.ReadAllBytesAsync(filePath, cancellationToken);
