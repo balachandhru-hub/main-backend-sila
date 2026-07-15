@@ -65,7 +65,9 @@ namespace Buyer.Application.Features.Queries.GetAllBuyers
                         Currency = organization.Currency,
                         YearEstablished = organization.YearEstablished,
                         Website = organization.Website,
-                        Description = organization.Description
+                        Description = organization.Description,
+                        Status=organization.Status,
+                        Comments=organization.Comment
                     }
                 };
 
