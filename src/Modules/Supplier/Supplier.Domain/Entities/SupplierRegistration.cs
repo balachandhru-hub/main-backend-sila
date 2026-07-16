@@ -10,7 +10,7 @@ namespace Supplier.Domain.Entities
 
         public Guid SupplierId { get; set; }
 
-        public Guid RegistrationType { get; set; }
+        public string RegistrationType { get; set; }
 
         public string RegistrationNumber { get; set; }
 
