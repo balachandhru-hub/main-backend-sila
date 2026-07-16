@@ -148,11 +148,22 @@ public class UnspscRepository : IUnspscRepository
 
     public async Task<List<GetSegmentDto>> GetSegmentAsync(
     int pageIndex,
-    int pageSize)
+    int pageSize,
+    string? searchTerm)
     {
         _logger.LogInfo($"Retrieving UNSPSC segments. PageIndex: {pageIndex}, PageSize: {pageSize}");
 
-        return await _context.UnspscCategories
+        var query = _context.UnspscCategories.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            searchTerm = searchTerm.ToLower();
+
+            query = query.Where(x =>
+                x.SegmentTitle.ToLower().Contains(searchTerm));
+        }
+
+        return await query
             .Select(x => new
             {
                 x.Segment,
@@ -160,7 +171,7 @@ public class UnspscRepository : IUnspscRepository
             })
             .Distinct()
             .OrderBy(x => x.Segment)
-            .Skip((pageIndex - 1) * pageSize)
+            .Skip(pageIndex)
             .Take(pageSize)
             .Select(x => new GetSegmentDto
             {

@@ -19,7 +19,8 @@ public class GetUnspscSegmentQueryHandler
         CancellationToken cancellationToken)
     {
         return await _repository.Unspsc.GetSegmentAsync(
-            request.PageIndex,
-            request.PageSize);
+    request.PageIndex,
+    request.PageSize,
+    request.SearchTerm);
     }
 }

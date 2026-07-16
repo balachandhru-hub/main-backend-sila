@@ -21,7 +21,8 @@ public interface IUnspscRepository
 
     Task<List<GetSegmentDto>> GetSegmentAsync(
     int pageIndex,
-    int pageSize);
+    int pageSize,
+    string? searchTerm);
 
     Task<List<FamilyDto>> GetFamilyAsync(
     long segment,

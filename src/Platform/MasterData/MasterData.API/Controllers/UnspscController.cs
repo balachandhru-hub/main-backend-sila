@@ -112,15 +112,17 @@ public class UnspscController : ControllerBase
     [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Data retrieved successfully")]
     [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
     public async Task<IActionResult> GetSegment(
-        [FromQuery] int pageIndex = 1,
-        [FromQuery] int pageSize = 10)
+    [FromQuery] int pageIndex = 1,
+    [FromQuery] int pageSize = 10,
+    [FromQuery] string? searchTerm = null)
     {
         _logger.LogInfo($"Received request to get UNSPSC segments: PageIndex={pageIndex}, PageSize={pageSize}");
 
         var result = await _mediator.Send(
-            new GetUnspscsegmentQuery(
-                pageIndex,
-                pageSize));
+    new GetUnspscsegmentQuery(
+        pageIndex,
+        pageSize,
+        searchTerm));
 
         _logger.LogInfo($"Retrieved {result.Count} segments.");
 
