@@ -100,4 +100,58 @@ public class UnspscController : ControllerBase
 
         return Ok(result);
     }
+
+    /// <summary>
+    /// Returns distinct UNSPSC Segments.
+    /// </summary>
+    [HttpGet]
+    [Route("api/v1/masterdata/unspsc/segment")]
+    [ValidateModelState]
+    [SwaggerOperation("GetUnspscSegment")]
+    [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Data retrieved successfully")]
+    [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+    public async Task<IActionResult> GetSegment(
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        _logger.LogInfo($"Received request to get UNSPSC segments: PageIndex={pageIndex}, PageSize={pageSize}");
+
+        var result = await _mediator.Send(
+            new GetUnspscsegmentQuery(
+                pageIndex,
+                pageSize));
+
+        _logger.LogInfo($"Retrieved {result.Count} segments.");
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Returns distinct Families for a Segment.
+    /// </summary>
+    [HttpGet]
+    [Route("api/v1/masterdata/unspsc/family")]
+    [ValidateModelState]
+    [SwaggerOperation("GetUnspscFamily")]
+    [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Data retrieved successfully")]
+    [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+    public async Task<IActionResult> GetFamily(
+        [FromQuery] long segment,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        _logger.LogInfo($"Received request to get families. Segment={segment}, PageIndex={pageIndex}, PageSize={pageSize}");
+
+        var result = await _mediator.Send(
+            new GetUnspscFamilyQuery(
+                segment,
+                pageIndex,
+                pageSize));
+
+        _logger.LogInfo($"Retrieved {result.Count} families.");
+
+        return Ok(result);
+    }
+
+
 }
