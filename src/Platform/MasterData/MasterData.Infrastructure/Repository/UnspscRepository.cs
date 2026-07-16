@@ -179,22 +179,22 @@ public class UnspscRepository : IUnspscRepository
         _logger.LogInfo($"Retrieving families for Segment={segment}");
 
         return await _context.UnspscCategories
-    .Where(x => x.Segment == segment &&
-                x.Family.HasValue)
-    .Select(x => new
-    {
-        x.Family,
-        x.FamilyTitle
-    })
-    .Distinct()
-    .OrderBy(x => x.Family)
-    .Skip((pageIndex - 1) * pageSize)
-    .Take(pageSize)
-    .Select(x => new FamilyDto
-    {
-        Family = x.Family,
-        Title = x.FamilyTitle
-    })
-    .ToListAsync();
+        .Where(x => x.Segment == segment &&
+                    x.Family.HasValue)
+        .Select(x => new
+        {
+            x.Family,
+            x.FamilyTitle
+        })
+        .Distinct()
+        .OrderBy(x => x.Family)
+        .Skip(pageIndex)
+        .Take(pageSize)
+        .Select(x => new FamilyDto
+        {
+            Family = x.Family,
+            Title = x.FamilyTitle
+        })
+        .ToListAsync();
     }
 }
