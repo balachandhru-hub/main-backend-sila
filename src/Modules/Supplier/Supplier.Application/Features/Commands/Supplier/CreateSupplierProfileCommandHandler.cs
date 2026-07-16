@@ -150,7 +150,7 @@ namespace Supplier.Application.Features.Commands.Supplier
             {
                 Id = Guid.NewGuid(),
                 SupplierId = supplierProfile.Id,
-                RegistrationType = metadataId,
+                RegistrationType = registration.RegistrationType,
                 RegistrationNumber = registration.RegistrationNumber,
                 RegistrationName = registration.RegistrationName,
                 ExpiryDate = registration.ExpiryDate,

@@ -118,7 +118,7 @@ namespace Supplier.Application.Features.Queries.Supplier
                     dto.Registrations.Add(
                         new SupplierRegistrationResponseDto
                         {
-                            RegistrationType = registration.RegistrationType.ToString(),
+                            RegistrationType = registration.RegistrationType,
                             RegistrationNumber = registration.RegistrationNumber,
                             RegistrationName = registration.RegistrationName,
                             ExpiryDate = registration.ExpiryDate,

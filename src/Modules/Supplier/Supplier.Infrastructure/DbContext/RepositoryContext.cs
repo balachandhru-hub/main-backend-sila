@@ -19,10 +19,10 @@ namespace Supplier.Infrastructure.DbContext
         }
 
         
-        public DbSet<SupplierBankAccount> SupplierBankAccounts { get; set; }
-        public DbSet<SupplierBusinessProfile> SupplierBusinessProfiles { get; set; }
-        public DbSet<SupplierDispatchLocation> SupplierDispatchLocations { get; set; }
-       public DbSet<SupplierRegistration> SupplierRegistrations { get; set; }
+        public DbSet<SupplierBankAccount> SupplierBankAccount { get; set; }
+        public DbSet<SupplierBusinessProfile> SupplierBusinessProfile { get; set; }
+        public DbSet<SupplierDispatchLocation> SupplierDispatchLocation { get; set; }
+       public DbSet<SupplierRegistration> SupplierRegistration { get; set; }
        public DbSet<Asset>Assets {get;set;}
       
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
