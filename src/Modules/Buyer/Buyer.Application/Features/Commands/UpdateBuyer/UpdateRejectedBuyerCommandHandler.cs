@@ -241,49 +241,49 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
 
                 if (category.Segment != item.Segment)
                 {
-                    _logger.LogInfo($"Updating Segment for buyer category ID {item.Id} from '{category.Segment}' to '{item.Segment}'.");
+
                     category.Segment = item.Segment;
                 }
 
                 if (category.SegmentTitle != item.SegmentTitle)
                 {
-                    _logger.LogInfo($"Updating SegmentTitle for buyer category ID {item.Id} from '{category.SegmentTitle}' to '{item.SegmentTitle}'.");
+
                     category.SegmentTitle = item.SegmentTitle;
                 }
 
                 if (category.Family != item.Family)
                 {
-                    _logger.LogInfo($"Updating Family for buyer category ID {item.Id} from '{category.Family}' to '{item.Family}'.");
+
                     category.Family = item.Family;
                 }
 
                 if (category.FamilyTitle != item.FamilyTitle)
                 {
-                    _logger.LogInfo($"Updating FamilyTitle for buyer category ID {item.Id} from '{category.FamilyTitle}' to '{item.FamilyTitle}'.");
+
                     category.FamilyTitle = item.FamilyTitle;
                 }
 
                 if (category.Class != item.Class)
                 {
-                    _logger.LogInfo($"Updating Class for buyer category ID {item.Id} from '{category.Class}' to '{item.Class}'.");
+
                     category.Class = item.Class;
                 }
 
                 if (category.ClassTitle != item.ClassTitle)
                 {
-                    _logger.LogInfo($"Updating ClassTitle for buyer category ID {item.Id} from '{category.ClassTitle}' to '{item.ClassTitle}'.");
+
                     category.ClassTitle = item.ClassTitle;
                 }
 
                 if (category.Commodity != item.Commodity)
                 {
-                    _logger.LogInfo($"Updating Commodity for buyer category ID {item.Id} from '{category.Commodity}' to '{item.Commodity}'.");
+
                     category.Commodity = item.Commodity;
                 }
 
                 if (category.CommodityTitle != item.CommodityTitle)
                 {
-                    _logger.LogInfo($"Updating CommodityTitle for buyer category ID {item.Id} from '{category.CommodityTitle}' to '{item.CommodityTitle}'.");
+
                     category.CommodityTitle = item.CommodityTitle;
                 }
 
@@ -298,7 +298,6 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
                 _logger.LogInfo($"Updating registration with ID {item.Id} for buyer ID {request.Buyer.BuyerId}.");
                 var registration = _repository.BuyerRegistration
                     .FindFirstByCondition(x =>
-                        x.Id == item.Id &&
                         x.BuyerId == buyer.Id &&
                         x.IsActive);
 
@@ -312,27 +311,26 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
 
                 if (registration.RegistrationType != item.RegistrationType)
                 {
-                    _logger.LogInfo(
-                        $"Updating RegistrationType for registration ID {item.Id} from '{registration.RegistrationType}' to '{item.RegistrationType}'.");
+
 
                     registration.RegistrationType = item.RegistrationType;
                 }
 
                 if (registration.RegistrationNumber != item.RegistrationNumber)
                 {
-                    _logger.LogInfo($"Updating RegistrationNumber for registration ID {item.Id} from '{registration.RegistrationNumber}' to '{item.RegistrationNumber}'.");
+
                     registration.RegistrationNumber = item.RegistrationNumber;
                 }
 
                 if (registration.RegistrationName != item.RegistrationName)
                 {
-                    _logger.LogInfo($"Updating RegistrationName for registration ID {item.Id} from '{registration.RegistrationName}' to '{item.RegistrationName}'.");
+
                     registration.RegistrationName = item.RegistrationName;
                 }
 
                 if (registration.ExpiryDate != item.ExpiryDate)
                 {
-                    _logger.LogInfo($"Updating ExpiryDate for registration ID {item.Id} from '{registration.ExpiryDate}' to '{item.ExpiryDate}'.");
+
                     registration.ExpiryDate = item.ExpiryDate;
                 }
 
@@ -362,8 +360,7 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
                 _logger.LogInfo($"Updating bank account with ID {item.Id} for buyer ID {request.Buyer.BuyerId}.");
                 var bank = _repository.BuyerBankAccount
                     .FindFirstByCondition(x =>
-                        x.Id == item.Id &&
-                        x.BuyerId == buyer.Id &&
+                     x.BuyerId == buyer.Id &&
                         x.IsActive);
 
                 if (bank == null)
@@ -375,43 +372,43 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
                 }
                 if (bank.AccountHolderName != item.AccountHolderName)
                 {
-                    _logger.LogInfo($"Updating AccountHolderName for bank account ID {item.Id} from '{bank.AccountHolderName}' to '{item.AccountHolderName}'.");
+
                     bank.AccountHolderName = item.AccountHolderName;
                 }
                 if (bank.BankName != item.BankName)
                 {
-                    _logger.LogInfo($"Updating BankName for bank account ID {item.Id} from '{bank.BankName}' to '{item.BankName}'.");
+
                     bank.BankName = item.BankName;
                 }
                 if (bank.BranchName != item.BranchName)
                 {
-                    _logger.LogInfo($"Updating BranchName for bank account ID {item.Id} from '{bank.BranchName}' to '{item.BranchName}'.");
+
                     bank.BranchName = item.BranchName;
                 }
 
                 if (bank.AccountNumber != item.AccountNumber)
                 {
-                    _logger.LogInfo($"Updating AccountNumber for bank account ID {item.Id} from '{bank.AccountNumber}' to '{item.AccountNumber}'.");
+
                     bank.AccountNumber = item.AccountNumber;
                 }
                 if (bank.IFSCCode != item.IFSCCode)
                 {
-                    _logger.LogInfo($"Updating IFSCCode for bank account ID {item.Id} from '{bank.IFSCCode}' to '{item.IFSCCode}'.");
+
                     bank.IFSCCode = item.IFSCCode;
                 }
                 if (bank.SWIFTCode != item.SWIFTCode)
                 {
-                    _logger.LogInfo($"Updating SWIFTCode for bank account ID {item.Id} from '{bank.SWIFTCode}' to '{item.SWIFTCode}'.");
+
                     bank.SWIFTCode = item.SWIFTCode;
                 }
                 if (bank.Currency != item.Currency)
                 {
-                    _logger.LogInfo($"Updating Currency for bank account ID {item.Id} from '{bank.Currency}' to '{item.Currency}'.");
+
                     bank.Currency = item.Currency;
                 }
                 if (bank.IsPrimary != item.IsPrimary)
                 {
-                    _logger.LogInfo($"Updating IsPrimary for bank account ID {item.Id} from '{bank.IsPrimary}' to '{item.IsPrimary}'.");
+
                     bank.IsPrimary = item.IsPrimary;
                 }
 
@@ -428,8 +425,7 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
                 _logger.LogInfo($"Updating dispatch location with ID {item.Id} for buyer ID {request.Buyer.BuyerId}.");
                 var location = _repository.BuyerDeliveryLocation
                     .FindFirstByCondition(x =>
-                        x.Id == item.Id &&
-                        x.BuyerId == buyer.Id &&
+                     x.BuyerId == buyer.Id &&
                         x.IsActive);
 
                 if (location == null)
@@ -441,53 +437,53 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
                 }
                 if (location.LocationName != item.LocationName)
                 {
-                    _logger.LogInfo($"Updating LocationName for dispatch location ID {item.Id} from '{location.LocationName}' to '{item.LocationName}'.");
+
                     location.LocationName = item.LocationName;
                 }
                 if (location.AddressLine1 != item.AddressLine1)
                 {
-                    _logger.LogInfo($"Updating AddressLine1 for dispatch location ID {item.Id} from '{location.AddressLine1}' to '{item.AddressLine1}'.");
+
                     location.AddressLine1 = item.AddressLine1;
                 }
                 if (location.AddressLine2 != item.AddressLine2)
                 {
-                    _logger.LogInfo($"Updating AddressLine2 for dispatch location ID {item.Id} from '{location.AddressLine2}' to '{item.AddressLine2}'.");
+
                     location.AddressLine2 = item.AddressLine2;
                 }
                 if (location.City != item.City)
                 {
-                    _logger.LogInfo($"Updating City for dispatch location ID {item.Id} from '{location.City}' to '{item.City}'.");
+
                     location.City = item.City;
                 }
                 if (location.State != item.State)
                 {
-                    _logger.LogInfo($"Updating State for dispatch location ID {item.Id} from '{location.State}' to '{item.State}'.");
+
                     location.State = item.State;
                 }
                 if (location.Country != item.Country)
                 {
-                    _logger.LogInfo($"Updating Country for dispatch location ID {item.Id} from '{location.Country}' to '{item.Country}'.");
+
                     location.Country = item.Country;
                 }
                 if (location.PinCode != item.PinCode)
                 {
-                    _logger.LogInfo($"Updating PinCode for dispatch location ID {item.Id} from '{location.PinCode}' to '{item.PinCode}'.");
+
                     location.PinCode = item.PinCode;
                 }
                 if (location.ContactPerson != item.ContactPerson)
                 {
-                    _logger.LogInfo($"Updating ContactPerson for dispatch location ID {item.Id} from '{location.ContactPerson}' to '{item.ContactPerson}'.");
+
                     location.ContactPerson = item.ContactPerson;
                 }
 
                 if (location.ContactPhone != item.ContactPhone)
                 {
-                    _logger.LogInfo($"Updating ContactPhone for dispatch location ID {item.Id} from '{location.ContactPhone}' to '{item.ContactPhone}'.");
+
                     location.ContactPhone = item.ContactPhone;
                 }
                 if (location.IsDefault != item.IsDefault)
                 {
-                    _logger.LogInfo($"Updating IsDefault for dispatch location ID {item.Id} from '{location.IsDefault}' to '{item.IsDefault}'.");
+
                     location.IsDefault = item.IsDefault;
                 }
 
