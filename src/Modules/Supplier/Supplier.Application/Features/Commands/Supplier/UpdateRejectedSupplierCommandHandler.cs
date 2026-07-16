@@ -260,10 +260,10 @@ namespace Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier
                         $"Registration type '{item.RegistrationType}' not found.");
                 }
 
-                if (registration.RegistrationType != metadataId)
+                if (registration.RegistrationType != item.RegistrationType)
                 {
                     _logger.LogInfo($"Updating RegistrationType for registration ID {item.Id} from '{registration.RegistrationType}' to '{metadataId}'.");
-                    registration.RegistrationType = metadataId;
+                    registration.RegistrationType = item.RegistrationType;
                 }
 
                 if (registration.RegistrationNumber != item.RegistrationNumber)
