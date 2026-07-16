@@ -113,7 +113,7 @@ namespace Supplier.Application.Features.Queries.Supplier
 
                     return new SupplierRegistrationResponseDto
                     {
-                        RegistrationType = x.RegistrationType.ToString(),
+                        RegistrationType = x.RegistrationType,
                         RegistrationNumber = x.RegistrationNumber,
                         RegistrationName = x.RegistrationName,
                         Asset = assetDto,
