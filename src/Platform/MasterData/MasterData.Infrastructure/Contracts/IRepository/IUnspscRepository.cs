@@ -18,4 +18,14 @@ public interface IUnspscRepository
         long family,
         int pageIndex,
         int pageSize);
+
+    Task<List<GetSegmentDto>> GetSegmentAsync(
+    int pageIndex,
+    int pageSize,
+    string? searchTerm);
+
+    Task<List<FamilyDto>> GetFamilyAsync(
+    long segment,
+    int pageIndex,
+    int pageSize);
 }

@@ -35,7 +35,7 @@ public class UnspscRepository : IUnspscRepository
     {
         _logger.LogInfo($"Retrieving UNSPSC categories. PageIndex: {pageIndex}, PageSize: {pageSize}");
 
-       
+
         var segments = await _context.UnspscCategories
             .Select(x => new
             {
@@ -48,14 +48,14 @@ public class UnspscRepository : IUnspscRepository
             .Take(pageSize)
             .ToListAsync();
 
-        
+
         var segmentIds = segments.Select(x => x.Segment).ToList();
 
         var data = await _context.UnspscCategories
             .Where(x => segmentIds.Contains(x.Segment))
             .ToListAsync();
 
-        
+
         return data
             .GroupBy(x => new
             {
@@ -92,7 +92,7 @@ public class UnspscRepository : IUnspscRepository
     {
         _logger.LogInfo($"Retrieving classes for Segment={segment}, Family={family}");
 
-        
+
         var classes = await _context.UnspscCategories
             .Where(x => x.Segment == segment &&
                         x.Family == family)
@@ -107,7 +107,7 @@ public class UnspscRepository : IUnspscRepository
             .Take(pageSize)
             .ToListAsync();
 
-       
+
         var classIds = classes.Select(x => x.Class).ToList();
 
         var data = await _context.UnspscCategories
@@ -116,7 +116,7 @@ public class UnspscRepository : IUnspscRepository
                         classIds.Contains(x.Class))
             .ToListAsync();
 
-       
+
         return data
             .GroupBy(x => new
             {
@@ -143,5 +143,69 @@ public class UnspscRepository : IUnspscRepository
                     .ToList()
             })
             .ToList();
+    }
+
+
+    public async Task<List<GetSegmentDto>> GetSegmentAsync(
+    int pageIndex,
+    int pageSize,
+    string? searchTerm)
+    {
+        _logger.LogInfo($"Retrieving UNSPSC segments. PageIndex: {pageIndex}, PageSize: {pageSize}");
+
+        var query = _context.UnspscCategories.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            searchTerm = searchTerm.ToLower();
+
+            query = query.Where(x =>
+                x.SegmentTitle.ToLower().Contains(searchTerm));
+        }
+
+        return await query
+            .Select(x => new
+            {
+                x.Segment,
+                x.SegmentTitle
+            })
+            .Distinct()
+            .OrderBy(x => x.Segment)
+            .Skip(pageIndex)
+            .Take(pageSize)
+            .Select(x => new GetSegmentDto
+            {
+                Segment = x.Segment,
+                Title = x.SegmentTitle
+            })
+            .ToListAsync();
+    }
+
+
+    public async Task<List<FamilyDto>> GetFamilyAsync(
+    long segment,
+    int pageIndex,
+    int pageSize)
+    {
+        _logger.LogInfo($"Retrieving families for Segment={segment}");
+
+        return await _context.UnspscCategories
+        .Where(x => x.Segment == segment &&
+                    x.Family.HasValue)
+        .Select(x => new
+        {
+            x.Family,
+            x.FamilyTitle
+        })
+        .Distinct()
+        .OrderBy(x => x.Family)
+        .Skip(pageIndex)
+        .Take(pageSize)
+        .Select(x => new FamilyDto
+        {
+            Family = x.Family,
+            Title = x.FamilyTitle
+        })
+        .ToListAsync();
     }
 }
