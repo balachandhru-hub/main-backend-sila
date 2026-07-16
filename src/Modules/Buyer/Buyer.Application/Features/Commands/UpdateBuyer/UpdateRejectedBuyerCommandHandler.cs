@@ -297,10 +297,9 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
             {
                 _logger.LogInfo($"Updating registration with ID {item.Id} for buyer ID {request.Buyer.BuyerId}.");
                 var registration = _repository.BuyerRegistration
-                    .FindFirstByCondition(x =>
-                        x.Id == item.Id &&
+                    .FindByCondition(x =>
                         x.BuyerId == buyer.Id &&
-                        x.IsActive);
+                        x.IsActive) .FirstOrDefault();
 
                 if (registration == null)
                 {
@@ -361,10 +360,9 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
             {
                 _logger.LogInfo($"Updating bank account with ID {item.Id} for buyer ID {request.Buyer.BuyerId}.");
                 var bank = _repository.BuyerBankAccount
-                    .FindFirstByCondition(x =>
-                        x.Id == item.Id &&
-                        x.BuyerId == buyer.Id &&
-                        x.IsActive);
+                    .FindByCondition(x =>
+                     x.BuyerId == buyer.Id &&
+                        x.IsActive).FirstOrDefault();
 
                 if (bank == null)
                 {
@@ -427,10 +425,9 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
             {
                 _logger.LogInfo($"Updating dispatch location with ID {item.Id} for buyer ID {request.Buyer.BuyerId}.");
                 var location = _repository.BuyerDeliveryLocation
-                    .FindFirstByCondition(x =>
-                        x.Id == item.Id &&
-                        x.BuyerId == buyer.Id &&
-                        x.IsActive);
+                    .FindByCondition(x =>
+                     x.BuyerId == buyer.Id &&
+                        x.IsActive) .FirstOrDefault();
 
                 if (location == null)
                 {

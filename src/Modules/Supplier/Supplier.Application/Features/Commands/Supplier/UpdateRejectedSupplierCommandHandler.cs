@@ -239,10 +239,10 @@ namespace Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier
             {
                 _logger.LogInfo($"Updating registration with ID {item.Id} for supplier ID {request.Supplier.SupplierId}.");
                 var registration = _repository.SupplierRegistration
-                    .FindFirstByCondition(x =>
-                        x.Id == item.Id &&
+                    .FindByCondition(x =>
+
                         x.SupplierId == supplier.Id &&
-                        x.IsActive);
+                        x.IsActive).FirstOrDefault();
 
                 if (registration == null)
                 {
@@ -252,17 +252,11 @@ namespace Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier
                         $"Registration with Id '{item.Id}' was not found.");
                 }
 
-                if (!metadataLookup.TryGetValue(item.RegistrationType, out Guid metadataId))
-                {
-                    _logger.LogError($"Registration type '{item.RegistrationType}' not found in metadata for supplier ID {request.Supplier.SupplierId}.");
-                    throw new NotFoundCustomException(
-                        "Registration type not found.",
-                        $"Registration type '{item.RegistrationType}' not found.");
-                }
+
 
                 if (registration.RegistrationType != item.RegistrationType)
                 {
-                    _logger.LogInfo($"Updating RegistrationType for registration ID {item.Id} from '{registration.RegistrationType}' to '{metadataId}'.");
+                    _logger.LogInfo($"Updating RegistrationType for registration ID {item.Id} from '{registration.RegistrationType}' to '{item.RegistrationType}'.");
                     registration.RegistrationType = item.RegistrationType;
                 }
 
@@ -308,10 +302,10 @@ namespace Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier
             {
                 _logger.LogInfo($"Updating bank account with ID {item.Id} for supplier ID {request.Supplier.SupplierId}.");
                 var bank = _repository.SupplierBankAccount
-                    .FindFirstByCondition(x =>
-                        x.Id == item.Id &&
+                    .FindByCondition(x =>
+
                         x.SupplierId == supplier.Id &&
-                        x.IsActive);
+                        x.IsActive).FirstOrDefault(); ;
 
                 if (bank == null)
                 {
@@ -379,10 +373,9 @@ namespace Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier
             {
                 _logger.LogInfo($"Updating dispatch location with ID {item.Id} for supplier ID {request.Supplier.SupplierId}.");
                 var location = _repository.SupplierDispatchLocation
-                    .FindFirstByCondition(x =>
-                        x.Id == item.Id &&
-                        x.SupplierId == supplier.Id &&
-                        x.IsActive);
+                    .FindByCondition(x =>
+                       x.SupplierId == supplier.Id &&
+                        x.IsActive).FirstOrDefault();
 
                 if (location == null)
                 {
