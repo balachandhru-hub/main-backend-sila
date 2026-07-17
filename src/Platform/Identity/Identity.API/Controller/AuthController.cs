@@ -211,8 +211,8 @@ namespace Identity.API.Controllers
                 result.Token!,
                 new CookieOptions
                 {
-                    // Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
-                    // Path = "/",
+                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    Path = "/",
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
@@ -225,8 +225,8 @@ namespace Identity.API.Controllers
                 result.RefreshToken.ToString(),
                 new CookieOptions
                 {
-                    // Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
-                    // Path = "/",
+                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    Path = "/",
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
