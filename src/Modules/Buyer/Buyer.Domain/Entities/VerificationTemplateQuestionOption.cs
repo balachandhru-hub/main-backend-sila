@@ -13,6 +13,6 @@ namespace Buyer.Domain.Entities
         public string OptionText { get; set; }
 
         public int DisplayOrder { get; set; }
-        public VerificationTemplateQuestionOption (){}
+        public VerificationTemplateQuestionOption() { }
     }
 }

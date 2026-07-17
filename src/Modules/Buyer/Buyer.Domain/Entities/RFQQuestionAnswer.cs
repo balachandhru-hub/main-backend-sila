@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using SharedKernel.Models;
 namespace Buyer.Domain.Entities
 {
-public class RFQQuestionAnswer : BaseModel
+    public class RFQQuestionAnswer : BaseModel
     {
         [Key]
         public Guid Id { get; set; }
@@ -24,6 +24,6 @@ public class RFQQuestionAnswer : BaseModel
         public Guid? QuestionOptionId { get; set; }
 
         public DateTime? AnsweredOn { get; set; }
-        public RFQQuestionAnswer(){}
+        public RFQQuestionAnswer() { }
     }
 }

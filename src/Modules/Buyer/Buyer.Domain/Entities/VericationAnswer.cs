@@ -10,7 +10,7 @@ namespace Buyer.Domain.Entities
         public Guid SupplierVerificationRequestId { get; set; }
 
         public Guid VerificationTemplateQuestionId { get; set; }
-	    public Guid  TemplateId {get; set;}
+        public Guid TemplateId { get; set; }
 
         public string? Answer { get; set; }
 
@@ -19,6 +19,6 @@ namespace Buyer.Domain.Entities
         public Guid? VerificationTemplateQuestionOptionId { get; set; }
 
         public DateTime? AnsweredOn { get; set; }
-        public VerificationAnswer(){}
+        public VerificationAnswer() { }
     }
 }

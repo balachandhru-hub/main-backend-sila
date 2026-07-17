@@ -18,6 +18,6 @@ namespace Buyer.Domain.Entities
         public int DisplayOrder { get; set; }
 
         public string? Placeholder { get; set; }
-        public VerificationTemplateQuestion(){}
+        public VerificationTemplateQuestion() { }
     }
 }
