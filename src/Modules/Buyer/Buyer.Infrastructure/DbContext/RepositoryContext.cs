@@ -23,6 +23,23 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<BuyerBusinessProfile> BuyerBusinessProfile { get; set; }
         public DbSet<BuyerRegistration> BuyerRegistration { get; set; }
         public DbSet<Asset> Asset { get; set; }
+        public DbSet<RFQ> RFQ { get; set; }
+        public DbSet<RFQItem> RFQItem { get; set; }
+        public DbSet<RFQAttachmentMapping> RFQAttachmentMapping { get; set; }
+        public DbSet<RFQItemAttachmentMapping> RFQItemAttachmentMapping { get; set; }
+        public DbSet<ItemBuyerMaster> ItemBuyerMaster { get; set; }
+        public DbSet<RFQQuestionAnswer> RFQQuestionAnswer { get; set; }
+        public DbSet<RFQQuestion> RFQQuestion { get; set; }
+        public DbSet<RFQQuestionOption> RFQQuestionOption { get; set; }
+        public DbSet<SupplierVerificationRequest> SupplierVerificationRequest { get; set; }
+        public DbSet<VerificationAnswer> VerificationAnswer { get; set; }
+        public DbSet<VerificationAnswerOption> VerificationAnswerOption { get; set; }
+        public DbSet<VerificationTemplate> VerificationTemplate { get; set; }
+        public DbSet<VerificationTemplateQuestion> VerificationTemplateQuestion { get; set; }
+        public DbSet<VerificationTemplateQuestionOption> VerificationTemplateQuestionOption { get; set; }
+        public DbSet<RFQAnswerOption> RFQAnswerOption { get; set; }
+
+
 
 
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
@@ -34,6 +51,24 @@ namespace Buyer.Infrastructure.DbContext
             _ = modelBuilder.Entity<BuyerDeliveryLocation>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<BuyerRegistration>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<Asset>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<RFQ>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<RFQAttachmentMapping>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<RFQItemAttachmentMapping>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<RFQItem>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<RFQQuestion>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<RFQQuestionAnswer>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<RFQAnswerOption>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<RFQQuestionOption>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<ItemBuyerMaster>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<SupplierVerificationRequest>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<VerificationAnswer>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<VerificationAnswerOption>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<VerificationTemplate>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<VerificationTemplateQuestion>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<VerificationTemplateQuestionOption>().HasIndex(a => a.IsActive);
+
+
+
 
             base.OnModelCreating(modelBuilder);
 
