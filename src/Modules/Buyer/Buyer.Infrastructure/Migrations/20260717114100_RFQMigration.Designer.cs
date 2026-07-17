@@ -4,6 +4,7 @@ using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Buyer.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260717114100_RFQMigration")]
+    partial class RFQMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -622,10 +625,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("date_updated");
 
-                    b.Property<decimal?>("DeliveryCharge")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("delivery_charge");
-
                     b.Property<string>("DeliveryLocation")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -687,6 +686,10 @@ namespace Buyer.Infrastructure.Migrations
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
+
+                    b.Property<decimal?>("deliveryCharge")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("delivery_charge");
 
                     b.HasKey("Id")
                         .HasName("pk_rfq");
@@ -1365,6 +1368,10 @@ namespace Buyer.Infrastructure.Migrations
                     b.Property<bool>("IsRequired")
                         .HasColumnType("bit")
                         .HasColumnName("is_required");
+
+                    b.Property<string>("Placeholder")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("placeholder");
 
                     b.Property<string>("Question")
                         .IsRequired()
