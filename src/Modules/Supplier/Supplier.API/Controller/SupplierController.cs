@@ -11,6 +11,7 @@ using Supplier.Domain.Dto;
 using SharedKernel.Controllers;
 using Supplier.Application.Features.StatusUpdate.Commands;
 using Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier;
+using Supplier.Application.Features.Commands.Supplier.UpdateSupplierStatusOrganization;
 
 
 namespace Supplier.API.Controllers
@@ -148,6 +149,27 @@ namespace Supplier.API.Controllers
                 Message = "Success",
                 Description = "Supplier updated successfully.",
                 Id = command.Supplier.SupplierId.ToString()
+            });
+        }
+        [HttpPut]
+        [Route("api/v1/supplier/internal/status")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_SUPPLIER_STATUS_ORGANIZATION")]
+        [SwaggerOperation("UpdateSupplierStatus")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier not found")]
+        public async Task<IActionResult> UpdateSupplierStatus(
+            [FromBody] UpdateSupplierStatusOrganizationCommand command)
+        {
+            await _mediator.Send(command);
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Supplier status updated successfully.",
+                Id = command.Supplier.OrganizationId.ToString()
             });
         }
     }

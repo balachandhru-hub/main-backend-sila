@@ -11,7 +11,7 @@ using SharedKernel.Controllers;
 using Buyer.Application.Features.Queries.GetAllBuyers;
 using Buyer.Application.Features.StatusUpdate.Commands;
 using Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer;
-
+using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
 namespace Buyer.API.Controllers
 {
     [ApiController]
@@ -133,6 +133,27 @@ namespace Buyer.API.Controllers
                 Message = "Success",
                 Description = "Buyer updated successfully.",
                 Id = command.Buyer.BuyerId.ToString()
+            });
+        }
+        [HttpPut]
+        [Route("api/v1/buyer/internal/status")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_BUYER_STATUS_ORGANIZATION")]
+        [SwaggerOperation("UpdateBuyerStatusOrganization")]
+        [SwaggerResponse(200, type: typeof(bool), description: "Buyer status updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateBuyerStatus(
+            [FromBody] UpdateBuyerStatusOrganizationCommand command)
+        {
+            await _mediator.Send(command);
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Buyer status updated successfully.",
+                Id = command.Buyer.OrganizationId.ToString()
             });
         }
     }

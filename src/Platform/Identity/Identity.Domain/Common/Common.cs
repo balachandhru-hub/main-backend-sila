@@ -25,5 +25,9 @@ namespace Identity.Domain.Common
                 public static readonly string DOMAIN_COOKIE_NAME = "Domain:DomainName";
                 public static readonly string VERIFICATION_TOKEN_COOKIE_NAME = "VerificationToken";
                 public static readonly string REFRESH_TOKEN_EXPIRATION_TIME = "Tokens:RefershTokenExpirationTimeInSeconds";
+                   public static readonly string SUPPLIER_BASE_URL = "InterCallService:SupplierUrl";
+                      public static readonly string BUYER_BASE_URL = "InterCallService:BuyerUrl";
+                       public static readonly string ACCESS_TOKEN = "access_token";
+
         }
 }
