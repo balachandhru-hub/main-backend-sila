@@ -20,6 +20,8 @@ namespace Buyer.Infrastructure.Repository
         private IBuyerBankAccountRepository _buyerBankAccountRepository;
         private IBuyerDeliveryLocationRepository _buyerDeliveryLocationRepository;
         private IBuyerRegistrationRepository _buyerRegistrationRepository;
+        private IBuyerDepartmentRepository _buyerDepartmentRepository;
+        private IBuyerCostCenterRepository _buyerCostCenterRepository;
         
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
@@ -94,6 +96,28 @@ namespace Buyer.Infrastructure.Repository
                     _buyerRegistrationRepository = new BuyerRegistrationRepository(_context);
                 }
                 return _buyerRegistrationRepository;
+            }
+        }
+          public IBuyerDepartmentRepository BuyerDepartment
+        {
+            get
+            {
+                if (_buyerDepartmentRepository == null)
+                {
+                    _buyerDepartmentRepository = new BuyerDepartmentRepository(_context);
+                }
+                return _buyerDepartmentRepository ;
+            }
+        }
+             public IBuyerCostCenterRepository BuyerCostCenter
+        {
+            get
+            {
+                if(_buyerCostCenterRepository == null)
+                {
+                    _buyerCostCenterRepository = new BuyerCostCenterRepository(_context);
+                }
+                return _buyerCostCenterRepository;
             }
         }
 
