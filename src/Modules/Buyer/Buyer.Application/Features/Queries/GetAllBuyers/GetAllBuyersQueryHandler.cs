@@ -19,7 +19,7 @@ namespace Buyer.Application.Features.Queries.GetAllBuyers
             GetAllBuyersQuery request,
             CancellationToken cancellationToken)
         {
-           var query = _repositoryWrapper.BuyerBusinessProfile.FindByCondition(x => x.IsActive);
+            var query = _repositoryWrapper.BuyerBusinessProfile.FindByCondition(x => x.IsActive);
 
             if (!string.IsNullOrWhiteSpace(request.OrganizationName))
             {
@@ -34,7 +34,7 @@ namespace Buyer.Application.Features.Queries.GetAllBuyers
             }
 
             var buyers = query
-                .OrderByDescending(x     => x.DateUpdated)
+                .OrderByDescending(x => x.DateUpdated)
                 .Skip(request.Index)
                 .Take(request.Limit)
                 .ToList();
@@ -66,8 +66,8 @@ namespace Buyer.Application.Features.Queries.GetAllBuyers
                         YearEstablished = organization.YearEstablished,
                         Website = organization.Website,
                         Description = organization.Description,
-                        Status=organization.Status,
-                        Comments=organization.Comment
+                        Status = organization.Status,
+                        Comments = organization.Comment
                     }
                 };
 
