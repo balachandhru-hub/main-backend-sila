@@ -130,6 +130,28 @@ namespace Identity.Application.Features.Auth.Commands.Login
                     _logger.LogError($"Person Not Found for userId : {user.Id}");
                     throw new UnAuthorizedCustomException("Unauthorized", "Person Not Found.");
                 }
+                var organization = _repository.Organization
+                .FindFirstByCondition(x =>
+                    x.Id == person.OrganizationId);
+
+            if (organization == null)
+            {
+                _logger.LogError($"Organization not found : {person.OrganizationId}");
+
+                throw new UnAuthorizedCustomException(
+                    "Unauthorized",
+                    "Organization not found.");
+            }
+
+            if (!organization.IsActive)
+            {
+                _logger.LogError(
+                    $"Login blocked. Organization is disabled : {organization.Id}");
+
+                throw new UnAuthorizedCustomException(
+                    "Organization disabled",
+                    "Your organization has been disabled");
+            }
                 var permissions = (
                     from roleFeature in _repository.RoleFeatureMapping.FindByConditionAsync(rf => rf.IsActive)
                     join feature in _repository.Feature.FindByConditionAsync(f => f.IsActive)
