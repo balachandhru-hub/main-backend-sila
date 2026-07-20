@@ -10,6 +10,9 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IBuyerDeliveryLocationRepository BuyerDeliveryLocation { get; }
         IBuyerRegistrationRepository BuyerRegistration { get; }
         IBuyerCategoryRepository BuyerCategory { get; }
+        IItemBuyerMasterRepository ItemBuyerMaster { get; }
+        IItemBuyerMasterBulkRepository ItemBuyerMasterBulk { get; }
+        
         IAssetRepository Asset { get; }
 
         bool Save();
