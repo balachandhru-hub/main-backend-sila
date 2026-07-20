@@ -17,17 +17,17 @@ namespace Identity.Domain.Common
                 public static readonly string COOKIE_ACCESS_TOKEN_KEY = "access_token";
                 public static readonly string COOKIE_REFRESH_TOKEN_KEY = "refresh_token";
                 public static readonly string TOKEN_KEY = "Tokens:key";
-                public static readonly string EMAIL_VERIFICATION="OTP_VERIFICATION";
-                public static readonly string EMAIL_OTP="OTP";
-                public static readonly string EMAIL_OTP_VALIDITY="OTP_VALIDITY";
+                public static readonly string EMAIL_VERIFICATION = "OTP_VERIFICATION";
+                public static readonly string EMAIL_OTP = "OTP";
+                public static readonly string EMAIL_OTP_VALIDITY = "OTP_VALIDITY";
                 public static readonly string MASTER_DATA_URL = "InterCallService:MasterDataUrl";
                 public static readonly string MAX_ACTIVE_SESSIONS = "TokenSecurity:MaxActiveSessions";
                 public static readonly string DOMAIN_COOKIE_NAME = "Domain:DomainName";
                 public static readonly string VERIFICATION_TOKEN_COOKIE_NAME = "VerificationToken";
                 public static readonly string REFRESH_TOKEN_EXPIRATION_TIME = "Tokens:RefershTokenExpirationTimeInSeconds";
-                   public static readonly string SUPPLIER_BASE_URL = "InterCallService:SupplierUrl";
-                      public static readonly string BUYER_BASE_URL = "InterCallService:BuyerUrl";
-                       public static readonly string ACCESS_TOKEN = "access_token";
+                public static readonly string SUPPLIER_BASE_URL = "InterCallService:SupplierUrl";
+                public static readonly string BUYER_BASE_URL = "InterCallService:BuyerUrl";
+                public static readonly string ACCESS_TOKEN = "access_token";
 
         }
 }

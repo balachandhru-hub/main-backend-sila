@@ -2,7 +2,7 @@ using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
-using  Buyer.Domain.Dto;
+using Buyer.Domain.Dto;
 
 namespace Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization
 {

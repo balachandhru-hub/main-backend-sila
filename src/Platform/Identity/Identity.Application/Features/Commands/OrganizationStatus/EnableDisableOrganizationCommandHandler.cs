@@ -19,10 +19,10 @@ namespace Identity.Application.Features.Commands.OrganizationStatus
 
         public EnableDisableOrganizationCommandHandler(
             IRepositoryWrapper repository, IBuyerApiClient buyerApiClient,
-    ISupplierApiClient supplierApiClient,IHttpContextAccessor httpContextAccessor)
+    ISupplierApiClient supplierApiClient, IHttpContextAccessor httpContextAccessor)
         {
             _repository = repository;
-             _buyerApiClient = buyerApiClient;
+            _buyerApiClient = buyerApiClient;
             _supplierApiClient = supplierApiClient;
             _httpContextAccessor = httpContextAccessor;
         }
@@ -31,9 +31,8 @@ namespace Identity.Application.Features.Commands.OrganizationStatus
             EnableDisableOrganizationCommand request,
             CancellationToken cancellationToken)
         {
-          var organization = _repository.Organization
-            .FindFirstByCondition(x =>
-                x.Id == request.OrganizationId);
+            var organization = _repository.Organization
+      .FindFirstByCondition(x => x.Id == request.OrganizationId);
 
             if (organization == null)
             {
@@ -44,34 +43,37 @@ namespace Identity.Application.Features.Commands.OrganizationStatus
 
             organization.IsActive = request.IsActive;
 
+            
             _repository.Organization.Update(organization);
 
-            await _repository.SaveAsync();
-           var token = _httpContextAccessor.HttpContext?
-    .Request.Cookies[Common.ACCESS_TOKEN];
+            var token = _httpContextAccessor.HttpContext?
+                .Request.Cookies[Common.ACCESS_TOKEN];
 
-        if (organization.OrganizationType == OrganizationType.Buyer)
-        {
-            await _buyerApiClient.UpdateStatus(
-                new UpdateOrganizationStatusDto
-                {
-                    OrganizationId = organization.Id,
-                    IsActive = request.IsActive
-                },
-                token,
-                cancellationToken);
-        }
-        else if (organization.OrganizationType == OrganizationType.Supplier)
-        {
-            await _supplierApiClient.UpdateStatus(
-                new UpdateOrganizationStatusDto
-                {
-                    OrganizationId = organization.Id,
-                    IsActive = request.IsActive
-                },
-                token,
-                cancellationToken);
-        }
+            if (organization.OrganizationType == OrganizationType.Buyer)
+            {
+                await _buyerApiClient.UpdateStatus(
+                    new UpdateOrganizationStatusDto
+                    {
+                        OrganizationId = organization.Id,
+                        IsActive = request.IsActive
+                    },
+                    token,
+                    cancellationToken);
+            }
+            else if (organization.OrganizationType == OrganizationType.Supplier)
+            {
+                await _supplierApiClient.UpdateStatus(
+                    new UpdateOrganizationStatusDto
+                    {
+                        OrganizationId = organization.Id,
+                        IsActive = request.IsActive
+                    },
+                    token,
+                    cancellationToken);
+            }
+
+
+            await _repository.SaveAsync();
 
             return true;
         }

@@ -221,16 +221,19 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
             // Buyer Categories 
             //-------------------------------------------------
 
+        
+
             var existingCategories = _repository.BuyerCategory
                 .FindByCondition(x => x.BuyerId == buyer.Id && x.IsActive)
                 .ToList();
 
             var requestCategories = request.Buyer.BuyerCategories ?? new List<UpdateBuyerCategoryDto>();
-          
-          
+
+            var categoriesToCreate = new List<BuyerCategory>();
+            var categoriesToUpdate = new List<BuyerCategory>();
+
             foreach (var item in requestCategories)
             {
-              
                 var category = existingCategories.FirstOrDefault(x =>
                     x.Segment == item.Segment &&
                     x.Family == item.Family &&
@@ -239,7 +242,9 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
 
                 if (category == null)
                 {
-                    _logger.LogInfo($"Category not found for buyer ID {buyer.Id}. Creating new category with Segment: {item.Segment}, Family: {item.Family}, Class: {item.Class}, Commodity: {item.Commodity}.");
+                    _logger.LogInfo(
+                        $"Category not found for buyer ID {buyer.Id}. Creating new category with Segment: {item.Segment}, Family: {item.Family}, Class: {item.Class}, Commodity: {item.Commodity}.");
+
                     category = new BuyerCategory
                     {
                         Id = Guid.NewGuid(),
@@ -255,13 +260,15 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
                         IsActive = true
                     };
 
-                    _repository.BuyerCategory.Create(category);
+                    categoriesToCreate.Add(category);
                 }
                 else
                 {
-                    _logger.LogInfo($"Existing category found for buyer ID {buyer.Id}. Checking for updates. Segment: {item.Segment}, Family: {item.Family}, Class: {item.Class}, Commodity: {item.Commodity}");
+                    _logger.LogInfo(
+                        $"Existing category found for buyer ID {buyer.Id}. Checking for updates. Segment: {item.Segment}, Family: {item.Family}, Class: {item.Class}, Commodity: {item.Commodity}");
+
                     if (category.Segment != item.Segment)
-                        category.Segment = item.Segment ;
+                        category.Segment = item.Segment;
 
                     if (category.SegmentTitle != item.SegmentTitle)
                         category.SegmentTitle = item.SegmentTitle;
@@ -284,11 +291,11 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
                     if (category.CommodityTitle != item.CommodityTitle)
                         category.CommodityTitle = item.CommodityTitle;
 
-                    _repository.BuyerCategory.Update(category);
+                    categoriesToUpdate.Add(category);
                 }
             }
 
-           
+
             foreach (var existing in existingCategories)
             {
                 bool exists = requestCategories.Any(x =>
@@ -300,8 +307,20 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
                 if (!exists)
                 {
                     existing.IsActive = false;
-                    _repository.BuyerCategory.Update(existing);
+                    categoriesToUpdate.Add(existing);
                 }
+            }
+
+
+            if (categoriesToCreate.Any())
+            {
+                _repository.BuyerCategory.CreateRange(categoriesToCreate);
+            }
+
+
+            if (categoriesToUpdate.Any())
+            {
+                _repository.BuyerCategory.UpdateRange(categoriesToUpdate);
             }
             //-------------------------------------------------
             // Registration Update

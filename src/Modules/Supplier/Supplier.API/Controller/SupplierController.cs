@@ -152,7 +152,7 @@ namespace Supplier.API.Controllers
             });
         }
         [HttpPut]
-        [Route("api/v1/supplier/internal/status")]
+        [Route("api/v1/supplier/internal-status")]
         [ValidateModelState]
         [ApiAuthorization(Name = "UPDATE_SUPPLIER_STATUS_ORGANIZATION")]
         [SwaggerOperation("UpdateSupplierStatus")]

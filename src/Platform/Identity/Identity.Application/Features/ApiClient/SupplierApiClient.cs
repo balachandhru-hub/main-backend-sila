@@ -29,7 +29,7 @@ namespace Identity.Infrastructure.ApiClients
 
             var request = new HttpRequestMessage(
                 HttpMethod.Put,
-                $"{supplierUrl}/api/v1/supplier/internal/status");
+                $"{supplierUrl}/api/v1/supplier/internal-status");
 
             request.Content = JsonContent.Create(new
             {

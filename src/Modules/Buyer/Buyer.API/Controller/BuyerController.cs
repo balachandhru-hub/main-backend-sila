@@ -136,7 +136,7 @@ namespace Buyer.API.Controllers
             });
         }
         [HttpPut]
-        [Route("api/v1/buyer/internal/status")]
+        [Route("api/v1/buyer/internal-status")]
         [ValidateModelState]
         [ApiAuthorization(Name = "UPDATE_BUYER_STATUS_ORGANIZATION")]
         [SwaggerOperation("UpdateBuyerStatusOrganization")]
