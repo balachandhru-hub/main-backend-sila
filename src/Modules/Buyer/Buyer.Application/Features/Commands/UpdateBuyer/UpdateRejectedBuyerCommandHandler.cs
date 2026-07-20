@@ -8,6 +8,7 @@ using Buyer.Infrastructure.Contracts.IRepository;
 using Buyer.Application.Contracts;
 using Buyer.Domain.Dto;
 using Microsoft.AspNetCore.Http;
+using Buyer.Domain.Entities;
 
 
 
@@ -217,77 +218,90 @@ namespace Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer
                 buyer.Description = profile.Description;
             }
             //-------------------------------------------------
-            // Buyer Categories Update
+            // Buyer Categories 
             //-------------------------------------------------
 
-            foreach (var item in request.Buyer.BuyerCategories ?? Enumerable.Empty<UpdateBuyerCategoryDto>())
-            {
-                _logger.LogInfo($"Updating buyer category with ID {item.Id} for buyer ID {request.Buyer.BuyerId}.");
+            var existingCategories = _repository.BuyerCategory
+                .FindByCondition(x => x.BuyerId == buyer.Id && x.IsActive)
+                .ToList();
 
-                var category = _repository.BuyerCategory
-                    .FindFirstByCondition(x =>
-                        x.Id == item.Id &&
-                        x.BuyerId == buyer.Id &&
-                        x.IsActive);
+            var requestCategories = request.Buyer.BuyerCategories ?? new List<UpdateBuyerCategoryDto>();
+          
+          
+            foreach (var item in requestCategories)
+            {
+              
+                var category = existingCategories.FirstOrDefault(x =>
+                    x.Segment == item.Segment &&
+                    x.Family == item.Family &&
+                    x.Class == item.Class &&
+                    x.Commodity == item.Commodity);
 
                 if (category == null)
                 {
-                    _logger.LogError($"Buyer category with ID {item.Id} not found for buyer ID {request.Buyer.BuyerId}.");
+                    _logger.LogInfo($"Category not found for buyer ID {buyer.Id}. Creating new category with Segment: {item.Segment}, Family: {item.Family}, Class: {item.Class}, Commodity: {item.Commodity}.");
+                    category = new BuyerCategory
+                    {
+                        Id = Guid.NewGuid(),
+                        BuyerId = buyer.Id,
+                        Segment = item.Segment,
+                        SegmentTitle = item.SegmentTitle,
+                        Family = item.Family,
+                        FamilyTitle = item.FamilyTitle,
+                        Class = item.Class,
+                        ClassTitle = item.ClassTitle,
+                        Commodity = item.Commodity,
+                        CommodityTitle = item.CommodityTitle,
+                        IsActive = true
+                    };
 
-                    throw new NotFoundCustomException(
-                        "Buyer category not found.",
-                        $"Buyer category with Id '{item.Id}' was not found.");
+                    _repository.BuyerCategory.Create(category);
                 }
-
-                if (category.Segment != item.Segment)
+                else
                 {
+                    _logger.LogInfo($"Existing category found for buyer ID {buyer.Id}. Checking for updates. Segment: {item.Segment}, Family: {item.Family}, Class: {item.Class}, Commodity: {item.Commodity}");
+                    if (category.Segment != item.Segment)
+                        category.Segment = item.Segment ;
 
-                    category.Segment = item.Segment;
+                    if (category.SegmentTitle != item.SegmentTitle)
+                        category.SegmentTitle = item.SegmentTitle;
+
+                    if (category.Family != item.Family)
+                        category.Family = item.Family;
+
+                    if (category.FamilyTitle != item.FamilyTitle)
+                        category.FamilyTitle = item.FamilyTitle;
+
+                    if (category.Class != item.Class)
+                        category.Class = item.Class;
+
+                    if (category.ClassTitle != item.ClassTitle)
+                        category.ClassTitle = item.ClassTitle;
+
+                    if (category.Commodity != item.Commodity)
+                        category.Commodity = item.Commodity;
+
+                    if (category.CommodityTitle != item.CommodityTitle)
+                        category.CommodityTitle = item.CommodityTitle;
+
+                    _repository.BuyerCategory.Update(category);
                 }
+            }
 
-                if (category.SegmentTitle != item.SegmentTitle)
+           
+            foreach (var existing in existingCategories)
+            {
+                bool exists = requestCategories.Any(x =>
+                    x.Segment == existing.Segment &&
+                    x.Family == existing.Family &&
+                    x.Class == existing.Class &&
+                    x.Commodity == existing.Commodity);
+
+                if (!exists)
                 {
-
-                    category.SegmentTitle = item.SegmentTitle;
+                    existing.IsActive = false;
+                    _repository.BuyerCategory.Update(existing);
                 }
-
-                if (category.Family != item.Family)
-                {
-
-                    category.Family = item.Family;
-                }
-
-                if (category.FamilyTitle != item.FamilyTitle)
-                {
-
-                    category.FamilyTitle = item.FamilyTitle;
-                }
-
-                if (category.Class != item.Class)
-                {
-
-                    category.Class = item.Class;
-                }
-
-                if (category.ClassTitle != item.ClassTitle)
-                {
-
-                    category.ClassTitle = item.ClassTitle;
-                }
-
-                if (category.Commodity != item.Commodity)
-                {
-
-                    category.Commodity = item.Commodity;
-                }
-
-                if (category.CommodityTitle != item.CommodityTitle)
-                {
-
-                    category.CommodityTitle = item.CommodityTitle;
-                }
-
-                _repository.BuyerCategory.Update(category);
             }
             //-------------------------------------------------
             // Registration Update
