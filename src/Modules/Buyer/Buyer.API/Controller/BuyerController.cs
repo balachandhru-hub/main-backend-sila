@@ -348,6 +348,8 @@ namespace Buyer.API.Controllers
                 Message = "Department and Cost Center uploaded successfully",
                 Description = "Department and Cost Center uploaded successfully",
                 StatusCode = 200
+            });
+        }
         [HttpPut]
         [Route("api/v1/buyer/internal-status")]
         [ValidateModelState]
