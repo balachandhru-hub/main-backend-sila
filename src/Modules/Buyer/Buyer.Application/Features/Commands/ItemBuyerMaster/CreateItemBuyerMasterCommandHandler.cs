@@ -3,6 +3,7 @@ using ItemBuyerMasterEntity = Buyer.Domain.Entities.ItemBuyerMaster;
 using MediatR;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
+using Buyer.Domain.Entities;
 
 namespace Buyer.Application.Features.Commands.ItemBuyerMaster
 {
@@ -40,10 +41,24 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
                     $"Material Code '{dto.MaterialCode}' already exists.");
             }
 
-            var buyer = await _repository.BuyerBusinessProfile
-                .FindFirstByConditionAsync(x =>
-                    x.OrganizationId == request.OrganizationId &&
-                    x.IsActive);
+            BuyerBusinessProfile? buyer;
+
+            if (dto.BuyerId.HasValue)
+            {
+                // Platform flow
+                buyer = await _repository.BuyerBusinessProfile
+                    .FindFirstByConditionAsync(x =>
+                        x.Id == dto.BuyerId.Value &&
+                        x.IsActive);
+            }
+            else
+            {
+                // Buyer flow
+                buyer = await _repository.BuyerBusinessProfile
+                    .FindFirstByConditionAsync(x =>
+                        x.OrganizationId == request.OrganizationId &&
+                        x.IsActive);
+            }
 
             if (buyer == null)
             {

@@ -17,19 +17,11 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
         }
 
         public async Task<int> Handle(
-            UploadItemBuyerMasterCommand request,
-            CancellationToken cancellationToken)
+    UploadItemBuyerMasterCommand request,
+    CancellationToken cancellationToken)
         {
             if (request.File == null || request.File.Length == 0)
                 throw new Exception("Please upload a valid Excel file.");
-
-            var buyer = await _repository.BuyerBusinessProfile
-                .FindFirstByConditionAsync(x =>
-                    x.OrganizationId == request.OrganizationId &&
-                    x.IsActive);
-
-            if (buyer == null)
-                throw new Exception("Buyer profile not found.");
 
             List<BuyerEntity> items = new();
 
@@ -40,16 +32,48 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
 
             foreach (var row in worksheet.RowsUsed().Skip(1))
             {
-                var description = row.Cell(1).GetString().Trim();
-                var materialCode = row.Cell(2).GetString().Trim();
-                var materialGroup = row.Cell(3).GetString().Trim();
+                Guid buyerId;
+
+                var buyerIdText = row.Cell(1).GetString().Trim();
+
+                if (!string.IsNullOrWhiteSpace(buyerIdText))
+                {
+                    // Platform User
+                    if (!Guid.TryParse(buyerIdText, out buyerId))
+                        throw new Exception($"Invalid BuyerId at row {row.RowNumber()}.");
+
+                    var buyer = await _repository.BuyerBusinessProfile
+                        .FindFirstByConditionAsync(x =>
+                            x.Id == buyerId &&
+                            x.IsActive);
+
+                    if (buyer == null)
+                        throw new Exception($"Buyer not found at row {row.RowNumber()}.");
+                }
+                else
+                {
+                    // Buyer User
+                    var buyer = await _repository.BuyerBusinessProfile
+                        .FindFirstByConditionAsync(x =>
+                            x.OrganizationId == request.OrganizationId &&
+                            x.IsActive);
+
+                    if (buyer == null)
+                        throw new Exception("Buyer profile not found.");
+
+                    buyerId = buyer.Id;
+                }
+
+                var description = row.Cell(2).GetString().Trim();
+                var materialCode = row.Cell(3).GetString().Trim();
+                var materialGroup = row.Cell(4).GetString().Trim();
 
                 if (string.IsNullOrWhiteSpace(materialCode))
                     continue;
 
                 items.Add(new BuyerEntity
                 {
-                    BuyerId = buyer.Id,
+                    BuyerId = buyerId,
                     Description = description,
                     MaterialCode = materialCode,
                     MaterialGroup = materialGroup

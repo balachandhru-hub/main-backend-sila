@@ -33,17 +33,18 @@ namespace Buyer.API.Controller
         [HttpGet]
         [Route("api/v1/buyer/item-master")]
         [ValidateModelState]
-        //[ApiAuthorization(Name = "GET_ITEM_BUYER_MASTER")]
+        [ApiAuthorization(Name = "GET_ITEM_BUYER_MASTER")]
         [SwaggerOperation("GetItemBuyerMaster")]
-        [SwaggerResponse(200, type: typeof(SuccessResponseDto))]
-        [SwaggerResponse(500, type: typeof(ErrorResponseDto))]
+        [SwaggerResponse(200, type: typeof(ItemBuyerMasterDto), description: "Item Buyer Master retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> Get(
             [FromQuery] int index = 0,
             [FromQuery] int limit = 10,
             [FromQuery] Guid? buyerId = null,
             [FromQuery] string? searchTerm = null)
         {
-            _logger.LogInfo("Getting Item Buyer Master.");
+            _logger.LogInfo("Fetching Item Buyer Master.");
 
             var result = await _mediator.Send(
                 new GetItemBuyerMasterQuery
@@ -54,6 +55,8 @@ namespace Buyer.API.Controller
                     SearchTerm = searchTerm
                 });
 
+            _logger.LogInfo("Item Buyer Master retrieved successfully.");
+
             return Ok(result);
         }
 
@@ -63,26 +66,28 @@ namespace Buyer.API.Controller
         [HttpPost]
         [Route("api/v1/buyer/item-master")]
         [ValidateModelState]
-        //[ApiAuthorization(Name = "CREATE_ITEM_BUYER_MASTER")]
+        [ApiAuthorization(Name = "CREATE_ITEM_BUYER_MASTER")]
         [SwaggerOperation("CreateItemBuyerMaster")]
-        [SwaggerResponse(200, type: typeof(SuccessResponseDto))]
-        [SwaggerResponse(500, type: typeof(ErrorResponseDto))]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Item Buyer Master created successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> Create(
             [FromBody] CreateItemBuyerMasterDto dto)
         {
-            _logger.LogInfo("Creating Item Buyer Master.");
+            _logger.LogInfo($"Creating Item Buyer Master. MaterialCode : {dto.MaterialCode}");
 
-            var id = await _mediator.Send(
-    new CreateItemBuyerMasterCommand(dto, GetOrganizationId()));
+            var result = await _mediator.Send(
+                new CreateItemBuyerMasterCommand(dto, GetOrganizationId()));
 
-            _logger.LogInfo($"IsAuthenticated : {User.Identity?.IsAuthenticated}");
+            _logger.LogInfo($"Item Buyer Master created successfully : {result}");
 
-            foreach (var claim in User.Claims)
+            return Ok(new SuccessResponseDto
             {
-                _logger.LogInfo($"{claim.Type} = {claim.Value}");
-            }
-
-            return Ok(id);
+                Id = result.ToString(),
+                Message = "Item Buyer Master created successfully",
+                Description = "Item Buyer Master created successfully",
+                StatusCode = 201
+            });
         }
 
 
@@ -92,10 +97,11 @@ namespace Buyer.API.Controller
         [HttpPost]
         [Route("api/v1/buyer/item-master/upload")]
         [ValidateModelState]
-        //[ApiAuthorization(Name = "UPLOAD_ITEM_BUYER_MASTER")]
+        [ApiAuthorization(Name = "UPLOAD_ITEM_BUYER_MASTER")]
         [SwaggerOperation("UploadItemBuyerMaster")]
-        [SwaggerResponse(200, type: typeof(SuccessResponseDto))]
-        [SwaggerResponse(500, type: typeof(ErrorResponseDto))]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Item Buyer Master uploaded successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> Upload([FromForm] IFormFile file)
         {
             _logger.LogInfo("Uploading Item Buyer Master Excel.");
@@ -105,10 +111,14 @@ namespace Buyer.API.Controller
                     file,
                     GetOrganizationId()));
 
-            return Ok(new
+            _logger.LogInfo($"Item Buyer Master uploaded successfully. Records : {recordsInserted}");
+
+            return Ok(new SuccessResponseDto
             {
-                Message = "Upload successful.",
-                RecordsInserted = recordsInserted
+                StatusCode = 200,
+                Message = "Success",
+                Description = $"Successfully uploaded {recordsInserted} records.",
+                Id = recordsInserted.ToString()
             });
         }
 
@@ -118,21 +128,34 @@ namespace Buyer.API.Controller
         /// Update Item Buyer Master
         /// </summary>
         [HttpPut]
-        [Route("api/v1/buyer/item-master")]
+        [Route("api/v1/buyer/item-master/{id}")]
         [ValidateModelState]
-        //[ApiAuthorization(Name = "UPDATE_ITEM_BUYER_MASTER")]
+        [ApiAuthorization(Name = "UPDATE_ITEM_BUYER_MASTER")]
         [SwaggerOperation("UpdateItemBuyerMaster")]
-        [SwaggerResponse(200, type: typeof(SuccessResponseDto))]
-        [SwaggerResponse(500, type: typeof(ErrorResponseDto))]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Item Buyer Master updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Item Buyer Master not found")]
         public async Task<IActionResult> Update(
+            Guid id,
             [FromBody] UpdateItemBuyerMasterDto dto)
         {
-            _logger.LogInfo("Updating Item Buyer Master.");
+            _logger.LogInfo($"Updating Item Buyer Master : {id}");
 
             var result = await _mediator.Send(
-                new UpdateItemBuyerMasterCommand(dto, GetOrganizationId()));
+                new UpdateItemBuyerMasterCommand(
+                    id,
+                    GetOrganizationId(),
+                    dto));
 
-            return Ok(result);
+            _logger.LogInfo($"Item Buyer Master updated successfully : {result}");
+
+            return Ok(new SuccessResponseDto
+            {
+                Id = result.ToString(),
+                Message = "Item Buyer Master updated successfully",
+                Description = "Item Buyer Master updated successfully",
+                StatusCode = 200
+            });
         }
 
         /// <summary>
@@ -141,18 +164,26 @@ namespace Buyer.API.Controller
         [HttpDelete]
         [Route("api/v1/buyer/item-master/{id}")]
         [ValidateModelState]
-        //[ApiAuthorization(Name = "DELETE_ITEM_BUYER_MASTER")]
+        [ApiAuthorization(Name = "DELETE_ITEM_BUYER_MASTER")]
         [SwaggerOperation("DeleteItemBuyerMaster")]
-        [SwaggerResponse(200, type: typeof(SuccessResponseDto))]
-        [SwaggerResponse(500, type: typeof(ErrorResponseDto))]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Item Buyer Master deleted successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Item Buyer Master not found")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            _logger.LogInfo("Deleting Item Buyer Master.");
+            _logger.LogInfo($"Deleting Item Buyer Master : {id}");
 
-            var result = await _mediator.Send(
-                new DeleteItemBuyerMasterCommand(id));
+            await _mediator.Send(new DeleteItemBuyerMasterCommand(id));
 
-            return Ok(result);
+            _logger.LogInfo($"Item Buyer Master deleted successfully : {id}");
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Item Buyer Master deleted successfully.",
+                Id = id.ToString()
+            });
         }
     }
 }

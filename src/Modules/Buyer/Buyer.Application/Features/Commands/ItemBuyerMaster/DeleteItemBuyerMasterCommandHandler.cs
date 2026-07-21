@@ -1,5 +1,6 @@
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
@@ -23,23 +24,22 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
             DeleteItemBuyerMasterCommand request,
             CancellationToken cancellationToken)
         {
-            _logger.LogInfo("Deleting Item Buyer Master.");
+            _logger.LogInfo($"Deleting ItemBuyerMaster : {request.Id}");
 
             var entity = await _repository.ItemBuyerMaster
-                .FindFirstByConditionAsync(x =>
+                .FindByCondition(x =>
                     x.Id == request.Id &&
-                    x.IsActive);
+                    x.IsActive)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (entity == null)
             {
                 throw new NotFoundCustomException(
-                    "Item not found.",
-                    "Item Buyer Master not found.");
+                    "Item Buyer Master not found.",
+                    "");
             }
 
-            entity.IsActive = false;
-
-            _repository.ItemBuyerMaster.Update(entity);
+            _repository.ItemBuyerMaster.Delete(entity);
 
             await _repository.SaveAsync();
 
