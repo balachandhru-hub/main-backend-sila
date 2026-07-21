@@ -11,6 +11,8 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IBuyerRegistrationRepository BuyerRegistration { get; }
         IBuyerCategoryRepository BuyerCategory { get; }
         IAssetRepository Asset { get; }
+        IBuyerDepartmentRepository BuyerDepartment{get;}
+        IBuyerCostCenterRepository BuyerCostCenter{get;}
 
         bool Save();
         Task<bool> SaveAsync();
