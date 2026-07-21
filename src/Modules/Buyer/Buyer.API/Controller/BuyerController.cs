@@ -309,7 +309,7 @@ namespace Buyer.API.Controllers
         }
 
         [HttpDelete]
-        [Route("api/v1/buyer/costCenter/{id}")]
+        [Route("api/v1/buyer/costcenter/{id}")]
         [ApiAuthorization(Name = "DELETE_BUYER_COSTCENTER")]
         [SwaggerOperation("DeleteBuyerCostCenter")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Department deleted successfully")]

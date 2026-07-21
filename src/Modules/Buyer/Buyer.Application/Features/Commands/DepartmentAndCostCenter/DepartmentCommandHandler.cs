@@ -7,6 +7,7 @@ using MediatR;
 using Buyer.Application.Features.Commands.Department;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
+using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
 {
@@ -14,14 +15,14 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
         : IRequestHandler<CreateBuyerDepartmentCommand, Guid>
     {
         private readonly IRepositoryWrapper _repository;
-
+         private readonly ILoggerManager _logger;
 
         public CreateBuyerDepartmentCommandHandler(
-            IRepositoryWrapper repository
+            IRepositoryWrapper repository, ILoggerManager logger
             )
         {
             _repository = repository;
-
+            _logger = logger;
         }
 
         public async Task<Guid> Handle(CreateBuyerDepartmentCommand request, CancellationToken cancellationToken)
@@ -31,50 +32,56 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
             if (request.BuyerDepartmentDto.BuyerId.HasValue &&
                 request.BuyerDepartmentDto.BuyerId.Value != Guid.Empty)
             {
+                _logger.LogInfo($"Using provided BuyerId: {request.BuyerDepartmentDto.BuyerId.Value}");
                 buyerId = request.BuyerDepartmentDto.BuyerId.Value;
             }
             else
             {
+                _logger.LogInfo($"Fetching BuyerId for OrganizationId: {request.BuyerDepartmentDto.OrganizationId}");
                 var buyer = await _repository.BuyerBusinessProfile
                     .FindByCondition(x => x.OrganizationId == request.BuyerDepartmentDto.OrganizationId)
                     .FirstOrDefaultAsync(cancellationToken);
 
                 if (buyer == null)
+                {
+                    _logger.LogError($"Buyer with OrganizationId {request.BuyerDepartmentDto.OrganizationId} not found.");
                     throw new NotFoundCustomException("Buyer is not there", "");
-
+                }
                 buyerId = buyer.Id;
             }
 
-         var department = new BuyerDepartment
-{
-    Id = Guid.NewGuid(),
-    BuyerId = buyerId,
-    Department = request.BuyerDepartmentDto.Department
-};
+            var department = new BuyerDepartment
+            {
+                Id = Guid.NewGuid(),
+                BuyerId = buyerId,
+                Department = request.BuyerDepartmentDto.Department
+            };
 
-await _repository.BuyerDepartment.CreateAsync(department);
+            await _repository.BuyerDepartment.CreateAsync(department);
 
-if (request.BuyerDepartmentDto.CostCenter == null ||
-    !request.BuyerDepartmentDto.CostCenter.Any())
-{
-    throw new BadRequestCustomException("At least one Cost Center is required.", "");
-}
+            if (request.BuyerDepartmentDto.CostCenter == null ||
+                !request.BuyerDepartmentDto.CostCenter.Any())
+            {
+                _logger.LogError("No Cost Centers provided for the department.");
+                throw new BadRequestCustomException("At least one Cost Center is required.", "");
+            }
 
-foreach (var costCenterName in request.BuyerDepartmentDto.CostCenter)
-{
-    var costCenter = new BuyerCostCenter
-    {
-        Id = Guid.NewGuid(),
-        DepartmentId = department.Id,
-        CostCenter = costCenterName
-    };
+            foreach (var costCenterName in request.BuyerDepartmentDto.CostCenter)
+            {
+                _logger.LogInfo($"Creating CostCenter '{costCenterName}' for Department '{department.Department}'.");
+                var costCenter = new BuyerCostCenter
+                {
+                    Id = Guid.NewGuid(),
+                    DepartmentId = department.Id,
+                    CostCenter = costCenterName
+                };
 
-    await _repository.BuyerCostCenter.CreateAsync(costCenter);
-}
+                await _repository.BuyerCostCenter.CreateAsync(costCenter);
+            }
 
-await _repository.SaveAsync();
+            await _repository.SaveAsync();
 
-return department.Id;
+            return department.Id;
         }
     }
 }

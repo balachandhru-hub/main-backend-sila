@@ -7,6 +7,7 @@ using MediatR;
 using Buyer.Application.Features.Commands.CostCenter;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
+using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
 {
@@ -14,24 +15,28 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
         : IRequestHandler<CreateBuyerCostCenterCommand, Guid>
     {
         private readonly IRepositoryWrapper _repository;
-
+        private readonly ILoggerManager _logger;
 
         public CreateBuyerCostCenterCommandHandler(
-            IRepositoryWrapper repository
+            IRepositoryWrapper repository,
+            ILoggerManager logger
             )
         {
             _repository = repository;
-
+            _logger = logger;
         }
         public async Task<Guid> Handle(CreateBuyerCostCenterCommand request, CancellationToken cancellationToken)
         {
+            _logger.LogInfo($"Creating CostCenter for Department ID {request.BuyerCostCenterDto.DepartmentId}.");
             var department = await _repository.BuyerDepartment
                 .FindByCondition(x => x.Id == request.BuyerCostCenterDto.DepartmentId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (department == null)
+            {
+                _logger.LogError($"Department with ID {request.BuyerCostCenterDto.DepartmentId} not found.");
                 throw new NotFoundCustomException("Department not found.", "");
-
+            }
             var costCenter = new BuyerCostCenter
             {
                 Id = Guid.NewGuid(),

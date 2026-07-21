@@ -4,6 +4,7 @@ using ClosedXML.Excel;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
+using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
 {
@@ -11,10 +12,12 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
         : IRequestHandler<UploadDepartmentCostCenterCommand, bool>
     {
         private readonly IRepositoryWrapper _repository;
+         private readonly ILoggerManager _logger;
 
-        public UploadDepartmentCostCenterCommandHandler(IRepositoryWrapper repository)
+        public UploadDepartmentCostCenterCommandHandler(IRepositoryWrapper repository, ILoggerManager logger)
         {
             _repository = repository;
+            _logger = logger;
         }
 
         public async Task<bool> Handle(
@@ -27,17 +30,21 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
             if (request.UploadDepartmentCostCenterDto.BuyerId.HasValue &&
                 request.UploadDepartmentCostCenterDto.BuyerId.Value != Guid.Empty)
             {
+                _logger.LogInfo($"Using provided BuyerId: {request.UploadDepartmentCostCenterDto.BuyerId.Value}");
                 buyerId = request.UploadDepartmentCostCenterDto.BuyerId.Value;
             }
             else
             {
+                _logger.LogInfo($"Fetching BuyerId for OrganizationId: {request.UploadDepartmentCostCenterDto.OrganizationId}");
                 var buyer = await _repository.BuyerBusinessProfile
                     .FindByCondition(x => x.OrganizationId == request.UploadDepartmentCostCenterDto.OrganizationId)
                     .FirstOrDefaultAsync(cancellationToken);
 
                 if (buyer == null)
+                {
+                    _logger.LogError($"Buyer with OrganizationId {request.UploadDepartmentCostCenterDto.OrganizationId} not found.");
                     throw new NotFoundCustomException("Buyer not found.", "");
-
+                }
                 buyerId = buyer.Id;
             }
 
@@ -45,6 +52,7 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
             if (request.UploadDepartmentCostCenterDto.File == null ||
                 request.UploadDepartmentCostCenterDto.File.Length == 0)
             {
+                _logger.LogError("No file uploaded or file is empty.");
                 throw new BadRequestCustomException("Please upload an Excel file.", "");
             }
 
@@ -67,11 +75,12 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
 
             foreach (var row in departmentSheet.RowsUsed().Skip(1))
             {
+                _logger.LogInfo($"Processing row {row.RowNumber()} in Department sheet.");
                 var departmentName = row.Cell(1).GetString().Trim();
 
                 if (string.IsNullOrWhiteSpace(departmentName))
                     continue;
-
+                _logger.LogInfo($"Skipping empty department name in row {row.RowNumber()}.");
                 var department = await _repository.BuyerDepartment
                     .FindByCondition(x =>
                         x.BuyerId == buyerId &&
@@ -80,6 +89,7 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
 
                 if (department == null)
                 {
+                    _logger.LogInfo($"Creating new department '{departmentName}' for BuyerId {buyerId}.");
                     department = new BuyerDepartment
                     {
                         Id = Guid.NewGuid(),
@@ -89,7 +99,7 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
 
                     await _repository.BuyerDepartment.CreateAsync(department);
                 }
-
+                _logger.LogInfo($"Department '{departmentName}' processed with Id {department.Id}.");
                 departmentDictionary[departmentName] = department.Id;
             }
 
@@ -105,6 +115,7 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
 
             foreach (var row in costCenterSheet.RowsUsed().Skip(1))
             {
+                _logger.LogInfo($"Processing row {row.RowNumber()} in CostCenter sheet.");
                 var departmentName = row.Cell(1).GetString().Trim();
                 var costCenterName = row.Cell(2).GetString().Trim();
 
@@ -117,7 +128,7 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
                     continue;
 
                 var departmentId = departmentDictionary[departmentName];
-
+                _logger.LogInfo($"Processing CostCenter '{costCenterName}' for Department '{departmentName}' (Id: {departmentId}).");
                 // Check duplicate Cost Center
                 var costCenter = await _repository.BuyerCostCenter
                     .FindByCondition(x =>
@@ -127,6 +138,7 @@ namespace Buyer.Application.Features.Commands.DepartmentAndCostCenter
 
                 if (costCenter == null)
                 {
+                    _logger.LogInfo($"Creating new CostCenter '{costCenterName}' for DepartmentId {departmentId}.");
                     costCenter = new BuyerCostCenter
                     {
                         Id = Guid.NewGuid(),
