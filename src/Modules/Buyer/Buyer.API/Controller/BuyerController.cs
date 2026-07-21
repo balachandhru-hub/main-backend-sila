@@ -18,6 +18,7 @@ using Buyer.Application.Features.Queries.Department;
 using Buyer.Application.Features.Queries.CostCenter;
 using Buyer.Application.Features.Commands.DepartmentAndCostCenter;
 
+using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
 namespace Buyer.API.Controllers
 {
     [ApiController]
@@ -347,6 +348,25 @@ namespace Buyer.API.Controllers
                 Message = "Department and Cost Center uploaded successfully",
                 Description = "Department and Cost Center uploaded successfully",
                 StatusCode = 200
+        [HttpPut]
+        [Route("api/v1/buyer/internal-status")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_BUYER_STATUS_ORGANIZATION")]
+        [SwaggerOperation("UpdateBuyerStatusOrganization")]
+        [SwaggerResponse(200, type: typeof(bool), description: "Buyer status updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateBuyerStatus(
+            [FromBody] UpdateBuyerStatusOrganizationCommand command)
+        {
+            await _mediator.Send(command);
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Buyer status updated successfully.",
+                Id = command.Buyer.OrganizationId.ToString()
             });
         }
     }

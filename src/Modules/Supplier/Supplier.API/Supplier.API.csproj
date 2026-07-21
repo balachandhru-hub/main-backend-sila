@@ -9,7 +9,7 @@
    <ItemGroup>
     <ProjectReference Include="..\Supplier.Application\Supplier.Application.csproj" />
     <ProjectReference Include="..\Supplier.Infrastructure\Supplier.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
+   <ProjectReference Include="..\..\..\Platform\SharedKernel\SharedKernel.csproj" />
     
   </ItemGroup>
 

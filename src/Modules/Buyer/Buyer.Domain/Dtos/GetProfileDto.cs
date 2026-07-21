@@ -15,6 +15,7 @@ namespace Buyer.Domain.Dto
         public List<BankAccountDto> BankAccounts { get; set; } = new();
 
         public List<DeliveryLocationDto> DispatchLocations { get; set; } = new();
+        public List<CategoryDto> Categories { get; set; } = new();
     }
 
     public class BusinessProfileDto
@@ -111,5 +112,23 @@ namespace Buyer.Domain.Dto
         public string? ContactPhone { get; set; }
 
         public bool IsDefault { get; set; }
+    }
+    public class CategoryDto
+    {
+        public long? Segment { get; set; }
+
+        public string? SegmentTitle { get; set; }
+
+        public long? Family { get; set; }
+
+        public string? FamilyTitle { get; set; }
+
+        public long? Class { get; set; }
+
+        public string? ClassTitle { get; set; }
+
+        public long? Commodity { get; set; }
+
+        public string? CommodityTitle { get; set; }
     }
 }
