@@ -19,6 +19,7 @@ using Buyer.Application.Features.Queries.CostCenter;
 using Buyer.Application.Features.Commands.DepartmentAndCostCenter;
 using Buyer.Application.Features.Commands.CreateRFQ;
 using  Buyer.Application.Features.Profile.Queries.GetBuyerId;
+using Buyer.Application.Features.Queries.GetAllSupplier;
 
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
 namespace Buyer.API.Controllers
@@ -421,5 +422,20 @@ namespace Buyer.API.Controllers
 
             return Ok(result);
         }
+
+        [HttpPost]
+[Route("api/v1/buyer/get-verified-suppliers")]
+[ValidateModelState]
+[ApiAuthorization(Name = "GET_VERIFIED_SUPPLIERS")]
+[SwaggerOperation("GetVerifiedSuppliers")]
+   [SwaggerResponse(200, type: typeof(SuccessResponseDto),description: "Verified suppliers fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")] 
+public async Task<IActionResult> GetVerifiedSuppliers(
+    [FromBody] GetVerifiedSupplierRequestDto dto)
+{
+    var result = await _mediator.Send(new GetVerifiedSupplierQuery(dto));
+
+    return Ok(result);
+}
     }
 }

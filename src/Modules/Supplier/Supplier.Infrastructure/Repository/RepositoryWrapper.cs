@@ -24,6 +24,7 @@ namespace Supplier.Infrastructure.Repository
 
         private ISupplierDispatchLocationRepository _supplierDispatchLocation;
         private IAssetRepository _asset;
+        private ISupplierCatalogRepository _supplierCatalog;
   
       
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
@@ -84,6 +85,15 @@ namespace Supplier.Infrastructure.Repository
             {
                 if (_asset == null) _asset = new AssetRepository(_context, _configuration, _logger, _dbConnectionString);
                 return _asset;
+            }
+        }
+
+          public ISupplierCatalogRepository SupplierCatalog
+        {
+            get
+            {
+                if (_supplierCatalog == null) _supplierCatalog = new SupplierCatalogRepository(_context);
+                return _supplierCatalog;
             }
         }
         public bool Save()

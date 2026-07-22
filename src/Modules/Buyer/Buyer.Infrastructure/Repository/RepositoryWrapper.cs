@@ -27,6 +27,7 @@ namespace Buyer.Infrastructure.Repository
         private IRFQQuestionRepository _rfqQuestionRepository;
         private IRFQQuestionOptionRepository _rfqQuestionOptionRepository;
         private IRFQItemRepository _rfqItemRepository;
+        private IBuyerSupplierMappingRepository _buyerSupplierMappingRepository;
 
         private IRFQItemAttachmentMappingRepository _rfqItemAttachmentMappingRepository;
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
@@ -199,6 +200,18 @@ namespace Buyer.Infrastructure.Repository
                 }
 
                 return _rfqItemAttachmentMappingRepository;
+            }
+        }
+        public IBuyerSupplierMappingRepository BuyerSupplierMapping
+        {
+            get
+            {
+                if(_buyerSupplierMappingRepository==null)
+                {
+                    _buyerSupplierMappingRepository=
+                    new BuyerSupplierMappingRepository(_context);
+                }
+                return _buyerSupplierMappingRepository;
             }
         }
         public bool Save()
