@@ -19,9 +19,9 @@ namespace Buyer.Application.Features.Queries.CostCenter
         {
             return await _repository.BuyerCostCenter
                 .FindByCondition(x =>
-
-                    string.IsNullOrEmpty(request.SearchTerm) ||
-                     x.CostCenter.Contains(request.SearchTerm))
+                    x.DepartmentId == request.DepartmentId &&
+                    (string.IsNullOrEmpty(request.SearchTerm) ||
+                     x.CostCenter.Contains(request.SearchTerm)))
                 .OrderBy(x => x.CostCenter)
                 .Skip(request.Index)
                 .Take(request.Limit)
