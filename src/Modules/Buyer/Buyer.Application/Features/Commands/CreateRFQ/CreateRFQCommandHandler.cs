@@ -39,7 +39,8 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
         {
 
 
-
+            _logger.LogInfo(
+                $"Create RFQ process started. OrganizationId: {request.OrganizationId}");
 
             var buyer = _repository.BuyerBusinessProfile
         .FindFirstByCondition(x =>
@@ -73,6 +74,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
 
             var rfq = new RFQ
             {
+
                 Id = Guid.NewGuid(),
                 RFQNumber = rfqNumber,
 
@@ -109,6 +111,8 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             // Technical Specification Documents
             if (request.RFQ.TechnicalSpecificationDocuments != null)
             {
+                _logger.LogInfo(
+        $"Uploading {request.RFQ.TechnicalSpecificationDocuments.Count} technical specification document(s).");
                 foreach (AssetUploadDto document in request.RFQ.TechnicalSpecificationDocuments)
                 {
 
@@ -122,12 +126,17 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                         AssetId = assetId,
                         Type = Common.TECHNICAL_SPECIFICATION
                     });
+
                 }
+                _logger.LogInfo(
+   "Technical specification documents uploaded successfully.");
             }
 
             // Terms & Conditions Documents
             if (request.RFQ.TermsConditionDocuments != null)
             {
+                _logger.LogInfo(
+        $"Uploading {request.RFQ.TermsConditionDocuments.Count} Terms & Conditions document(s).");
                 foreach (AssetUploadDto document in request.RFQ.TermsConditionDocuments)
                 {
 
@@ -141,18 +150,25 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                         AssetId = assetId,
                         Type = Common.TERMS_CONDITION
                     });
+
                 }
+
             }
 
             if (attachments.Any())
             {
+
                 await _repository.RFQAttachmentMapping.CreateRangeAsync(attachments);
+                _logger.LogInfo(
+    $"RFQ attachment mappings created successfully. Total Attachments: {attachments.Count}");
             }
 
 
 
             foreach (var question in request.RFQ.Questions)
             {
+                _logger.LogInfo(
+    $"Creating {request.RFQ.Questions.Count} RFQ question(s).");
                 var rfqQuestion = new RFQQuestion
                 {
                     Id = Guid.NewGuid(),
@@ -172,6 +188,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
 
                     foreach (var option in question.Options)
                     {
+
                         await _repository.RFQQuestionOption.CreateAsync(new RFQQuestionOption
                         {
                             Id = Guid.NewGuid(),
@@ -182,9 +199,12 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     }
                 }
             }
+            _logger.LogInfo("RFQ questions created successfully.");
 
             if (request.RFQ.Items != null)
             {
+                _logger.LogInfo(
+        $"Creating {request.RFQ.Items.Count} RFQ item(s).");
                 foreach (var item in request.RFQ.Items)
                 {
                     var rfqItem = new RFQItem
@@ -219,7 +239,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                         }
                     }
                 }
-
+                _logger.LogInfo("RFQ items created successfully.");
 
             }
 
@@ -238,6 +258,8 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                         BuyerId = buyer.Id,
                         SupplierId = supplierId
                     });
+                _logger.LogInfo(
+$"Supplier mapping completed successfully. Total Suppliers: {request.RFQ.SupplierIds.Count}");
             }
 
 
@@ -268,7 +290,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             if (unVerifiedSuppliers.Any())
             {
                 _logger.LogInfo(
-   $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQNumber}");
+$"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQNumber}");
                 await _mediator.Send(
     new InviteSuppliersCommand(
         new InviteSuppliersDto
