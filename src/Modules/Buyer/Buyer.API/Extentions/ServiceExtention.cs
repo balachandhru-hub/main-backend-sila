@@ -13,6 +13,10 @@ using Buyer.Infrastructure.Contracts.IRepository;
 using Buyer.Infrastructure.Repository;
 using Buyer.Application.Contracts;
 using Buyer.Infrastructure.ApiClients;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 
 
 
@@ -41,7 +45,7 @@ namespace Buyer.API.Extensions
                             .SetIsOriginAllowed(origin =>
 
                         origin.Equals(config[Common.DEFAULT_FRONT_END_ORIGIN_LOCAL]!, StringComparison.OrdinalIgnoreCase)
-                   
+
                     )
                             .AllowAnyMethod()
                             .AllowAnyHeader()
@@ -153,14 +157,14 @@ namespace Buyer.API.Extensions
 
         public static void ConfigureScheduler(this IServiceCollection services)
         {
-   
-        
+
+
         }
 
         /// <summary>
         /// This method is used to inject the mappings of Entities and Dto.
         /// </summary>
-   
+
 
         /// <summary>
         /// This method is used to inject the custom exception middleware.
@@ -171,14 +175,67 @@ namespace Buyer.API.Extensions
         {
             return builder.UseMiddleware<CustomExceptionMiddleware>();
         }
-            public static void ConfigureMediatR(this IServiceCollection services)
-    {
-        services.AddMediatR(cfg =>
+        public static void ConfigureMediatR(this IServiceCollection services)
         {
-             cfg.RegisterServicesFromAssembly(typeof(GetOrganizationProfileQuery).Assembly);
-        });
-    }
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(typeof(GetOrganizationProfileQuery).Assembly);
+            });
+        }
 
-      
+
+
+        public static void ConfigureAuthentication(
+               this IServiceCollection services
+           )
+        {
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.RequireHttpsMetadata = false;
+                    options.SaveToken = true;
+
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateAudience = false,
+                        ValidateIssuer = false,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes("1kt6ryCXoY13_9LrCfyfF_wSgPVxlewGtrBlY0PkyxA")
+                        ),
+                        ValidateLifetime = false,
+                        ClockSkew = TimeSpan.Zero //the default for this setting is 5 minutes
+                    };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            if (context.Request.Cookies.TryGetValue(Common.ACCESS_TOKEN, out var token))
+                            {
+                                context.Token = token;
+                            }
+                            return Task.CompletedTask;
+                        },
+                        OnAuthenticationFailed = context =>
+                        {
+                            if (
+                                context.Exception.GetType() == typeof(SecurityTokenExpiredException)
+                            )
+                            {
+                                context.Response.Headers.Append("Token-Expired", "true");
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+        }
+
+
     }
 }

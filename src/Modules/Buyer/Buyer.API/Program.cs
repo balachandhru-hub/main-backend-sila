@@ -45,6 +45,7 @@ namespace Buyer.API
             builder.Services.ConfigureLoggerService();
             builder.Services.ConfigureRepositoryWrapper();
             builder.Services.ConfigureServiceWrapper();
+            builder.Services.ConfigureAuthentication();
             builder.Services.ConfigureMediatR();
             builder.Services.AddHttpClient();
             builder.Services.AddSignalR(options =>
