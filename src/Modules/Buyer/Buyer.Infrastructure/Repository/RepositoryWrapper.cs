@@ -20,7 +20,8 @@ namespace Buyer.Infrastructure.Repository
         private IBuyerBankAccountRepository _buyerBankAccountRepository;
         private IBuyerDeliveryLocationRepository _buyerDeliveryLocationRepository;
         private IBuyerRegistrationRepository _buyerRegistrationRepository;
-        
+        private IItemBuyerMasterRepository _itemBuyerMasterRepository;
+        private IBulkInsertHelper? _bulkInsertHelper;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -36,7 +37,7 @@ namespace Buyer.Infrastructure.Repository
             {
                 if (_buyerBusinessProfileRepository == null)
                 {
-                    _buyerBusinessProfileRepository= new BuyerBusinessProfileRepository(_context);
+                    _buyerBusinessProfileRepository = new BuyerBusinessProfileRepository(_context);
                 }
                 return _buyerBusinessProfileRepository;
             }
@@ -56,7 +57,7 @@ namespace Buyer.Infrastructure.Repository
         {
             get
             {
-                if(_assetRepository == null)
+                if (_assetRepository == null)
                 {
                     _assetRepository = new AssetRepository(_context);
                 }
@@ -67,7 +68,7 @@ namespace Buyer.Infrastructure.Repository
         {
             get
             {
-                if(_buyerCategoryRepository == null)
+                if (_buyerCategoryRepository == null)
                 {
                     _buyerCategoryRepository = new BuyerCategoryRepository(_context);
                 }
@@ -78,7 +79,7 @@ namespace Buyer.Infrastructure.Repository
         {
             get
             {
-                if(_buyerDeliveryLocationRepository == null)
+                if (_buyerDeliveryLocationRepository == null)
                 {
                     _buyerDeliveryLocationRepository = new BuyerDeliveryLocationRepository(_context);
                 }
@@ -89,7 +90,7 @@ namespace Buyer.Infrastructure.Repository
         {
             get
             {
-                if(_buyerRegistrationRepository == null)
+                if (_buyerRegistrationRepository == null)
                 {
                     _buyerRegistrationRepository = new BuyerRegistrationRepository(_context);
                 }
@@ -97,6 +98,33 @@ namespace Buyer.Infrastructure.Repository
             }
         }
 
+        public IItemBuyerMasterRepository ItemBuyerMaster
+        {
+            get
+            {
+                if (_itemBuyerMasterRepository == null)
+                {
+                    _itemBuyerMasterRepository =
+                        new ItemBuyerMasterRepository(_context);
+                }
+
+                return _itemBuyerMasterRepository;
+            }
+        }
+        public IBulkInsertHelper BulkInsertHelper
+        {
+            get
+            {
+                if (_bulkInsertHelper == null)
+                {
+                    _bulkInsertHelper = new BulkInsertHelper(
+                        _context,
+                        _userIdentityService);
+                }
+
+                return _bulkInsertHelper;
+            }
+        }
         public bool Save()
         {
             _context.OnBeforeSaving(_userIdentityService.GetCurrentUser());
