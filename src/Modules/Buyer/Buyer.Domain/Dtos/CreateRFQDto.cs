@@ -29,7 +29,10 @@ public class CreateRFQDto
 
     // Hardcoded template for now
 
-    public Guid TemplateId { get; set; }
+    /// <summary>
+    /// Gets or sets the template ID.
+    /// </summary>
+    //public Guid TemplateId { get; set; }
 
     // Attachments
 
@@ -45,7 +48,9 @@ public class CreateRFQDto
 
     public List<RFQItemDto> Items { get; set; }
 
+        public List<Guid> SupplierIds { get; set; } = new();
 
+        public Guid RFQVerificationTemplateId { get; set; }
 
 }
 }

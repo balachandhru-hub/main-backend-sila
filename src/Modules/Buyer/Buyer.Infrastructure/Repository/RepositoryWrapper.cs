@@ -29,6 +29,10 @@ namespace Buyer.Infrastructure.Repository
         private IRFQItemRepository _rfqItemRepository;
 
         private IRFQItemAttachmentMappingRepository _rfqItemAttachmentMappingRepository;
+        private IRFQSupplierMappingRepository _rfqSupplierMapping;
+
+private ISupplierVerificationRequestRepository _supplierVerificationRequest;
+private IBuyerSupplierMappingRepository _buyerSupplierMappingRepository;
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
             _context = repositoryContext;
@@ -201,6 +205,45 @@ namespace Buyer.Infrastructure.Repository
                 return _rfqItemAttachmentMappingRepository;
             }
         }
+        public IRFQSupplierMappingRepository RFQSupplierMapping
+{
+    get
+    {
+        if (_rfqSupplierMapping == null)
+        {
+            _rfqSupplierMapping = new RFQSupplierMappingRepository(_context);
+        }
+
+        return _rfqSupplierMapping;
+    }
+}
+
+public ISupplierVerificationRequestRepository SupplierVerificationRequest
+{
+    get
+    {
+        if (_supplierVerificationRequest == null)
+        {
+            _supplierVerificationRequest =
+                new SupplierVerificationRequestRepository(_context);
+        }
+
+        return _supplierVerificationRequest;
+    }
+}
+public IBuyerSupplierMappingRepository BuyerSupplierMapping
+{
+    get
+    {
+        if (_buyerSupplierMappingRepository == null)
+        {
+            _buyerSupplierMappingRepository =
+                new BuyerSupplierMappingRepository(_context);
+        }
+
+        return _buyerSupplierMappingRepository;
+    }
+}
         public bool Save()
         {
             _context.OnBeforeSaving(_userIdentityService.GetCurrentUser());

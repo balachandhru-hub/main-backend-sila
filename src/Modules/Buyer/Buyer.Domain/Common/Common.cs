@@ -29,5 +29,6 @@ namespace Buyer.Domain.Common
                 public static readonly string TERMS_CONDITION = "TERMS_CONDITION";
                 public static readonly string TECHNICAL_SPECIFICATION = "TECHNICAL_SPECIFICATION";
                 public static int DISPLAY_ORDER = 1;
+                public const string PENDING = "Pending";
         }
 }

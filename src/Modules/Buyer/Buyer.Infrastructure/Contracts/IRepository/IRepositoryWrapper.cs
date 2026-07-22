@@ -22,6 +22,10 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IRFQItemRepository RFQItem { get; }
 
         IRFQItemAttachmentMappingRepository RFQItemAttachmentMapping { get; }
+        IRFQSupplierMappingRepository RFQSupplierMapping { get; }
+
+        ISupplierVerificationRequestRepository SupplierVerificationRequest { get; }
+        IBuyerSupplierMappingRepository BuyerSupplierMapping { get; }
         bool Save();
         Task<bool> SaveAsync();
     }
