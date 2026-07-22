@@ -30,6 +30,10 @@ namespace Buyer.Infrastructure.Repository
         private IBuyerSupplierMappingRepository _buyerSupplierMappingRepository;
 
         private IRFQItemAttachmentMappingRepository _rfqItemAttachmentMappingRepository;
+        private IRFQSupplierMappingRepository _rfqSupplierMapping;
+
+private ISupplierVerificationRequestRepository _supplierVerificationRequest;
+private IBuyerSupplierMappingRepository _buyerSupplierMappingRepository;
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
             _context = repositoryContext;
