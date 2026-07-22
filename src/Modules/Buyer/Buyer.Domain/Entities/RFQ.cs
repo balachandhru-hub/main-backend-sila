@@ -12,7 +12,6 @@ namespace Buyer.Domain.Entities
 
         public string RFQNumber { get; set; }
 
-        public Guid BuyerOrganizationId { get; set; }
         [Required]
         [ForeignKey("BuyerBusinessProfile")]
         public Guid BuyerId { get; set; }

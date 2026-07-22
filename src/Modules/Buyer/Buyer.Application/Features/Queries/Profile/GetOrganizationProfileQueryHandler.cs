@@ -128,7 +128,22 @@ public class GetOrganizationProfileQueryHandler
                 IsDefault = x.IsDefault
             })
             .ToList();
-
-        return response;
-    }
+        //category
+        response.Categories = _repositoryWrapper.BuyerCategory
+            .FindByCondition(x => x.BuyerId == organization.Id && x.IsActive)
+            .Select(x => new CategoryDto
+            {
+            
+                Segment = x.Segment,
+                SegmentTitle = x.SegmentTitle,
+                Family = x.Family,
+                FamilyTitle = x.FamilyTitle,
+                Class = x.Class,
+                ClassTitle = x.ClassTitle,
+                Commodity = x.Commodity,
+                CommodityTitle = x.CommodityTitle
+            })
+            .ToList();
+                return response;
+            }
 }

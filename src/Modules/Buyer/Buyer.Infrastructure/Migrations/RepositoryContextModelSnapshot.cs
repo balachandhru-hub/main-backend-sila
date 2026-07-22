@@ -367,6 +367,54 @@ namespace Buyer.Infrastructure.Migrations
                     b.ToTable("buyer_category", "buyersystem");
                 });
 
+            modelBuilder.Entity("Buyer.Domain.Entities.BuyerCostCenter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CostCenter")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("cost_center");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("department_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_buyer_cost_center");
+
+                    b.HasIndex("DepartmentId")
+                        .HasDatabaseName("ix_buyer_cost_center_department_id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_buyer_cost_center_is_active");
+
+                    b.ToTable("buyer_cost_center", "buyersystem");
+                });
+
             modelBuilder.Entity("Buyer.Domain.Entities.BuyerDeliveryLocation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -451,6 +499,54 @@ namespace Buyer.Infrastructure.Migrations
                         .HasDatabaseName("ix_buyer_delivery_location_is_active");
 
                     b.ToTable("buyer_delivery_location", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.BuyerDepartment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BuyerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("buyer_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("department");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_buyer_department");
+
+                    b.HasIndex("BuyerId")
+                        .HasDatabaseName("ix_buyer_department_buyer_id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_buyer_department_is_active");
+
+                    b.ToTable("buyer_department", "buyersystem");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.BuyerRegistration", b =>
@@ -600,10 +696,6 @@ namespace Buyer.Infrastructure.Migrations
                     b.Property<Guid>("BuyerId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("buyer_id");
-
-                    b.Property<Guid>("BuyerOrganizationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("buyer_organization_id");
 
                     b.Property<string>("CostCenter")
                         .IsRequired()
@@ -1440,6 +1532,30 @@ namespace Buyer.Infrastructure.Migrations
                         .HasDatabaseName("ix_verification_template_question_option_is_active");
 
                     b.ToTable("verification_template_question_option", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.BuyerCostCenter", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.BuyerDepartment", "BuyerDepartment")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_buyer_cost_center_buyer_department_department_id");
+
+                    b.Navigation("BuyerDepartment");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.BuyerDepartment", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
+                        .WithMany()
+                        .HasForeignKey("BuyerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_buyer_department_buyer_business_profile_buyer_id");
+
+                    b.Navigation("BuyerBusinessProfile");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.ItemBuyerMaster", b =>

@@ -38,6 +38,8 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<VerificationTemplateQuestion> VerificationTemplateQuestion { get; set; }
         public DbSet<VerificationTemplateQuestionOption> VerificationTemplateQuestionOption { get; set; }
         public DbSet<RFQAnswerOption> RFQAnswerOption { get; set; }
+        public DbSet<BuyerCostCenter> BuyerCostCenter {get;set;}
+        public DbSet<BuyerDepartment> BuyerDepartment {get;set;}
 
 
 
@@ -66,6 +68,8 @@ namespace Buyer.Infrastructure.DbContext
             _ = modelBuilder.Entity<VerificationTemplate>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<VerificationTemplateQuestion>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<VerificationTemplateQuestionOption>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<BuyerDepartment>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<BuyerCostCenter>().HasIndex(a=>a.IsActive);
 
 
 
