@@ -5,11 +5,12 @@ using BuyerEntity = Buyer.Domain.Entities.ItemBuyerMaster;
 using SharedKernel.ExceptionHandler;
 using Buyer.Domain.Entities;
 using Microsoft.AspNetCore.Http;
+using Buyer.Domain.Dtos;
 
 namespace Buyer.Application.Features.Commands.ItemBuyerMaster
 {
     public class UploadItemBuyerMasterCommandHandler
-        : IRequestHandler<UploadItemBuyerMasterCommand, int>
+        : IRequestHandler<UploadItemBuyerMasterCommand, ExcelUploadResultDto>
     {
         private readonly IRepositoryWrapper _repository;
 
@@ -19,7 +20,7 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
             _repository = repository;
         }
 
-        public async Task<int> Handle(
+        public async Task<ExcelUploadResultDto> Handle(
     UploadItemBuyerMasterCommand request,
     CancellationToken cancellationToken)
         {
@@ -85,6 +86,13 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
             {
                 var value = headerRow.Cell(i + 1).GetString().Trim();
 
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    throw new NoContentCustomException(
+                        $"Header missing at column {i + 1}.",
+                        $"Header missing at column {i + 1}.");
+                }
+
                 if (!value.Equals(expectedHeaders[i],
                     StringComparison.OrdinalIgnoreCase))
                 {
@@ -144,28 +152,59 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
 
             return items;
         }
-        private async Task<int> ProcessInBatches(
-    List<BuyerEntity> data,
-    int batchSize)
+        private async Task<ExcelUploadResultDto> ProcessInBatches(List<BuyerEntity> data, int batchSize)
         {
-            int uploaded = 0;
+            var result = new ExcelUploadResultDto
+            {
+                TotalRows = data.Count
+            };
 
             for (int i = 0; i < data.Count; i += batchSize)
             {
                 var batch = data
                     .Skip(i)
                     .Take(batchSize)
-                    .Where(IsValid)
                     .ToList();
 
-                if (batch.Any())
+                var validRows = new List<BuyerEntity>();
+
+                for (int j = 0; j < batch.Count; j++)
                 {
-                    await _repository.BulkInsertHelper.BulkInsertOrUpdateAsync(batch);
-                    uploaded += batch.Count;
+                    var item = batch[j];
+
+                    if (!IsValid(item))
+                    {
+                        result.FailedUploads++;
+
+                        result.Errors.Add(
+                            $"Invalid record at Excel row {i + j + 2}");
+
+                        continue;
+                    }
+
+                    validRows.Add(item);
+                }
+
+                try
+                {
+                    if (validRows.Any())
+                    {
+                        await _repository.BulkInsertHelper
+                            .BulkInsertOrUpdateAsync(validRows);
+
+                        result.SuccessfulUploads += validRows.Count;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result.FailedUploads += validRows.Count;
+
+                    result.Errors.Add(
+                        $"Batch starting at row {i + 2}: {ex.Message}");
                 }
             }
 
-            return uploaded;
+            return result;
         }
         private static bool IsValid(BuyerEntity item)
         {

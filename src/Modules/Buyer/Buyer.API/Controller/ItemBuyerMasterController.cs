@@ -115,17 +115,15 @@ namespace Buyer.API.Controller
                 OrganizationId = GetOrganizationId()
             };
 
-            var recordsInserted = await _mediator.Send(
-                new UploadItemBuyerMasterCommand(dto));
+            var result = await _mediator.Send(new UploadItemBuyerMasterCommand(dto));
 
-            _logger.LogInfo($"Item Buyer Master uploaded successfully. Records : {recordsInserted}");
-
+            _logger.LogInfo($"Item Buyer Master uploaded successfully. Records : {result.SuccessfulUploads}");
             return Ok(new SuccessResponseDto
             {
                 StatusCode = 200,
                 Message = "Success",
-                Description = $"Successfully uploaded {recordsInserted} records.",
-                Id = recordsInserted.ToString()
+                Description = $"Uploaded {result.SuccessfulUploads} of {result.TotalRows} records.",
+                Id = result.SuccessfulUploads.ToString()
             });
         }
 
