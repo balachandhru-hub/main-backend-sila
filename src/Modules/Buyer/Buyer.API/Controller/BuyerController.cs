@@ -229,7 +229,7 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Department not found")]
         public async Task<IActionResult> GetAllCostCenter(
-            [FromQuery] Guid departmentId,
+            [FromQuery] Guid? departmentId,
             [FromQuery] int index = 0,
             [FromQuery] int limit = 10,
             [FromQuery] string? searchTerm = null)
@@ -237,6 +237,7 @@ namespace Buyer.API.Controllers
             var result = await _mediator.Send(new GetBuyerCostCenterQuery
             {
 
+                DepartmentId = departmentId,
                 Index = index,
                 Limit = limit,
                 SearchTerm = searchTerm
