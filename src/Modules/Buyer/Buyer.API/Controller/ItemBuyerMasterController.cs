@@ -8,8 +8,6 @@ using Swashbuckle.AspNetCore.Annotations;
 using Buyer.Application.Features.Commands.ItemBuyerMaster;
 using Buyer.Domain.Dtos;
 using SharedKernel.Controllers;
-using Microsoft.AspNetCore.Http;
-using Buyer.Application.Features.Commands.ItemBuyerMaster;
 
 namespace Buyer.API.Controller
 {
@@ -102,9 +100,7 @@ namespace Buyer.API.Controller
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Item Buyer Master uploaded successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> Upload(
-    [FromForm] IFormFile file,
-    [FromForm] Guid? buyerId)
+        public async Task<IActionResult> Upload(IFormFile file, [FromQuery] Guid? buyerId)
         {
             _logger.LogInfo("Uploading Item Buyer Master Excel.");
 
