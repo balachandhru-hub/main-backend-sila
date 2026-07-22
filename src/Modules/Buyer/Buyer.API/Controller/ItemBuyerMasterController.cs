@@ -102,14 +102,21 @@ namespace Buyer.API.Controller
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Item Buyer Master uploaded successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> Upload([FromForm] IFormFile file)
+        public async Task<IActionResult> Upload(
+    [FromForm] IFormFile file,
+    [FromForm] Guid? buyerId)
         {
             _logger.LogInfo("Uploading Item Buyer Master Excel.");
 
+            var dto = new UploadItemBuyerMasterDto
+            {
+                File = file,
+                BuyerId = buyerId,
+                OrganizationId = GetOrganizationId()
+            };
+
             var recordsInserted = await _mediator.Send(
-                new UploadItemBuyerMasterCommand(
-                    file,
-                    GetOrganizationId()));
+                new UploadItemBuyerMasterCommand(dto));
 
             _logger.LogInfo($"Item Buyer Master uploaded successfully. Records : {recordsInserted}");
 

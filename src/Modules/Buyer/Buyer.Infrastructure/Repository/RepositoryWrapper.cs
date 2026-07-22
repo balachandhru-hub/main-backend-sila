@@ -21,8 +21,7 @@ namespace Buyer.Infrastructure.Repository
         private IBuyerDeliveryLocationRepository _buyerDeliveryLocationRepository;
         private IBuyerRegistrationRepository _buyerRegistrationRepository;
         private IItemBuyerMasterRepository _itemBuyerMasterRepository;
-        private IItemBuyerMasterBulkRepository _itemBuyerMasterBulkRepository;
-
+        private IBulkInsertHelper? _bulkInsertHelper;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -112,22 +111,20 @@ namespace Buyer.Infrastructure.Repository
                 return _itemBuyerMasterRepository;
             }
         }
-        public IItemBuyerMasterBulkRepository ItemBuyerMasterBulk
+        public IBulkInsertHelper BulkInsertHelper
         {
             get
             {
-                if (_itemBuyerMasterBulkRepository == null)
+                if (_bulkInsertHelper == null)
                 {
-                    _itemBuyerMasterBulkRepository =
-                        new ItemBuyerMasterBulkRepository(
-                            _context,
-                            _userIdentityService);
+                    _bulkInsertHelper = new BulkInsertHelper(
+                        _context,
+                        _userIdentityService);
                 }
 
-                return _itemBuyerMasterBulkRepository;
+                return _bulkInsertHelper;
             }
         }
-
         public bool Save()
         {
             _context.OnBeforeSaving(_userIdentityService.GetCurrentUser());

@@ -11,7 +11,7 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IBuyerRegistrationRepository BuyerRegistration { get; }
         IBuyerCategoryRepository BuyerCategory { get; }
         IItemBuyerMasterRepository ItemBuyerMaster { get; }
-        IItemBuyerMasterBulkRepository ItemBuyerMasterBulk { get; }
+        IBulkInsertHelper BulkInsertHelper { get; }
         
         IAssetRepository Asset { get; }
 

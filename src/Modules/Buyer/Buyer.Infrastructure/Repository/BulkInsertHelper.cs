@@ -7,13 +7,13 @@ using Buyer.Infrastructure.DbContext;
 
 namespace Buyer.Infrastructure.Repository;
 
-public class ItemBuyerMasterBulkRepository
-    : IItemBuyerMasterBulkRepository
+public class BulkInsertHelper
+    : IBulkInsertHelper
 {
     private readonly RepositoryContext _context;
     private readonly IUserIdentityService _userIdentityService;
 
-    public ItemBuyerMasterBulkRepository(
+    public BulkInsertHelper(
     RepositoryContext context,
     IUserIdentityService userIdentityService)
     {
