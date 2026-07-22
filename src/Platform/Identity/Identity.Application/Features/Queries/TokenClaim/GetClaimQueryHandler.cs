@@ -4,19 +4,31 @@ using Identity.Domain.Dto;
 using MediatR;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
+using Identity.Application.Contracts;
+using Identity.Domain.Enum;
 
 namespace Identity.Application.Features.Auth.Queries.GetClaim
 {
     public class GetClaimQueryHandler : IRequestHandler<GetClaimQuery, TokenClaimDto>
     {
         private readonly ILoggerManager _logger;
+        private readonly IBuyerApiClient _buyerApiClient;
+        private readonly ISupplierApiClient _supplierApiClient;
+        private readonly IBuyerIdApiClient _buyerIdApiClient;
+        private readonly ISupplierIdApiClient _supplierIdApiClient;
 
-        public GetClaimQueryHandler(ILoggerManager logger)
+        public GetClaimQueryHandler(ILoggerManager logger,IBuyerApiClient buyerApiClient,
+    ISupplierApiClient supplierApiClient, IBuyerIdApiClient buyerIdApiClient,
+    ISupplierIdApiClient supplierIdApiClient)
         {
+            _buyerApiClient = buyerApiClient;
+            _supplierApiClient = supplierApiClient; 
+           _buyerIdApiClient = buyerIdApiClient;
+        _supplierIdApiClient = supplierIdApiClient;
             _logger = logger;
         }
 
-        public Task<TokenClaimDto> Handle(GetClaimQuery request, CancellationToken cancellationToken)
+        public async Task<TokenClaimDto> Handle(GetClaimQuery request, CancellationToken cancellationToken)
         {
             _logger.LogInfo("Fetching Claim Details");
 
@@ -38,19 +50,50 @@ namespace Identity.Application.Features.Auth.Queries.GetClaim
                 UserId = Guid.Parse(claims["UserId"]),
                 RoleId = Guid.Parse(claims["role"]),
                 PersonId = Guid.Parse(claims["PersonId"]),
-                OrganizationId = Guid.Parse(claims["OrganizationId"])
+                OrganizationId = Guid.Parse(claims["OrganizationId"]),
+               
             };
+            
 
             if (claims.TryGetValue("Permissions", out var permissions))
             {
+                Console.WriteLine($"Fetched Permissions: {permissions}");
+                
+                _logger.LogInfo($"Fetched Permissions: {permissions}");
                 dto.Permissions =
                     JsonSerializer.Deserialize<List<string>>(permissions)
                     ?? new List<string>();
             }
+            foreach (var claim in jwtToken.Claims)
+            {
+                _logger.LogInfo($"{claim.Type} = {claim.Value}");
+            }
+            if (claims.TryGetValue("OrganizationType", out var organizationType))
+            {
+                
+                _logger.LogInfo($"Fetched Organization Type: {organizationType}");
+                if (Enum.TryParse<OrganizationType>(
+                    organizationType,
+                    true,
+                    out var orgType))
+                {
+                    _logger.LogInfo($"Fetching Organization Id for Organization Type: {orgType}");
+                    if (orgType == OrganizationType.Buyer)
+                    {
+                        _logger.LogInfo($"Fetching Buyer Id for Organization: {dto.OrganizationId}");
+                        dto.BuyerId = await _buyerIdApiClient.GetBuyerId(request.Token);
+                    }
+                    else if (orgType == OrganizationType.Supplier)
+                    {
+                        _logger.LogInfo($"Fetching Supplier Id for Organization: {dto.OrganizationId}");
+                        dto.SupplierId = await _supplierIdApiClient.GetSupplierId(request.Token);
+                    }
+                }
+            }
 
             _logger.LogInfo("Fetched Claim Details");
 
-            return Task.FromResult(dto);
+            return dto;
         }
     }
 }

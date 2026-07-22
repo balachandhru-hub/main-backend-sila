@@ -22,8 +22,13 @@ namespace Buyer.Infrastructure.Repository
         private IBuyerRegistrationRepository _buyerRegistrationRepository;
         private IBuyerDepartmentRepository _buyerDepartmentRepository;
         private IBuyerCostCenterRepository _buyerCostCenterRepository;
-        
+        private IRFQRepository _rfqRepository;
+        private IRFQAttachmentMappingRepository _rfqAttachmentMappingRepository;
+        private IRFQQuestionRepository _rfqQuestionRepository;
+        private IRFQQuestionOptionRepository _rfqQuestionOptionRepository;
+        private IRFQItemRepository _rfqItemRepository;
 
+        private IRFQItemAttachmentMappingRepository _rfqItemAttachmentMappingRepository;
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
             _context = repositoryContext;
@@ -38,7 +43,7 @@ namespace Buyer.Infrastructure.Repository
             {
                 if (_buyerBusinessProfileRepository == null)
                 {
-                    _buyerBusinessProfileRepository= new BuyerBusinessProfileRepository(_context);
+                    _buyerBusinessProfileRepository = new BuyerBusinessProfileRepository(_context);
                 }
                 return _buyerBusinessProfileRepository;
             }
@@ -58,7 +63,7 @@ namespace Buyer.Infrastructure.Repository
         {
             get
             {
-                if(_assetRepository == null)
+                if (_assetRepository == null)
                 {
                     _assetRepository = new AssetRepository(_context);
                 }
@@ -69,7 +74,7 @@ namespace Buyer.Infrastructure.Repository
         {
             get
             {
-                if(_buyerCategoryRepository == null)
+                if (_buyerCategoryRepository == null)
                 {
                     _buyerCategoryRepository = new BuyerCategoryRepository(_context);
                 }
@@ -80,7 +85,7 @@ namespace Buyer.Infrastructure.Repository
         {
             get
             {
-                if(_buyerDeliveryLocationRepository == null)
+                if (_buyerDeliveryLocationRepository == null)
                 {
                     _buyerDeliveryLocationRepository = new BuyerDeliveryLocationRepository(_context);
                 }
@@ -91,14 +96,14 @@ namespace Buyer.Infrastructure.Repository
         {
             get
             {
-                if(_buyerRegistrationRepository == null)
+                if (_buyerRegistrationRepository == null)
                 {
                     _buyerRegistrationRepository = new BuyerRegistrationRepository(_context);
                 }
                 return _buyerRegistrationRepository;
             }
         }
-          public IBuyerDepartmentRepository BuyerDepartment
+        public IBuyerDepartmentRepository BuyerDepartment
         {
             get
             {
@@ -106,21 +111,96 @@ namespace Buyer.Infrastructure.Repository
                 {
                     _buyerDepartmentRepository = new BuyerDepartmentRepository(_context);
                 }
-                return _buyerDepartmentRepository ;
+                return _buyerDepartmentRepository;
             }
         }
-             public IBuyerCostCenterRepository BuyerCostCenter
+        public IBuyerCostCenterRepository BuyerCostCenter
         {
             get
             {
-                if(_buyerCostCenterRepository == null)
+                if (_buyerCostCenterRepository == null)
                 {
                     _buyerCostCenterRepository = new BuyerCostCenterRepository(_context);
                 }
                 return _buyerCostCenterRepository;
             }
         }
+        public IRFQRepository RFQ
+        {
+            get
+            {
+                if (_rfqRepository == null)
+                {
+                    _rfqRepository = new RFQRepository(_context);
+                }
 
+                return _rfqRepository;
+            }
+        }
+        public IRFQAttachmentMappingRepository RFQAttachmentMapping
+        {
+            get
+            {
+                if (_rfqAttachmentMappingRepository == null)
+                {
+                    _rfqAttachmentMappingRepository =
+                        new RFQAttachmentMappingRepository(_context);
+                }
+
+                return _rfqAttachmentMappingRepository;
+            }
+        }
+        public IRFQQuestionRepository RFQQuestion
+        {
+            get
+            {
+                if (_rfqQuestionRepository == null)
+                {
+                    _rfqQuestionRepository = new RFQQuestionRepository(_context);
+                }
+
+                return _rfqQuestionRepository;
+            }
+        }
+
+        public IRFQQuestionOptionRepository RFQQuestionOption
+        {
+            get
+            {
+                if (_rfqQuestionOptionRepository == null)
+                {
+                    _rfqQuestionOptionRepository = new RFQQuestionOptionRepository(_context);
+                }
+
+                return _rfqQuestionOptionRepository;
+            }
+        }
+        public IRFQItemRepository RFQItem
+        {
+            get
+            {
+                if (_rfqItemRepository == null)
+                {
+                    _rfqItemRepository = new RFQItemRepository(_context);
+                }
+
+                return _rfqItemRepository;
+            }
+        }
+
+        public IRFQItemAttachmentMappingRepository RFQItemAttachmentMapping
+        {
+            get
+            {
+                if (_rfqItemAttachmentMappingRepository == null)
+                {
+                    _rfqItemAttachmentMappingRepository =
+                        new RFQItemAttachmentMappingRepository(_context);
+                }
+
+                return _rfqItemAttachmentMappingRepository;
+            }
+        }
         public bool Save()
         {
             _context.OnBeforeSaving(_userIdentityService.GetCurrentUser());

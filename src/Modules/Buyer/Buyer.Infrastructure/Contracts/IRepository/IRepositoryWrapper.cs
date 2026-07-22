@@ -14,6 +14,14 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IBuyerDepartmentRepository BuyerDepartment{get;}
         IBuyerCostCenterRepository BuyerCostCenter{get;}
 
+        IRFQRepository RFQ { get; }
+        IRFQAttachmentMappingRepository RFQAttachmentMapping { get; }
+        IRFQQuestionRepository RFQQuestion { get; }
+
+        IRFQQuestionOptionRepository RFQQuestionOption { get; }
+        IRFQItemRepository RFQItem { get; }
+
+        IRFQItemAttachmentMappingRepository RFQItemAttachmentMapping { get; }
         bool Save();
         Task<bool> SaveAsync();
     }

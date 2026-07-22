@@ -171,7 +171,8 @@ namespace Identity.Application.Features.Auth.Commands.Login
                     new Claim("PersonId", user.PersonId.ToString()),
                     new Claim("UserId", user.Id.ToString()),
                     new Claim("OrganizationId", person.OrganizationId.ToString()),
-                    new Claim("Permissions", permissionJson)
+                    new Claim("Permissions", permissionJson),
+                    new Claim("OrganizationType", organization.OrganizationType.ToString()),
                 };
 
                 int number = int.TryParse(_configuration[Common.TOKEN_EXPIRY], out int result)
