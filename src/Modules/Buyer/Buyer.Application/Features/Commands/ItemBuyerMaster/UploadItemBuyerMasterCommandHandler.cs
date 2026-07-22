@@ -3,6 +3,8 @@ using ClosedXML.Excel;
 using MediatR;
 using BuyerEntity = Buyer.Domain.Entities.ItemBuyerMaster;
 using SharedKernel.ExceptionHandler;
+using Buyer.Domain.Entities;
+using Microsoft.AspNetCore.Http;
 
 namespace Buyer.Application.Features.Commands.ItemBuyerMaster
 {
@@ -21,84 +23,154 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
     UploadItemBuyerMasterCommand request,
     CancellationToken cancellationToken)
         {
-            if (request.UploadDto.File == null)
-            {
-                throw new BadRequestCustomException(
-                    "File is required.",
-                    "File is required.");
-            }
-            if (!Path.GetExtension(request.UploadDto.File.FileName)
-                    .Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new BadRequestCustomException(
-                    "Only .xlsx files are supported.",
-                    "Only .xlsx files are supported.");
-            }
-            if (request.UploadDto.File.Length == 0)
-            {
-                throw new NoContentCustomException(
-                    "Uploaded file is empty.",
-                    "Uploaded file is empty.");
-            }
-
-
-            List<BuyerEntity> items = new();
+            ValidateFile(request.UploadDto.File);
 
             using var stream = request.UploadDto.File.OpenReadStream();
             using var workbook = new XLWorkbook(stream);
 
             var worksheet = workbook.Worksheet(1);
 
-            Guid buyerId;
+            ValidateHeaders(worksheet);
+
+            var buyerId = await GetBuyerId(request);
+
+            var rows = ExtractRows(worksheet, buyerId);
+
+            return await ProcessInBatches(rows, 1000);
+        }
+
+        private static void ValidateFile(IFormFile file)
+        {
+            if (file == null)
+            {
+                throw new BadRequestCustomException(
+                    "File is required.",
+                    "File is required.");
+            }
+
+            if (file.Length == 0)
+            {
+                throw new NoContentCustomException(
+                    "Uploaded file is empty.",
+                    "Uploaded file is empty.");
+            }
+
+            if (!Path.GetExtension(file.FileName)
+                    .Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BadRequestCustomException(
+                    "Only .xlsx files are supported.",
+                    "Only .xlsx files are supported.");
+            }
+        }
+        private static void ValidateHeaders(IXLWorksheet worksheet)
+        {
+            string[] expectedHeaders =
+            {
+        "Description",
+        "MaterialCode",
+        "MaterialGroup"
+    };
+
+            var headerRow = worksheet.Row(1);
+
+            if (headerRow == null)
+            {
+                throw new NoContentCustomException(
+                    "Excel file is empty.",
+                    "Excel file is empty.");
+            }
+
+            for (int i = 0; i < expectedHeaders.Length; i++)
+            {
+                var value = headerRow.Cell(i + 1).GetString().Trim();
+
+                if (!value.Equals(expectedHeaders[i],
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new NotFoundCustomException(
+                        $"Expected header '{expectedHeaders[i]}' but found '{value}'.",
+                        $"Expected header '{expectedHeaders[i]}' but found '{value}'.");
+                }
+            }
+        }
+        private async Task<Guid> GetBuyerId(
+            UploadItemBuyerMasterCommand request)
+        {
+            BuyerBusinessProfile? buyer;
 
             if (request.UploadDto.BuyerId.HasValue)
             {
-                var buyer = await _repository.BuyerBusinessProfile
+                buyer = await _repository.BuyerBusinessProfile
                     .FindFirstByConditionAsync(x =>
                         x.Id == request.UploadDto.BuyerId.Value &&
                         x.IsActive);
-
-                if (buyer == null)
-                    throw new NotFoundCustomException(
-                        "Buyer profile not found.",
-                        "Buyer profile not found.");
-                buyerId = buyer.Id;
             }
             else
             {
-                var buyer = await _repository.BuyerBusinessProfile
+                buyer = await _repository.BuyerBusinessProfile
                     .FindFirstByConditionAsync(x =>
                         x.OrganizationId == request.UploadDto.OrganizationId &&
                         x.IsActive);
-
-                if (buyer == null)
-                    throw new NotFoundCustomException(
-                        "Buyer profile not found.",
-                        "Buyer profile not found.");
-                buyerId = buyer.Id;
             }
+
+            if (buyer == null)
+            {
+                throw new NotFoundCustomException(
+                    "Buyer profile not found.",
+                    "Buyer profile not found.");
+            }
+
+            return buyer.Id;
+        }
+        private List<BuyerEntity> ExtractRows(
+    IXLWorksheet worksheet,
+    Guid buyerId)
+        {
+            var items = new List<BuyerEntity>();
 
             foreach (var row in worksheet.RowsUsed().Skip(1))
             {
-                var description = row.Cell(1).GetString().Trim();
-                var materialCode = row.Cell(2).GetString().Trim();
-                var materialGroup = row.Cell(3).GetString().Trim();
-
-                if (string.IsNullOrWhiteSpace(materialCode))
-                    continue;
-
-                items.Add(new BuyerEntity
+                var entity = new BuyerEntity
                 {
                     BuyerId = buyerId,
-                    Description = description,
-                    MaterialCode = materialCode,
-                    MaterialGroup = materialGroup
-                });
+                    Description = row.Cell(1).GetString().Trim(),
+                    MaterialCode = row.Cell(2).GetString().Trim(),
+                    MaterialGroup = row.Cell(3).GetString().Trim()
+                };
+
+                items.Add(entity);
             }
 
-            await _repository.BulkInsertHelper.BulkInsertOrUpdateAsync(items);
+            return items;
+        }
+        private async Task<int> ProcessInBatches(
+    List<BuyerEntity> data,
+    int batchSize)
+        {
+            int uploaded = 0;
 
-            return items.Count;
+            for (int i = 0; i < data.Count; i += batchSize)
+            {
+                var batch = data
+                    .Skip(i)
+                    .Take(batchSize)
+                    .Where(IsValid)
+                    .ToList();
+
+                if (batch.Any())
+                {
+                    await _repository.BulkInsertHelper.BulkInsertOrUpdateAsync(batch);
+                    uploaded += batch.Count;
+                }
+            }
+
+            return uploaded;
+        }
+        private static bool IsValid(BuyerEntity item)
+        {
+            return
+                !string.IsNullOrWhiteSpace(item.MaterialCode);
         }
     }
 }
