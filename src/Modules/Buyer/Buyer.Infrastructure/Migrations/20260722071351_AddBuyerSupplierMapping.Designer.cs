@@ -4,6 +4,7 @@ using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Buyer.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260722071351_AddBuyerSupplierMapping")]
+    partial class AddBuyerSupplierMapping
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -744,6 +747,11 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("buyer_id");
 
+                    b.Property<string>("CostCenter")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("cost_center");
+
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by");
@@ -1236,62 +1244,6 @@ namespace Buyer.Infrastructure.Migrations
                     b.ToTable("rfqquestion_option", "buyersystem");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.RFQSupplierMapping", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("BuyerId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("buyer_id");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_created");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_updated");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<Guid>("RFQId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("rfqid");
-
-                    b.Property<string>("RFQNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("rfqnumber");
-
-                    b.Property<Guid>("SupplierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_id");
-
-                    b.Property<Guid>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_rfqsupplier_mapping");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_rfqsupplier_mapping_is_active");
-
-                    b.HasIndex("RFQId")
-                        .HasDatabaseName("ix_rfqsupplier_mapping_rfqid");
-
-                    b.ToTable("rfqsupplier_mapping", "buyersystem");
-                });
-
             modelBuilder.Entity("Buyer.Domain.Entities.SupplierVerificationRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1327,11 +1279,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("rfqid");
 
-                    b.Property<string>("RFQNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("rfqnumber");
-
                     b.Property<Guid>("RFQVerificationTemplateId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("rfqverification_template_id");
@@ -1366,9 +1313,6 @@ namespace Buyer.Infrastructure.Migrations
 
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_supplier_verification_request_is_active");
-
-                    b.HasIndex("RFQId")
-                        .HasDatabaseName("ix_supplier_verification_request_rfqid");
 
                     b.ToTable("supplier_verification_request", "buyersystem");
                 });
@@ -1749,30 +1693,6 @@ namespace Buyer.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_rfqquestion_rfq_rfqid");
-
-                    b.Navigation("RFQ");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.RFQSupplierMapping", b =>
-                {
-                    b.HasOne("Buyer.Domain.Entities.RFQ", "RFQ")
-                        .WithMany()
-                        .HasForeignKey("RFQId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_rfqsupplier_mapping_rfq_rfqid");
-
-                    b.Navigation("RFQ");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.SupplierVerificationRequest", b =>
-                {
-                    b.HasOne("Buyer.Domain.Entities.RFQ", "RFQ")
-                        .WithMany()
-                        .HasForeignKey("RFQId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_supplier_verification_request_rfq_rfqid");
 
                     b.Navigation("RFQ");
                 });

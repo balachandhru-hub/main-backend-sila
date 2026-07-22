@@ -17,6 +17,9 @@ using Buyer.Application.Features.Commands.CostCenter;
 using Buyer.Application.Features.Queries.Department;
 using Buyer.Application.Features.Queries.CostCenter;
 using Buyer.Application.Features.Commands.DepartmentAndCostCenter;
+using Buyer.Application.Features.Commands.CreateRFQ;
+using  Buyer.Application.Features.Profile.Queries.GetBuyerId;
+using Buyer.Domain.Dtos;
 
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
 namespace Buyer.API.Controllers
@@ -371,6 +374,57 @@ namespace Buyer.API.Controllers
                 Description = "Buyer status updated successfully.",
                 Id = command.Buyer.OrganizationId.ToString()
             });
+        }
+        [HttpPost]
+        [Route("api/v1/buyer/createrfq")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "CREATE_RFQ")]
+        [SwaggerOperation("CreateRFQ")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "RFQ created successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        public async Task<IActionResult> CreateRFQ(
+            [FromBody] CreateRFQDto  rfq)
+        {
+            Guid organizationId = GetOrganizationId();
+            _logger.LogInfo("Creating RFQ");
+
+            Guid rfqId = await _mediator.Send(
+        new CreateRFQCommand(organizationId, rfq));
+
+            _logger.LogInfo("RFQ created successfully");
+
+            return Ok(new SuccessResponseDto
+            {
+                 Id = rfqId.ToString(),
+                StatusCode = 200,
+                Message = "Success",
+                Description = "RFQ created successfully."
+            });
+        }
+       /// <summary>
+        /// Get Buyer Id
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/v1/buyer/id")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_BUYER_ID")]
+        [SwaggerOperation("GetBuyerId")]
+        [SwaggerResponse(200, type: typeof(Guid), description: "Fetched Buyer Id successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetBuyerId()
+        {
+            Guid organizationId = GetOrganizationId();
+
+            _logger.LogInfo($"Fetching Buyer Id for Organization: {organizationId}");
+
+            Guid result = await _mediator.Send(
+                new GetBuyerIdQuery(organizationId));
+
+            _logger.LogInfo($"Fetched Buyer Id for Organization: {organizationId}");
+
+            return Ok(result);
         }
     }
 }

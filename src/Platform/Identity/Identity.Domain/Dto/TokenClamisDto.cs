@@ -1,3 +1,4 @@
+using Identity.Domain.Enum;
 namespace Identity.Domain.Dto
 {
     public class TokenClaimDto
@@ -11,5 +12,9 @@ namespace Identity.Domain.Dto
         public Guid RoleId { get; set; }
 
         public List<string> Permissions { get; set; } 
+        public Guid? BuyerId { get; set; }
+
+        public Guid? SupplierId { get; set; }
+       
     }
 }
