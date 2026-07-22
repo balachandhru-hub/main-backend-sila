@@ -31,7 +31,7 @@ namespace Buyer.Domain.Entities
 
         public string Status { get; set; }
 
-        public string CostCenter { get; set; }
+
 
         public string Department { get; set; }
 

@@ -12,6 +12,7 @@ using SharedKernel.Controllers;
 using Supplier.Application.Features.StatusUpdate.Commands;
 using Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier;
 using Supplier.Application.Features.Commands.Supplier.UpdateSupplierStatusOrganization;
+using Supplier.Application.Features.Profile.Queries.GetSupplierId;
 
 
 namespace Supplier.API.Controllers
@@ -171,6 +172,31 @@ namespace Supplier.API.Controllers
                 Description = "Supplier status updated successfully.",
                 Id = command.Supplier.OrganizationId.ToString()
             });
+        }
+        /// <summary>
+        /// Get Supplier Id
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/v1/supplier/id")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_ID")]
+        [SwaggerOperation("GetSupplierId")]
+        [SwaggerResponse(200, type: typeof(Guid), description: "Fetched Supplier Id successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetSupplierId()
+        {
+            Guid organizationId = GetOrganizationId();
+
+            _logger.LogInfo($"Fetching Supplier Id for Organization: {organizationId}");
+
+            Guid result = await _mediator.Send(
+                new GetSupplierIdQuery(organizationId));
+
+            _logger.LogInfo($"Fetched Supplier Id for Organization: {organizationId}");
+
+            return Ok(result);
         }
     }
 }

@@ -145,6 +145,8 @@ namespace Identity.API.Extensions
             _ = services.AddScoped<IBcryptHashing, BcryptHashing>();
              _ = services.AddScoped<IBuyerApiClient, BuyerApiClient>();
             _ = services.AddScoped<ISupplierApiClient, SupplierApiClient>();
+            _ = services.AddScoped<IBuyerIdApiClient, BuyerIdApiClient>();
+            _ = services.AddScoped<ISupplierIdApiClient, SupplierIdApiClient>();
 
             _ = services.AddControllers();
 

@@ -40,6 +40,8 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<RFQAnswerOption> RFQAnswerOption { get; set; }
         public DbSet<BuyerCostCenter> BuyerCostCenter {get;set;}
         public DbSet<BuyerDepartment> BuyerDepartment {get;set;}
+        public DbSet<BuyerSupplierMapping> BuyerSupplierMapping {get;set;}
+        public DbSet<RFQSupplierMapping> RFQSupplierMapping {get;set;}
 
 
 
@@ -70,6 +72,8 @@ namespace Buyer.Infrastructure.DbContext
             _ = modelBuilder.Entity<VerificationTemplateQuestionOption>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<BuyerDepartment>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<BuyerCostCenter>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<BuyerSupplierMapping>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<RFQSupplierMapping>().HasIndex(a=>a.IsActive);
 
 
 

@@ -21,6 +21,7 @@ namespace Buyer.Domain.Entities
         public string UOM { get; set; }
         public string MaterialCode{get;set;}
         public string MaterialGroup{get;set;}
+        public string CostCenter { get; set; }
         public RFQItem(){}
 
     }
