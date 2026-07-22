@@ -14,49 +14,41 @@ using Buyer.Domain.Dto;
 namespace Buyer.Application.Features.Commands.CreateRFQ
 {
     public class CreateRFQCommandHandler
-        : IRequestHandler<CreateRFQCommand, bool>
+        : IRequestHandler<CreateRFQCommand, Guid>
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+
         private readonly IMediator _mediator;
 
         public CreateRFQCommandHandler(
             IRepositoryWrapper repository,
             ILoggerManager logger,
-            IHttpContextAccessor httpContextAccessor,
+
             IMediator mediator)
         {
             _repository = repository;
             _logger = logger;
-            _httpContextAccessor = httpContextAccessor;
+
             _mediator = mediator;
         }
 
-        public async Task<bool> Handle(
-     CreateRFQCommand request,
-     CancellationToken cancellationToken)
+        public async Task<Guid> Handle(
+    CreateRFQCommand request,
+    CancellationToken cancellationToken)
         {
-            var organizationIdClaim = _httpContextAccessor.HttpContext?
-                .User
-                .FindFirst("OrganizationId")?.Value;
 
-            if (string.IsNullOrWhiteSpace(organizationIdClaim))
-            {
-                throw new UnAuthorizedCustomException(
-                    "Unauthorized.",
-                    "Organization claim not found.");
-            }
 
-            var organizationId = Guid.Parse(organizationIdClaim);
+
 
             var buyer = _repository.BuyerBusinessProfile
-                .FindFirstByCondition(x =>
-                    x.OrganizationId == organizationId &&
-                    x.IsActive);
+        .FindFirstByCondition(x =>
+            x.OrganizationId == request.OrganizationId &&
+            x.IsActive);
 
             if (buyer == null)
             {
+                _logger.LogError($"Buyer not found for OrganizationId: {request.OrganizationId}");
                 throw new NotFoundCustomException(
                     "Buyer not found.",
                     "Buyer does not exist.");
@@ -70,6 +62,8 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
 
             if (existingRFQ != null)
             {
+                _logger.LogError(
+    $"Duplicate RFQ creation attempted. BuyerId: {buyer.Id}, Department: {request.RFQ.Department}");
                 throw new BadRequestCustomException(
     "Department already exists.",
     "The selected Department already exists for this buyer.");
@@ -106,8 +100,9 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             };
 
             _repository.RFQ.Create(rfq);
+            _logger.LogInfo(
+                $"RFQ entity created. RFQ Id: {rfq.Id}, RFQ Number: {rfq.RFQNumber}");
 
-           
 
             List<RFQAttachmentMapping> attachments = new();
 
@@ -154,7 +149,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                 await _repository.RFQAttachmentMapping.CreateRangeAsync(attachments);
             }
 
-           
+
 
             foreach (var question in request.RFQ.Questions)
             {
@@ -187,7 +182,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     }
                 }
             }
-           
+
             if (request.RFQ.Items != null)
             {
                 foreach (var item in request.RFQ.Items)
@@ -225,7 +220,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     }
                 }
 
-               
+
             }
 
             // ======================================================
@@ -245,7 +240,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     });
             }
 
-          
+
 
             // ======================================================
             // Get verified suppliers
@@ -272,6 +267,8 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
 
             if (unVerifiedSuppliers.Any())
             {
+                _logger.LogInfo(
+   $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQNumber}");
                 await _mediator.Send(
     new InviteSuppliersCommand(
         new InviteSuppliersDto
@@ -286,7 +283,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             await _repository.SaveAsync();
             _logger.LogInfo($"RFQ created successfully. RFQ Id : {rfq.Id}");
 
-            return true;
+            return rfq.Id;
         }
     }
 }

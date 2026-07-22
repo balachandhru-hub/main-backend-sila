@@ -3,7 +3,7 @@ using MediatR;
 
 namespace Buyer.Application.Features.Commands.InviteSuppliers
 {
-    public class InviteSuppliersCommand : IRequest<bool>
+    public class InviteSuppliersCommand : IRequest<Guid>
     {
         public InviteSuppliersDto Invite { get; set; }
 

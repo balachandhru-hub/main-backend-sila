@@ -19,6 +19,7 @@ using Buyer.Application.Features.Queries.CostCenter;
 using Buyer.Application.Features.Commands.DepartmentAndCostCenter;
 using Buyer.Application.Features.Commands.CreateRFQ;
 using  Buyer.Application.Features.Profile.Queries.GetBuyerId;
+using Buyer.Domain.Dtos;
 
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
 namespace Buyer.API.Controllers
@@ -381,16 +382,19 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "RFQ created successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         public async Task<IActionResult> CreateRFQ(
-            [FromBody] CreateRFQCommand command)
+            [FromBody] CreateRFQDto  rfq)
         {
+            Guid organizationId = GetOrganizationId();
             _logger.LogInfo("Creating RFQ");
 
-            await _mediator.Send(command);
+            Guid rfqId = await _mediator.Send(
+        new CreateRFQCommand(organizationId, rfq));
 
             _logger.LogInfo("RFQ created successfully");
 
             return Ok(new SuccessResponseDto
             {
+                 Id = rfqId.ToString(),
                 StatusCode = 200,
                 Message = "Success",
                 Description = "RFQ created successfully."

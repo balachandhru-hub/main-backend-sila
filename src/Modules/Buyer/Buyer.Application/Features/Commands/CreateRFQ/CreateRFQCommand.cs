@@ -3,8 +3,15 @@ using MediatR;
 
 namespace Buyer.Application.Features.Commands.CreateRFQ
 {
-    public class CreateRFQCommand : IRequest<bool>
+   public class CreateRFQCommand : IRequest<Guid>
+{
+    public Guid OrganizationId { get; }
+    public CreateRFQDto RFQ { get; }
+
+    public CreateRFQCommand(Guid organizationId, CreateRFQDto rfq)
     {
-        public CreateRFQDto RFQ { get; set; } = default!;
+        OrganizationId = organizationId;
+        RFQ = rfq;
     }
+}
 }
