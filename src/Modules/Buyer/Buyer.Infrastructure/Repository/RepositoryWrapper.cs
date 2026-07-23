@@ -245,9 +245,7 @@ private ISupplierVerificationRequestRepository _supplierVerificationRequest;
             }
         }
 
-        return _buyerSupplierMappingRepository;
-    }
-}
+
         public IItemBuyerMasterRepository ItemBuyerMaster
         {
             get
