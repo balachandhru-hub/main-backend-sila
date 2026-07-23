@@ -76,9 +76,8 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                     AssetUploadDto uploadDto = new()
                     {
                         EntityId = catalog.Id,
-                        EntityType = "SUPPLIER",
-                        AssetType = "SUPPLIER_CATALOG",
-                        FileBytes = asset.FileBytes,
+                        EntityType = asset.EntityType,
+                        AssetType = asset.AssetType,
                         FileName = asset.FileName,
                         ContentType = asset.ContentType,
                         IsSingletonAsset = false
