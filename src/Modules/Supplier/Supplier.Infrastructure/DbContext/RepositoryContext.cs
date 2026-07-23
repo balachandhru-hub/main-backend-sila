@@ -26,6 +26,11 @@ namespace Supplier.Infrastructure.DbContext
        public DbSet<Asset>Assets {get;set;}
        public DbSet<SupplierCatalog> SupplierCatalog {get;set;}
        public DbSet<CatalogAssetMapping> CatalogAssetMapping {get;set;}
+       public DbSet<SupplierRFQ> SupplierRFQ {get;set;}
+       public DbSet<SupplierRFQItem> SupplierRFQItem {get;set;}
+       public DbSet<SupplierQuotation> SupplierQuotation {get;set;}
+       public DbSet<SupplierQuotationItem> SupplierQuotationItem {get;set;}
+        public DbSet<RFQSupplierMapping> RFQSupplierMapping {get;set;}
       
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
@@ -37,7 +42,17 @@ namespace Supplier.Infrastructure.DbContext
             _ = modelBuilder.Entity<Asset>().HasIndex(a=> a.IsActive);
             _ = modelBuilder.Entity<SupplierCatalog>().HasIndex(a=> a.IsActive);
             _ = modelBuilder.Entity<CatalogAssetMapping>().HasIndex(a=> a.IsActive);
+            _ = modelBuilder.Entity<SupplierRFQ>().HasIndex(a=> a.IsActive);
+            _ = modelBuilder.Entity<SupplierRFQItem>().HasIndex(a=> a.IsActive);
+            _ = modelBuilder.Entity<SupplierQuotation>().HasIndex(a=> a.IsActive);
+            _ = modelBuilder.Entity<SupplierQuotationItem>().HasIndex(a=> a.IsActive);
+            _ = modelBuilder.Entity<RFQSupplierMapping>().HasIndex(a=> a.IsActive);
 
+                modelBuilder.Entity<SupplierQuotationItem>()
+                    .HasOne(x => x.SupplierRFQItem)
+                    .WithMany()
+                    .HasForeignKey(x => x.SupplierRFQItemId)
+                    .OnDelete(DeleteBehavior.NoAction);
              base.OnModelCreating(modelBuilder);
 
             foreach (Microsoft.EntityFrameworkCore.Metadata.IMutableEntityType entity in modelBuilder.Model.GetEntityTypes())
