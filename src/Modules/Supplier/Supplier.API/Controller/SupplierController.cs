@@ -14,7 +14,8 @@ using Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier;
 using Supplier.Application.Features.Commands.Supplier.UpdateSupplierStatusOrganization;
 using Supplier.Application.Features.Profile.Queries.GetSupplierId;
 using Supplier.Application.Features.Commands.SupplierCatalog;
-using Supplier.Application.Features.Queries.SupplierCatalog;using Supplier.Application.Features.Queries.GetSupplier;
+using Supplier.Application.Features.Queries.SupplierCatalog;
+using Supplier.Application.Features.Queries.GetSupplier;
 
 
 namespace Supplier.API.Controllers
@@ -209,7 +210,7 @@ namespace Supplier.API.Controllers
         [HttpPost]
         [Route("api/v1/supplier/catalog")]
         [ValidateModelState]
-        // [ApiAuthorization(Name = "CREATE_SUPPLIER_CATALOG")]
+        [ApiAuthorization(Name = "CREATE_SUPPLIER_CATALOG")]
         [SwaggerOperation("CreateSupplierCatalog")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier catalog created successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
@@ -240,7 +241,7 @@ namespace Supplier.API.Controllers
         [HttpGet]
         [Route("api/v1/supplier/catalog")]
         [ValidateModelState]
-        // [ApiAuthorization(Name = "GET_SUPPLIER_CATALOG")]
+        [ApiAuthorization(Name = "GET_SUPPLIER_CATALOG")]
         [SwaggerOperation("GetSupplierCatalog")]
         [SwaggerResponse(200, type: typeof(List<GetSupplierCatalogDto>), description: "Supplier catalog retrieved successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
@@ -269,7 +270,7 @@ namespace Supplier.API.Controllers
         [HttpDelete]
         [Route("api/v1/supplier/catalog/{id}")]
         [ValidateModelState]
-        // [ApiAuthorization(Name = "DELETE_SUPPLIER_CATALOG")]
+        [ApiAuthorization(Name = "DELETE_SUPPLIER_CATALOG")]
         [SwaggerOperation("DeleteSupplierCatalog")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier catalog deleted successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
@@ -304,7 +305,7 @@ namespace Supplier.API.Controllers
         [HttpPut]
         [Route("api/v1/supplier/catalog")]
         [ValidateModelState]
-        // [ApiAuthorization(Name = "UPDATE_SUPPLIER_CATALOG")]
+        [ApiAuthorization(Name = "UPDATE_SUPPLIER_CATALOG")]
         [SwaggerOperation("UpdateSupplierCatalog")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier catalog updated successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
