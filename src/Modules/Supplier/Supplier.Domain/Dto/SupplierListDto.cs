@@ -7,8 +7,7 @@ namespace Supplier.Domain.Dto
         public string SupplierName { get; set; }
 
 
-        public decimal Price { get; set; }
-
+       public string Email {get;set;}
         public bool IsVerified { get; set; }
 
     }

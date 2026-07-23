@@ -107,7 +107,7 @@ namespace Supplier.Application.Features.Queries.GetSupplier
       {
           SupplierId = catalog.SupplierId,
           SupplierName = supplier.OrganizationName,
-          Price = catalog.Price,
+          Email = supplier.Email,
           IsVerified = verifiedSupplierIds.Contains(catalog.SupplierId)
 
       })
