@@ -13,6 +13,7 @@ using Supplier.Application.Features.StatusUpdate.Commands;
 using Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier;
 using Supplier.Application.Features.Commands.Supplier.UpdateSupplierStatusOrganization;
 using Supplier.Application.Features.Profile.Queries.GetSupplierId;
+using Supplier.Application.Features.Queries.GetSupplier;
 
 
 namespace Supplier.API.Controllers
@@ -195,6 +196,26 @@ namespace Supplier.API.Controllers
                 new GetSupplierIdQuery(organizationId));
 
             _logger.LogInfo($"Fetched Supplier Id for Organization: {organizationId}");
+
+            return Ok(result);
+        }
+
+
+        [HttpPost]
+        [Route("api/v1/supplier/rfq-verfied-supplier")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_LIST")]
+        [SwaggerOperation("GetSupplierList")]
+        [SwaggerResponse(200, type: typeof(List<SupplierListDto>), description: "Supplier list fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier not found")]
+        public async Task<IActionResult> GetSupplierList(
+     [FromBody] GetSupplierListDto supplierListDto,
+     CancellationToken cancellationToken)
+        {
+            var query = new GetSupplierListQuery(supplierListDto);
+
+            var result = await _mediator.Send(query, cancellationToken);
 
             return Ok(result);
         }

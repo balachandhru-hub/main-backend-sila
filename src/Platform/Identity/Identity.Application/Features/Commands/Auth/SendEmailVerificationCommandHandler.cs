@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Identity.Domain.Common;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
@@ -34,6 +35,16 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
             CancellationToken cancellationToken)
         {
             string? ipAddress = _httpContextAccessor.HttpContext?.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',')[0].Trim() ?? _httpContextAccessor.HttpContext?.Request.Headers["X-Real-IP"].FirstOrDefault() ?? _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.MapToIPv4()?.ToString();
+             var organizationExists = await _repository.Organization
+        .FindByConditionAsync(x => x.Email == request.Email && x.IsActive)
+        .AnyAsync(cancellationToken);
+
+    if (organizationExists)
+    {
+        throw new BadRequestCustomException(
+            "This email address is already registered.",
+            "Please use a different email address.");
+    }
             var existingOtp = _repository.EmailVerification
       .FindByConditionAsync(x =>
           x.Email == request.Email && x.IsVerified == false &&
