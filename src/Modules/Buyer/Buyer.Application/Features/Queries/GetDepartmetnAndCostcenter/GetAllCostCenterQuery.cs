@@ -5,7 +5,7 @@ namespace Buyer.Application.Features.Queries.CostCenter
 {
     public class GetBuyerCostCenterQuery : IRequest<List<BuyerCostCenterDto>>
 {
-    public Guid DepartmentId { get; set; }
+    public Guid? DepartmentId { get; set; }
 
     public int Index { get; set; }
 

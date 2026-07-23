@@ -20,6 +20,8 @@ namespace Buyer.Infrastructure.Repository
         private IBuyerBankAccountRepository _buyerBankAccountRepository;
         private IBuyerDeliveryLocationRepository _buyerDeliveryLocationRepository;
         private IBuyerRegistrationRepository _buyerRegistrationRepository;
+        private IItemBuyerMasterRepository _itemBuyerMasterRepository;
+        private IBulkInsertHelper? _bulkInsertHelper;
         private IBuyerDepartmentRepository _buyerDepartmentRepository;
         private IBuyerCostCenterRepository _buyerCostCenterRepository;
         private IRFQRepository _rfqRepository;
@@ -240,6 +242,37 @@ private ISupplierVerificationRequestRepository _supplierVerificationRequest;
                     new SupplierVerificationRequestRepository(_context);
                 }
                 return  _supplierVerificationRequest;
+            }
+        }
+
+        return _buyerSupplierMappingRepository;
+    }
+}
+        public IItemBuyerMasterRepository ItemBuyerMaster
+        {
+            get
+            {
+                if (_itemBuyerMasterRepository == null)
+                {
+                    _itemBuyerMasterRepository =
+                        new ItemBuyerMasterRepository(_context);
+                }
+
+                return _itemBuyerMasterRepository;
+            }
+        }
+        public IBulkInsertHelper BulkInsertHelper
+        {
+            get
+            {
+                if (_bulkInsertHelper == null)
+                {
+                    _bulkInsertHelper = new BulkInsertHelper(
+                        _context,
+                        _userIdentityService);
+                }
+
+                return _bulkInsertHelper;
             }
         }
         public bool Save()
