@@ -19,11 +19,8 @@ namespace Buyer.Application.Features.Queries.GetAllSupplier
             GetVerifiedSupplierQuery request,
             CancellationToken cancellationToken)
         {
-            var query = _repository.BuyerSupplierMapping.FindByCondition(x => true);
-
-
-
-            var supplierIds = await query
+              var supplierIds = await _repository.BuyerSupplierMapping
+                .FindByCondition(x => x.BuyerId == request.VerifiedSupplierRequestDto.BuyerId)
                 .OrderBy(x => x.SupplierId)
                 .Skip(request.VerifiedSupplierRequestDto.Index)
                 .Take(request.VerifiedSupplierRequestDto.Limit)

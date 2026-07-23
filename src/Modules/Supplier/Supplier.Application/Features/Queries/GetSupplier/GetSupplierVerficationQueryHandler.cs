@@ -54,24 +54,17 @@ namespace Supplier.Application.Features.Queries.GetSupplier
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
-            var token = _httpContextAccessor.HttpContext?
-                .Request.Cookies[Common.ACCESS_TOKEN];
-
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                _logger.LogError("Access token is missing in the request cookies.");
-                throw new UnauthorizedAccessException("Access token is missing.");
-            }
+          
 
             // Step 3 : Get Verified SupplierIds for the Buyer
             var verifiedSupplierIds = await _buyerApiClient.GetVerifiedSuppliers(
                 new GetVerifiedSupplierRequestDto
                 {
-
+                    BuyerId=filter.BuyerId,
                     Index = filter.Index,
                     Limit = filter.Limit
                 },
-                token,
+                
                 cancellationToken);
 
             verifiedSupplierIds = verifiedSupplierIds

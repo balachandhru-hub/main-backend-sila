@@ -6,7 +6,7 @@ namespace Supplier.Application.Contracts
     {
         Task<List<Guid>> GetVerifiedSuppliers(
             GetVerifiedSupplierRequestDto request,
-            string accessToken,
+            
             CancellationToken cancellationToken = default);
     }
 }

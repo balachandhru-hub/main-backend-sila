@@ -428,7 +428,7 @@ namespace Buyer.API.Controllers
         }
 
         [HttpPost]
-        [Route("api/v1/buyer/get-verified-suppliers")]
+        [Route("api/v1/buyer/verified-suppliers")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_VERIFIED_SUPPLIERS")]
         [SwaggerOperation("GetVerifiedSuppliers")]

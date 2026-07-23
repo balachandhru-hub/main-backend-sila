@@ -21,6 +21,6 @@ namespace Supplier.Domain.Dto
         // true = Verified
         // false = Non Verified
         public string? Type{ get; set; }
-        // public Guid? BuyerId {get;set;}
+        public Guid BuyerId {get;set;}
     }
 }

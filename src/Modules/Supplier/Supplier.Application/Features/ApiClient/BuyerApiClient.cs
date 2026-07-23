@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using SharedKernel.ExceptionHandler;
 using Supplier.Application.Contracts;
@@ -11,27 +12,32 @@ namespace Supplier.Infrastructure.ApiClients
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public BuyerApiClient(
             HttpClient httpClient,
-            IConfiguration configuration)
+            IConfiguration configuration,IHttpContextAccessor httpContextAccessor)
         {
             _httpClient = httpClient;
             _configuration = configuration;
+            _httpContextAccessor=httpContextAccessor;
         }
 
         public async Task<List<Guid>> GetVerifiedSuppliers(
             GetVerifiedSupplierRequestDto requestDto,
-            string accessToken,
+            
             CancellationToken cancellationToken = default)
         {
             var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
 
             var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"{buyerUrl}/api/v1/buyer/get-verified-suppliers");
+                $"{buyerUrl}/api/v1/buyer/verified-suppliers");
 
             request.Content = JsonContent.Create(requestDto);
+             var accessToken = _httpContextAccessor.HttpContext?
+        .Request.Cookies[Common.ACCESS_TOKEN];
+
 
             if (!string.IsNullOrWhiteSpace(accessToken))
             {
