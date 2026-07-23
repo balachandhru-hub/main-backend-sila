@@ -33,7 +33,7 @@ namespace Buyer.Infrastructure.Repository
         private IRFQSupplierMappingRepository _rfqSupplierMapping;
 
 private ISupplierVerificationRequestRepository _supplierVerificationRequest;
-private IBuyerSupplierMappingRepository _buyerSupplierMappingRepository;
+
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
             _context = repositoryContext;
@@ -216,6 +216,30 @@ private IBuyerSupplierMappingRepository _buyerSupplierMappingRepository;
                     new BuyerSupplierMappingRepository(_context);
                 }
                 return _buyerSupplierMappingRepository;
+            }
+        }
+         public IRFQSupplierMappingRepository RFQSupplierMapping
+        {
+            get
+            {
+                if( _rfqSupplierMapping==null)
+                {
+                     _rfqSupplierMapping=
+                    new RFQSupplierMappingRepository(_context);
+                }
+                return  _rfqSupplierMapping;
+            }
+        }
+         public ISupplierVerificationRequestRepository SupplierVerificationRequest
+        {
+            get
+            {
+                if( _supplierVerificationRequest==null)
+                {
+                     _supplierVerificationRequest=
+                    new SupplierVerificationRequestRepository(_context);
+                }
+                return  _supplierVerificationRequest;
             }
         }
         public bool Save()

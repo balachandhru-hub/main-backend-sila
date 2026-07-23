@@ -21,14 +21,7 @@ namespace Buyer.Application.Features.Queries.GetAllSupplier
         {
             var query = _repository.BuyerSupplierMapping.FindByCondition(x => true);
 
-            // Optional search by SupplierId (if SearchTerm contains Guid)
-            if (!string.IsNullOrWhiteSpace(request.VerifiedSupplierRequestDto.SearchTerm))
-            {
-                if (Guid.TryParse(request.VerifiedSupplierRequestDto.SearchTerm, out Guid supplierId))
-                {
-                    query = query.Where(x => x.SupplierId == supplierId);
-                }
-            }
+
 
             var supplierIds = await query
                 .OrderBy(x => x.SupplierId)

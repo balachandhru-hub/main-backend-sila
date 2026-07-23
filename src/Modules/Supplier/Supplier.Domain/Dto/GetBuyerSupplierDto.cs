@@ -7,6 +7,6 @@ namespace Supplier.Domain.Dto
 
         public int Limit { get; set; } = 10;
 
-        public string? SearchTerm { get; set; }
+       
     }
 }
