@@ -15,6 +15,8 @@ public interface IRepositoryWrapper
     IAssetRepository Asset { get; }
     ISupplierCatalogRepository SupplierCatalog{get;}
 
+    ICatalogAssetMappingRepository CatalogAssetMapping { get; }
+
     bool Save();
     Task<bool> SaveAsync();
 }
