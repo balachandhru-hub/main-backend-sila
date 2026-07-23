@@ -29,12 +29,13 @@ namespace Buyer.Infrastructure.Repository
         private IRFQQuestionRepository _rfqQuestionRepository;
         private IRFQQuestionOptionRepository _rfqQuestionOptionRepository;
         private IRFQItemRepository _rfqItemRepository;
+        private IBuyerSupplierMappingRepository _buyerSupplierMappingRepository;
 
         private IRFQItemAttachmentMappingRepository _rfqItemAttachmentMappingRepository;
         private IRFQSupplierMappingRepository _rfqSupplierMapping;
 
 private ISupplierVerificationRequestRepository _supplierVerificationRequest;
-private IBuyerSupplierMappingRepository _buyerSupplierMappingRepository;
+
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
             _context = repositoryContext;
@@ -207,45 +208,44 @@ private IBuyerSupplierMappingRepository _buyerSupplierMappingRepository;
                 return _rfqItemAttachmentMappingRepository;
             }
         }
-        public IRFQSupplierMappingRepository RFQSupplierMapping
-{
-    get
-    {
-        if (_rfqSupplierMapping == null)
+        public IBuyerSupplierMappingRepository BuyerSupplierMapping
         {
-            _rfqSupplierMapping = new RFQSupplierMappingRepository(_context);
+            get
+            {
+                if(_buyerSupplierMappingRepository==null)
+                {
+                    _buyerSupplierMappingRepository=
+                    new BuyerSupplierMappingRepository(_context);
+                }
+                return _buyerSupplierMappingRepository;
+            }
+        }
+         public IRFQSupplierMappingRepository RFQSupplierMapping
+        {
+            get
+            {
+                if( _rfqSupplierMapping==null)
+                {
+                     _rfqSupplierMapping=
+                    new RFQSupplierMappingRepository(_context);
+                }
+                return  _rfqSupplierMapping;
+            }
+        }
+         public ISupplierVerificationRequestRepository SupplierVerificationRequest
+        {
+            get
+            {
+                if( _supplierVerificationRequest==null)
+                {
+                     _supplierVerificationRequest=
+                    new SupplierVerificationRequestRepository(_context);
+                }
+                return  _supplierVerificationRequest;
+            }
         }
 
-        return _rfqSupplierMapping;
-    }
-}
 
-public ISupplierVerificationRequestRepository SupplierVerificationRequest
-{
-    get
-    {
-        if (_supplierVerificationRequest == null)
-        {
-            _supplierVerificationRequest =
-                new SupplierVerificationRequestRepository(_context);
-        }
-
-        return _supplierVerificationRequest;
-    }
-}
-public IBuyerSupplierMappingRepository BuyerSupplierMapping
-{
-    get
-    {
-        if (_buyerSupplierMappingRepository == null)
-        {
-            _buyerSupplierMappingRepository =
-                new BuyerSupplierMappingRepository(_context);
-        }
-
-        return _buyerSupplierMappingRepository;
-    }
-}
         public IItemBuyerMasterRepository ItemBuyerMaster
         {
             get

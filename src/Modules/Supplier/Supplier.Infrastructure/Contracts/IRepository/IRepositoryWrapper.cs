@@ -13,6 +13,7 @@ public interface IRepositoryWrapper
 
     ISupplierDispatchLocationRepository SupplierDispatchLocation { get; }
     IAssetRepository Asset { get; }
+    ISupplierCatalogRepository SupplierCatalog{get;}
 
     bool Save();
     Task<bool> SaveAsync();
