@@ -26,8 +26,8 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
         }
 
         public async Task<bool> Handle(
-    UpdateSupplierCatalogCommand request,
-    CancellationToken cancellationToken)
+            UpdateSupplierCatalogCommand request,
+            CancellationToken cancellationToken)
         {
             var catalog = _repositoryWrapper.SupplierCatalog
                 .FindFirstByCondition(x =>
@@ -39,7 +39,7 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                     "Supplier catalog not found.",
                     "Supplier catalog not found.");
 
-            // Update only provided fields
+            // Update catalog fields
             if (!string.IsNullOrWhiteSpace(request.Catalog.CatalogName))
                 catalog.CatalogName = request.Catalog.CatalogName;
 
@@ -55,30 +55,39 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
             _repositoryWrapper.SupplierCatalog.Update(catalog);
 
             // Update assets only if assets are sent
-            if (request.Catalog.Assets != null &&
-                request.Catalog.Assets.Any())
+            if (request.Catalog.Assets != null)
             {
-                // Deactivate old assets & remove mappings
-                var mappings = _repositoryWrapper.CatalogAssetMapping
+                // Existing mappings
+                var existingMappings = _repositoryWrapper.CatalogAssetMapping
                     .FindByCondition(x => x.CatalogId == catalog.Id)
                     .ToList();
 
-                foreach (var mapping in mappings)
+                // Asset ids received from frontend (existing assets)
+                var requestAssetIds = request.Catalog.Assets
+                    .Where(x => x.Id != Guid.Empty)
+                    .Select(x => x.Id)
+                    .ToHashSet();
+
+                // Remove assets not present in request
+                foreach (var mapping in existingMappings)
                 {
-                    var asset = _repositoryWrapper.Asset
-                        .FindFirstByCondition(x => x.Id == mapping.AssetId);
-
-                    if (asset != null)
+                    if (!requestAssetIds.Contains(mapping.AssetId))
                     {
-                        asset.IsActive = false;
-                        _repositoryWrapper.Asset.Update(asset);
-                    }
+                        var existingAsset = _repositoryWrapper.Asset
+                            .FindFirstByCondition(x => x.Id == mapping.AssetId);
 
-                    _repositoryWrapper.CatalogAssetMapping.Delete(mapping);
+                        if (existingAsset != null)
+                        {
+                            existingAsset.IsActive = false;
+                            _repositoryWrapper.Asset.Update(existingAsset);
+                        }
+
+                        _repositoryWrapper.CatalogAssetMapping.Delete(mapping);
+                    }
                 }
 
-                // Upload new assets
-                foreach (var asset in request.Catalog.Assets)
+                // Upload only newly added assets
+                foreach (var asset in request.Catalog.Assets.Where(x => x.Id == Guid.Empty))
                 {
                     AssetUploadDto uploadDto = new()
                     {
@@ -92,7 +101,8 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                     };
 
                     Guid assetId = await _mediator.Send(
-                        new UploadAssetCommand(uploadDto));
+                        new UploadAssetCommand(uploadDto),
+                        cancellationToken);
 
                     _repositoryWrapper.CatalogAssetMapping.Create(
                         new CatalogAssetMapping
