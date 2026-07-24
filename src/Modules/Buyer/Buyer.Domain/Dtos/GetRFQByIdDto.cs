@@ -1,5 +1,5 @@
 using SharedKernel.Dto;
-
+using Buyer.Domain.Dto;
 namespace Buyer.Domain.Dtos
 {
     public class GetRFQByIdDto

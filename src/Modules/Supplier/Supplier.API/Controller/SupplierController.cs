@@ -14,7 +14,6 @@ using Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier;
 using Supplier.Application.Features.Commands.Supplier.UpdateSupplierStatusOrganization;
 using Supplier.Application.Features.Profile.Queries.GetSupplierId;
 using Supplier.Application.Features.Commands.CreateSupplierRFQ;
-using Supplier.Application.Features.Commands.CreateSupplierQuotation;
 using Supplier.Application.Features.Commands.UpdateSupplierQuotation;
 using Microsoft.AspNetCore.SignalR;
 using Supplier.API.Hubs;
@@ -31,7 +30,7 @@ namespace Supplier.API.Controllers
     {
         private readonly IMediator _mediator;
         private readonly ILoggerManager _logger;
-private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IHubContext<NotificationHub> _hubContext;
         public SupplierController(
             IMediator mediator,
             ILoggerManager logger,
@@ -223,17 +222,24 @@ private readonly IHubContext<NotificationHub> _hubContext;
                 new CreateSupplierRFQCommand(dto));
 
             await _hubContext.Clients.All.SendAsync(
-                "SupplierRFQCreated",
-                new
-                {
-                    SupplierId = dto.SupplierId,
-                    BuyerId = dto.BuyerId,
-                    RFQId = supplierRFQId,
-                    RFQNumber = dto.RFQNumber,
-                    Message = "A new RFQ has been assigned to you."
-                });
+     "SupplierRFQCreated",
+     new
+     {
+         SupplierId = dto.SupplierId,
+         BuyerId = dto.BuyerId,
+         RFQId = supplierRFQId,
+         RFQNumber = dto.RFQNumber,
+         Message = "A new RFQ has been assigned to you."
+     });
 
-
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Supplier RFQ created successfully.",
+                Id = supplierRFQId.ToString()
+            });
+        }
 
         /// <summary>
         /// Create Supplier Catalog
@@ -261,8 +267,8 @@ private readonly IHubContext<NotificationHub> _hubContext;
             {
                 StatusCode = 200,
                 Message = "Success",
-                Description = "Supplier RFQ created successfully.",
-                Id = supplierRFQId.ToString()
+                Description = "Supplier catalog created successfully.",
+                Id = id.ToString()
             });
         }
         [HttpPut]
@@ -276,19 +282,20 @@ private readonly IHubContext<NotificationHub> _hubContext;
         public async Task<IActionResult> UpdateSupplierQuotation(
             [FromBody] UpdateSupplierQuotationDto dto)
         {
-           var result = await _mediator.Send(
-    new UpdateSupplierQuotationCommand(dto));
+            var result = await _mediator.Send(
+     new UpdateSupplierQuotationCommand(dto));
 
-           await _hubContext.Clients.All.SendAsync(
-            "QuotationSubmitted",
-            new
-            {
-                BuyerId = result.BuyerId,
-                SupplierId = result.SupplierId,
-                QuotationId = result.QuotationId,
-                Message = "Supplier has submitted the quotation."
-            });
-                        return Ok(new SuccessResponseDto
+            await _hubContext.Clients.All.SendAsync(
+          "QuotationSubmitted",
+          new
+          {
+              BuyerId = result.BuyerId,
+              SupplierId = result.SupplierId,
+              QuotationId = result.QuotationId,
+              Message = "Supplier has submitted the quotation."
+          });
+
+            return Ok(new SuccessResponseDto
             {
                 StatusCode = 200,
                 Message = "Success",
@@ -297,10 +304,6 @@ private readonly IHubContext<NotificationHub> _hubContext;
             });
         }
 
-                Description = "Supplier catalog created successfully.",
-                Id = id.ToString()
-            });
-        }
 
         /// <summary>
         /// Get Supplier Catalog
@@ -419,3 +422,4 @@ private readonly IHubContext<NotificationHub> _hubContext;
         }
     }
 }
+
