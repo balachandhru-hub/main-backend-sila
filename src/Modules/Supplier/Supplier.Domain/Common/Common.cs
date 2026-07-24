@@ -21,6 +21,8 @@ namespace Supplier.Domain.Common
         public static readonly string REVERIFICATION_STATUS = "RE_VERIFICATION";
         public static readonly string IDENTITY_SERVICE_BASE_URL = "InterCallService:IdentityUrl";
         public static readonly string ACCESS_TOKEN = "access_token";
+        public static readonly string QUOTATION_STATUS = "DRAFT";
+        public static readonly string PERCENTAGE = "PERCENTAGE";
 
     }
 

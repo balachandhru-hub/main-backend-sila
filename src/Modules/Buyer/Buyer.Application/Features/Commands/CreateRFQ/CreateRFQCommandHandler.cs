@@ -1,7 +1,6 @@
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 using System.Security.Claims;
@@ -10,6 +9,7 @@ using Buyer.Application.Features.Assets.Commands;
 using Buyer.Domain.Common;
 using Buyer.Application.Features.Commands.InviteSuppliers;
 using Buyer.Domain.Dto;
+using Buyer.Application.Contracts;
 
 namespace Buyer.Application.Features.Commands.CreateRFQ
 {
@@ -20,17 +20,23 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
         private readonly ILoggerManager _logger;
 
         private readonly IMediator _mediator;
+        private readonly ISupplierApiClient _supplierApiClient;
+
 
         public CreateRFQCommandHandler(
             IRepositoryWrapper repository,
             ILoggerManager logger,
 
-            IMediator mediator)
+            IMediator mediator,
+            ISupplierApiClient supplierApiClient
+          )
         {
             _repository = repository;
             _logger = logger;
 
             _mediator = mediator;
+            _supplierApiClient = supplierApiClient;
+      
         }
 
         public async Task<Guid> Handle(
@@ -200,7 +206,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                 }
             }
             _logger.LogInfo("RFQ questions created successfully.");
-
+            var createdItems = new List<RFQItem>();
             if (request.RFQ.Items != null)
             {
                 _logger.LogInfo(
@@ -220,6 +226,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     };
 
                     await _repository.RFQItem.CreateAsync(rfqItem);
+                    createdItems.Add(rfqItem);
 
                     if (item.Attachments != null)
                     {
@@ -302,7 +309,59 @@ $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQN
             SupplierInvites = unVerifiedSuppliers
         }));
             }
+        
             await _repository.SaveAsync();
+            foreach (var supplierId in request.RFQ.SupplierIds)
+            {
+                var supplierRequest = new CreateSupplierRFQRequestDto
+                {
+                    BuyerRFQId = rfq.Id,
+                    RFQNumber = rfq.RFQNumber,
+
+                    BuyerId = buyer.Id,
+                    SupplierId = supplierId,
+
+                    BuyerName = buyer.OrganizationName,
+
+                    Title = rfq.Title,
+                    Description = rfq.Description,
+
+                    StartDate = rfq.StartDate,
+                    EndDate = rfq.EndDate,
+
+                    AddLotOption = rfq.AddLotOption,
+                    Status = rfq.Status,
+
+                    Items = createdItems.Select(x =>
+                        new CreateSupplierRFQItemRequestDto
+                        {
+                            BuyerRFQItemId = x.Id,
+                            Description = x.Description,
+                            Quantity = x.Quantity,
+                            UOM = x.UOM,
+                            MaterialCode = x.MaterialCode,
+                            MaterialGroup = x.MaterialGroup,
+                            CostCenter = x.CostCenter
+                        }).ToList()
+                };
+
+                try
+                {
+                    await _supplierApiClient.CreateSupplierRFQ(
+                        supplierRequest,
+                     
+                        cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        $"Failed to create Supplier RFQ for Supplier {supplierId}. Error: {ex.Message}");
+                        throw new BadRequestCustomException(
+                            "Unable to create Supplier RFQ.",
+                            $"Failed to create Supplier RFQ for Supplier {supplierId}. Error: {ex.Message}");
+                }
+            }
+            
             _logger.LogInfo($"RFQ created successfully. RFQ Id : {rfq.Id}");
 
             return rfq.Id;

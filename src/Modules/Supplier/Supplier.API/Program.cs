@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi.Models;
 using Supplier.Domain.Common;
 using Supplier.Infrastructure;
+using Supplier.API.Hubs;
 
 
 namespace Supplier.API;
@@ -46,6 +47,7 @@ public partial class Program
    builder.Services.ConfigureDBContext(configuration);
  builder.Services.ConfigureServiceWrapper();
         builder.Services.ConfigureRepositoryWrapper();
+       
 
 
         builder.Services.ConfigureMediatR();
@@ -126,6 +128,7 @@ builder.Services.ConfigureAuthentication();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
+        app.MapHub<NotificationHub>("/notificationHub");
 
         app.Run();
     }

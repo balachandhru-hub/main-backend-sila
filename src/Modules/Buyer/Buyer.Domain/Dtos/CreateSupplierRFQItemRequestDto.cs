@@ -1,10 +1,9 @@
-
-using SharedKernel.Dto;
-
 namespace Buyer.Domain.Dto
 {
-    public class RFQItemDto
+    public class CreateSupplierRFQItemRequestDto
     {
+        public Guid BuyerRFQItemId { get; set; }
+
         public string Description { get; set; }
 
         public decimal Quantity { get; set; }
@@ -14,8 +13,7 @@ namespace Buyer.Domain.Dto
         public string MaterialCode { get; set; }
 
         public string MaterialGroup { get; set; }
+
         public string CostCenter { get; set; }
-        public List<AssetUploadDto>? Attachments { get; set; }
-       
     }
 }

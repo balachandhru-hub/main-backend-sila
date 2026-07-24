@@ -13,6 +13,13 @@ public interface IRepositoryWrapper
 
     ISupplierDispatchLocationRepository SupplierDispatchLocation { get; }
     IAssetRepository Asset { get; }
+    ISupplierRFQRepository SupplierRFQ { get; }
+
+    ISupplierRFQItemRepository SupplierRFQItem { get; }
+
+    IRFQSupplierMappingRepository RFQSupplierMapping { get; }
+    ISupplierQuotationRepository SupplierQuotation { get; }
+    ISupplierQuotationItemRepository SupplierQuotationItem { get; }
 
     bool Save();
     Task<bool> SaveAsync();

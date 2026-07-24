@@ -1,4 +1,4 @@
-using Buyer.Domain.Dtos;
+using Buyer.Domain.Dto;
 using MediatR;
 
 namespace Buyer.Application.Features.Commands.CreateRFQ
