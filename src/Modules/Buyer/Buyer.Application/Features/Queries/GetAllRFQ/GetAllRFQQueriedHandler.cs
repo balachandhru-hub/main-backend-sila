@@ -8,6 +8,7 @@ using SharedKernel.Dto;
 using SharedKernel.LoggerServices;
 using SharedKernel.ExceptionHandler;
 using Buyer.Domain.Dto;
+using Buyer.Application.Contracts;
 
 namespace Buyer.Application.Features.Queries.GetAllRFQ
 {
@@ -16,12 +17,14 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
         private readonly IRepositoryWrapper _repository;
         private readonly IMetadataApiClient _metadataClient;
         private readonly ILoggerManager _logger;
+        private readonly ISupplierApiClient _supplierApiClient;
 
-        public GetRFQByIdQueryHandler(IRepositoryWrapper repository, IMetadataApiClient metadataApiClient, ILoggerManager logger)
+        public GetRFQByIdQueryHandler(IRepositoryWrapper repository, IMetadataApiClient metadataApiClient, ILoggerManager logger, ISupplierApiClient supplierApiClient)
         {
             _repository = repository;
             _metadataClient = metadataApiClient;
             _logger = logger;
+            _supplierApiClient = supplierApiClient;
         }
 
         public async Task<GetRFQByIdDto> Handle(
@@ -59,6 +62,19 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 );
             }
             var buyerId = rfq.BuyerId;
+            GetAllSupplierQuotationDto? supplierQuotation = null;
+
+            try
+            {
+                supplierQuotation = await _supplierApiClient.GetSupplierQuotation(
+                    request.RFQId,
+                    cancellationToken);
+            }
+            catch
+            {
+                // Ignore if quotation is not created yet
+                supplierQuotation = new GetAllSupplierQuotationDto();
+            }
 
             var questions = await _repository.RFQQuestion
                 .FindByCondition(x => x.RFQId == request.RFQId)
@@ -148,10 +164,10 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 x.RFQId == request.RFQId &&
                 x.Type == Common.TERMS_CONDITION)
 
-            join asset in _repository.Asset.FindByCondition(x => x.IsActive)
-                on mapping.AssetId equals asset.Id
+                                        join asset in _repository.Asset.FindByCondition(x => x.IsActive)
+                                            on mapping.AssetId equals asset.Id
 
-            select asset
+                                        select asset
         ).ToListAsync(cancellationToken);
 
             var termsDocuments = termsAssetData.Select(asset => new AssetDto
@@ -194,7 +210,24 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 Questions = questions,
                 Items = items,
                 SupplierIds = supplierIds,
-                RFQVerificationTemplateId = verificationTemplateId
+                RFQVerificationTemplateId = verificationTemplateId,
+                SupplierQuotation = supplierQuotation == null
+        ? new List<GetAllSupplierQuotationDto>()
+        : new List<GetAllSupplierQuotationDto>
+        {
+            new GetAllSupplierQuotationDto
+            {
+                TotalPrice = supplierQuotation.TotalPrice,
+                DeliveryCharge = supplierQuotation.DeliveryCharge,
+                Tax = supplierQuotation.Tax,
+                Discount = supplierQuotation.Discount,
+                DeliveryType = supplierQuotation.DeliveryType,
+                Status = supplierQuotation.Status
+            }
+        },
+
+                SupplierQuotationItems = supplierQuotation?.SupplierQuotationItems
+        ?? new List<SupplierQuotationItemDto>()
             };
         }
     }

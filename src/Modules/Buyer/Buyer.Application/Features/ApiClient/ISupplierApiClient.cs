@@ -8,5 +8,8 @@ namespace Buyer.Application.Contracts
             CreateSupplierRFQRequestDto rfq,
             
             CancellationToken cancellationToken = default);
+            Task<GetAllSupplierQuotationDto> GetSupplierQuotation(
+    Guid RFQId,
+    CancellationToken cancellationToken = default);
     }
 }

@@ -8,5 +8,9 @@ namespace Supplier.Application.Contracts
             GetVerifiedSupplierRequestDto request,
             
             CancellationToken cancellationToken = default);
+        Task<GetRFQAttachmentsDto> GetRFQAttachments(
+    Guid rfqId,
+    CancellationToken cancellationToken = default);
     }
+    
 }

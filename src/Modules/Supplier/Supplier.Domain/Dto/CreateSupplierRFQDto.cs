@@ -22,6 +22,7 @@ namespace Supplier.Domain.Dto
         public bool AddLotOption { get; set; }
 
         public string Status { get; set; }
+        public string DeliveryLocation {get;set;}
 
 
 
