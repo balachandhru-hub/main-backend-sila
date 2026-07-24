@@ -7,19 +7,20 @@ using Microsoft.EntityFrameworkCore;
 using SharedKernel.Dto;
 using SharedKernel.LoggerServices;
 using SharedKernel.ExceptionHandler;
+using Buyer.Domain.Dto;
 
 namespace Buyer.Application.Features.Queries.GetAllRFQ
 {
     public class GetRFQByIdQueryHandler : IRequestHandler<GetRFQByIdQuery, GetRFQByIdDto>
     {
         private readonly IRepositoryWrapper _repository;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IMetadataApiClient _metadataClient;
         private readonly ILoggerManager _logger;
 
-        public GetRFQByIdQueryHandler(IRepositoryWrapper repository, IHttpContextAccessor httpContextAccessor, ILoggerManager logger)
+        public GetRFQByIdQueryHandler(IRepositoryWrapper repository, IMetadataApiClient metadataApiClient, ILoggerManager logger)
         {
             _repository = repository;
-            _httpContextAccessor = httpContextAccessor;
+            _metadataClient = metadataApiClient;
             _logger = logger;
         }
 
@@ -28,6 +29,25 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
             CancellationToken cancellationToken)
         {
             _logger.LogInfo($"Fetching RFQ details for RFQId: {request.RFQId}");
+            List<MetadataDto>? metadataList;
+
+            try
+            {
+                metadataList = await _metadataClient.GetReferenceList(
+                    new List<string>
+                    {
+            Common.ASSET_TYPE,
+            Common.FILE_TYPE,
+            Common.ENTITY_TYPE
+                    });
+            }
+            catch
+            {
+                throw new PreConditionFailedCustomException(
+                    "Unable to fetch metadata.",
+                    "Unable to fetch AssetType, FileType and EntityType metadata."
+                );
+            }
 
 
             var rfq = await _repository.RFQ
@@ -64,23 +84,32 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
 
             foreach (var item in rfqItems)
             {
-                var attachments = await (
-                    from mapping in _repository.RFQItemAttachmentMapping.FindByCondition(x =>
-                        x.RFQItemId == item.Id &&
-                        x.Type == Common.RFQ_ITEM_ATTACHMENT)
+                var attachmentData = await (
+                from mapping in _repository.RFQItemAttachmentMapping.FindByCondition(x =>
+                    x.RFQItemId == item.Id &&
+                    x.Type == Common.RFQ_ITEM_ATTACHMENT)
 
-                    join asset in _repository.Asset.FindByCondition(x => x.IsActive)
-                        on mapping.AssetId equals asset.Id
+                join asset in _repository.Asset.FindByCondition(x => x.IsActive)
+                    on mapping.AssetId equals asset.Id
 
-                    select new AssetDto
-                    {
-                        Id = asset.Id,
-                        AssetType = asset.AssetType.ToString(),
-                        AssetName = asset.AssetName,
-                        FileType = asset.FileType.ToString(),
-                        FileName = asset.FileName
-                    })
-                    .ToListAsync(cancellationToken);
+                select asset
+                )
+                .ToListAsync(cancellationToken);
+
+                var attachments = attachmentData.Select(asset => new AssetDto
+                {
+                    Id = asset.Id,
+                    AssetType = metadataList!.FirstOrDefault(x =>
+                                    x.Type == Common.ASSET_TYPE &&
+                                    x.Id == asset.AssetType)?.Key ?? string.Empty,
+
+                    FileType = metadataList.FirstOrDefault(x =>
+                                    x.Type == Common.FILE_TYPE &&
+                                    x.Id == asset.FileType)?.Key ?? string.Empty,
+
+                    AssetName = asset.AssetName,
+                    FileName = asset.FileName
+                }).ToList();
 
                 items.Add(new GetRFQItemDto
                 {
@@ -94,42 +123,52 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 });
             }
 
-            // Load these from your respective tables if available
-            var technicalDocuments = await (
-              from mapping in _repository.RFQAttachmentMapping.FindByCondition(x =>
-                  x.RFQId == request.RFQId &&
-                  x.Type == Common.TECHNICAL_SPECIFICATION)
+            var technicalAssetData = await (
+                from mapping in _repository.RFQAttachmentMapping.FindByCondition(x =>
+                    x.RFQId == request.RFQId &&
+                    x.Type == Common.TECHNICAL_SPECIFICATION)
 
-              join asset in _repository.Asset.FindByCondition(x => x.IsActive)
-                  on mapping.AssetId equals asset.Id
+                join asset in _repository.Asset.FindByCondition(x => x.IsActive)
+                    on mapping.AssetId equals asset.Id
 
-              select new AssetDto
-              {
-                  Id = asset.Id,
-                  AssetType = asset.AssetType.ToString(),
-                  AssetName = asset.AssetName,
-                  FileType = asset.FileType.ToString(),
-                  FileName = asset.FileName
-              })
-              .ToListAsync(cancellationToken);
+                select asset
+            ).ToListAsync(cancellationToken);
 
-            var termsDocuments = await (
-    from mapping in _repository.RFQAttachmentMapping.FindByCondition(x =>
-        x.RFQId == request.RFQId &&
-        x.Type == Common.TERMS_CONDITION)
+            var technicalDocuments = technicalAssetData.Select(asset => new AssetDto
+            {
+                Id = asset.Id,
+                AssetType = metadataList!.FirstOrDefault(x =>
+                                x.Type == Common.ASSET_TYPE &&
+                                x.Id == asset.AssetType)?.Key ?? string.Empty,
+                AssetName = asset.AssetName,
+                FileType = metadataList.FirstOrDefault(x =>
+                                x.Type == Common.FILE_TYPE &&
+                                x.Id == asset.FileType)?.Key ?? string.Empty,
+                FileName = asset.FileName
+            }).ToList();
 
-    join asset in _repository.Asset.FindByCondition(x => x.IsActive)
-        on mapping.AssetId equals asset.Id
+            var termsAssetData = await (from mapping in _repository.RFQAttachmentMapping.FindByCondition(x =>
+                x.RFQId == request.RFQId &&
+                x.Type == Common.TERMS_CONDITION)
 
-    select new AssetDto
-    {
-        Id = asset.Id,
-        AssetType = asset.AssetType.ToString(),
-        AssetName = asset.AssetName,
-        FileType = asset.FileType.ToString(),
-        FileName = asset.FileName
-    })
-    .ToListAsync(cancellationToken);
+            join asset in _repository.Asset.FindByCondition(x => x.IsActive)
+                on mapping.AssetId equals asset.Id
+
+            select asset
+        ).ToListAsync(cancellationToken);
+
+            var termsDocuments = termsAssetData.Select(asset => new AssetDto
+            {
+                Id = asset.Id,
+                AssetType = metadataList!.FirstOrDefault(x =>
+                                x.Type == Common.ASSET_TYPE &&
+                                x.Id == asset.AssetType)?.Key ?? string.Empty,
+                AssetName = asset.AssetName,
+                FileType = metadataList.FirstOrDefault(x =>
+                                x.Type == Common.FILE_TYPE &&
+                                x.Id == asset.FileType)?.Key ?? string.Empty,
+                FileName = asset.FileName
+            }).ToList();
             var supplierIds = await _repository.BuyerSupplierMapping
             .FindByCondition(x => x.BuyerId == buyerId)
             .Select(x => x.SupplierId)
