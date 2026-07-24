@@ -21,6 +21,7 @@ using Buyer.Application.Features.Commands.CreateRFQ;
 using Buyer.Application.Features.Profile.Queries.GetBuyerId;
 using Buyer.Application.Features.Queries.GetAllSupplier;
 using Buyer.Domain.Dtos;
+using Buyer.Application.Features.Queries.GetAllRFQ;
 
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
 namespace Buyer.API.Controllers
@@ -439,6 +440,40 @@ namespace Buyer.API.Controllers
         [FromBody] GetVerifiedSupplierRequestDto dto)
         {
             var result = await _mediator.Send(new GetVerifiedSupplierQuery(dto));
+
+            return Ok(result);
+        }
+
+        [HttpPost]
+        [Route("api/v1/buyer/rfq-master-data")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_RFQ_MASTER_DATA")]
+        [SwaggerOperation("GetRFQList")]
+        [SwaggerResponse(200, type: typeof(List<RFQListDto>), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetRFQList(
+     [FromBody] GetRFQListQuery query)
+        {
+            var result = await _mediator.Send(query);
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("api/v1/buyer/rfq-by-id")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_RFQ_BY_ID")]
+        [SwaggerOperation("GetRFQById")]
+        [SwaggerResponse(200, type: typeof(GetRFQByIdDto), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetRFQById([FromQuery] Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetRFQByIdQuery
+            {
+                RFQId = rfqId
+            });
 
             return Ok(result);
         }

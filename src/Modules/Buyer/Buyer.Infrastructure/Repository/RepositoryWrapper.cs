@@ -34,7 +34,8 @@ namespace Buyer.Infrastructure.Repository
         private IRFQItemAttachmentMappingRepository _rfqItemAttachmentMappingRepository;
         private IRFQSupplierMappingRepository _rfqSupplierMapping;
 
-private ISupplierVerificationRequestRepository _supplierVerificationRequest;
+        private ISupplierVerificationRequestRepository _supplierVerificationRequest;
+        private IVerificationTemplateRepository _verificationTemplateRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -271,6 +272,18 @@ private ISupplierVerificationRequestRepository _supplierVerificationRequest;
                 }
 
                 return _bulkInsertHelper;
+            }
+        }
+         public IVerificationTemplateRepository VerificationTemplate
+        {
+            get
+            {
+                if (_verificationTemplateRepository == null)
+                {
+                   _verificationTemplateRepository = new VerificationTemplateRepository(_context);
+                }
+
+                return _verificationTemplateRepository;
             }
         }
         public bool Save()
