@@ -18,6 +18,9 @@ using Supplier.Application.Features.Commands.CreateSupplierQuotation;
 using Supplier.Application.Features.Commands.UpdateSupplierQuotation;
 using Microsoft.AspNetCore.SignalR;
 using Supplier.API.Hubs;
+using Supplier.Application.Features.Commands.SupplierCatalog;
+using Supplier.Application.Features.Queries.SupplierCatalog;
+using Supplier.Application.Features.Queries.GetSupplier;
 
 
 namespace Supplier.API.Controllers
@@ -229,6 +232,31 @@ private readonly IHubContext<NotificationHub> _hubContext;
                     RFQNumber = dto.RFQNumber,
                     Message = "A new RFQ has been assigned to you."
                 });
+
+
+
+        /// <summary>
+        /// Create Supplier Catalog
+        /// </summary>
+        [HttpPost]
+        [Route("api/v1/supplier/catalog")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "CREATE_SUPPLIER_CATALOG")]
+        [SwaggerOperation("CreateSupplierCatalog")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier catalog created successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> CreateSupplierCatalog(
+            [FromBody] CreateSupplierCatalogCommand command)
+        {
+            command.OrganizationId = GetOrganizationId();
+
+            _logger.LogInfo($"Creating supplier catalog for OrganizationId: {command.OrganizationId}");
+
+            var id = await _mediator.Send(command);
+
+            _logger.LogInfo($"Supplier catalog created successfully. CatalogId: {id}");
+
             return Ok(new SuccessResponseDto
             {
                 StatusCode = 200,
@@ -269,5 +297,125 @@ private readonly IHubContext<NotificationHub> _hubContext;
             });
         }
 
+                Description = "Supplier catalog created successfully.",
+                Id = id.ToString()
+            });
+        }
+
+        /// <summary>
+        /// Get Supplier Catalog
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/supplier/catalog")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_CATALOG")]
+        [SwaggerOperation("GetSupplierCatalog")]
+        [SwaggerResponse(200, type: typeof(List<GetSupplierCatalogDto>), description: "Supplier catalog retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetSupplierCatalog()
+        {
+            Guid organizationId = GetOrganizationId();
+
+            _logger.LogInfo($"Fetching supplier catalog for OrganizationId: {organizationId}");
+
+            var query = new GetAllSupplierCatalogQuery
+            {
+                OrganizationId = organizationId
+            };
+
+            var result = await _mediator.Send(query);
+
+            _logger.LogInfo($"Supplier catalog fetched successfully for OrganizationId: {organizationId}");
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Delete Supplier Catalog
+        /// </summary>
+        [HttpDelete]
+        [Route("api/v1/supplier/catalog/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "DELETE_SUPPLIER_CATALOG")]
+        [SwaggerOperation("DeleteSupplierCatalog")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier catalog deleted successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier catalog not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> DeleteSupplierCatalog(Guid id)
+        {
+            _logger.LogInfo($"Deleting supplier catalog: {id}");
+
+            var command = new DeleteSupplierCatalogCommand
+            {
+                Id = id,
+                OrganizationId = GetOrganizationId()
+            };
+
+            await _mediator.Send(command);
+
+            _logger.LogInfo($"Supplier catalog deleted successfully: {id}");
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Supplier catalog deleted successfully.",
+                Id = id.ToString()
+            });
+        }
+
+        /// <summary>
+        /// Update Supplier Catalog
+        /// </summary>
+        [HttpPut]
+        [Route("api/v1/supplier/catalog")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_SUPPLIER_CATALOG")]
+        [SwaggerOperation("UpdateSupplierCatalog")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier catalog updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier catalog not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateSupplierCatalog(
+            [FromBody] UpdateSupplierCatalogCommand command)
+        {
+            command.OrganizationId = GetOrganizationId();
+
+            _logger.LogInfo($"Updating supplier catalog: {command.Catalog.Id}");
+
+            await _mediator.Send(command);
+
+            _logger.LogInfo($"Supplier catalog updated successfully: {command.Catalog.Id}");
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Supplier catalog updated successfully.",
+                Id = command.Catalog.Id.ToString()
+            });
+        }
+
+
+        [HttpPost]
+        [Route("api/v1/supplier/rfq-verfied-supplier")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_LIST")]
+        [SwaggerOperation("GetSupplierList")]
+        [SwaggerResponse(200, type: typeof(List<SupplierListDto>), description: "Supplier list fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier not found")]
+        public async Task<IActionResult> GetSupplierList(
+     [FromBody] GetSupplierListDto supplierListDto,
+     CancellationToken cancellationToken)
+        {
+            var query = new GetSupplierListQuery(supplierListDto);
+
+            var result = await _mediator.Send(query, cancellationToken);
+
+            return Ok(result);
+        }
     }
 }

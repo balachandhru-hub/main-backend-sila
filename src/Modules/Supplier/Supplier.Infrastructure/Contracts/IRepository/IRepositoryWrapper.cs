@@ -20,6 +20,9 @@ public interface IRepositoryWrapper
     IRFQSupplierMappingRepository RFQSupplierMapping { get; }
     ISupplierQuotationRepository SupplierQuotation { get; }
     ISupplierQuotationItemRepository SupplierQuotationItem { get; }
+    ISupplierCatalogRepository SupplierCatalog{get;}
+
+    ICatalogAssetMappingRepository CatalogAssetMapping { get; }
 
     bool Save();
     Task<bool> SaveAsync();

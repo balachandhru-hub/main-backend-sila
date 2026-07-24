@@ -56,6 +56,7 @@ namespace Supplier.API.Extensions
             services.AddScoped<IUserContext, UserContext>();
             _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
             _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
+            _ =services.AddScoped<IBuyerApiClient, BuyerApiClient>();
             _ = services.AddControllers();
         }
         public static void ConfigureDBContext(

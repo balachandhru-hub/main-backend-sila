@@ -11,12 +11,12 @@ namespace Supplier.Infrastructure.Repository
     public class RepositoryWrapper : IRepositoryWrapper
     {
         private readonly RepositoryContext _context;
-       
+
         private readonly ILoggerManager _logger;
         private readonly IConfiguration _configuration;
         private readonly string _dbConnectionString;
-         private readonly IUserIdentityService _userIdentityService;
-         private ISupplierBusinessProfileRepository _supplierBusinessProfile;
+        private readonly IUserIdentityService _userIdentityService;
+        private ISupplierBusinessProfileRepository _supplierBusinessProfile;
 
         private ISupplierRegistrationRepository _supplierRegistration;
 
@@ -31,16 +31,21 @@ namespace Supplier.Infrastructure.Repository
     private IRFQSupplierMappingRepository _rfqSupplierMapping ;
     private ISupplierQuotationRepository _supplierQuotation;
     private ISupplierQuotationItemRepository _supplierQuotationItem;
+        private ISupplierCatalogRepository _supplierCatalog;
+  
       
+        private ICatalogAssetMappingRepository _catalogAssetMapping;
+
+
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
             _context = repositoryContext;
-             _userIdentityService = userIdentityService;
+            _userIdentityService = userIdentityService;
             _logger = logger;
             _configuration = configuration;
             _dbConnectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
-      public ISupplierBusinessProfileRepository SupplierBusinessProfile
+        public ISupplierBusinessProfileRepository SupplierBusinessProfile
         {
             get
             {
@@ -84,7 +89,7 @@ namespace Supplier.Infrastructure.Repository
                 return _supplierDispatchLocation;
             }
         }
-         public IAssetRepository Asset
+        public IAssetRepository Asset
         {
             get
             {
@@ -147,6 +152,37 @@ namespace Supplier.Infrastructure.Repository
                 return _supplierQuotationItem;
             }
         }
+
+         
+        public ISupplierCatalogRepository SupplierCatalog
+        {
+            get
+            {
+                if (_supplierCatalog == null)
+                {
+                    _supplierCatalog =
+                        new SupplierCatalogRepository(_context);
+                }
+
+                return _supplierCatalog;
+            }
+        }
+
+        public ICatalogAssetMappingRepository CatalogAssetMapping
+        {
+            get
+            {
+                if (_catalogAssetMapping == null)
+                {
+                    _catalogAssetMapping =
+                        new CatalogAssetMappingRepository(_context);
+                }
+
+                return _catalogAssetMapping;
+            }
+        }
+
+
         public bool Save()
         {
             _context.OnBeforeSaving(_userIdentityService.GetCurrentUser());

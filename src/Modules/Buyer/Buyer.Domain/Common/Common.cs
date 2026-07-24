@@ -31,5 +31,6 @@ namespace Buyer.Domain.Common
                 public static readonly string TECHNICAL_SPECIFICATION = "TECHNICAL_SPECIFICATION";
                 public static int DISPLAY_ORDER = 1;
                 public const string PENDING = "PENDING";
+                public static readonly string RFQ_ITEM_ATTACHMENT ="RFQ_ITEM_ATTACHMENT";
         }
 }

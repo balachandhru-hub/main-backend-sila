@@ -24,6 +24,11 @@ namespace Supplier.Domain.Entities
 
         [Required]
         public string UnitOfMeasure { get; set; }
+        public string? SegmentName {get;set;}
+        public string? SegmentCode {get;set;}
+        public string? FamilyName {get;set;}
+        public string? FamilyCode {get;set;}
+        public string? CommodityCode {get;set;}
 
         public SupplierCatalog()
         {

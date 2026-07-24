@@ -2,8 +2,11 @@ using Buyer.Domain.Entities;
 
 namespace Buyer.Infrastructure.Contracts.IRepository
 {
-    public interface IBuyerSupplierMappingRepository
-        : IRepositoryBase<BuyerSupplierMapping>
+    /// <summary>
+    /// IBuyerSupplierMappingRepository
+    /// </summary>
+    public interface IBuyerSupplierMappingRepository : IRepositoryBase<BuyerSupplierMapping>
     {
+
     }
 }
