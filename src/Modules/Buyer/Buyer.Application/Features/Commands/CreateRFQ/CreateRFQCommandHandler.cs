@@ -10,6 +10,7 @@ using Buyer.Application.Features.Assets.Commands;
 using Buyer.Domain.Common;
 using Buyer.Application.Features.Commands.InviteSuppliers;
 using Buyer.Domain.Dto;
+using Buyer.Application.Contracts;
 
 namespace Buyer.Application.Features.Commands.CreateRFQ
 {
@@ -20,17 +21,23 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
         private readonly ILoggerManager _logger;
 
         private readonly IMediator _mediator;
+        private readonly ISupplierApiClient _supplierApiClient;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public CreateRFQCommandHandler(
             IRepositoryWrapper repository,
             ILoggerManager logger,
 
-            IMediator mediator)
+            IMediator mediator,
+            ISupplierApiClient supplierApiClient,
+            IHttpContextAccessor httpContextAccessor)
         {
             _repository = repository;
             _logger = logger;
 
             _mediator = mediator;
+            _supplierApiClient = supplierApiClient;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<Guid> Handle(
@@ -200,7 +207,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                 }
             }
             _logger.LogInfo("RFQ questions created successfully.");
-
+            var createdItems = new List<RFQItem>();
             if (request.RFQ.Items != null)
             {
                 _logger.LogInfo(
@@ -220,6 +227,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     };
 
                     await _repository.RFQItem.CreateAsync(rfqItem);
+                    createdItems.Add(rfqItem);
 
                     if (item.Attachments != null)
                     {
@@ -303,6 +311,57 @@ $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQN
         }));
             }
             await _repository.SaveAsync();
+            var accessToken =
+    _httpContextAccessor.HttpContext?
+        .Request.Cookies[Common.ACCESS_TOKEN];
+
+            foreach (var supplierId in request.RFQ.SupplierIds)
+            {
+                var supplierRequest = new CreateSupplierRFQRequestDto
+                {
+                    BuyerRFQId = rfq.Id,
+                    RFQNumber = rfq.RFQNumber,
+
+                    BuyerId = buyer.Id,
+                    SupplierId = supplierId,
+
+                    BuyerName = buyer.OrganizationName,
+
+                    Title = rfq.Title,
+                    Description = rfq.Description,
+
+                    StartDate = rfq.StartDate,
+                    EndDate = rfq.EndDate,
+
+                    AddLotOption = rfq.AddLotOption,
+                    Status = rfq.Status,
+
+                    Items = createdItems.Select(x =>
+                        new CreateSupplierRFQItemRequestDto
+                        {
+                            BuyerRFQItemId = x.Id,
+                            Description = x.Description,
+                            Quantity = x.Quantity,
+                            UOM = x.UOM,
+                            MaterialCode = x.MaterialCode,
+                            MaterialGroup = x.MaterialGroup,
+                            CostCenter = x.CostCenter
+                        }).ToList()
+                };
+
+                try
+                {
+                    await _supplierApiClient.CreateSupplierRFQ(
+                        supplierRequest,
+                        accessToken,
+                        cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        $"Failed to create Supplier RFQ for Supplier {supplierId}. Error: {ex.Message}");
+                }
+            }
             _logger.LogInfo($"RFQ created successfully. RFQ Id : {rfq.Id}");
 
             return rfq.Id;

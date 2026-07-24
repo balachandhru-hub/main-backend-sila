@@ -1,5 +1,5 @@
 using SharedKernel.Dto;
-namespace Buyer.Domain.Dtos
+namespace Buyer.Domain.Dto
 {
     public class CreateRFQDto
     {
