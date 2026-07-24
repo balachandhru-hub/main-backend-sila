@@ -13,6 +13,11 @@ using Supplier.Application.Features.StatusUpdate.Commands;
 using Supplier.Application.Features.Commands.Supplier.UpdateRejectedSupplier;
 using Supplier.Application.Features.Commands.Supplier.UpdateSupplierStatusOrganization;
 using Supplier.Application.Features.Profile.Queries.GetSupplierId;
+using Supplier.Application.Features.Commands.CreateSupplierRFQ;
+using Supplier.Application.Features.Commands.CreateSupplierQuotation;
+using Supplier.Application.Features.Commands.UpdateSupplierQuotation;
+using Microsoft.AspNetCore.SignalR;
+using Supplier.API.Hubs;
 using Supplier.Application.Features.Commands.SupplierCatalog;
 using Supplier.Application.Features.Queries.SupplierCatalog;
 using Supplier.Application.Features.Queries.GetSupplier;
@@ -26,13 +31,15 @@ namespace Supplier.API.Controllers
     {
         private readonly IMediator _mediator;
         private readonly ILoggerManager _logger;
-
+private readonly IHubContext<NotificationHub> _hubContext;
         public SupplierController(
             IMediator mediator,
-            ILoggerManager logger)
+            ILoggerManager logger,
+             IHubContext<NotificationHub> hubContext)
         {
             _mediator = mediator;
             _logger = logger;
+            _hubContext = hubContext;
         }
 
         /// <summary>
@@ -201,6 +208,30 @@ namespace Supplier.API.Controllers
 
             return Ok(result);
         }
+        [HttpPost]
+        [Route("/api/v1/supplier/internal-rfq")]
+        [ApiAuthorization(Name = "CREATE_SUPPLIER_RFQ")]
+        [ValidateModelState]
+        [SwaggerOperation("CreateSupplierRFQ")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier RFQ created successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> CreateSupplierRFQ(
+            [FromBody] CreateSupplierRFQDto dto)
+        {
+            Guid supplierRFQId = await _mediator.Send(
+                new CreateSupplierRFQCommand(dto));
+
+            await _hubContext.Clients.All.SendAsync(
+                "SupplierRFQCreated",
+                new
+                {
+                    SupplierId = dto.SupplierId,
+                    BuyerId = dto.BuyerId,
+                    RFQId = supplierRFQId,
+                    RFQNumber = dto.RFQNumber,
+                    Message = "A new RFQ has been assigned to you."
+                });
 
 
 
@@ -230,6 +261,42 @@ namespace Supplier.API.Controllers
             {
                 StatusCode = 200,
                 Message = "Success",
+                Description = "Supplier RFQ created successfully.",
+                Id = supplierRFQId.ToString()
+            });
+        }
+        [HttpPut]
+        [Route("/api/v1/supplier/quotation")]
+        [ApiAuthorization(Name = "UPDATE_SUPPLIER_QUOTATION")]
+        [ValidateModelState]
+        [SwaggerOperation("UpdateSupplierQuotation")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier quotation updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateSupplierQuotation(
+            [FromBody] UpdateSupplierQuotationDto dto)
+        {
+           var result = await _mediator.Send(
+    new UpdateSupplierQuotationCommand(dto));
+
+           await _hubContext.Clients.All.SendAsync(
+            "QuotationSubmitted",
+            new
+            {
+                BuyerId = result.BuyerId,
+                SupplierId = result.SupplierId,
+                QuotationId = result.QuotationId,
+                Message = "Supplier has submitted the quotation."
+            });
+                        return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Supplier quotation updated successfully.",
+                Id = result.QuotationId.ToString()
+            });
+        }
+
                 Description = "Supplier catalog created successfully.",
                 Id = id.ToString()
             });

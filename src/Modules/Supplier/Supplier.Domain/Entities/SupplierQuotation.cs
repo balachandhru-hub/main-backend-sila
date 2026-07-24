@@ -37,6 +37,8 @@ namespace Supplier.Domain.Entities
         public decimal? Discount { get; set; }
 
         public string? DeliveryType { get; set; }
+        public string? DiscountType { get; set; }  
+        public string? TaxType { get; set; } 
 
         public string Status { get; set; }
 

@@ -21,6 +21,7 @@ using System.Text;
 
 
 
+
 namespace Buyer.API.Extensions
 {
     /// <summary>
@@ -143,6 +144,7 @@ namespace Buyer.API.Extensions
             _ = services.AddScoped<IUserContext, UserContext>();
             _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
             _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
+            _ = services.AddScoped<ISupplierApiClient, SupplierApiClient>();
             _ = services.AddControllers();
 
         }

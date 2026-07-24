@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Supplier.Infrastructure.DbContext;
 
@@ -11,9 +12,11 @@ using Supplier.Infrastructure.DbContext;
 namespace Supplier.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260723124909_TaxTypetoSupplierQuotationtable")]
+    partial class TaxTypetoSupplierQuotationtable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -417,10 +420,6 @@ namespace Supplier.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("catalog_name");
 
-                    b.Property<string>("CommodityCode")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("commodity_code");
-
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by");
@@ -438,14 +437,6 @@ namespace Supplier.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
-                    b.Property<string>("FamilyCode")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("family_code");
-
-                    b.Property<string>("FamilyName")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("family_name");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
@@ -453,14 +444,6 @@ namespace Supplier.Infrastructure.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("price");
-
-                    b.Property<string>("SegmentCode")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("segment_code");
-
-                    b.Property<string>("SegmentName")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("segment_name");
 
                     b.Property<Guid>("SupplierId")
                         .HasColumnType("uniqueidentifier")

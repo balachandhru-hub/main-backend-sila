@@ -24,6 +24,13 @@ namespace Supplier.Infrastructure.Repository
 
         private ISupplierDispatchLocationRepository _supplierDispatchLocation;
         private IAssetRepository _asset;
+        private ISupplierRFQRepository _supplierRFQ;
+
+    private ISupplierRFQItemRepository _supplierRFQItem ;
+
+    private IRFQSupplierMappingRepository _rfqSupplierMapping ;
+    private ISupplierQuotationRepository _supplierQuotation;
+    private ISupplierQuotationItemRepository _supplierQuotationItem;
         private ISupplierCatalogRepository _supplierCatalog;
   
       
@@ -88,6 +95,61 @@ namespace Supplier.Infrastructure.Repository
             {
                 if (_asset == null) _asset = new AssetRepository(_context, _configuration, _logger, _dbConnectionString);
                 return _asset;
+            }
+        }
+        public ISupplierRFQRepository SupplierRFQ
+        {
+            get
+            {
+                if (_supplierRFQ == null) 
+                {
+                    _supplierRFQ = new SupplierRFQRepository(_context);
+                }
+                return _supplierRFQ;
+            }
+        }
+        public ISupplierRFQItemRepository SupplierRFQItem
+        {
+            get
+            {
+                if (_supplierRFQItem == null) 
+                {
+                    _supplierRFQItem = new SupplierRFQItemRepository(_context);
+                }
+                return _supplierRFQItem;
+            }
+        }
+        public IRFQSupplierMappingRepository RFQSupplierMapping
+        {
+            get
+            {
+                if (_rfqSupplierMapping == null) 
+                {
+                    _rfqSupplierMapping = new RFQSupplierMappingRepository(_context);
+                }
+                return _rfqSupplierMapping;
+            }
+        }
+        public ISupplierQuotationRepository SupplierQuotation
+        {
+            get
+            {
+                if (_supplierQuotation == null) 
+                {
+                    _supplierQuotation = new SupplierQuotationRepository(_context);
+                }
+                return _supplierQuotation;
+            }
+        }
+        public ISupplierQuotationItemRepository SupplierQuotationItem
+        {
+            get
+            {
+                if (_supplierQuotationItem == null) 
+                {
+                    _supplierQuotationItem = new SupplierQuotationItemRepository(_context);
+                }
+                return _supplierQuotationItem;
             }
         }
 
