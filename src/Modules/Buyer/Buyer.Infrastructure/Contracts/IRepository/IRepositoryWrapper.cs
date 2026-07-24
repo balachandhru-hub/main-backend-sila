@@ -29,6 +29,7 @@ namespace Buyer.Infrastructure.Contracts.IRepository
 
         ISupplierVerificationRequestRepository SupplierVerificationRequest { get; }
         IBuyerSupplierMappingRepository BuyerSupplierMapping { get; }
+        IVerificationTemplateRepository VerificationTemplate{get;}
         bool Save();
         Task<bool> SaveAsync();
     }
