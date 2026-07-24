@@ -35,10 +35,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
             {
                 metadataList = await _metadataClient.GetReferenceList(
                     new List<string>
-                    {
-            Common.ASSET_TYPE,
-            Common.FILE_TYPE,
-            Common.ENTITY_TYPE
+                    {Common.ASSET_TYPE,Common.FILE_TYPE,Common.ENTITY_TYPE
                     });
             }
             catch
