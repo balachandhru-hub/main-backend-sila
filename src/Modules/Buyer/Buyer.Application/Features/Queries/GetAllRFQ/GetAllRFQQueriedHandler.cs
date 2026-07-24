@@ -5,6 +5,8 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Dto;
+using SharedKernel.LoggerServices;
+using SharedKernel.ExceptionHandler;
 
 namespace Buyer.Application.Features.Queries.GetAllRFQ
 {
@@ -12,24 +14,33 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
     {
         private readonly IRepositoryWrapper _repository;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILoggerManager _logger;
 
-        public GetRFQByIdQueryHandler(IRepositoryWrapper repository, IHttpContextAccessor httpContextAccessor)
+        public GetRFQByIdQueryHandler(IRepositoryWrapper repository, IHttpContextAccessor httpContextAccessor, ILoggerManager logger)
         {
             _repository = repository;
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
         public async Task<GetRFQByIdDto> Handle(
             GetRFQByIdQuery request,
             CancellationToken cancellationToken)
         {
+            _logger.LogInfo($"Fetching RFQ details for RFQId: {request.RFQId}");
+
 
             var rfq = await _repository.RFQ
                 .FindByCondition(x => x.Id == request.RFQId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (rfq == null)
-                return null;
+            {
+                throw new NotFoundCustomException(
+                    "RFQ not found.",
+                    $"No RFQ exists with RFQId: {request.RFQId}."
+                );
+            }
             var buyerId = rfq.BuyerId;
 
             var questions = await _repository.RFQQuestion

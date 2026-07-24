@@ -2,6 +2,7 @@ using Buyer.Domain.Dto;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Features.Queries.GetAllRFQ
 {
@@ -9,16 +10,19 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
         : IRequestHandler<GetRFQListQuery, List<RFQListDto>>
     {
         private readonly IRepositoryWrapper _repository;
+        private readonly ILoggerManager _logger;
 
-        public GetRFQListQueryHandler(IRepositoryWrapper repository)
+        public GetRFQListQueryHandler(IRepositoryWrapper repository, ILoggerManager logger)
         {
             _repository = repository;
+            _logger=logger;
         }
 
         public async Task<List<RFQListDto>> Handle(
      GetRFQListQuery request,
      CancellationToken cancellationToken)
         {
+            _logger.LogInfo("Get All RFQ Masetr Data");
 
             var rfqs = await _repository.RFQ
                 .FindByCondition(x => x.BuyerId == request.BuyerId)
