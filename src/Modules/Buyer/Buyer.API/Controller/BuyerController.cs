@@ -22,8 +22,8 @@ using Buyer.Application.Features.Profile.Queries.GetBuyerId;
 using Buyer.Application.Features.Queries.GetAllSupplier;
 using Buyer.Domain.Dtos;
 using Buyer.Application.Features.Queries.GetAllRFQ;
-
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
+using Buyer.Application.Features.Queries.GetRFQAttachments;
 namespace Buyer.API.Controllers
 {
     [ApiController]
@@ -471,6 +471,21 @@ namespace Buyer.API.Controllers
         public async Task<IActionResult> GetRFQById([FromQuery] Guid rfqId)
         {
             var result = await _mediator.Send(new GetRFQByIdQuery
+            {
+                RFQId = rfqId
+            });
+
+            return Ok(result);
+        }
+        [HttpGet]
+        [Route("api/v1/buyer/rfq-attachments")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_RFQ_ATTACHMENTS")]
+        [SwaggerOperation("GetRFQAttachments")]
+        [SwaggerResponse(200, type: typeof(GetRFQAttachmentsDto), description: "Success")]
+        public async Task<IActionResult> GetRFQAttachments([FromQuery] Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetRFQAttachmentsQuery
             {
                 RFQId = rfqId
             });

@@ -20,6 +20,9 @@ using Supplier.API.Hubs;
 using Supplier.Application.Features.Commands.SupplierCatalog;
 using Supplier.Application.Features.Queries.SupplierCatalog;
 using Supplier.Application.Features.Queries.GetSupplier;
+using Supplier.Application.Features.Queries.GetAllSupplierRFQ;
+using Supplier.Application.Features.Queries.GetSupplierAllRFQ;
+using Supplier.Application.Features.Queries.GetSupplierQuotation;
 
 
 namespace Supplier.API.Controllers
@@ -420,6 +423,58 @@ namespace Supplier.API.Controllers
 
             return Ok(result);
         }
+
+         [HttpPost]
+        [Route("api/v1/supplier/rfq-master-data")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_RFQ_MASTER_DATA")]
+        [SwaggerOperation("GetSupplierRFQList")]
+        [SwaggerResponse(200, type: typeof(List<SupplierRFQListDto>), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetRFQList(
+     [FromBody] GetSupplierRFQListQuery query)
+        {
+            var result = await _mediator.Send(query);
+
+            return Ok(result);
+        }
+         [HttpGet]
+        [Route("api/v1/supplier/rfq-by-id")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_RFQ_BY_ID")]
+        [SwaggerOperation("GetSupplierRFQById")]
+        [SwaggerResponse(200, type: typeof(GetRFQByIdDto), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetRFQById([FromQuery] Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetSupplierRFQByIdQuery
+            {
+                RFQId = rfqId
+            });
+
+            return Ok(result);
+        }
+
+         [HttpGet]
+        [Route("api/v1/supplier/quotation-rfq-by-id")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_QUOTATION_RFQ_BY_ID")]
+        [SwaggerOperation("GetSupplierQuotationRFQById")]
+        [SwaggerResponse(200, type: typeof(GetRFQByIdDto), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetQuotationRFQById([FromQuery] Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetSupplierQuotationByBuyerRFQIdQuery
+            {
+                RFQId = rfqId
+            });
+
+            return Ok(result);
+        }
+
     }
 }
 

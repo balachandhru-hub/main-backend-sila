@@ -1,0 +1,134 @@
+using Supplier.Domain.Common;
+using Supplier.Domain.Dto;
+using Supplier.Infrastructure.Contracts.IRepository;
+using MediatR;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using SharedKernel.Dto;
+using SharedKernel.LoggerServices;
+using SharedKernel.ExceptionHandler;
+using Supplier.Application.Contracts;
+
+namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
+{
+    public class GetSupplierRFQByIdQueryHandler : IRequestHandler<GetSupplierRFQByIdQuery, GetRFQByIdDto>
+    {
+        private readonly IRepositoryWrapper _repository;
+        private readonly IMetadataApiClient _metadataClient;
+        private readonly ILoggerManager _logger;
+        private readonly IBuyerApiClient _buyerApiClient;
+
+        public GetSupplierRFQByIdQueryHandler(IRepositoryWrapper repository, IMetadataApiClient metadataApiClient, ILoggerManager logger, IBuyerApiClient buyerApiClient)
+        {
+            _repository = repository;
+            _metadataClient = metadataApiClient;
+            _logger = logger;
+            _buyerApiClient = buyerApiClient;
+        }
+
+        public async Task<GetRFQByIdDto> Handle(
+            GetSupplierRFQByIdQuery request,
+            CancellationToken cancellationToken)
+        {
+            _logger.LogInfo($"Fetching RFQ details for RFQId: {request.RFQId}");
+
+            var rfq = await _repository.SupplierRFQ
+                .FindByCondition(x => x.BuyerRFQId == request.RFQId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (rfq == null)
+            {
+                throw new NotFoundCustomException(
+                    "RFQ not found.",
+                    $"No RFQ exists with BuyerRFQId: {request.RFQId}.");
+            }
+
+            var buyerId = rfq.BuyerId;
+            var supplierRFQId = rfq.Id;
+
+            // Get attachments from Buyer Service
+            var attachmentResponse = await _buyerApiClient.GetRFQAttachments(
+                request.RFQId,
+                cancellationToken);
+
+            // Load Supplier RFQ Items
+            var rfqItems = await _repository.SupplierRFQItem
+                .FindByCondition(x => x.SupplierRFQId == supplierRFQId)
+                .ToListAsync(cancellationToken);
+
+            var items = new List<GetRFQItemDto>();
+
+            foreach (var item in rfqItems)
+            {
+                var itemAttachment = attachmentResponse.ItemAttachments
+                    .FirstOrDefault(x => x.RFQItemId == item.BuyerRFQItemId);
+
+                items.Add(new GetRFQItemDto
+                {
+                    Description = item.Description,
+                    Quantity = item.Quantity,
+                    UOM = item.UOM,
+                    MaterialCode = item.MaterialCode,
+                    MaterialGroup = item.MaterialGroup,
+                    CostCenter = item.CostCenter,
+                    Attachments = itemAttachment?.Attachments ?? new List<AssetDto>()
+                });
+            }
+
+            // Header attachments
+            var technicalDocuments = attachmentResponse.TechnicalSpecificationDocuments;
+            var termsDocuments = attachmentResponse.TermsConditionDocuments;
+            // Supplier Quotation Header
+            var quotation = await _repository.SupplierQuotation
+                .FindByCondition(x => x.SupplierRFQId == supplierRFQId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            // Supplier Quotation Items
+            var quotationItems = new List<SupplierQuotationItemDto>();
+
+            if (quotation != null)
+            {
+                quotationItems = await _repository.SupplierQuotationItem
+                    .FindByCondition(x => x.SupplierQuotationId == quotation.Id)
+                    .Select(x => new SupplierQuotationItemDto
+                    {
+                        QuotedPrice = x.QuotedPrice
+                    })
+                    .ToListAsync(cancellationToken);
+            }
+
+
+
+            return new GetRFQByIdDto
+            {
+                Title = rfq.Title,
+                Description = rfq.Description,
+                DeliveryLocation = rfq.DeliveryLocation,
+                StartDate = rfq.StartDate,
+                EndDate = rfq.EndDate,
+                AddLotOption = rfq.AddLotOption,
+                TechnicalSpecificationDocuments = technicalDocuments,
+                TermsConditionDocuments = termsDocuments,
+
+                Items = items,
+                SupplierQuotation = quotation == null
+        ? new List<GetSupplierQuotationDto>()
+        : new List<GetSupplierQuotationDto>
+        {
+            new GetSupplierQuotationDto
+            {
+                TotalPrice = quotation.TotalPrice,
+                DeliveryCharge = quotation.DeliveryCharge,
+                Tax = quotation.Tax,
+                Discount = quotation.Discount,
+                DeliveryType = quotation.DeliveryType,
+                Status = quotation.Status
+            }
+        },
+
+                SupplierQuotationItems = quotationItems
+
+            };
+        }
+    }
+}

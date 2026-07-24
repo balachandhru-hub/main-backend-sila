@@ -50,7 +50,8 @@
                     EndDate = request.RFQ.EndDate,
 
                     AddLotOption = request.RFQ.AddLotOption,
-                    Status = request.RFQ.Status
+                    Status = request.RFQ.Status,
+                    DeliveryLocation=request.RFQ.DeliveryLocation
                 };
 
                 _repository.SupplierRFQ.Create(supplierRFQ);
