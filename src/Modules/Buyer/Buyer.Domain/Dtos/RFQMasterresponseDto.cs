@@ -10,5 +10,6 @@ namespace Buyer.Domain.Dto
 
         public string DeliveryLocation { get; set; }
         public string OrganizationName { get; set; }
+        public Guid RFQId {get;set;}
     }
 }

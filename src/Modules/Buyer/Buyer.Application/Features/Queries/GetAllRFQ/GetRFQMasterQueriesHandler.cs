@@ -41,7 +41,8 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                     Title = rfq.Title,
                     EndDate = rfq.EndDate,
                     DeliveryLocation = rfq.DeliveryLocation,
-                    OrganizationName = buyer.OrganizationName
+                    OrganizationName = buyer.OrganizationName,
+                    RFQId=rfq.Id
                 })
                 .Skip(request.Index)
                 .Take(request.Limit)
