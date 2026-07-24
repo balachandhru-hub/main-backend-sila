@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 using Supplier.Infrastructure.Contracts.IRepository;
+using Supplier.Domain.Common;
 
 namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
 {
@@ -30,14 +32,26 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                 .GetByIdAsync(request.Quotation.SupplierQuotationId);
 
             if (quotation == null)
-                throw new Exception("Supplier quotation not found.");
+            {
+                _logger.LogError(
+                    $"Supplier Quotation not found : {request.Quotation.SupplierQuotationId}");
+                throw new NotFoundCustomException(
+                    "Supplier Quotation not found.",
+                    $"Supplier Quotation with ID {request.Quotation.SupplierQuotationId} was not found.");
+            }
 
             var supplierRFQ = await _repository.SupplierRFQ
                 .FindByCondition(x => x.Id == quotation.SupplierRFQId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (supplierRFQ == null)
-                throw new Exception("Supplier RFQ not found.");
+            {
+                _logger.LogError(
+                    $"Supplier RFQ not found for Quotation ID : {request.Quotation.SupplierQuotationId}");
+                throw new NotFoundCustomException(
+                    "Supplier RFQ not found.",
+                    $"Supplier RFQ with ID {quotation.SupplierRFQId} was not found.");
+            }
 
             quotation.DeliveryCharge = request.Quotation.DeliveryCharge;
             quotation.DeliveryType = request.Quotation.DeliveryType;
@@ -52,11 +66,22 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
 
             if (!supplierRFQ.AddLotOption)
             {
+                _logger.LogInfo(
+                    $"Updating item-wise quotation for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
                 if (request.Quotation.Items == null || !request.Quotation.Items.Any())
-                    throw new Exception("Quotation items are required.");
+                {
+                    _logger.LogError(
+                        $"Quotation items are required for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
+                    throw new BadRequestCustomException(
+                        "Quotation items are required.",
+                        "Please provide quotation items for item-wise quotation.");
+                }
+                    
 
                 foreach (var item in request.Quotation.Items)
                 {
+                    _logger.LogInfo(
+                        $"Updating Quotation Item : {item.SupplierRFQItemId} for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
                     var quotationItem = await _repository.SupplierQuotationItem
                         .FindByCondition(x =>
                             x.SupplierQuotationId == quotation.Id &&
@@ -64,7 +89,13 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                         .FirstOrDefaultAsync(cancellationToken);
 
                     if (quotationItem == null)
-                        throw new Exception($"Quotation Item not found : {item.SupplierRFQItemId}");
+                    {
+                        _logger.LogError(
+                            $"Quotation Item not found : {item.SupplierRFQItemId}");
+                        throw new BadRequestCustomException(
+                            "Quotation Item not found.",
+                            $"Quotation Item with ID {item.SupplierRFQItemId} was not found.");
+                    }
 
                     // First update -> use request quoted price
                     // Next updates -> use already saved quoted price
@@ -77,9 +108,11 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                     // Discount only (Per Item)
                     if (quotation.Discount.HasValue)
                     {
+                        _logger.LogInfo(
+                            $"Applying discount for Quotation Item : {item.SupplierRFQItemId}");
                         if (string.Equals(
                             quotation.DiscountType,
-                            "Percentage",
+                            Common.PERCENTAGE,
                             StringComparison.OrdinalIgnoreCase))
                         {
                             finalQuotedPrice -=
@@ -101,7 +134,13 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
             else
             {
                 if (!request.Quotation.TotalPrice.HasValue)
-                    throw new Exception("Lot quotation total price is required.");
+                {
+                    _logger.LogError(
+                        $"Total price is required for lot quotation : {request.Quotation.SupplierQuotationId}");
+                    throw new BadRequestCustomException(
+                        "Total price is required.",
+                        "Please provide total price for lot quotation.");
+                }
 
                 subTotal = request.Quotation.TotalPrice.Value;
             }
@@ -116,13 +155,17 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
             {
                 if (string.Equals(
                     quotation.TaxType,
-                    "Percentage",
+                    Common.PERCENTAGE,
                     StringComparison.OrdinalIgnoreCase))
                 {
+                    _logger.LogInfo(
+                        $"Applying tax for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
                     total += total * quotation.Tax.Value / 100;
                 }
                 else
                 {
+                    _logger.LogInfo(
+                        $"Applying tax for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
                     total += quotation.Tax.Value;
                 }
             }
@@ -130,15 +173,21 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
             // Delivery (Per Quotation)
             if (quotation.DeliveryCharge.HasValue)
             {
+                _logger.LogInfo(
+                    $"Applying delivery charge for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
                 if (string.Equals(
                     quotation.DeliveryType,
                     "Percentage",
                     StringComparison.OrdinalIgnoreCase))
                 {
+                    _logger.LogInfo(
+                        $"Applying delivery charge for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
                     total += total * quotation.DeliveryCharge.Value / 100;
                 }
                 else
                 {
+                    _logger.LogInfo(
+                        $"Applying delivery charge for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
                     total += quotation.DeliveryCharge.Value;
                 }
             }

@@ -6,7 +6,7 @@ namespace Buyer.Application.Contracts
     {
         Task CreateSupplierRFQ(
             CreateSupplierRFQRequestDto rfq,
-            string accessToken,
+            
             CancellationToken cancellationToken = default);
     }
 }

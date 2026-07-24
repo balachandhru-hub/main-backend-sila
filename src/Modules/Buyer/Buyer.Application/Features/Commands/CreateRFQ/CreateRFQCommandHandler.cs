@@ -1,7 +1,6 @@
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 using System.Security.Claims;
@@ -22,22 +21,22 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
 
         private readonly IMediator _mediator;
         private readonly ISupplierApiClient _supplierApiClient;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+
 
         public CreateRFQCommandHandler(
             IRepositoryWrapper repository,
             ILoggerManager logger,
 
             IMediator mediator,
-            ISupplierApiClient supplierApiClient,
-            IHttpContextAccessor httpContextAccessor)
+            ISupplierApiClient supplierApiClient
+          )
         {
             _repository = repository;
             _logger = logger;
 
             _mediator = mediator;
             _supplierApiClient = supplierApiClient;
-            _httpContextAccessor = httpContextAccessor;
+      
         }
 
         public async Task<Guid> Handle(
@@ -310,11 +309,8 @@ $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQN
             SupplierInvites = unVerifiedSuppliers
         }));
             }
+        
             await _repository.SaveAsync();
-            var accessToken =
-    _httpContextAccessor.HttpContext?
-        .Request.Cookies[Common.ACCESS_TOKEN];
-
             foreach (var supplierId in request.RFQ.SupplierIds)
             {
                 var supplierRequest = new CreateSupplierRFQRequestDto
@@ -353,15 +349,19 @@ $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQN
                 {
                     await _supplierApiClient.CreateSupplierRFQ(
                         supplierRequest,
-                        accessToken,
+                     
                         cancellationToken);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(
                         $"Failed to create Supplier RFQ for Supplier {supplierId}. Error: {ex.Message}");
+                        throw new BadRequestCustomException(
+                            "Unable to create Supplier RFQ.",
+                            $"Failed to create Supplier RFQ for Supplier {supplierId}. Error: {ex.Message}");
                 }
             }
+            
             _logger.LogInfo($"RFQ created successfully. RFQ Id : {rfq.Id}");
 
             return rfq.Id;
