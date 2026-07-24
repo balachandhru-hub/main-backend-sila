@@ -4,15 +4,14 @@ using Supplier.Infrastructure.DbContext;
 
 namespace Supplier.Infrastructure.Repository
 {
-    public class SupplierCatalogRepository
-        : RepositoryBase<SupplierCatalog>,
-          ISupplierCatalogRepository
+    public class CatalogAssetMappingRepository
+        : RepositoryBase<CatalogAssetMapping>,
+          ICatalogAssetMappingRepository
     {
-        public SupplierCatalogRepository(
+        public CatalogAssetMappingRepository(
             RepositoryContext repositoryContext)
             : base(repositoryContext)
         {
         }
     }
-}   
-
+}
