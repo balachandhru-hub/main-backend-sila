@@ -328,7 +328,7 @@ $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQN
 
                     StartDate = rfq.StartDate,
                     EndDate = rfq.EndDate,
-
+                DeliveryLocation = rfq.DeliveryLocation, 
                     AddLotOption = rfq.AddLotOption,
                     Status = rfq.Status,
 
