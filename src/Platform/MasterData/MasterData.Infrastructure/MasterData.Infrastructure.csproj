@@ -49,6 +49,18 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>MasterData.Infrastructure\Migrations\Metadata.csv</Link>
     </Content>
+    <Content Include="Migrations\CountryList.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MasterData.Infrastructure\Migrations\CountryList.csv</Link>
+    </Content>
+    <Content Include="Migrations\Currency.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MasterData.Infrastructure\Migrations\Currency.csv</Link>
+    </Content>
+    <Content Include="Migrations\Unit.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MasterData.Infrastructure\Migrations\Unit.csv</Link>
+    </Content>
 
   </ItemGroup>
 
