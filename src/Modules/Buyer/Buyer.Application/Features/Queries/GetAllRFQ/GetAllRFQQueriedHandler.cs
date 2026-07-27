@@ -132,7 +132,9 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                     MaterialCode = item.MaterialCode,
                     MaterialGroup = item.MaterialGroup,
                     CostCenter = item.CostCenter,
-                    Attachments = attachments
+                    Attachments = attachments,
+                    
+
                 });
             }
 
@@ -222,7 +224,8 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 Tax = supplierQuotation.Tax,
                 Discount = supplierQuotation.Discount,
                 DeliveryType = supplierQuotation.DeliveryType,
-                Status = supplierQuotation.Status
+                Status = supplierQuotation.Status,
+                QuotationId=supplierQuotation.QuotationId
             }
         },
 

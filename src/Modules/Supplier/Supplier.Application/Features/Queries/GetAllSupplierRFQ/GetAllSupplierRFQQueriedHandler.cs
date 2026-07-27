@@ -71,7 +71,12 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     MaterialCode = item.MaterialCode,
                     MaterialGroup = item.MaterialGroup,
                     CostCenter = item.CostCenter,
-                    Attachments = itemAttachment?.Attachments ?? new List<AssetDto>()
+                    Attachments = itemAttachment?.Attachments ?? new List<AssetDto>(),
+                    SupplierRFQItemId=item.Id,
+                    SupplierRFQId=item.SupplierRFQId,
+                    BuyerRFQItemId=item.BuyerRFQItemId
+
+
                 });
             }
 
@@ -92,10 +97,12 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     .FindByCondition(x => x.SupplierQuotationId == quotation.Id)
                     .Select(x => new SupplierQuotationItemDto
                     {
+                         ItemQutationId = x.Id,
                         QuotedPrice = x.QuotedPrice
                     })
                     .ToListAsync(cancellationToken);
             }
+           
 
 
 
@@ -122,11 +129,13 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 Tax = quotation.Tax,
                 Discount = quotation.Discount,
                 DeliveryType = quotation.DeliveryType,
-                Status = quotation.Status
+                Status = quotation.Status,
+                QutationId=quotation.Id
             }
         },
 
-                SupplierQuotationItems = quotationItems
+                SupplierQuotationItems = quotationItems,
+           
 
             };
         }

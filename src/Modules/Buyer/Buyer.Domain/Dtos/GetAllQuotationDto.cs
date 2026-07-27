@@ -16,11 +16,13 @@
 
         public string? Status { get; set; }
         public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } 
+        public Guid? QuotationId {get;set;}
 
        
     }
         public class SupplierQuotationItemDto
     {
      public decimal QuotedPrice { get; set; }
+      public Guid? ItemQuotationId {get;set;}
     }
 }
