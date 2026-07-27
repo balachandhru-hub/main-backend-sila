@@ -23,7 +23,7 @@ namespace Buyer.Domain.Dto
         public bool AddLotOption { get; set; }
 
         public string Status { get; set; }
-
+        public string DeliveryLocation { get; set; }
         public List<CreateSupplierRFQItemRequestDto>? Items { get; set; }
     }
 }
