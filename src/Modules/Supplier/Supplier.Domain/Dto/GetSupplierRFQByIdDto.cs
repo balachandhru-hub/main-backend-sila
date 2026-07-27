@@ -38,6 +38,9 @@ namespace Supplier.Domain.Dto
         public string MaterialGroup { get; set; }
         public string CostCenter { get; set; }
         public List<AssetDto>? Attachments { get; set; }
+        public Guid? SupplierRFQId{get;set;}
+        public Guid? SupplierRFQItemId{get;set;}
+        public Guid? BuyerRFQItemId {get;set;}
        
     }
      public class GetSupplierQuotationDto
@@ -54,6 +57,7 @@ namespace Supplier.Domain.Dto
         public string? DeliveryType { get; set; }
 
         public string? Status { get; set; }
+        public Guid? QutationId {get;set;}
 
        
     }
@@ -61,6 +65,8 @@ namespace Supplier.Domain.Dto
          public class SupplierQuotationItemDto
     {
      public decimal QuotedPrice { get; set; }
+     public Guid? ItemQutationId {get;set;}
+
     }
 
      public class GetAllSupplierQuotationDto
@@ -78,6 +84,7 @@ namespace Supplier.Domain.Dto
 
         public string? Status { get; set; }
         public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } 
+        public Guid? QutationId {get;set;}
 
        
     }
