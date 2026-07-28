@@ -128,6 +128,112 @@ namespace MasterData.Infrastructure.Persistence
                 csvReader.Dispose();
             }
         }
+        public static void CreateCountryList(Stream stream, RepositoryContext context)
+        {
+            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                var conf = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HeaderValidated = null,
+                    MissingFieldFound = null,
+                    IgnoreReferences = true,
+                    BadDataFound = null
+                };
+                CsvReader csvReader = new CsvReader(reader, conf);
+                System.Collections.Generic.IEnumerable<CountryList> entries = csvReader.GetRecords<CountryList>();
+                List<CountryList> csvCount = entries.ToList();
+                foreach (CountryList entry in csvCount)
+                {
+                    var existingEntry = context.CountryLists.Find(entry.Id);
+                    if (existingEntry != null)
+                    {
+                        var originalValues = context.Entry(existingEntry).OriginalValues;
+                        context.Entry(existingEntry).CurrentValues.SetValues(entry);
+                        existingEntry.DateCreated = originalValues.GetValue<DateTime>("DateCreated");
+                        existingEntry.CreatedBy = originalValues.GetValue<Guid>("CreatedBy");
+                        existingEntry.IsActive = originalValues.GetValue<bool>("IsActive");
+                    }
+                    else
+                    {
+                        _ = context.CountryLists.Add(entry);
+                    }
+                }
+                SaveEntities(context);
+                csvReader.Dispose();
+            }
+        }
+         public static void CreateCurrencyName(Stream stream, RepositoryContext context)
+        {
+            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                var conf = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HeaderValidated = null,
+                    MissingFieldFound = null,
+                    IgnoreReferences = true,
+                    BadDataFound = null
+                };
+                CsvReader csvReader = new CsvReader(reader, conf);
+                System.Collections.Generic.IEnumerable<Currency> entries = csvReader.GetRecords<Currency>();
+                List<Currency> csvCount = entries.ToList();
+                foreach (Currency entry in csvCount)
+                {
+                
+                    var existingEntry = context.Currencies.Find(entry.Id);
+                    if (existingEntry != null)
+                    {
+                        
+                        var originalValues = context.Entry(existingEntry).OriginalValues;
+                        context.Entry(existingEntry).CurrentValues.SetValues(entry);
+                        existingEntry.DateCreated = originalValues.GetValue<DateTime>("DateCreated");
+                        existingEntry.CreatedBy = originalValues.GetValue<Guid>("CreatedBy");
+                        existingEntry.IsActive = originalValues.GetValue<bool>("IsActive");
+                    }
+                    else
+                    {
+                        _ = context.Currencies.Add(entry);
+                    }
+                }
+                SaveEntities(context);
+                csvReader.Dispose();
+            }
+        }
+        public static void CreateUnit(Stream stream, RepositoryContext context)
+        {
+            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                var conf = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HeaderValidated = null,
+                    MissingFieldFound = null,
+                    IgnoreReferences = true,
+                    BadDataFound = null
+                };
+                CsvReader csvReader = new CsvReader(reader, conf);
+                System.Collections.Generic.IEnumerable<Unit> entries = csvReader.GetRecords<Unit>();
+                List<Unit> csvCount = entries.ToList();
+                foreach (Unit entry in csvCount)
+                {
+                
+                    var existingEntry = context.Units.Find(entry.Id);
+                    if (existingEntry != null)
+                    {
+                        
+                        var originalValues = context.Entry(existingEntry).OriginalValues;
+                        context.Entry(existingEntry).CurrentValues.SetValues(entry);
+                        existingEntry.DateCreated = originalValues.GetValue<DateTime>("DateCreated");
+                        existingEntry.CreatedBy = originalValues.GetValue<Guid>("CreatedBy");
+                        existingEntry.IsActive = originalValues.GetValue<bool>("IsActive");
+                    }
+                    else
+                    {
+                        _ = context.Units.Add(entry);
+                    }
+                }
+                SaveEntities(context);
+                csvReader.Dispose();
+            }
+        }
         public static void Initialize(IServiceProvider serviceProvider)
         {
             RepositoryContext context = serviceProvider.GetRequiredService<RepositoryContext>();
@@ -143,6 +249,15 @@ namespace MasterData.Infrastructure.Persistence
 
             stream = new FileStream(Path.Combine(basePath, "Metadata.csv"), FileMode.Open, FileAccess.Read);
             CreateMetadata(stream, context);
+
+            stream = new FileStream(Path.Combine(basePath, "CountryList.csv"), FileMode.Open, FileAccess.Read);
+            CreateCountryList(stream, context);
+
+            stream = new FileStream(Path.Combine(basePath, "Currency.csv"), FileMode.Open, FileAccess.Read);
+            CreateCurrencyName(stream, context);
+
+            stream = new FileStream(Path.Combine(basePath, "Unit.csv"), FileMode.Open, FileAccess.Read);
+            CreateUnit(stream, context);
         }
 
         public static void SaveEntities(RepositoryContext repositoryContext)
