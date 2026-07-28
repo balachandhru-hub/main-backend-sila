@@ -12,8 +12,9 @@ public interface IRepositoryWrapper
     IEmailSentDetailRepository EmailSentDetail { get; }
     IEmailFailedDetailRepository EmailFailedDetail { get; }
     IEmailCCListRepository EmailCCList { get; }
-
-
+    ICountryListRepository CountryList { get; }
+    ICurrencyRepository Currency { get; }
+    IUnitRepository Unit { get; }
 
     bool Save();
     Task<bool> SaveAsync();

@@ -26,6 +26,9 @@ public class RepositoryContext : DbContext
     public DbSet<EmailFailedDetail> EmailFailedDetails { get; set; }
     public DbSet<EmailCCList> EmailCCLists { get; set; }
     public DbSet<Metadata> Metadata { get; set; }
+    public DbSet<CountryList> CountryLists { get; set; }
+    public DbSet<Currency> Currencies { get; set; }
+    public DbSet<Unit> Units { get; set; }
 
     protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
     {
@@ -38,6 +41,9 @@ public class RepositoryContext : DbContext
         _ = modelBuilder.Entity<EmailFailedDetail>().HasIndex(x => new { x.IsActive });
         _ = modelBuilder.Entity<EmailCCList>().HasIndex(x => new { x.IsActive });
         _ = modelBuilder.Entity<Metadata>().HasIndex(x => new { x.IsActive });
+        _ = modelBuilder.Entity<CountryList>().HasIndex(x => new { x.IsActive });
+        _ = modelBuilder.Entity<Currency>().HasIndex(x => new { x.IsActive });
+        _= modelBuilder.Entity<Unit>().HasIndex(x => new { x.IsActive });
 
         base.OnModelCreating(modelBuilder);
 
