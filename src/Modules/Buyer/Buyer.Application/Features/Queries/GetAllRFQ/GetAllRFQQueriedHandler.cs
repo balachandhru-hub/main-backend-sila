@@ -62,6 +62,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 );
             }
             var buyerId = rfq.BuyerId;
+            
             GetAllSupplierQuotationDto? supplierQuotation = null;
 
             try
@@ -75,7 +76,21 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 // Ignore if quotation is not created yet
                 supplierQuotation = new GetAllSupplierQuotationDto();
             }
+            
+                SupplierRFQAnswerResponseDto? supplierAnswers = null;
 
+                try
+                {
+                    _logger.LogInfo($"Fetching Supplier RFQ Answers for BuyerRFQId: {request.RFQId}");
+                    supplierAnswers = await _supplierApiClient.GetSupplierRFQAnswers(
+                        request.RFQId,
+                        cancellationToken);
+                }
+                catch
+                {
+                    _logger.LogInfo($"No Supplier RFQ Answers found for BuyerRFQId: {request.RFQId}");
+                    supplierAnswers = new SupplierRFQAnswerResponseDto();
+                }
             var questions = await _repository.RFQQuestion
                 .FindByCondition(x => x.RFQId == request.RFQId)
                 .OrderBy(x => x.DisplayOrder)
@@ -230,7 +245,8 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
         },
 
                 SupplierQuotationItems = supplierQuotation?.SupplierQuotationItems
-        ?? new List<SupplierQuotationItemDto>()
+        ?? new List<SupplierQuotationItemDto>(),
+         SupplierAnswers = supplierAnswers ?? new SupplierRFQAnswerResponseDto()
             };
         }
     }

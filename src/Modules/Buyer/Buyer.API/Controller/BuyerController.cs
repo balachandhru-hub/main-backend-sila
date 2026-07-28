@@ -24,6 +24,7 @@ using Buyer.Domain.Dtos;
 using Buyer.Application.Features.Queries.GetAllRFQ;
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
 using Buyer.Application.Features.Queries.GetRFQAttachments;
+using Buyer.Application.Features.Queries.GetRFQQuestions;
 namespace Buyer.API.Controllers
 {
     [ApiController]
@@ -489,6 +490,26 @@ namespace Buyer.API.Controllers
             {
                 RFQId = rfqId
             });
+
+            return Ok(result);
+        }
+        [HttpGet]
+        [Route("api/v1/buyer/internal-rfq-questions")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_RFQ_QUESTIONS")]
+        [SwaggerOperation("GetRFQQuestions")]
+        [SwaggerResponse(200, type: typeof(List<RFQQuestionResponseDto>), description: "Fetched RFQ Questions successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetRFQQuestions(
+            [FromQuery] Guid rfqId)
+        {
+            _logger.LogInfo($"Fetching RFQ Questions for RFQ Id: {rfqId}");
+
+            var result = await _mediator.Send(
+                new GetRFQQuestionsQuery(rfqId));
+
+            _logger.LogInfo($"Fetched RFQ Questions successfully for RFQ Id: {rfqId}");
 
             return Ok(result);
         }
