@@ -51,10 +51,7 @@ public class GetCountriesQueryHandler
         return Task.FromResult(
             new PagedResultDto<CountryDto>
             {
-                Items = items,
-                TotalCount = totalCount,
-                Index = request.Index,
-                Limit = request.Limit,
+                Items = items
             }
         );
     }
