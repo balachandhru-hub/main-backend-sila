@@ -38,6 +38,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
 
             if (rfq == null)
             {
+                _logger.LogError($"RFQ not found for BuyerRFQId: {request.RFQId}");
                 throw new NotFoundCustomException(
                     "RFQ not found.",
                     $"No RFQ exists with BuyerRFQId: {request.RFQId}.");
@@ -45,13 +46,15 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
 
             var buyerId = rfq.BuyerId;
             var supplierRFQId = rfq.Id;
-
-            // Get attachments from Buyer Service
+            _logger.LogInfo($"Fetching verified suppliers for BuyerId: {buyerId}");
             var attachmentResponse = await _buyerApiClient.GetRFQAttachments(
                 request.RFQId,
                 cancellationToken);
+                var questions = await _buyerApiClient.GetRFQQuestions(
+                    request.RFQId,
+                    cancellationToken);
 
-            // Load Supplier RFQ Items
+            _logger.LogInfo($"Fetching RFQ items for SupplierRFQId: {supplierRFQId}");
             var rfqItems = await _repository.SupplierRFQItem
                 .FindByCondition(x => x.SupplierRFQId == supplierRFQId)
                 .ToListAsync(cancellationToken);
@@ -60,6 +63,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
 
             foreach (var item in rfqItems)
             {
+                _logger.LogInfo($"Fetching attachments for RFQItemId: {item.BuyerRFQItemId}");
                 var itemAttachment = attachmentResponse.ItemAttachments
                     .FirstOrDefault(x => x.RFQItemId == item.BuyerRFQItemId);
 
@@ -80,7 +84,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 });
             }
 
-            // Header attachments
+            _logger.LogInfo($"Fetching technical specification and terms documents for RFQId: {request.RFQId}");
             var technicalDocuments = attachmentResponse.TechnicalSpecificationDocuments;
             var termsDocuments = attachmentResponse.TermsConditionDocuments;
             // Supplier Quotation Header
@@ -118,6 +122,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 TermsConditionDocuments = termsDocuments,
 
                 Items = items,
+                Questions = questions,
                 SupplierQuotation = quotation == null
         ? new List<GetSupplierQuotationDto>()
         : new List<GetSupplierQuotationDto>

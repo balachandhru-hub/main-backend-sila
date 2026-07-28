@@ -23,6 +23,8 @@ using Supplier.Application.Features.Queries.GetSupplier;
 using Supplier.Application.Features.Queries.GetAllSupplierRFQ;
 using Supplier.Application.Features.Queries.GetSupplierAllRFQ;
 using Supplier.Application.Features.Queries.GetSupplierQuotation;
+using Supplier.Application.Features.Commands.SupplierAnswers;
+using Supplier.Application.Features.Queries.SupplierAnswers;
 
 
 namespace Supplier.API.Controllers
@@ -471,6 +473,46 @@ namespace Supplier.API.Controllers
             {
                 RFQId = rfqId
             });
+
+            return Ok(result);
+        }
+        [HttpPut]
+        [Route("api/v1/supplier/rfq-answer")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "SAVE_SUPPLIER_RFQ_ANSWER")]
+        [SwaggerOperation("SaveSupplierRFQAnswer")]
+        [SwaggerResponse(200, type: typeof(bool), description: "Supplier answers saved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> SaveSupplierRFQAnswer(
+            [FromBody] SaveSupplierRFQAnswerDto request)
+        {
+            _logger.LogInfo(
+                $"Saving supplier answers for SupplierRFQ : {request.SupplierRFQId}");
+
+            var result = await _mediator.Send(
+                new SaveSupplierRFQAnswerCommand(request));
+
+            _logger.LogInfo(
+                $"Supplier answers saved successfully for SupplierRFQ : {request.SupplierRFQId}");
+
+            return Ok(result);
+        }
+        [HttpGet]
+        [Route("api/v1/supplier/internal-rfq-answer/{buyerRFQId}")]
+        [ApiAuthorization(Name = "GET_SUPPLIER_RFQ_ANSWER")]
+        [SwaggerOperation("GetSupplierRFQAnswer")]
+        [SwaggerResponse(200, type: typeof(SupplierRFQAnswerResponseDto), description: "Supplier answers fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetSupplierRFQAnswer(Guid buyerRFQId)
+        {
+            _logger.LogInfo($"Fetching supplier answers for SupplierRFQ : {buyerRFQId}");
+
+            var result = await _mediator.Send(
+                new GetSupplierRFQAnswerQuery(buyerRFQId));
+
+            _logger.LogInfo($"Supplier answers fetched successfully for SupplierRFQ : {buyerRFQId}");
 
             return Ok(result);
         }

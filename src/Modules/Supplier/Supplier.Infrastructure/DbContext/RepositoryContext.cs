@@ -31,6 +31,8 @@ namespace Supplier.Infrastructure.DbContext
        public DbSet<SupplierQuotation> SupplierQuotation {get;set;}
        public DbSet<SupplierQuotationItem> SupplierQuotationItem {get;set;}
         public DbSet<RFQSupplierMapping> RFQSupplierMapping {get;set;}
+        public DbSet<SupplierRFQQuestionAnswer> SupplierRFQQuestionAnswer {get;set;}
+        public DbSet<SupplierRFQAnswerOption> SupplierRFQAnswerOption {get;set;}
       
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
@@ -47,6 +49,8 @@ namespace Supplier.Infrastructure.DbContext
             _ = modelBuilder.Entity<SupplierQuotation>().HasIndex(a=> a.IsActive);
             _ = modelBuilder.Entity<SupplierQuotationItem>().HasIndex(a=> a.IsActive);
             _ = modelBuilder.Entity<RFQSupplierMapping>().HasIndex(a=> a.IsActive);
+            _=  modelBuilder.Entity<SupplierRFQQuestionAnswer>().HasIndex(a=> a.IsActive);
+            _=  modelBuilder.Entity<SupplierRFQAnswerOption>().HasIndex(a=> a.IsActive);
 
                 modelBuilder.Entity<SupplierQuotationItem>()
                     .HasOne(x => x.SupplierRFQItem)
