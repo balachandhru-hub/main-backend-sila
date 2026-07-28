@@ -23,6 +23,8 @@ public interface IRepositoryWrapper
     ISupplierCatalogRepository SupplierCatalog{get;}
 
     ICatalogAssetMappingRepository CatalogAssetMapping { get; }
+    IRFQQuestionAnswerRepository RFQQuestionAnswer { get; }
+    IRFQQuestionAnswerOptionRepository RFQQuestionAnswerOption { get; }
 
     bool Save();
     Task<bool> SaveAsync();

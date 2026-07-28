@@ -32,8 +32,8 @@ namespace Supplier.Infrastructure.Repository
     private ISupplierQuotationRepository _supplierQuotation;
     private ISupplierQuotationItemRepository _supplierQuotationItem;
         private ISupplierCatalogRepository _supplierCatalog;
-  
-      
+        private IRFQQuestionAnswerRepository _rfqQuestionAnswer;
+        private IRFQQuestionAnswerOptionRepository _rfqQuestionAnswerOption;
         private ICatalogAssetMappingRepository _catalogAssetMapping;
 
 
@@ -182,7 +182,32 @@ namespace Supplier.Infrastructure.Repository
             }
         }
 
+        public IRFQQuestionAnswerRepository RFQQuestionAnswer
+        {
+            get
+            {
+                if (_rfqQuestionAnswer == null)
+                {
+                    _rfqQuestionAnswer =
+                        new RFQQuestionAnswerRepository(_context);
+                }
 
+                return _rfqQuestionAnswer;
+            }
+        }
+        public IRFQQuestionAnswerOptionRepository RFQQuestionAnswerOption
+        {
+            get
+            {
+                if (_rfqQuestionAnswerOption == null)
+                {
+                    _rfqQuestionAnswerOption =
+                        new RFQQuestionAnswerOptionRepository(_context);
+                }
+
+                return _rfqQuestionAnswerOption;
+            }
+        }
         public bool Save()
         {
             _context.OnBeforeSaving(_userIdentityService.GetCurrentUser());

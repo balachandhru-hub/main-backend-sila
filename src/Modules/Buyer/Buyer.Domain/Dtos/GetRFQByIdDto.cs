@@ -38,10 +38,11 @@ namespace Buyer.Domain.Dtos
 
         public Guid RFQVerificationTemplateId { get; set; }
         public List<GetAllSupplierQuotationDto> SupplierQuotation { get; set; }
+        public SupplierRFQAnswerResponseDto? SupplierAnswers { get; set; }
 
-public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } 
+        public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; }
     }
-     public class GetRFQItemDto
+    public class GetRFQItemDto
     {
         public string Description { get; set; }
 
@@ -54,8 +55,8 @@ public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; }
         public string MaterialGroup { get; set; }
         public string CostCenter { get; set; }
         public List<AssetDto>? Attachments { get; set; }
-       
+
     }
 
-      
+
 }

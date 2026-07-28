@@ -11,5 +11,8 @@ namespace Buyer.Application.Contracts
             Task<GetAllSupplierQuotationDto> GetSupplierQuotation(
     Guid RFQId,
     CancellationToken cancellationToken = default);
+       Task<SupplierRFQAnswerResponseDto?> GetSupplierRFQAnswers(
+        Guid buyerRFQId,
+        CancellationToken cancellationToken);
     }
 }
