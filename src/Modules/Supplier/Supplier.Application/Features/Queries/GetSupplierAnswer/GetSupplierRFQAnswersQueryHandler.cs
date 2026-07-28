@@ -4,6 +4,7 @@ using Supplier.Domain.Dto;
 using Supplier.Infrastructure.Contracts.IRepository;
 using SharedKernel.Dto;
 using SharedKernel.LoggerServices;
+using SharedKernel.ExceptionHandler;
 
 namespace Supplier.Application.Features.Queries.SupplierAnswers
 {
@@ -35,7 +36,10 @@ namespace Supplier.Application.Features.Queries.SupplierAnswers
             if (supplierRFQ == null)
             {
                 _logger.LogError($"Supplier RFQ not found for BuyerRFQId: {request.BuyerRFQId}");
-                throw new Exception("Supplier RFQ not found.");
+                
+                throw new NotFoundCustomException(
+                    "Supplier RFQ not found.",
+                    $"Supplier RFQ with BuyerRFQId {request.BuyerRFQId} does not exist.");
             }
             _logger.LogInfo($"Fetching answers for SupplierRFQId: {supplierRFQ.Id}");
             var answers = _repository.RFQQuestionAnswer

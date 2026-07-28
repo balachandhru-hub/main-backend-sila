@@ -3,6 +3,8 @@ using Supplier.Application.Features.Commands.Asset;
 using Supplier.Domain.Entities;
 using Supplier.Infrastructure.Contracts.IRepository;
 using SharedKernel.LoggerServices;
+using Microsoft.AspNetCore.Http.HttpResults;
+using SharedKernel.ExceptionHandler;
 
 namespace Supplier.Application.Features.Commands.SupplierAnswers
 {
@@ -36,10 +38,17 @@ namespace Supplier.Application.Features.Commands.SupplierAnswers
                     x.IsActive);
 
             if (supplierRFQ == null)
-                throw new Exception("Supplier RFQ not found.");
+            {
+                _logger.LogError($"Supplier RFQ not found for SupplierRFQId: {request.Answer.SupplierRFQId}");
+                throw new NotFoundCustomException(
+                    "Supplier RFQ not found.",
+                    $"Supplier RFQ with Id {request.Answer.SupplierRFQId} does not exist.");
+            }
+                
 
             foreach (var answer in request.Answer.Answers)
             {
+                _logger.LogInfo($"Processing answer for RFQQuestionId: {answer.RFQQuestionId} in SupplierRFQ: {request.Answer.SupplierRFQId}");
                 var existingAnswer = _repository.RFQQuestionAnswer
                     .FindFirstByCondition(x =>
                         x.SupplierRFQId == supplierRFQ.Id &&
