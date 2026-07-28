@@ -16,38 +16,41 @@ public class GetUnitsQueryHandler : IRequestHandler<GetUnitsQuery, PagedResultDt
         _logger = logger;
     }
 
-    public Task<PagedResultDto<UnitDto>> Handle(GetUnitsQuery request, CancellationToken cancellationToken)
+    public Task<PagedResultDto<UnitDto>> Handle(
+        GetUnitsQuery request,
+        CancellationToken cancellationToken
+    )
     {
-        var query = _repository.Unit
-            .FindByCondition(x => x.IsActive);
+        var query = _repository.Unit.FindByCondition(x => x.IsActive);
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var term = request.SearchTerm.ToLower();
-            query = query.Where(x => x.Key.ToLower().Contains(term) || x.Type.ToLower().Contains(term));
+            query = query.Where(x =>
+                x.Key.ToLower().Contains(term) || x.Type.ToLower().Contains(term)
+            );
         }
 
         var totalCount = query.Count();
 
         var items = query
             .OrderBy(x => x.Key)
-            .Skip(request.Index * request.Limit)
+            .Skip(request.Index)
             .Take(request.Limit)
             .Select(x => new UnitDto
             {
                 Id = x.Id,
                 Key = x.Key,
                 Type = x.Type,
-                Description = x.Description
+                Description = x.Description,
             })
             .ToList();
 
-        return Task.FromResult(new PagedResultDto<UnitDto>
-        {
-            Items = items,
-            TotalCount = totalCount,
-            Index = request.Index,
-            Limit = request.Limit
-        });
+        return Task.FromResult(
+            new PagedResultDto<UnitDto>
+            {
+                Items = items
+            }
+        );
     }
 }

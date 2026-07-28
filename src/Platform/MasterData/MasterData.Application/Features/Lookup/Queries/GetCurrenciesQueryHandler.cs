@@ -1,11 +1,12 @@
-using MediatR;
 using MasterData.Domain.Dto;
 using MasterData.Infrastructure.Contracts.IRepository;
+using MediatR;
 using SharedKernel.LoggerServices;
 
 namespace MasterData.Application.Features.Lookup.Queries;
 
-public class GetCurrenciesQueryHandler : IRequestHandler<GetCurrenciesQuery, List<CurrencyDto>>
+public class GetCurrenciesQueryHandler
+    : IRequestHandler<GetCurrenciesQuery, PagedResultDto<CurrencyDto>>
 {
     private readonly IRepositoryWrapper _repository;
     private readonly ILoggerManager _logger;
@@ -16,23 +17,37 @@ public class GetCurrenciesQueryHandler : IRequestHandler<GetCurrenciesQuery, Lis
         _logger = logger;
     }
 
-    public Task<List<CurrencyDto>> Handle(GetCurrenciesQuery request, CancellationToken cancellationToken)
+    public Task<PagedResultDto<CurrencyDto>> Handle(
+        GetCurrenciesQuery request,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogInfo("Fetching currencies");
 
-        var result = _repository.Currency
-            .FindByCondition(x => x.IsActive)
-            .OrderBy(x => x.SortNumber)
+        var query = _repository
+            .Currency.FindByCondition(x => x.IsActive)
+            .OrderBy(x => x.SortNumber);
+
+        var totalCount = query.Count();
+
+        var items = query
+            .Skip(request.Index)
+            .Take(request.Limit)
             .Select(x => new CurrencyDto
             {
                 Id = x.Id,
                 CurrencyName = x.CurrencyName,
-                SortNumber = x.SortNumber
+                SortNumber = x.SortNumber,
             })
             .ToList();
 
-        _logger.LogInfo($"Fetched {result.Count} currencies");
+        _logger.LogInfo($"Fetched {items.Count} currencies");
 
-        return Task.FromResult(result);
+        return Task.FromResult(
+            new PagedResultDto<CurrencyDto>
+            {
+                Items = items
+            }
+        );
     }
 }

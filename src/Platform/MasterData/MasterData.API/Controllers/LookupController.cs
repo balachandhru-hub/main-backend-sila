@@ -33,7 +33,7 @@ public class LookupController : ControllerBase
     [SwaggerResponse(500, "Internal Server Error", typeof(ErrorResponseDto))]
     public async Task<IActionResult> GetCountries(
         [FromQuery] int index = 0,
-        [FromQuery] int limit = 20,
+        [FromQuery] int limit = 10,
         [FromQuery] string? searchTerm = null)
     {
         _logger.LogInfo("Fetching countries");
@@ -60,7 +60,7 @@ public class LookupController : ControllerBase
     [SwaggerResponse(500, "Internal Server Error", typeof(ErrorResponseDto))]
     public async Task<IActionResult> GetUnits(
         [FromQuery] int index = 0,
-        [FromQuery] int limit = 20,
+        [FromQuery] int limit = 10,
         [FromQuery] string? searchTerm = null)
     {
         _logger.LogInfo("Fetching units");
@@ -82,15 +82,21 @@ public class LookupController : ControllerBase
     [Route("api/v1/masterdata/currencies")]
     [ApiAuthorization(Name = "GET_CURRENCIES")]
     [SwaggerOperation("GetCurrencies")]
-    [SwaggerResponse(200, "Currencies fetched successfully", typeof(List<CurrencyDto>))]
+    [SwaggerResponse(200, "Currencies fetched successfully", typeof(PagedResultDto<CurrencyDto>))]
     [SwaggerResponse(401, "Unauthorized", typeof(ErrorResponseDto))]
     [SwaggerResponse(500, "Internal Server Error", typeof(ErrorResponseDto))]
-    public async Task<IActionResult> GetCurrencies()
+    public async Task<IActionResult> GetCurrencies(
+    [FromQuery] int index = 0,
+    [FromQuery] int limit = 10)
     {
         _logger.LogInfo("Fetching currencies");
 
-        var result = await _mediator.Send(new GetCurrenciesQuery());
-
+        var result = await _mediator.Send(new GetCurrenciesQuery
+        {
+            Index = index,
+            Limit = limit
+        });
+    
         return Ok(result);
     }
 }
