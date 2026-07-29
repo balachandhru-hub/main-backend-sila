@@ -19,7 +19,7 @@ namespace Identity.Infrastructure.ApiClients
             _configuration = configuration;
         }
 
-        public async Task<Guid> GetSupplierId(
+        public async Task<Guid?> GetSupplierId(
             string accessToken,
             CancellationToken cancellationToken = default)
         {
@@ -41,10 +41,12 @@ namespace Identity.Infrastructure.ApiClients
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return null;
+                }
 
-                throw new BadRequestCustomException(
-                    "Unable to fetch Supplier Id.",
-                    error);
+                throw new BadRequestCustomException("Unable to fetch Supplier Id.", error);
             }
 
             return await response.Content.ReadFromJsonAsync<Guid>(cancellationToken: cancellationToken);
