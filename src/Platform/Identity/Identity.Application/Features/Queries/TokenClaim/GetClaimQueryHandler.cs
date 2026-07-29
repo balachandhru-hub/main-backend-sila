@@ -17,14 +17,12 @@ namespace Identity.Application.Features.Auth.Queries.GetClaim
         private readonly IBuyerIdApiClient _buyerIdApiClient;
         private readonly ISupplierIdApiClient _supplierIdApiClient;
 
-        public GetClaimQueryHandler(ILoggerManager logger,IBuyerApiClient buyerApiClient,
-    ISupplierApiClient supplierApiClient, IBuyerIdApiClient buyerIdApiClient,
-    ISupplierIdApiClient supplierIdApiClient)
+        public GetClaimQueryHandler(ILoggerManager logger, IBuyerApiClient buyerApiClient, ISupplierApiClient supplierApiClient, IBuyerIdApiClient buyerIdApiClient, ISupplierIdApiClient supplierIdApiClient)
         {
             _buyerApiClient = buyerApiClient;
-            _supplierApiClient = supplierApiClient; 
-           _buyerIdApiClient = buyerIdApiClient;
-        _supplierIdApiClient = supplierIdApiClient;
+            _supplierApiClient = supplierApiClient;
+            _buyerIdApiClient = buyerIdApiClient;
+            _supplierIdApiClient = supplierIdApiClient;
             _logger = logger;
         }
 
@@ -34,16 +32,14 @@ namespace Identity.Application.Features.Auth.Queries.GetClaim
 
             if (string.IsNullOrWhiteSpace(request.Token))
             {
-                throw new UnAuthorizedCustomException(
-                    "Unauthorized",
-                    "Access token not found.");
+                _logger.LogError("Access token not found.");
+                throw new UnAuthorizedCustomException("Unauthorized","Access token not found.");
             }
 
             JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
             JwtSecurityToken jwtToken = handler.ReadJwtToken(request.Token);
 
-            Dictionary<string, string> claims =
-                jwtToken.Claims.ToDictionary(c => c.Type, c => c.Value);
+            Dictionary<string, string> claims = jwtToken.Claims.ToDictionary(c => c.Type, c => c.Value);
 
             TokenClaimDto dto = new TokenClaimDto
             {
@@ -51,26 +47,18 @@ namespace Identity.Application.Features.Auth.Queries.GetClaim
                 RoleId = Guid.Parse(claims["role"]),
                 PersonId = Guid.Parse(claims["PersonId"]),
                 OrganizationId = Guid.Parse(claims["OrganizationId"]),
-               
+
             };
-            
+
 
             if (claims.TryGetValue("Permissions", out var permissions))
             {
-                Console.WriteLine($"Fetched Permissions: {permissions}");
-                
                 _logger.LogInfo($"Fetched Permissions: {permissions}");
-                dto.Permissions =
-                    JsonSerializer.Deserialize<List<string>>(permissions)
-                    ?? new List<string>();
-            }
-            foreach (var claim in jwtToken.Claims)
-            {
-                _logger.LogInfo($"{claim.Type} = {claim.Value}");
+                dto.Permissions = JsonSerializer.Deserialize<List<string>>(permissions) ?? new List<string>();
             }
             if (claims.TryGetValue("OrganizationType", out var organizationType))
             {
-                
+
                 _logger.LogInfo($"Fetched Organization Type: {organizationType}");
                 if (Enum.TryParse<OrganizationType>(
                     organizationType,
@@ -82,11 +70,13 @@ namespace Identity.Application.Features.Auth.Queries.GetClaim
                     {
                         _logger.LogInfo($"Fetching Buyer Id for Organization: {dto.OrganizationId}");
                         dto.BuyerId = await _buyerIdApiClient.GetBuyerId(request.Token);
+                        dto.OrganizationType = OrganizationType.Buyer;
                     }
                     else if (orgType == OrganizationType.Supplier)
                     {
                         _logger.LogInfo($"Fetching Supplier Id for Organization: {dto.OrganizationId}");
                         dto.SupplierId = await _supplierIdApiClient.GetSupplierId(request.Token);
+                        dto.OrganizationType = OrganizationType.Supplier;
                     }
                 }
             }

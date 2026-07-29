@@ -15,6 +15,7 @@ namespace Identity.Domain.Dto
         public Guid? BuyerId { get; set; }
 
         public Guid? SupplierId { get; set; }
+        public OrganizationType? OrganizationType { get; set; }
        
     }
 }
