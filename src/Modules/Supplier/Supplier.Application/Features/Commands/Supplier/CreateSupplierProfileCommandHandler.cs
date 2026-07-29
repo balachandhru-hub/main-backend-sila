@@ -7,6 +7,7 @@ using Supplier.Domain.Common;
 using Microsoft.Extensions.Configuration;
 using Supplier.Application.Features.Commands.Asset;
 using SharedKernel.ExceptionHandler;
+using Supplier.Domain.Dto;
 
 namespace Supplier.Application.Features.Commands.Supplier
 {
@@ -234,6 +235,36 @@ namespace Supplier.Application.Features.Commands.Supplier
         }
 
         await _repository.SupplierDispatchLocation.CreateRangeAsync(dispatchLocations);
+    }
+
+    //---------------------------------------------------------
+    // Categories
+    //---------------------------------------------------------
+
+    if (request.SupplierCategories != null && request.SupplierCategories.Any())
+    {
+        _logger.LogInfo("Creating Supplier Categories.");
+
+        List<SupplierCategory> categories = new();
+
+        foreach (var category in request.SupplierCategories)
+        {
+            categories.Add(new SupplierCategory
+            {
+                Id = Guid.NewGuid(),
+                SupplierId = supplierProfile.Id,
+                Segment = category.Segment,
+                SegmentTitle = category.SegmentTitle,
+                Family = category.Family,
+                FamilyTitle = category.FamilyTitle,
+                Class = category.Class,
+                ClassTitle = category.ClassTitle,
+                Commodity = category.Commodity,
+                CommodityTitle = category.CommodityTitle
+            });
+        }
+
+        await _repository.SupplierCategory.CreateRangeAsync(categories);
     }
 
     //---------------------------------------------------------

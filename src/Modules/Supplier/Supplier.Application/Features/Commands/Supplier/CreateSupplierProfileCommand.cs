@@ -14,5 +14,7 @@ namespace Supplier.Application.Features.Commands.Supplier
         public List<SupplierBankAccountDto> BankAccounts { get; set; }
 
         public List<SupplierDispatchLocationDto> DispatchLocations { get; set; }
+
+        public List<SupplierCategoryDto> SupplierCategories { get; set; }
     }
 }

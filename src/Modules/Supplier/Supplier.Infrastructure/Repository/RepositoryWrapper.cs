@@ -35,6 +35,7 @@ namespace Supplier.Infrastructure.Repository
         private IRFQQuestionAnswerRepository _rfqQuestionAnswer;
         private IRFQQuestionAnswerOptionRepository _rfqQuestionAnswerOption;
         private ICatalogAssetMappingRepository _catalogAssetMapping;
+        private ISupplierCategoryRepository _supplierCategory;
 
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
@@ -208,6 +209,19 @@ namespace Supplier.Infrastructure.Repository
                 return _rfqQuestionAnswerOption;
             }
         }
+
+        public ISupplierCategoryRepository SupplierCategory
+        {
+            get
+            {
+                if (_supplierCategory == null)
+                {
+                    _supplierCategory = new SupplierCategoryRepository(_context);
+                }
+                return _supplierCategory;
+            }
+        }
+
         public bool Save()
         {
             _context.OnBeforeSaving(_userIdentityService.GetCurrentUser());

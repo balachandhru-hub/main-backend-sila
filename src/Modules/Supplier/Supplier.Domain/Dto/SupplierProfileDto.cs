@@ -13,5 +13,7 @@ namespace Supplier.Domain.Dto
         public List<SupplierBankAccountDto> BankAccounts { get; set; } = new();
 
         public List<SupplierDispatchLocationDto> DispatchLocations { get; set; } = new();
+
+        public List<SupplierCategoryDto> Categories { get; set; } = new();
     }
 }
