@@ -28,6 +28,7 @@ namespace Identity.Domain.Common
                 public static readonly string SUPPLIER_BASE_URL = "InterCallService:SupplierUrl";
                 public static readonly string BUYER_BASE_URL = "InterCallService:BuyerUrl";
                 public static readonly string ACCESS_TOKEN = "access_token";
+                public static readonly string PLATFORM_ADMINISTRATOR = "PLATFORM_ADMINISTRATOR";
 
         }
 }

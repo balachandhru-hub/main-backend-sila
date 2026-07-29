@@ -75,7 +75,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Identity.Infrastructure\Migrations\ApiKey.csv</Link>
       </Content>
-
+    <Content Include="Migrations\ModelMapping.csv" >
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Identity.Infrastructure\Migrations\ModelMapping.csv</Link>
+      </Content>
 
   </ItemGroup>
 
