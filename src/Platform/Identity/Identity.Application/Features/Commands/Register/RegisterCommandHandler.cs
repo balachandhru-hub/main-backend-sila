@@ -60,6 +60,7 @@ namespace Identity.Application.Features.Commands.Register
                     "Verification token has expired.",
                     "Please verify your email again.");
             }
+           
 
             // Create Organization
             var organization = new Identity.Domain.Entities.Organization

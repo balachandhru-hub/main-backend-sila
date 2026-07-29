@@ -31,6 +31,8 @@ namespace Identity.Infrastructure.DbContext
         public DbSet<EmailVerification> EmailVerification {get;set;}
         public DbSet<ApiKey> ApiKey {get;set;}
         public DbSet<LoginRecord> LoginRecord {get;set;}
+        public DbSet<ModelMapping> ModelMapping {get;set;}
+        public DbSet<OrganizationModelMapping> OrganizationModelMapping {get;set;}
       
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
@@ -46,6 +48,8 @@ namespace Identity.Infrastructure.DbContext
             _ = modelBuilder.Entity<EmailVerification>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<ApiKey>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<LoginRecord>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<ModelMapping>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<OrganizationModelMapping>().HasIndex(a => a.IsActive);
 
              base.OnModelCreating(modelBuilder);
 
@@ -75,6 +79,19 @@ namespace Identity.Infrastructure.DbContext
                     index.SetDatabaseName(index.GetDatabaseName()!.ConvertToSnakeCase());
                 }
             }
+            var schema = _configuration[Common.APPLICATION_SCHEMA];
+
+            // SQL Sequence
+        modelBuilder.HasSequence<long>("OrganizationSNSequence", schema)
+            .StartsAt(1)
+            .IncrementsBy(1);
+
+        // SNID generation
+        modelBuilder.Entity<Organization>()
+            .Property(x => x.SNID)
+            .HasDefaultValueSql(
+                $"'SN' + RIGHT('00000000000' + CAST(NEXT VALUE FOR [{schema}].[OrganizationSNSequence] AS VARCHAR(11)), 11)"
+            );
         }
              public void OnBeforeSaving(Guid UserId)
         {

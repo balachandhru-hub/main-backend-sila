@@ -29,6 +29,7 @@ namespace Identity.Domain.Entities
         public string City { get; set; }
         public string State { get; set; }
         public string PinCode { get; set; }
+        public string SNID { get; set; }
         public Organization(){}
 
        
