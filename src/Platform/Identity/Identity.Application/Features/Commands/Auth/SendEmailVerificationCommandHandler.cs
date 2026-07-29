@@ -134,7 +134,8 @@ namespace Identity.Application.Features.Auth.Commands.SendEmailVerification
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception(
+                throw new FailedDependencyCustomException(
+                    "Failed to send OTP email.",
                     $"Email API failed. Status: {(int)response.StatusCode}, Response: {responseBody}");
             }
         }
