@@ -27,6 +27,8 @@ namespace Repository
         private ILoginRecordRepository _loginRecordRepository;
         private IRoleFeatureMappingRepository _roleFeatureMapping;
         private IFeatureRepository _featureRepository;
+        private IModelMappingRepository _modelMappingRepository;
+        private IOrganizationModelMappingRepository _organizationModelMappingRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -147,7 +149,28 @@ namespace Repository
                 return _featureRepository;
             }
         }
-
+        public IModelMappingRepository ModelMapping
+        {
+            get
+            {
+                if(_modelMappingRepository ==null)
+                {
+                    _modelMappingRepository =new ModelMappingRepository(_context);
+                }
+                return _modelMappingRepository;
+            }
+        }
+        public IOrganizationModelMappingRepository OrganizationModelMapping
+        {
+            get
+            {
+                if(_organizationModelMappingRepository ==null)
+                {
+                    _organizationModelMappingRepository =new OrganizationModelMappingRepository(_context);
+                }
+                return _organizationModelMappingRepository;
+            }
+        }
         public bool Save()
         {
             _context.OnBeforeSaving(_userIdentityService.GetCurrentUser());

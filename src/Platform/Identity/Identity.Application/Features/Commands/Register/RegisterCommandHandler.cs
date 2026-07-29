@@ -58,11 +58,30 @@ namespace Identity.Application.Features.Commands.Register
                 throw new Exception(
                     "Verification token has expired. Please verify your email again.");
             }
+            var lastSnId = _repository.Organization
+            .FindByConditionAsync(x => x.IsActive)
+            .OrderByDescending(x => x.SNID)
+            .Select(x => x.SNID)
+            .FirstOrDefault();
+
+        int nextNumber = 1;
+
+        if (!string.IsNullOrWhiteSpace(lastSnId))
+        {
+            
+            if (int.TryParse(lastSnId.Replace("SN", ""), out int currentNumber))
+            {
+                nextNumber = currentNumber + 1;
+            }
+        }
+
+        string snId = $"SN{nextNumber:D3}";
 
             // Create Organization
             var organization = new Identity.Domain.Entities.Organization
             {
                 Id = Guid.NewGuid(),
+                SNID = snId,
                 OrganizationName = request.OrganizationName,
                 OrganizationType = request.OrganizationType,
                 Email = request.Email,

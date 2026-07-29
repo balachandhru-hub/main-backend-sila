@@ -349,6 +349,47 @@ namespace Identity.Infrastructure
                 csvReader.Dispose();
             }
         }
+           public static void CreateModelMapping(Stream stream, RepositoryContext context)
+        {
+            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                var conf = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HeaderValidated = null,
+                    MissingFieldFound = null,
+                    IgnoreReferences = true
+                };
+                CsvReader csvReader = new CsvReader(reader, conf);
+                System.Collections.Generic.IEnumerable<ModelMapping> entries = csvReader.GetRecords<ModelMapping>();
+                List<ModelMapping> csvCount = entries.ToList();
+                foreach (ModelMapping entry in csvCount)
+                {
+                    var existingEntry = context.ModelMapping.Find(entry.Id);
+
+                    if (existingEntry != null)
+                    {
+                        // Backup original values
+                        var originalValues = context.Entry(existingEntry).OriginalValues;
+
+                        // Update existing entry
+                        context.Entry(existingEntry).CurrentValues.SetValues(entry);
+
+                        // Restore original values for specific fields
+                        existingEntry.DateCreated = originalValues.GetValue<DateTime>("DateCreated");
+                        existingEntry.CreatedBy = originalValues.GetValue<Guid>("CreatedBy");
+                        existingEntry.IsActive = originalValues.GetValue<bool>("IsActive");
+
+                    }
+                    else
+                    {
+                        // Add new entry
+                        _ = context.ModelMapping.Add(entry);
+                    }
+                }
+                SaveEntities(context);
+                csvReader.Dispose();
+            }
+        }
 
 
 
@@ -392,6 +433,10 @@ namespace Identity.Infrastructure
             stream = new FileStream(Path.Combine(basePath, "ApiKey.csv"), FileMode.Open, FileAccess.Read);
 
             CreateApiKey(stream, context);
+      
+            stream = new FileStream(Path.Combine(basePath, "ModelMapping.csv"), FileMode.Open, FileAccess.Read);
+
+            CreateModelMapping(stream, context);
            
 
         }

@@ -17,7 +17,8 @@ namespace Contracts.IRepository
         IFeatureRepository Feature {get;}
         IRoleFeatureMappingRepository RoleFeatureMapping {get;}
 
-      
+        IModelMappingRepository ModelMapping {get;}
+        IOrganizationModelMappingRepository OrganizationModelMapping {get;}
         bool Save();
         Task<bool> SaveAsync();
     }
