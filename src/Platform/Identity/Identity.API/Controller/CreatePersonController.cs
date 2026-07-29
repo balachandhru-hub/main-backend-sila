@@ -10,7 +10,7 @@ using SharedKernel.Attributes;
 using Identity.Domain.Dto;
 
 using Identity.Application.Features.Commands.CreatePerson;
-using Identity.Application.Features.Queries.GetAllModels;
+using Identity.Application.Features.Queries.GetAllModel;
 using Identity.Application.Features.Commands.SaveOrganizationModelMapping;
 
 
@@ -68,39 +68,39 @@ namespace Identity.API.Controllers
             return Ok(result);
         }
         [HttpGet]
-        [Route("api/v1/identity/models")]
-        [ApiAuthorization(Name = "GET_MODELS")]
-        [SwaggerOperation("GetAllModels")]
+        [Route("api/v1/identity/model")]
+        [ApiAuthorization(Name = "GET_MODEL")]
+        [SwaggerOperation("GetAllModel")]
         [SwaggerResponse(200, type: typeof(List<ModelDto>), description: "Success")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetAllModels()
+        public async Task<IActionResult> GetAllModel()
         {
-            _logger.LogInfo("Fetching all models.");
+            _logger.LogInfo("Fetching all model.");
 
-            var result = await _mediator.Send(new GetAllModelsQuery());
+            var result = await _mediator.Send(new GetAllModelQuery());
 
-            _logger.LogInfo("Models fetched successfully.");
+            _logger.LogInfo("Model fetched successfully.");
 
             return Ok(result);
         }
         [HttpPut]
-        [Route("api/v1/identity/organization-models")]
+        [Route("api/v1/identity/organization-model")]
         [ValidateModelState]
-        [ApiAuthorization(Name = "SAVE_ORGANIZATION_MODELS")]
-        [SwaggerOperation("SaveOrganizationModels")]
-        [SwaggerResponse(200, type: typeof(bool), description: "Models saved successfully")]
+        [ApiAuthorization(Name = "SAVE_ORGANIZATION_MODEL")]
+        [SwaggerOperation("SaveOrganizationModel")]
+        [SwaggerResponse(200, type: typeof(bool), description: "Model saved successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> SaveOrganizationModels(
-            [FromBody] SaveOrganizationModelsDto request)
+        public async Task<IActionResult> SaveOrganizationModel(
+            [FromBody] SaveOrganizationModelDto request)
         {
             _logger.LogInfo("Saving organization model mappings.");
 
          
 
             var result = await _mediator.Send(
-                new SaveOrganizationModelsCommand
+                new SaveOrganizationModelCommand
                 {
                     
                     Model = request
@@ -111,23 +111,23 @@ namespace Identity.API.Controllers
             return Ok(result);
         }
         [HttpGet]
-        [Route("api/v1/identity/organization-models")]
+        [Route("api/v1/identity/organization-model")]
         [ValidateModelState]
-        [ApiAuthorization(Name = "GET_ORGANIZATION_MODELS")]
-        [SwaggerOperation("GetOrganizationModels")]
+        [ApiAuthorization(Name = "GET_ORGANIZATION_MODEL")]
+        [SwaggerOperation("GetOrganizationModel")]
         [SwaggerResponse(200, type: typeof(List<ModelDto>), description: "Success")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetOrganizationModels(
+        public async Task<IActionResult> GetOrganizationModel(
             [FromQuery] Guid? organizationId)
         {
-            _logger.LogInfo("Fetching organization models.");
+            _logger.LogInfo("Fetching organization model.");
             var result = await _mediator.Send(
-                new GetOrganizationModelsQuery
+                new GetOrganizationModelQuery
                 {
                     OrganizationId = organizationId
                 });
-_logger.LogInfo("Organization models fetched successfully.");
+_logger.LogInfo("Organization model fetched successfully.");
             return Ok(result);
         }
             }

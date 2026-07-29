@@ -79,6 +79,19 @@ namespace Identity.Infrastructure.DbContext
                     index.SetDatabaseName(index.GetDatabaseName()!.ConvertToSnakeCase());
                 }
             }
+            var schema = _configuration[Common.APPLICATION_SCHEMA];
+
+            // SQL Sequence
+        modelBuilder.HasSequence<long>("OrganizationSNSequence", schema)
+            .StartsAt(1)
+            .IncrementsBy(1);
+
+        // SNID generation
+        modelBuilder.Entity<Organization>()
+            .Property(x => x.SNID)
+            .HasDefaultValueSql(
+                $"'SN' + RIGHT('00000000000' + CAST(NEXT VALUE FOR [{schema}].[OrganizationSNSequence] AS VARCHAR(11)), 11)"
+            );
         }
              public void OnBeforeSaving(Guid UserId)
         {

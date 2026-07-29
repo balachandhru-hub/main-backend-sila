@@ -4,10 +4,10 @@ using MediatR;
 
 namespace Identity.Application.Features.Commands.SaveOrganizationModelMapping
 {
-    public class SaveOrganizationModelsCommand : IRequest<bool>
+    public class SaveOrganizationModelCommand : IRequest<bool>
 {
    
 
-    public SaveOrganizationModelsDto Model { get; set; }
+    public SaveOrganizationModelDto Model { get; set; }
 }
 }

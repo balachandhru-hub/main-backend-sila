@@ -7,16 +7,16 @@ using Identity.Domain.Common;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
-namespace Identity.Application.Features.Queries.GetAllModels
+namespace Identity.Application.Features.Queries.GetAllModel
 {
-    public class GetOrganizationModelsQueryHandler
-        : IRequestHandler<GetOrganizationModelsQuery, List<ModelDto>>
+    public class GetOrganizationModelQueryHandler
+        : IRequestHandler<GetOrganizationModelQuery, List<ModelDto>>
     {
         private readonly IRepositoryWrapper _repository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILoggerManager _logger;
 
-        public GetOrganizationModelsQueryHandler(
+        public GetOrganizationModelQueryHandler(
             IRepositoryWrapper repository,
             IHttpContextAccessor httpContextAccessor,
             ILoggerManager logger)
@@ -27,10 +27,10 @@ namespace Identity.Application.Features.Queries.GetAllModels
         }
 
         public async Task<List<ModelDto>> Handle(
-            GetOrganizationModelsQuery request,
+            GetOrganizationModelQuery request,
             CancellationToken cancellationToken)
         {
-            _logger.LogInfo("Fetching organization models for OrganizationId: " + request.OrganizationId);
+            _logger.LogInfo("Fetching organization model for OrganizationId: " + request.OrganizationId);
             var role = _httpContextAccessor.HttpContext?
                 .User?
                 .FindFirst(ClaimTypes.Role)?

@@ -5,13 +5,13 @@ using SharedKernel.LoggerServices;
 
 namespace Identity.Application.Features.Commands.SaveOrganizationModelMapping
 {
-    public class SaveOrganizationModelsCommandHandler
-        : IRequestHandler<SaveOrganizationModelsCommand, bool>
+    public class SaveOrganizationModelCommandHandler
+        : IRequestHandler<SaveOrganizationModelCommand, bool>
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
 
-        public SaveOrganizationModelsCommandHandler(
+        public SaveOrganizationModelCommandHandler(
             IRepositoryWrapper repository,
             ILoggerManager logger)
         {
@@ -20,7 +20,7 @@ namespace Identity.Application.Features.Commands.SaveOrganizationModelMapping
         }
 
         public async Task<bool> Handle(
-     SaveOrganizationModelsCommand request,
+     SaveOrganizationModelCommand request,
      CancellationToken cancellationToken)
         {
             _logger.LogInfo("Starting to save organization model mappings.");
