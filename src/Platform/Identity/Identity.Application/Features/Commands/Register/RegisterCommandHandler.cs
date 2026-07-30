@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using HashingSystem;
 using SharedKernel.ExceptionHandler;
+using Identity.Domain.Common;
 
 namespace Identity.Application.Features.Commands.Register
 {
@@ -110,9 +111,9 @@ namespace Identity.Application.Features.Commands.Register
             await _repository.User.CreateAsync(user);
             string roleName = request.OrganizationType switch
             {
-                OrganizationType.Supplier => "SUPPLIER_ADMINISTRATOR",
-                OrganizationType.Buyer => "BUYER_ADMINISTRATOR",
-                OrganizationType.Platform => "PLATFORM_ADMINISTRATOR",
+                OrganizationType.Supplier => Common.SUPPLIER_NETWORK_ADMIN_KEY,
+                OrganizationType.Buyer => Common.BUYER_NETWORK_ADMIN_KEY,
+                OrganizationType.Platform => Common.PLATFORM_ADMINISTRATOR,
                 _ => throw new BadRequestCustomException("Invalid organization type.", "The provided organization type is not supported.")
             };
             var role = _repository.Role
