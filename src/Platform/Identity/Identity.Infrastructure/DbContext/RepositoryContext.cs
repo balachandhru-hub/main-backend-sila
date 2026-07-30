@@ -83,7 +83,7 @@ namespace Identity.Infrastructure.DbContext
 
             // SQL Sequence
         modelBuilder.HasSequence<long>("OrganizationSNSequence", schema)
-            .StartsAt(1)
+            .StartsAt(2)
             .IncrementsBy(1);
 
         // SNID generation
