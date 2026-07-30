@@ -12,6 +12,9 @@ using Identity.Domain.Dto;
 using Identity.Application.Features.Commands.CreatePerson;
 using Identity.Application.Features.Queries.GetAllModel;
 using Identity.Application.Features.Commands.SaveOrganizationModelMapping;
+using Identity.Application.Features.Queries.GetOrganizationUser;
+using System.Security.Claims;
+using Identity.Application.Features.Queries.GetPersonDetail;
 
 
 
@@ -97,12 +100,12 @@ namespace Identity.API.Controllers
         {
             _logger.LogInfo("Saving organization model mappings.");
 
-         
+
 
             var result = await _mediator.Send(
                 new SaveOrganizationModelCommand
                 {
-                    
+
                     Model = request
                 });
 
@@ -127,8 +130,54 @@ namespace Identity.API.Controllers
                 {
                     OrganizationId = organizationId
                 });
-_logger.LogInfo("Organization model fetched successfully.");
+            _logger.LogInfo("Organization model fetched successfully.");
             return Ok(result);
         }
+        [HttpGet]
+        [Route("api/v1/identity/organization-users")]
+        [ApiAuthorization(Name = "GET_ORGANIZATION_USERS")]
+        [SwaggerOperation("GetOrganizationUsers")]
+        [SwaggerResponse(200, type: typeof(List<UserListDto>), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetOrganizationUsers(
+      [FromQuery] Guid? organizationId)
+        {
+            _logger.LogDebug("Fetching organization users.");
+            string? role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            
+            if (!organizationId.HasValue)
+            {
+                organizationId = GetOrganizationId();
             }
+
+            var result = await _mediator.Send(
+                new GetOrganizationUserQuery
+                {
+                    OrganizationId = organizationId,
+                    LoggedInRole = role
+                });
+        _logger.LogDebug("Organization users fetched successfully.");
+            return Ok(result);
+        }
+        [HttpGet]
+        [Route("api/v1/identity/person-detail")]
+        [ApiAuthorization(Name = "GET_PERSON_DETAIL")]
+        [SwaggerOperation("GetPersonDetail")]
+        [SwaggerResponse(200, type: typeof(PersonDetailDto), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetPersonDetail([FromQuery] Guid personId)
+        {
+            _logger.LogDebug($"Fetching person details for PersonId: {personId}");
+            var result = await _mediator.Send(
+                new GetPersonDetailQuery
+                {
+                    PersonId = personId
+                });
+            _logger.LogDebug($"Person details fetched successfully for PersonId: {personId}");
+            return Ok(result);
+        }
+    }
 }
