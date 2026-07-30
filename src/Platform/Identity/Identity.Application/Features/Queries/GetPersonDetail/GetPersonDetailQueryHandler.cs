@@ -66,7 +66,7 @@ namespace Identity.Application.Features.Queries.GetPersonDetail
                     "Person not found.",
                     "Invalid PersonId.");
             }
-_logger.LogInfo($"Fetched person details for PersonId: {request.PersonId}");
+            _logger.LogInfo($"Fetched person details for PersonId: {request.PersonId}");
             return await Task.FromResult(person);
         }
     }

@@ -98,7 +98,7 @@ _logger.LogInfo($"OrganizationId: {organizationId}, LoggedInRoleId: {request.Log
             else
             {
                 _logger.LogInfo("Unsupported LoggedInRole.");
-                return new List<UserListDto>();
+                throw new NotFoundCustomException("Unsupported LoggedInRole.", "The provided LoggedInRole is not supported for fetching users.");
             }
 
             var users =

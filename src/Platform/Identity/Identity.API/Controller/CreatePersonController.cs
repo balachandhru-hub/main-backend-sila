@@ -143,7 +143,7 @@ namespace Identity.API.Controllers
         public async Task<IActionResult> GetOrganizationUsers(
       [FromQuery] Guid? organizationId)
         {
-            _logger.LogInfo("Fetching organization users.");
+            _logger.LogDebug("Fetching organization users.");
             string? role = User.FindFirst(ClaimTypes.Role)?.Value;
 
             
@@ -158,7 +158,7 @@ namespace Identity.API.Controllers
                     OrganizationId = organizationId,
                     LoggedInRole = role
                 });
-        _logger.LogInfo("Organization users fetched successfully.");
+        _logger.LogDebug("Organization users fetched successfully.");
             return Ok(result);
         }
         [HttpGet]
@@ -170,13 +170,13 @@ namespace Identity.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetPersonDetail([FromQuery] Guid personId)
         {
-            _logger.LogInfo($"Fetching person details for PersonId: {personId}");
+            _logger.LogDebug($"Fetching person details for PersonId: {personId}");
             var result = await _mediator.Send(
                 new GetPersonDetailQuery
                 {
                     PersonId = personId
                 });
-            _logger.LogInfo($"Person details fetched successfully for PersonId: {personId}");
+            _logger.LogDebug($"Person details fetched successfully for PersonId: {personId}");
             return Ok(result);
         }
     }
