@@ -30,5 +30,15 @@ namespace Identity.Domain.Common
                 public static readonly string ACCESS_TOKEN = "access_token";
                 public static readonly string PLATFORM_ADMINISTRATOR = "PLATFORM_ADMINISTRATOR";
 
+
+                public const string BUYER_NETWORK_ADMIN = "BUYER_NETWORK_ADMIN";
+                public const string SUPPLIER_NETWORK_ADMIN = "SUPPLIER_NETWORK_ADMIN";
+
+                public const string BUYER_ADMINISTRATOR = "BUYER_ADMINISTRATOR";
+                public const string SUPPLIER_ADMINISTRATOR = "SUPPLIER_ADMINISTRATOR";
+
+                public const string BUYER_USER = "BUYER_USER";
+                public const string SUPPLIER_USER = "SUPPLIER_USER";
+
         }
 }
