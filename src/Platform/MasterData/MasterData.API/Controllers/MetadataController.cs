@@ -40,12 +40,12 @@ public class MetadataController : ControllerBase
     public async Task<IActionResult> GetReferenceList(
         [FromBody] List<string> type)
     {
-        _logger.LogInfo("Fetching metadata reference list");
+        _logger.LogDebug("Fetching metadata reference list");
 
         var result = await _mediator.Send(
             new GetMetadataByTypeQuery(type));
 
-        _logger.LogInfo("Metadata reference list fetched");
+        _logger.LogDebug("Metadata reference list fetched");
 
         return Ok(result);
     }
@@ -64,7 +64,7 @@ public class MetadataController : ControllerBase
     public async Task<IActionResult> GetMetadataByKeys(
             [FromBody] GetMetadataByKeysRequestDto request)
     {
-        _logger.LogInfo("Fetching metadata by keys");
+        _logger.LogDebug("Fetching metadata by keys");
 
         var result = await _mediator.Send(
             new GetMetadataByKeysQuery(request.Type, request.Keys));
@@ -81,7 +81,7 @@ public class MetadataController : ControllerBase
     [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
     public async Task<IActionResult> GetRefTermKeyById(Guid id)
     {
-        _logger.LogInfo($"Fetching reference term key for Id: {id}");
+        _logger.LogDebug($"Fetching reference term key for Id: {id}");
 
         var result = await _mediator.Send(new GetRefTermKeyByIdQuery(id));
 

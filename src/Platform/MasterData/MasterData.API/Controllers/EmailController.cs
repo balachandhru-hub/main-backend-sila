@@ -34,7 +34,7 @@ public class EmailController : ControllerBase
     public async Task<IActionResult> SendEmail(
     [FromBody] SendEmailCommand command)
     {
-        _logger.LogInfo(
+        _logger.LogDebug(
             $"Sending email to {command.ToEmail}");
 
 

@@ -60,11 +60,11 @@ namespace Supplier.API.Controllers
         public async Task<IActionResult> CreateSupplierProfile(
             [FromBody] CreateSupplierProfileCommand command)
         {
-            _logger.LogInfo("Creating supplier profile.");
+            _logger.LogDebug("Creating supplier profile.");
 
             var supplierId = await _mediator.Send(command);
 
-            _logger.LogInfo("Supplier profile created successfully.");
+            _logger.LogDebug("Supplier profile created successfully.");
 
             return Ok(new
             {
@@ -91,7 +91,7 @@ namespace Supplier.API.Controllers
 
             var result = await _mediator.Send(new GetSupplierProfileQuery(organizationId));
 
-            _logger.LogInfo($"Supplier profile fetched successfully: {organizationId}");
+            _logger.LogDebug($"Supplier profile fetched successfully: {organizationId}");
 
             return Ok(result);
         }
@@ -109,11 +109,11 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetAllSuppliers([FromBody] GetAllSuppliersQuery query)
         {
-            _logger.LogInfo("Fetching Supplier Profiles");
+            _logger.LogDebug("Fetching Supplier Profiles");
 
             var result = await _mediator.Send(query);
 
-            _logger.LogInfo("Supplier Profiles retrieved successfully");
+            _logger.LogDebug("Supplier Profiles retrieved successfully");
 
             return Ok(result);
         }
@@ -133,11 +133,11 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> UpdateSupplierStatus([FromBody] UpdateSupplierStatusCommand command)
         {
-            _logger.LogInfo($"Updating Supplier Status. SupplierId: {command.SupplierId}, Status: {command.Status}");
+            _logger.LogDebug($"Updating Supplier Status. SupplierId: {command.SupplierId}, Status: {command.Status}");
 
             var result = await _mediator.Send(command);
 
-            _logger.LogInfo($"Supplier Status updated successfully. SupplierId: {command.SupplierId}");
+            _logger.LogDebug($"Supplier Status updated successfully. SupplierId: {command.SupplierId}");
 
             return Ok(result);
         }
@@ -152,11 +152,11 @@ namespace Supplier.API.Controllers
         public async Task<IActionResult> UpdateRejectedSupplier(
             [FromBody] UpdateRejectedSupplierCommand command)
         {
-            _logger.LogInfo($"Updating rejected supplier : {command.Supplier.SupplierId}");
+            _logger.LogDebug($"Updating rejected supplier : {command.Supplier.SupplierId}");
 
             await _mediator.Send(command);
 
-            _logger.LogInfo($"Supplier updated successfully : {command.Supplier.SupplierId}");
+            _logger.LogDebug($"Supplier updated successfully : {command.Supplier.SupplierId}");
 
             return Ok(new SuccessResponseDto
             {
@@ -203,12 +203,12 @@ namespace Supplier.API.Controllers
         {
             Guid organizationId = GetOrganizationId();
 
-            _logger.LogInfo($"Fetching Supplier Id for Organization: {organizationId}");
+            _logger.LogDebug($"Fetching Supplier Id for Organization: {organizationId}");
 
             Guid result = await _mediator.Send(
                 new GetSupplierIdQuery(organizationId));
 
-            _logger.LogInfo($"Fetched Supplier Id for Organization: {organizationId}");
+            _logger.LogDebug($"Fetched Supplier Id for Organization: {organizationId}");
 
             return Ok(result);
         }
@@ -262,11 +262,11 @@ namespace Supplier.API.Controllers
         {
             command.OrganizationId = GetOrganizationId();
 
-            _logger.LogInfo($"Creating supplier catalog for OrganizationId: {command.OrganizationId}");
+            _logger.LogDebug($"Creating supplier catalog for OrganizationId: {command.OrganizationId}");
 
             var id = await _mediator.Send(command);
 
-            _logger.LogInfo($"Supplier catalog created successfully. CatalogId: {id}");
+            _logger.LogDebug($"Supplier catalog created successfully. CatalogId: {id}");
 
             return Ok(new SuccessResponseDto
             {
@@ -325,7 +325,7 @@ namespace Supplier.API.Controllers
         {
             Guid organizationId = GetOrganizationId();
 
-            _logger.LogInfo($"Fetching supplier catalog for OrganizationId: {organizationId}");
+            _logger.LogDebug($"Fetching supplier catalog for OrganizationId: {organizationId}");
 
             var query = new GetAllSupplierCatalogQuery
             {
@@ -334,7 +334,7 @@ namespace Supplier.API.Controllers
 
             var result = await _mediator.Send(query);
 
-            _logger.LogInfo($"Supplier catalog fetched successfully for OrganizationId: {organizationId}");
+            _logger.LogDebug($"Supplier catalog fetched successfully for OrganizationId: {organizationId}");
 
             return Ok(result);
         }
@@ -353,7 +353,7 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> DeleteSupplierCatalog(Guid id)
         {
-            _logger.LogInfo($"Deleting supplier catalog: {id}");
+            _logger.LogDebug($"Deleting supplier catalog: {id}");
 
             var command = new DeleteSupplierCatalogCommand
             {
@@ -363,7 +363,7 @@ namespace Supplier.API.Controllers
 
             await _mediator.Send(command);
 
-            _logger.LogInfo($"Supplier catalog deleted successfully: {id}");
+            _logger.LogDebug($"Supplier catalog deleted successfully: {id}");
 
             return Ok(new SuccessResponseDto
             {
@@ -391,11 +391,11 @@ namespace Supplier.API.Controllers
         {
             command.OrganizationId = GetOrganizationId();
 
-            _logger.LogInfo($"Updating supplier catalog: {command.Catalog.Id}");
+            _logger.LogDebug($"Updating supplier catalog: {command.Catalog.Id}");
 
             await _mediator.Send(command);
 
-            _logger.LogInfo($"Supplier catalog updated successfully: {command.Catalog.Id}");
+            _logger.LogDebug($"Supplier catalog updated successfully: {command.Catalog.Id}");
 
             return Ok(new SuccessResponseDto
             {
@@ -487,13 +487,13 @@ namespace Supplier.API.Controllers
         public async Task<IActionResult> SaveSupplierRFQAnswer(
             [FromBody] SaveSupplierRFQAnswerDto request)
         {
-            _logger.LogInfo(
+            _logger.LogDebug(
                 $"Saving supplier answers for SupplierRFQ : {request.SupplierRFQId}");
 
             var result = await _mediator.Send(
                 new SaveSupplierRFQAnswerCommand(request));
 
-            _logger.LogInfo(
+            _logger.LogDebug(
                 $"Supplier answers saved successfully for SupplierRFQ : {request.SupplierRFQId}");
 
             return Ok(result);
@@ -507,12 +507,12 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetSupplierRFQAnswer(Guid buyerRFQId)
         {
-            _logger.LogInfo($"Fetching supplier answers for SupplierRFQ : {buyerRFQId}");
+            _logger.LogDebug($"Fetching supplier answers for SupplierRFQ : {buyerRFQId}");
 
             var result = await _mediator.Send(
                 new GetSupplierRFQAnswerQuery(buyerRFQId));
 
-            _logger.LogInfo($"Supplier answers fetched successfully for SupplierRFQ : {buyerRFQId}");
+            _logger.LogDebug($"Supplier answers fetched successfully for SupplierRFQ : {buyerRFQId}");
 
             return Ok(result);
         }
