@@ -53,8 +53,8 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
             _logger.LogInfo($"Validating Catalog Type: {request.Catalog.CatalogType}");
             var catalogType = request.Catalog.CatalogType.Trim().ToUpper();
 
-            if (catalogType != "CATALOG" &&
-                catalogType != "NON_CATALOG")
+            if (catalogType != Common.CATALOG &&
+                catalogType != Common.NON_CATALOG)
             {
                 _logger.LogError($"Invalid Catalog Type: {catalogType}");
                 throw new BadRequestCustomException(
