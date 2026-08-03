@@ -103,10 +103,6 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                 .Take(request.Limit)
                 .ToList();
 
-            //-------------------------------------------------------
-            // Need more records? Fetch SupplierIds from SupplierCategory
-            // and then fetch Catalogs for those suppliers.
-            //-------------------------------------------------------
             _logger.LogInfo($"Fetched {result.Count} records out of {catalogCount} total records.");
             int remaining = request.Limit - result.Count;
 
