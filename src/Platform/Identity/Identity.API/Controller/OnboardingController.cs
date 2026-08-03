@@ -32,7 +32,7 @@ namespace Identity.API.Controllers
         [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Onboarding details not found")]
         public async Task<IActionResult> GetOnboarding()
         {
-            _logger.LogInfo("Fetching onboarding details.");
+            _logger.LogDebug("Fetching onboarding details.");
 
             Guid organizationId = GetOrganizationId();
 
@@ -41,7 +41,7 @@ namespace Identity.API.Controllers
                 OrganizationId = organizationId
             });
 
-            _logger.LogInfo("Onboarding details fetched successfully.");
+            _logger.LogDebug("Onboarding details fetched successfully.");
 
             return Ok(result);
         }

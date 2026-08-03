@@ -36,7 +36,7 @@ public class LookupController : ControllerBase
         [FromQuery] int limit = 10,
         [FromQuery] string? searchTerm = null)
     {
-        _logger.LogInfo("Fetching countries");
+        _logger.LogDebug("Fetching countries");
 
         var result = await _mediator.Send(new GetCountriesQuery
         {
@@ -63,7 +63,7 @@ public class LookupController : ControllerBase
         [FromQuery] int limit = 10,
         [FromQuery] string? searchTerm = null)
     {
-        _logger.LogInfo("Fetching units");
+        _logger.LogDebug("Fetching units");
 
         var result = await _mediator.Send(new GetUnitsQuery
         {
@@ -89,7 +89,7 @@ public class LookupController : ControllerBase
     [FromQuery] int index = 0,
     [FromQuery] int limit = 10)
     {
-        _logger.LogInfo("Fetching currencies");
+        _logger.LogDebug("Fetching currencies");
 
         var result = await _mediator.Send(new GetCurrenciesQuery
         {
