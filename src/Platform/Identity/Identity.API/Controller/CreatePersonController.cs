@@ -56,7 +56,7 @@ namespace Identity.API.Controllers
         public async Task<IActionResult> CreatePerson(
             [FromBody] CreatePersonDto request)
         {
-            _logger.LogInfo("Creating person.");
+            _logger.LogDebug("Creating person.");
 
             Guid organizationId = GetOrganizationId();
 
@@ -66,7 +66,7 @@ namespace Identity.API.Controllers
                 Model = request
             });
 
-            _logger.LogInfo("Person created successfully.");
+            _logger.LogDebug("Person created successfully.");
 
             return Ok(result);
         }
@@ -79,11 +79,11 @@ namespace Identity.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetAllModel()
         {
-            _logger.LogInfo("Fetching all model.");
+            _logger.LogDebug("Fetching all model.");
 
             var result = await _mediator.Send(new GetAllModelQuery());
 
-            _logger.LogInfo("Model fetched successfully.");
+            _logger.LogDebug("Model fetched successfully.");
 
             return Ok(result);
         }
@@ -98,7 +98,7 @@ namespace Identity.API.Controllers
         public async Task<IActionResult> SaveOrganizationModel(
             [FromBody] SaveOrganizationModelDto request)
         {
-            _logger.LogInfo("Saving organization model mappings.");
+            _logger.LogDebug("Saving organization model mappings.");
 
 
 
@@ -109,7 +109,7 @@ namespace Identity.API.Controllers
                     Model = request
                 });
 
-            _logger.LogInfo("Organization model mappings saved successfully.");
+            _logger.LogDebug("Organization model mappings saved successfully.");
 
             return Ok(result);
         }
@@ -124,13 +124,13 @@ namespace Identity.API.Controllers
         public async Task<IActionResult> GetOrganizationModel(
             [FromQuery] Guid? organizationId)
         {
-            _logger.LogInfo("Fetching organization model.");
+            _logger.LogDebug("Fetching organization model.");
             var result = await _mediator.Send(
                 new GetOrganizationModelQuery
                 {
                     OrganizationId = organizationId
                 });
-            _logger.LogInfo("Organization model fetched successfully.");
+            _logger.LogDebug("Organization model fetched successfully.");
             return Ok(result);
         }
         [HttpGet]
