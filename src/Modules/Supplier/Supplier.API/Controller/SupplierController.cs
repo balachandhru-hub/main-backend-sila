@@ -25,6 +25,7 @@ using Supplier.Application.Features.Queries.GetSupplierAllRFQ;
 using Supplier.Application.Features.Queries.GetSupplierQuotation;
 using Supplier.Application.Features.Commands.SupplierAnswers;
 using Supplier.Application.Features.Queries.SupplierAnswers;
+using Supplier.Application.Features.Queries.BuyerCatalog;
 
 
 namespace Supplier.API.Controllers
@@ -500,6 +501,7 @@ namespace Supplier.API.Controllers
         }
         [HttpGet]
         [Route("api/v1/supplier/internal-rfq-answer/{buyerRFQId}")]
+        [ValidateModelState]
         [ApiAuthorization(Name = "GET_SUPPLIER_RFQ_ANSWER")]
         [SwaggerOperation("GetSupplierRFQAnswer")]
         [SwaggerResponse(200, type: typeof(SupplierRFQAnswerResponseDto), description: "Supplier answers fetched successfully")]
@@ -516,7 +518,23 @@ namespace Supplier.API.Controllers
 
             return Ok(result);
         }
+        [HttpGet]
+        [Route("api/v1/supplier/buyer-catalog")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_BUYER_CATALOG")]
+        [SwaggerOperation("GetBuyerCatalog")]
+        [SwaggerResponse(200, type: typeof(List<BuyerCatalogDto>), description: "Buyer catalog fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetBuyerCatalog(
+            [FromQuery] GetBuyerCatalogQuery query)
+        {
+            _logger.LogDebug("Fetching buyer catalog.");
+            var result = await _mediator.Send(query);
 
+            _logger.LogDebug("Buyer catalog fetched successfully.");
+            return Ok(result);
+        }
     }
 }
 
