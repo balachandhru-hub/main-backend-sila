@@ -42,11 +42,9 @@ namespace Supplier.Application.Features.Queries.GetSupplier
 
             // Step 1 : Supplier Catalog Filter
             var catalogQuery = _repository.SupplierCatalog
-                .FindByCondition(x =>
-                    (string.IsNullOrEmpty(filter.SegmentCode) ||
-                     x.SegmentCode == filter.SegmentCode) &&
-                    (string.IsNullOrEmpty(filter.FamilyCode) ||
-                     x.FamilyCode == filter.FamilyCode));
+    .FindByCondition(x =>
+        (!filter.Segment.HasValue || x.Segment == filter.Segment) &&
+        (!filter.Family.HasValue || x.Family == filter.Family));
 
             // Step 2 : Get Distinct SupplierIds
             var supplierIds = await catalogQuery
@@ -92,8 +90,8 @@ namespace Supplier.Application.Features.Queries.GetSupplier
             var result = await (
       from catalog in _repository.SupplierCatalog.FindByCondition(x =>
           supplierIds.Contains(x.SupplierId) &&
-          (string.IsNullOrEmpty(filter.SegmentCode) || x.SegmentCode == filter.SegmentCode) &&
-          (string.IsNullOrEmpty(filter.FamilyCode) || x.FamilyCode == filter.FamilyCode))
+          (!filter.Segment.HasValue || x.Segment == filter.Segment) &&
+          (!filter.Family.HasValue || x.Family == filter.Family))
 
       join supplier in _repository.SupplierBusinessProfile.FindByCondition(x => true)
           on catalog.SupplierId equals supplier.Id

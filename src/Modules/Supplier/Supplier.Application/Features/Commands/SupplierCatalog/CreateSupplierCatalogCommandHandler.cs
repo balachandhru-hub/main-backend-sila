@@ -49,11 +49,56 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
         Common.VERIFIED_STATUS,
         StringComparison.OrdinalIgnoreCase))
             {
+                _logger.LogError("Supplier is not verified");
                 throw new PreConditionFailedCustomException(
                     "Supplier must be verified before creating catalog.",
                     "Supplier is not verified.");
             }
+              if (string.IsNullOrWhiteSpace(request.Catalog.CatalogType))
+            {
+                _logger.LogError("Catalog Type is required.");
+                throw new BadRequestCustomException(
+                    "Catalog Type is required.",
+                    "Catalog Type is required.");
+            }
+              var catalogType = request.Catalog.CatalogType.Trim().ToUpper();
+                if (catalogType != Common.CATALOG &&
+                catalogType != Common.NON_CATALOG)
+            {
+                _logger.LogError("Invalid Catalog Type.");
+                throw new BadRequestCustomException(
+                    "Invalid Catalog Type.",
+                    "Catalog Type must be either CATALOG or NON_CATALOG.");
+            }
+                if (catalogType == Common.CATALOG)
+            {
+                _logger.LogInfo("Catalog Type is CATALOG. Validating price.");
+                if (request.Catalog.Price == null)
+                {
+                    _logger.LogError("Price is required for Catalog items.");
+                    throw new BadRequestCustomException(
+                        "Price is required for Catalog items.",
+                        "Price is required.");
+                }
 
+                request.Catalog.IsPunchOut = false;
+              
+            }
+
+            if (catalogType == Common.NON_CATALOG)
+            {
+                _logger.LogInfo("Catalog Type is NON_CATALOG. Validating price and punchout.");
+               
+
+                if (request.Catalog.IsPunchOut &&
+                    string.IsNullOrWhiteSpace(request.Catalog.PunchOutUrl))
+                {
+                    _logger.LogError("PunchOut URL is required when IsPunchOut is true.");
+                    throw new BadRequestCustomException(
+                        "PunchOut URL is required.",
+                        "PunchOut URL is required when IsPunchOut is true.");
+                }
+            }
 
             SupplierCatalogEntity catalog = new()
             {
@@ -62,7 +107,24 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 CatalogName = request.Catalog.CatalogName,
                 Description = request.Catalog.Description,
                 Price = request.Catalog.Price,
-                UnitOfMeasure = request.Catalog.UnitOfMeasure
+                UnitOfMeasure = request.Catalog.UnitOfMeasure,
+                   Segment = request.Catalog.Segment,
+                SegmentTitle = request.Catalog.SegmentTitle,
+
+                Family = request.Catalog.Family,
+                FamilyTitle = request.Catalog.FamilyTitle,
+
+                Commodity = request.Catalog.Commodity,
+                CommodityTitle = request.Catalog.CommodityTitle,
+
+                Class = request.Catalog.Class,
+                ClassTitle = request.Catalog.ClassTitle,
+
+                CatalogType = catalogType,
+
+                IsPunchOut = request.Catalog.IsPunchOut,
+
+                PunchOutUrl = request.Catalog.PunchOutUrl
             };
 
             _repositoryWrapper.SupplierCatalog.Create(catalog);
@@ -71,6 +133,7 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
             if (request.Catalog.Assets != null &&
                 request.Catalog.Assets.Any())
             {
+                _logger.LogInfo($"Uploading {request.Catalog.Assets.Count} assets for catalog {catalog.Id}");
                 foreach (var asset in request.Catalog.Assets)
                 {
                     AssetUploadDto uploadDto = new()
@@ -80,7 +143,8 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                         AssetType = asset.AssetType,
                         FileName = asset.FileName,
                         ContentType = asset.ContentType,
-                        IsSingletonAsset = false
+                        IsSingletonAsset = false,
+                        FileBytes = asset.FileBytes
                     };
 
                     Guid assetId = await _mediator.Send(

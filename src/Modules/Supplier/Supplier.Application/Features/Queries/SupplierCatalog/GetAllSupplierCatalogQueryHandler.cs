@@ -42,6 +42,20 @@ namespace Supplier.Application.Features.Queries.SupplierCatalog
                     Description = catalog.Description,
                     Price = catalog.Price,
                     UnitOfMeasure = catalog.UnitOfMeasure,
+                    CatalogType = catalog.CatalogType,
+                    IsPunchOut = catalog.IsPunchOut,
+                    PunchOutUrl = catalog.PunchOutUrl,
+
+                    Segment = catalog.Segment,
+                    SegmentTitle = catalog.SegmentTitle,
+
+                    Family = catalog.Family,
+                    FamilyTitle = catalog.FamilyTitle,
+
+                    Commodity = catalog.Commodity,
+                    CommodityTitle = catalog.CommodityTitle,
+                    Class = catalog.Class,
+                    ClassTitle = catalog.ClassTitle,
                     Assets = new List<AssetDto>()
                 };
 

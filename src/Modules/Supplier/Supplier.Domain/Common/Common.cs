@@ -25,6 +25,8 @@ namespace Supplier.Domain.Common
         public static readonly string PERCENTAGE = "PERCENTAGE";
         public static readonly string BUYER_SERVICE_BASE_URL = "InterCallService:BuyerUrl";
         public static readonly string UNVERIFIED_STATUS = "UNVERIFIED";
+        public const string CATALOG = "CATALOG";
+        public const string NON_CATALOG = "NON_CATALOG";
 
     }
 

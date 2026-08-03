@@ -20,16 +20,23 @@ namespace Supplier.Domain.Entities
         public string Description { get; set; }
 
      
-        public decimal Price { get; set; }
+        public decimal? Price { get; set; }
 
         [Required]
         public string UnitOfMeasure { get; set; }
-        public string? SegmentName {get;set;}
-        public string? SegmentCode {get;set;}
-        public string? FamilyName {get;set;}
-        public string? FamilyCode {get;set;}
-        public string? CommodityCode {get;set;}
+        public long? Segment {get;set;}
+        public string? SegmentTitle  {get;set;}
+        public long? Family {get;set;}
+        public string? FamilyTitle {get;set;}
+        public long? Commodity {get;set;}
+        public string? CommodityTitle {get;set;}
+        public long? Class {get;set;}
+        public string? ClassTitle {get;set;}
+        public string CatalogType { get; set; }
 
+        public bool IsPunchOut { get; set; }
+
+        public string? PunchOutUrl { get; set; }
         public SupplierCatalog()
         {
         }
