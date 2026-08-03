@@ -5,6 +5,7 @@ using Supplier.Infrastructure.Contracts.IRepository;
 using SharedKernel.Dto;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
+using Supplier.Domain.Common;
 
 namespace Supplier.Application.Features.Commands.SupplierCatalog
 {
@@ -38,6 +39,59 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 throw new NotFoundCustomException(
                     "Supplier catalog not found.",
                     "Supplier catalog not found.");
+                     if (string.IsNullOrWhiteSpace(request.Catalog.CatalogType))
+            {
+                throw new BadRequestCustomException(
+                    "Catalog Type is required.",
+                    "Catalog Type is required.");
+            }
+              var catalogType = request.Catalog.CatalogType.Trim().ToUpper();
+
+            if (catalogType != "CATALOG" &&
+                catalogType != "NON_CATALOG")
+            {
+                throw new BadRequestCustomException(
+                    "Invalid Catalog Type.",
+                    "Catalog Type must be either CATALOG or NON_CATALOG.");
+            }
+
+            if (catalogType == Common.CATALOG)
+            {
+                if (!request.Catalog.Price.HasValue)
+                {
+                    throw new BadRequestCustomException(
+                        "Price is required for Catalog items.",
+                        "Price is required.");
+                }
+
+                request.Catalog.IsPunchOut = false;
+                request.Catalog.PunchOutUrl = null;
+            }
+            else
+            {
+                if (!request.Catalog.Price.HasValue)
+                {
+                    throw new BadRequestCustomException(
+                        "Price is required for Catalog items.",
+                        "Price is required.");
+                }
+
+                request.Catalog.IsPunchOut = false;
+                request.Catalog.PunchOutUrl = null;
+            }
+
+            if (catalogType == Common.NON_CATALOG)
+            {
+                request.Catalog.Price = null;
+
+                if (request.Catalog.IsPunchOut &&
+                    string.IsNullOrWhiteSpace(request.Catalog.PunchOutUrl))
+                {
+                    throw new BadRequestCustomException(
+                        "PunchOut URL is required.",
+                        "PunchOut URL is required when IsPunchOut is true.");
+                }
+            }
 
             // Update catalog fields
             if (!string.IsNullOrWhiteSpace(request.Catalog.CatalogName))
@@ -51,7 +105,27 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
 
             if (!string.IsNullOrWhiteSpace(request.Catalog.UnitOfMeasure))
                 catalog.UnitOfMeasure = request.Catalog.UnitOfMeasure;
-
+            if (request.Catalog.Segment.HasValue)
+                catalog.Segment = request.Catalog.Segment.Value;
+            if (!string.IsNullOrWhiteSpace(request.Catalog.SegmentTitle))
+                catalog.SegmentTitle = request.Catalog.SegmentTitle;
+            if (request.Catalog.Family.HasValue)
+                catalog.Family = request.Catalog.Family.Value;
+            if (!string.IsNullOrWhiteSpace(request.Catalog.FamilyTitle))
+                catalog.FamilyTitle = request.Catalog.FamilyTitle;
+            if (request.Catalog.Commodity.HasValue)
+                catalog.Commodity = request.Catalog.Commodity.Value;
+            if (!string.IsNullOrWhiteSpace(request.Catalog.CommodityTitle))
+                catalog.CommodityTitle = request.Catalog.CommodityTitle;
+            if (request.Catalog.Class.HasValue)
+                catalog.Class = request.Catalog.Class.Value;
+            if (!string.IsNullOrWhiteSpace(request.Catalog.ClassTitle))
+                catalog.ClassTitle = request.Catalog.ClassTitle;
+            if (!string.IsNullOrWhiteSpace(request.Catalog.CatalogType))
+                catalog.CatalogType = request.Catalog.CatalogType;
+            catalog.IsPunchOut = request.Catalog.IsPunchOut;
+            if (!string.IsNullOrWhiteSpace(request.Catalog.PunchOutUrl))
+catalog.PunchOutUrl = request.Catalog.PunchOutUrl;
             _repositoryWrapper.SupplierCatalog.Update(catalog);
 
             // Update assets only if assets are sent

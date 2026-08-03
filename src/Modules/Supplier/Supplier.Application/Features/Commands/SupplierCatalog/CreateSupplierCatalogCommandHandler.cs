@@ -53,7 +53,45 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                     "Supplier must be verified before creating catalog.",
                     "Supplier is not verified.");
             }
+              if (string.IsNullOrWhiteSpace(request.Catalog.CatalogType))
+            {
+                throw new BadRequestCustomException(
+                    "Catalog Type is required.",
+                    "Catalog Type is required.");
+            }
+              var catalogType = request.Catalog.CatalogType.Trim().ToUpper();
+                if (catalogType != Common.CATALOG &&
+                catalogType != Common.NON_CATALOG)
+            {
+                throw new BadRequestCustomException(
+                    "Invalid Catalog Type.",
+                    "Catalog Type must be either CATALOG or NON_CATALOG.");
+            }
+                if (catalogType == Common.CATALOG)
+            {
+                if (request.Catalog.Price == null)
+                {
+                    throw new BadRequestCustomException(
+                        "Price is required for Catalog items.",
+                        "Price is required.");
+                }
 
+                request.Catalog.IsPunchOut = false;
+                request.Catalog.PunchOutUrl = null;
+            }
+
+            if (catalogType == Common.NON_CATALOG)
+            {
+                request.Catalog.Price = null;
+
+                if (request.Catalog.IsPunchOut &&
+                    string.IsNullOrWhiteSpace(request.Catalog.PunchOutUrl))
+                {
+                    throw new BadRequestCustomException(
+                        "PunchOut URL is required.",
+                        "PunchOut URL is required when IsPunchOut is true.");
+                }
+            }
 
             SupplierCatalogEntity catalog = new()
             {
@@ -62,7 +100,24 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 CatalogName = request.Catalog.CatalogName,
                 Description = request.Catalog.Description,
                 Price = request.Catalog.Price,
-                UnitOfMeasure = request.Catalog.UnitOfMeasure
+                UnitOfMeasure = request.Catalog.UnitOfMeasure,
+                   Segment = request.Catalog.Segment,
+                SegmentTitle = request.Catalog.SegmentTitle,
+
+                Family = request.Catalog.Family,
+                FamilyTitle = request.Catalog.FamilyTitle,
+
+                Commodity = request.Catalog.Commodity,
+                CommodityTitle = request.Catalog.CommodityTitle,
+
+                Class = request.Catalog.Class,
+                ClassTitle = request.Catalog.ClassTitle,
+
+                CatalogType = catalogType,
+
+                IsPunchOut = request.Catalog.IsPunchOut,
+
+                PunchOutUrl = request.Catalog.PunchOutUrl
             };
 
             _repositoryWrapper.SupplierCatalog.Create(catalog);
@@ -80,7 +135,8 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                         AssetType = asset.AssetType,
                         FileName = asset.FileName,
                         ContentType = asset.ContentType,
-                        IsSingletonAsset = false
+                        IsSingletonAsset = false,
+                        FileBytes = asset.FileBytes
                     };
 
                     Guid assetId = await _mediator.Send(
