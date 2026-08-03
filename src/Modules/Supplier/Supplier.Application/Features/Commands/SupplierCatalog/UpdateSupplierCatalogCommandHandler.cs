@@ -93,7 +93,7 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
             if (catalogType == Common.NON_CATALOG)
             {
                 _logger.LogInfo("Catalog Type is NON_CATALOG. Validating punchout.");
-                request.Catalog.Price = null;
+                
 
                 if (request.Catalog.IsPunchOut &&
                     string.IsNullOrWhiteSpace(request.Catalog.PunchOutUrl))
