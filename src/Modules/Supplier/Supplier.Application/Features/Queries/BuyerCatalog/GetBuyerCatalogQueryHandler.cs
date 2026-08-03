@@ -76,22 +76,22 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                     x.Description.Contains(search));
             }
 
-            if (request.Segment.HasValue)
+            if (request.Segment.HasValue){
                 _logger.LogInfo($"Applying segment filter: {request.Segment}");
             catalogQuery = catalogQuery.Where(x => x.Segment == request.Segment);
-
-            if (request.Family.HasValue)
+            }
+            if (request.Family.HasValue){
                 _logger.LogInfo($"Applying family filter: {request.Family}");
             catalogQuery = catalogQuery.Where(x => x.Family == request.Family);
-
-            if (request.Class.HasValue)
+            }
+            if (request.Class.HasValue){
                 _logger.LogInfo($"Applying class filter: {request.Class}");
             catalogQuery = catalogQuery.Where(x => x.Class == request.Class);
-
-            if (request.Commodity.HasValue)
+            }
+            if (request.Commodity.HasValue){
                 _logger.LogInfo($"Applying commodity filter: {request.Commodity}");
             catalogQuery = catalogQuery.Where(x => x.Commodity == request.Commodity);
-
+            }
 
 
             catalogQuery = catalogQuery.OrderBy(x => x.CatalogName);
@@ -127,26 +127,26 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                     _repository.SupplierCategory
                     .FindByCondition(x => x.IsActive);
 
-                if (request.Segment.HasValue)
+                if (request.Segment.HasValue){
                     _logger.LogInfo($"Filtering SupplierCategory by segment: {request.Segment}");
                 supplierCategoryQuery =
                     supplierCategoryQuery.Where(x => x.Segment == request.Segment);
-
-                if (request.Family.HasValue)
+                }
+                if (request.Family.HasValue){
                     _logger.LogInfo($"Filtering SupplierCategory by family: {request.Family}");
                 supplierCategoryQuery =
                     supplierCategoryQuery.Where(x => x.Family == request.Family);
-
-                if (request.Class.HasValue)
+                }
+                if (request.Class.HasValue){
                     _logger.LogInfo($"Filtering SupplierCategory by class: {request.Class}");
                 supplierCategoryQuery =
                     supplierCategoryQuery.Where(x => x.Class == request.Class);
-
-                if (request.Commodity.HasValue)
+                }
+                if (request.Commodity.HasValue){
                     _logger.LogInfo($"Filtering SupplierCategory by commodity: {request.Commodity}");
                 supplierCategoryQuery =
                     supplierCategoryQuery.Where(x => x.Commodity == request.Commodity);
-
+                }
                 var supplierIds = supplierCategoryQuery
                     .Select(x => x.SupplierId)
                     .Distinct()
@@ -194,7 +194,7 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
 
                         PunchOutUrl = catalog.PunchOutUrl,
 
-                        HasCatalog = true
+                       
                     };
 
 

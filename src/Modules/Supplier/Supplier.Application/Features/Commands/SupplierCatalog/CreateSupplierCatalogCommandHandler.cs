@@ -49,12 +49,14 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
         Common.VERIFIED_STATUS,
         StringComparison.OrdinalIgnoreCase))
             {
+                _logger.LogError("Supplier is not verified");
                 throw new PreConditionFailedCustomException(
                     "Supplier must be verified before creating catalog.",
                     "Supplier is not verified.");
             }
               if (string.IsNullOrWhiteSpace(request.Catalog.CatalogType))
             {
+                _logger.LogError("Catalog Type is required.");
                 throw new BadRequestCustomException(
                     "Catalog Type is required.",
                     "Catalog Type is required.");
@@ -63,30 +65,35 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 if (catalogType != Common.CATALOG &&
                 catalogType != Common.NON_CATALOG)
             {
+                _logger.LogError("Invalid Catalog Type.");
                 throw new BadRequestCustomException(
                     "Invalid Catalog Type.",
                     "Catalog Type must be either CATALOG or NON_CATALOG.");
             }
                 if (catalogType == Common.CATALOG)
             {
+                _logger.LogInfo("Catalog Type is CATALOG. Validating price.");
                 if (request.Catalog.Price == null)
                 {
+                    _logger.LogError("Price is required for Catalog items.");
                     throw new BadRequestCustomException(
                         "Price is required for Catalog items.",
                         "Price is required.");
                 }
 
                 request.Catalog.IsPunchOut = false;
-                request.Catalog.PunchOutUrl = null;
+              
             }
 
             if (catalogType == Common.NON_CATALOG)
             {
-                request.Catalog.Price = null;
+                _logger.LogInfo("Catalog Type is NON_CATALOG. Validating price and punchout.");
+               
 
                 if (request.Catalog.IsPunchOut &&
                     string.IsNullOrWhiteSpace(request.Catalog.PunchOutUrl))
                 {
+                    _logger.LogError("PunchOut URL is required when IsPunchOut is true.");
                     throw new BadRequestCustomException(
                         "PunchOut URL is required.",
                         "PunchOut URL is required when IsPunchOut is true.");
@@ -126,6 +133,7 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
             if (request.Catalog.Assets != null &&
                 request.Catalog.Assets.Any())
             {
+                _logger.LogInfo($"Uploading {request.Catalog.Assets.Count} assets for catalog {catalog.Id}");
                 foreach (var asset in request.Catalog.Assets)
                 {
                     AssetUploadDto uploadDto = new()
