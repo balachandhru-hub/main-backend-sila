@@ -26,7 +26,7 @@ using Supplier.Application.Features.Queries.GetSupplierQuotation;
 using Supplier.Application.Features.Commands.SupplierAnswers;
 using Supplier.Application.Features.Queries.SupplierAnswers;
 using Supplier.Application.Features.Queries.BuyerCatalog;
-using System.ComponentModel.DataAnnotations;
+
 
 
 namespace Supplier.API.Controllers
@@ -519,32 +519,7 @@ namespace Supplier.API.Controllers
 
             return Ok(result);
         }
-        /// <summary>
-        /// Upload Supplier Catalog via Excel
-        /// </summary>
-        [HttpPost]
-        [Route("api/v1/supplier/catalog-upload")]
-        [Consumes("multipart/form-data")]
-        [ValidateModelState]
-        // [ApiAuthorization(Name = "UPLOAD_SUPPLIER_CATALOG")]
-        [SwaggerOperation("UploadSupplierCatalog")]
-        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Upload successful")]
-        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
-        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> UploadSupplierCatalog([Required] IFormFile file)
-        {
-            _logger.LogDebug("Starting Supplier Catalog upload.");
-
-            var recordsInserted = await _mediator.Send(new UploadSupplierCatalogCommand(file, GetOrganizationId()));
-
-            _logger.LogDebug($"Supplier Catalog upload completed. Records inserted: {recordsInserted}");
-
-            return Ok(new
-            {
-                Message = "Upload successful.",
-                RecordsInserted = recordsInserted
-            });
-        }
+        
 
         [HttpGet]
         [Route("api/v1/supplier/buyer-catalog")]

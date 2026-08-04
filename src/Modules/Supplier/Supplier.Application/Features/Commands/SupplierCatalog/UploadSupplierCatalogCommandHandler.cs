@@ -6,6 +6,7 @@ using Supplier.Domain.Common;
 using Supplier.Domain.Dto;
 using Supplier.Infrastructure.Contracts.IRepository;
 using SupplierCatalogEntity = Supplier.Domain.Entities.SupplierCatalog;
+using SharedKernel.LoggerServices;
 
 namespace Supplier.Application.Features.Commands.SupplierCatalog
 {
@@ -13,11 +14,14 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
         : IRequestHandler<UploadSupplierCatalogCommand, ExcelUploadResultDto>
     {
         private readonly IRepositoryWrapper _repositoryWrapper;
+        private readonly ILoggerManager _logger;
 
-        public UploadSupplierCatalogCommandHandler(
-            IRepositoryWrapper repositoryWrapper)
+                public UploadSupplierCatalogCommandHandler(
+            IRepositoryWrapper repositoryWrapper,
+            ILoggerManager logger)
         {
             _repositoryWrapper = repositoryWrapper;
+            _logger = logger;
         }
 
         public async Task<ExcelUploadResultDto> Handle(
@@ -32,6 +36,8 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                     x.IsActive);
 
             if (supplier == null)
+                _logger.LogError($"Supplier profile not found for OrganizationId: {request.OrganizationId}");
+
                 throw new NotFoundCustomException(
                     "Supplier profile not found.",
                     "Supplier profile not found.");
@@ -56,9 +62,11 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
             return await ProcessRows(rows);
         }
 
-        private static void ValidateFile(IFormFile file)
+        private  void ValidateFile(IFormFile file)
         {
             if (file == null)
+                _logger.LogError("Supplier catalog upload failed. File is required.");
+
                 throw new BadRequestCustomException(
                     "File is required.",
                     "File is required.");
