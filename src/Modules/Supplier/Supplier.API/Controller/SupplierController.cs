@@ -410,7 +410,7 @@ namespace Supplier.API.Controllers
 
 
         [HttpPost]
-        [Route("api/v1/supplier/rfq-verfied-supplier")]
+        [Route("api/v1/supplier/rfq-supplier")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_SUPPLIER_LIST")]
         [SwaggerOperation("GetSupplierList")]
