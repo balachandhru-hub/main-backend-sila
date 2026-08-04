@@ -28,6 +28,7 @@ using Supplier.Application.Features.Queries.SupplierAnswers;
 using Supplier.Application.Features.Queries.BuyerCatalog;
 
 
+
 namespace Supplier.API.Controllers
 {
     [ApiController]
@@ -518,6 +519,8 @@ namespace Supplier.API.Controllers
 
             return Ok(result);
         }
+        
+
         [HttpGet]
         [Route("api/v1/supplier/buyer-catalog")]
         [ValidateModelState]
