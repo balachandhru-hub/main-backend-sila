@@ -16,7 +16,7 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
         private readonly IRepositoryWrapper _repositoryWrapper;
         private readonly ILoggerManager _logger;
 
-                public UploadSupplierCatalogCommandHandler(
+        public UploadSupplierCatalogCommandHandler(
             IRepositoryWrapper repositoryWrapper,
             ILoggerManager logger)
         {
@@ -28,6 +28,8 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
             UploadSupplierCatalogCommand request,
             CancellationToken cancellationToken)
         {
+            _logger.LogInfo("Starting supplier catalog upload process.");
+
             ValidateFile(request.File);
 
             var supplier = _repositoryWrapper.SupplierBusinessProfile
@@ -36,51 +38,67 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                     x.IsActive);
 
             if (supplier == null)
+            {
                 _logger.LogError($"Supplier profile not found for OrganizationId: {request.OrganizationId}");
-
                 throw new NotFoundCustomException(
                     "Supplier profile not found.",
                     "Supplier profile not found.");
+            }
 
             if (!string.Equals(
                     supplier.Status,
                     Common.VERIFIED_STATUS,
                     StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogError($"Supplier with OrganizationId: {request.OrganizationId} is not verified.");
                 throw new PreConditionFailedCustomException(
                     "Supplier must be verified before uploading catalog.",
                     "Supplier is not verified.");
+            }
+
+            _logger.LogInfo($"Validating supplier catalog Excel file for OrganizationId: {request.OrganizationId}. FileName: {request.File.FileName}, Size: {request.File.Length}");
 
             using var stream = request.File.OpenReadStream();
             using var workbook = new XLWorkbook(stream);
 
             var worksheet = workbook.Worksheet(1);
-
             ValidateHeaders(worksheet);
 
             var rows = ExtractRows(worksheet, supplier.Id);
+            _logger.LogInfo($"Extracted {rows.Count} rows from the catalog upload file.");
 
-            return await ProcessRows(rows);
+            var result = await ProcessRows(rows);
+            _logger.LogInfo($"Supplier catalog upload completed. TotalRows: {result.TotalRows}, Success: {result.SuccessfulUploads}, Failed: {result.FailedUploads}");
+
+            return result;
         }
 
-        private  void ValidateFile(IFormFile file)
+        private void ValidateFile(IFormFile file)
         {
             if (file == null)
+            {
                 _logger.LogError("Supplier catalog upload failed. File is required.");
-
                 throw new BadRequestCustomException(
                     "File is required.",
                     "File is required.");
+            }
 
             if (file.Length == 0)
+            {
+                _logger.LogError("Supplier catalog upload failed. Uploaded file is empty.");
                 throw new NoContentCustomException(
                     "Uploaded file is empty.",
                     "Uploaded file is empty.");
+            }
 
             if (!Path.GetExtension(file.FileName)
                     .Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogError($"Supplier catalog upload failed. Unsupported file type: {file.FileName}");
                 throw new BadRequestCustomException(
                     "Only .xlsx files are supported.",
                     "Only .xlsx files are supported.");
+            }
         }
 
         private static void ValidateHeaders(IXLWorksheet worksheet)
@@ -116,14 +134,18 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 var value = headerRow.Cell(i + 1).GetString().Trim();
 
                 if (string.IsNullOrWhiteSpace(value))
+                {
                     throw new NoContentCustomException(
                         $"Header missing at column {i + 1}.",
                         $"Header missing at column {i + 1}.");
+                }
 
                 if (!value.Equals(expectedHeaders[i], StringComparison.OrdinalIgnoreCase))
+                {
                     throw new NotFoundCustomException(
                         $"Expected header '{expectedHeaders[i]}' but found '{value}'.",
                         $"Expected header '{expectedHeaders[i]}' but found '{value}'.");
+                }
             }
         }
 
@@ -154,7 +176,6 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 var commodityRaw = row.Cell(14).GetString().Trim();
                 var commodityTitle = row.Cell(15).GetString().Trim();
 
-                // Validate required fields
                 if (string.IsNullOrWhiteSpace(description))
                 {
                     error = $"Row {rowNum}: Description is required.";
@@ -251,10 +272,11 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
 
             var validEntities = new List<SupplierCatalogEntity>();
 
-            foreach (var (entity, _, error) in rows)
+            foreach (var (entity, rowNumber, error) in rows)
             {
                 if (error != null)
                 {
+                    _logger.LogError($"Skipping invalid supplier catalog row {rowNumber}: {error}");
                     result.FailedUploads++;
                     result.Errors.Add(error);
                     continue;
@@ -267,17 +289,22 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
             {
                 try
                 {
+                    var catalogIdentifier = string.IsNullOrWhiteSpace(entity.CatalogName) ? entity.Id.ToString() : entity.CatalogName;
+                    _logger.LogInfo($"Persisting supplier catalog: {catalogIdentifier}");
                     _repositoryWrapper.SupplierCatalog.Create(entity);
                     result.SuccessfulUploads++;
                 }
                 catch (Exception ex)
                 {
+                    var catalogIdentifier = string.IsNullOrWhiteSpace(entity.CatalogName) ? entity.Id.ToString() : entity.CatalogName;
+                    _logger.LogError($"Failed to insert catalog '{catalogIdentifier}': {ex.Message}");
                     result.FailedUploads++;
-                    result.Errors.Add($"Failed to insert catalog '{entity.CatalogName}': {ex.Message}");
+                    result.Errors.Add($"Failed to insert catalog '{catalogIdentifier}': {ex.Message}");
                 }
             }
 
             _repositoryWrapper.Save();
+            _logger.LogInfo($"Saved catalog upload transaction. Successful: {result.SuccessfulUploads}, Failed: {result.FailedUploads}");
 
             await Task.CompletedTask;
             return result;
