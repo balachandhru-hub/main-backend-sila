@@ -6,10 +6,11 @@ namespace Buyer.Domain.Dto
 
     public string RFQNumber { get; set; }
 
-    public Guid BuyerOrganizationId { get; set; }
+    public Guid BuyerId { get; set; }
 
     public Guid RFQVerificationTemplateId { get; set; }
 
     public List<Guid> SupplierInvites { get; set; }
+    public DateTime EndDate { get; set; }
 }
 }

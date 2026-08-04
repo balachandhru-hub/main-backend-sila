@@ -30,6 +30,10 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         ISupplierVerificationRequestRepository SupplierVerificationRequest { get; }
         IBuyerSupplierMappingRepository BuyerSupplierMapping { get; }
         IVerificationTemplateRepository VerificationTemplate{get;}
+        IVerificationTemplateQuestionRepository VerificationTemplateQuestion {get;}
+        IVerificationTemplateQuestionOptionRepository VerificationTemplateQuestionOptionRepository{get;}
+        IDefaultVerificationTemplateQuestionRepository DefaultVerificationTemplateQuestionRepository{get;}
+        IDefaultVerificationTemplateRepository DefaultVerificationTemplateRepository {get;}
         bool Save();
         Task<bool> SaveAsync();
     }

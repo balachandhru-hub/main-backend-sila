@@ -35,6 +35,8 @@ namespace Supplier.Infrastructure.Repository
   
       
         private ICatalogAssetMappingRepository _catalogAssetMapping;
+        private ISupplierVerificationAnswerRepository _supplierVerificationAnswer;
+        private ISupplierVerificationAnswerOptionRepository _supplierVerificationAnswerOption;
 
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
@@ -179,6 +181,32 @@ namespace Supplier.Infrastructure.Repository
                 }
 
                 return _catalogAssetMapping;
+            }
+        }
+        public ISupplierVerificationAnswerRepository SupplierVerificationAnswer
+        {
+            get
+            {
+                if (_supplierVerificationAnswer == null)
+                {
+                    _supplierVerificationAnswer =
+                        new SupplierVerificationAnswerRepository(_context);
+                }
+
+                return _supplierVerificationAnswer;
+            }
+        }
+        public ISupplierVerificationAnswerOptionRepository SupplierVerificationAnswerOption
+        {
+            get
+            {
+                if (_supplierVerificationAnswerOption == null)
+                {
+                    _supplierVerificationAnswerOption =
+                        new SupplierVerificationAnswerOptionRepository(_context);
+                }
+
+                return _supplierVerificationAnswerOption;
             }
         }
 
