@@ -42,6 +42,8 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<BuyerDepartment> BuyerDepartment {get;set;}
         public DbSet<BuyerSupplierMapping> BuyerSupplierMapping {get;set;}
         public DbSet<RFQSupplierMapping> RFQSupplierMapping {get;set;}
+        public DbSet<DefaultVerificationTemplate> DefaultVerificationTemplate {get;set;}
+        public DbSet<DefaultVerificationTemplateQuestion> DefaultVerificationTemplateQuestion {get;set;}
         public DbSet<RFQQuestionAttachmentMapping> RFQQuestionAttachmentMapping {get;set;}
 
 
@@ -75,6 +77,8 @@ namespace Buyer.Infrastructure.DbContext
             _ = modelBuilder.Entity<BuyerCostCenter>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<BuyerSupplierMapping>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQSupplierMapping>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<DefaultVerificationTemplateQuestion>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<DefaultVerificationTemplate>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQQuestionAttachmentMapping>().HasIndex(a=>a.IsActive);
 
 

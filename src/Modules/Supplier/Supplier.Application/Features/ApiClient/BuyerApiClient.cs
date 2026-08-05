@@ -92,7 +92,79 @@ namespace Supplier.Infrastructure.ApiClients
             var result = await response.Content.ReadFromJsonAsync<GetRFQAttachmentsDto>(
                 cancellationToken: cancellationToken);
 
-            return result ?? new GetRFQAttachmentsDto();
+                    return result ?? new GetRFQAttachmentsDto();
+                }
+
+        public async Task<SupplierVerificationRequestDetailDto> GetSupplierVerificationRequestDetail(
+            Guid requestId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/supplier-verification-request-detail?requestId={requestId}");
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request.Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add("Cookie", $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch Supplier Verification Request.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<SupplierVerificationRequestDetailDto>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new SupplierVerificationRequestDetailDto();
+        }
+
+        public async Task UpdateVerificationRequestStatus(
+            Guid verificationRequestId,
+            string status,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Put,
+                $"{buyerUrl}/api/v1/buyer/supplier-verification-request-status");
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request.Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add("Cookie", $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            request.Content = JsonContent.Create(new
+            {
+                VerificationRequestId = verificationRequestId,
+                Status = status
+            });
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to update verification request status.",
+                    error);
+            }
         }
 
         public async Task<List<RFQQuestionResponseDto>> GetRFQQuestions(

@@ -36,6 +36,11 @@ namespace Buyer.Infrastructure.Repository
 
         private ISupplierVerificationRequestRepository _supplierVerificationRequest;
         private IVerificationTemplateRepository _verificationTemplateRepository;
+        private IVerificationTemplateQuestionRepository _verificationTemplateQuestionRepository;
+        private IVerificationTemplateQuestionOptionRepository _verificationTemplateQuestionOptionRepository;
+        private IDefaultVerificationTemplateQuestionRepository _defaultVerificationTemplateQuestionRepository;
+        private IDefaultVerificationTemplateRepository _defaultVerificationTemplateRepository;
+
         private IRFQQuestionAttachmentMappingRepository _rfqQuestionAttachmentMappingRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
@@ -287,6 +292,57 @@ namespace Buyer.Infrastructure.Repository
                 return _verificationTemplateRepository;
             }
         }
+
+         public IVerificationTemplateQuestionRepository VerificationTemplateQuestion
+        {
+            get
+            {
+                if (_verificationTemplateQuestionRepository == null)
+                {
+                   _verificationTemplateQuestionRepository = new VerificationTemplateQuestionRepository(_context);
+                }
+
+                return _verificationTemplateQuestionRepository;
+            }
+        }
+        public IVerificationTemplateQuestionOptionRepository VerificationTemplateQuestionOptionRepository
+        {
+            get
+            {
+                if (_verificationTemplateQuestionOptionRepository == null)
+                {
+                   _verificationTemplateQuestionOptionRepository = new VerificationTemplateQuestionOptionRepository(_context);
+                }
+
+                return _verificationTemplateQuestionOptionRepository;
+            }
+        }
+            public IDefaultVerificationTemplateQuestionRepository DefaultVerificationTemplateQuestionRepository
+        {
+            get
+            {
+                if (_defaultVerificationTemplateQuestionRepository == null)
+                {
+                   _defaultVerificationTemplateQuestionRepository = new DefaultVerificationTemplateQuestionRepository(_context);
+                }
+
+                return _defaultVerificationTemplateQuestionRepository;
+            }
+        }
+
+         public IDefaultVerificationTemplateRepository DefaultVerificationTemplateRepository
+        {
+            get
+            {
+                if (_defaultVerificationTemplateRepository == null)
+                {
+                   _defaultVerificationTemplateRepository = new DefaultVerificationTemplateRepository(_context);
+                }
+
+                return _defaultVerificationTemplateRepository;
+            }
+        }
+
         public IRFQQuestionAttachmentMappingRepository RFQQuestionAttachmentMapping
         {
             get

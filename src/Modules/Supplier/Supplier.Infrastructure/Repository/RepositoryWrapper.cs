@@ -35,6 +35,8 @@ namespace Supplier.Infrastructure.Repository
         private IRFQQuestionAnswerRepository _rfqQuestionAnswer;
         private IRFQQuestionAnswerOptionRepository _rfqQuestionAnswerOption;
         private ICatalogAssetMappingRepository _catalogAssetMapping;
+        private ISupplierVerificationAnswerRepository _supplierVerificationAnswer;
+        private ISupplierVerificationAnswerOptionRepository _supplierVerificationAnswerOption;
         private ISupplierCategoryRepository _supplierCategory;
 
 
@@ -180,6 +182,19 @@ namespace Supplier.Infrastructure.Repository
                 }
 
                 return _catalogAssetMapping;
+            }
+        }
+          public ISupplierVerificationAnswerRepository SupplierVerificationAnswer
+        {
+            get
+            {
+                if (_supplierVerificationAnswer == null)
+                {
+                    _supplierVerificationAnswer =
+                        new SupplierVerificationAnswerRepository(_context);
+                }
+
+                return _supplierVerificationAnswer;
             }
         }
 

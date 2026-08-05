@@ -26,4 +26,21 @@
      </PackageReference>
    </ItemGroup>
 
+   <ItemGroup>
+    <EmbeddedResource Include="Migrations\DefaultVerificationTemplate.csv" />
+    <EmbeddedResource Include="Migrations\DefaultVerificationTemplateQuestion.csv" />
+ 
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Migrations/DefaultVerificationTemplate.csv" >
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Buyer.Infrastructure\Migrations\DefaultVerificationTemplate.csv</Link>
+    </Content>
+     <Content Include="Migrations/DefaultVerificationTemplateQuestion.csv" >
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Buyer.Infrastructure\Migrations\DefaultVerificationTemplateQuestion.csv</Link>
+    </Content>
+ </ItemGroup>
+
 </Project>

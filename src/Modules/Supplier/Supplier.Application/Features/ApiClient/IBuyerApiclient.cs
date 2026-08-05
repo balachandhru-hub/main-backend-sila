@@ -11,6 +11,14 @@ namespace Supplier.Application.Contracts
         Task<GetRFQAttachmentsDto> GetRFQAttachments(
     Guid rfqId,
     CancellationToken cancellationToken = default);
+    Task<SupplierVerificationRequestDetailDto> GetSupplierVerificationRequestDetail(
+    Guid requestId,
+    CancellationToken cancellationToken = default);
+    Task UpdateVerificationRequestStatus(
+    Guid verificationRequestId,
+    string status,
+    CancellationToken cancellationToken = default);
+   
         Task<List<RFQQuestionResponseDto>> GetRFQQuestions(
         Guid rfqId,
         CancellationToken cancellationToken = default);

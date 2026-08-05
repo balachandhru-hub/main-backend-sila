@@ -34,6 +34,9 @@ namespace Supplier.Infrastructure.DbContext
         public DbSet<SupplierRFQQuestionAnswer> SupplierRFQQuestionAnswer {get;set;}
         public DbSet<SupplierRFQAnswerOption> SupplierRFQAnswerOption {get;set;}
         public DbSet<SupplierCategory> SupplierCategory {get;set;}
+
+        public DbSet<SupplierVerificationAnswer> SupplierVerificationAnswer { get; set; }
+        public DbSet<SupplierVerificationAnswerOption> SupplierVerificationAnswerOption { get; set; }
       
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
@@ -50,6 +53,8 @@ namespace Supplier.Infrastructure.DbContext
             _ = modelBuilder.Entity<SupplierQuotation>().HasIndex(a=> a.IsActive);
             _ = modelBuilder.Entity<SupplierQuotationItem>().HasIndex(a=> a.IsActive);
             _ = modelBuilder.Entity<RFQSupplierMapping>().HasIndex(a=> a.IsActive);
+            _ = modelBuilder.Entity<SupplierVerificationAnswerOption>().HasIndex(a=> a.IsActive);
+            _ = modelBuilder.Entity<SupplierVerificationAnswer>().HasIndex(a=> a.IsActive);
             _=  modelBuilder.Entity<SupplierRFQQuestionAnswer>().HasIndex(a=> a.IsActive);
             _=  modelBuilder.Entity<SupplierRFQAnswerOption>().HasIndex(a=> a.IsActive);
             _=  modelBuilder.Entity<SupplierCategory>().HasIndex(a=>a.IsActive);

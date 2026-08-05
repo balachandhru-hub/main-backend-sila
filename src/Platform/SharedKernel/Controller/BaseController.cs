@@ -33,5 +33,18 @@ namespace SharedKernel.Controllers
 
             return userId;
         }
+        protected Guid GetRoleId()
+        {
+            var claim = User.FindFirst("RoleId")?.Value;
+
+            if (!Guid.TryParse(claim, out Guid roleId))
+            {
+                throw new UnAuthorizedCustomException(
+                    "Unauthorized",
+                    "Role claim not found.");
+            }
+
+            return roleId;
+        }
     }
 }

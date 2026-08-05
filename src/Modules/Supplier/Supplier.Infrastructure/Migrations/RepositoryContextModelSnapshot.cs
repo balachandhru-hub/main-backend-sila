@@ -1193,6 +1193,118 @@ namespace Supplier.Infrastructure.Migrations
                     b.ToTable("supplier_registration", "supplier");
                 });
 
+            modelBuilder.Entity("Supplier.Domain.Entities.SupplierVerificationAnswer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Answer")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("answer");
+
+                    b.Property<DateTime?>("AnsweredOn")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("answered_on");
+
+                    b.Property<Guid?>("AssetId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("asset_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_id");
+
+                    b.Property<Guid>("SupplierVerificationRequestId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_verification_request_id");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("template_id");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("VerificationTemplateQuestionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("verification_template_question_id");
+
+                    b.Property<Guid?>("VerificationTemplateQuestionOptionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("verification_template_question_option_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_supplier_verification_answer");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_supplier_verification_answer_is_active");
+
+                    b.ToTable("supplier_verification_answer", "supplier");
+                });
+
+            modelBuilder.Entity("Supplier.Domain.Entities.SupplierVerificationAnswerOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("SupplierVerificationAnswerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_verification_answer_id");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("VerificationTemplateQuestionOptionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("verification_template_question_option_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_supplier_verification_answer_option");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_supplier_verification_answer_option_is_active");
+
+                    b.ToTable("supplier_verification_answer_option", "supplier");
+                });
+
             modelBuilder.Entity("Supplier.Domain.Entities.CatalogAssetMapping", b =>
                 {
                     b.HasOne("Supplier.Domain.Entities.SupplierCatalog", "SupplierCatalog")

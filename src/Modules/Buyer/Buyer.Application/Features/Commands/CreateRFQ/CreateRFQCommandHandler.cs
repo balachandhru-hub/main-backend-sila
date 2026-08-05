@@ -36,7 +36,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
 
             _mediator = mediator;
             _supplierApiClient = supplierApiClient;
-      
+
         }
 
         public async Task<Guid> Handle(
@@ -321,12 +321,13 @@ $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQN
         {
             RFQId = rfq.Id,
             RFQNumber = rfq.RFQNumber,
-            BuyerOrganizationId = buyer.OrganizationId,
+            BuyerId = buyer.Id,
             RFQVerificationTemplateId = request.RFQ.RFQVerificationTemplateId,
-            SupplierInvites = unVerifiedSuppliers
+            SupplierInvites = unVerifiedSuppliers,
+            EndDate = request.RFQ.EndDate
         }));
             }
-        
+
             await _repository.SaveAsync();
             foreach (var supplierId in request.RFQ.SupplierIds)
             {
@@ -345,7 +346,7 @@ $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQN
 
                     StartDate = rfq.StartDate,
                     EndDate = rfq.EndDate,
-                DeliveryLocation = rfq.DeliveryLocation, 
+                    DeliveryLocation = rfq.DeliveryLocation,
                     AddLotOption = rfq.AddLotOption,
                     Status = rfq.Status,
 
@@ -362,23 +363,25 @@ $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQN
                         }).ToList()
                 };
 
+
                 try
                 {
                     await _supplierApiClient.CreateSupplierRFQ(
                         supplierRequest,
-                     
+
                         cancellationToken);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(
                         $"Failed to create Supplier RFQ for Supplier {supplierId}. Error: {ex.Message}");
-                        throw new BadRequestCustomException(
-                            "Unable to create Supplier RFQ.",
-                            $"Failed to create Supplier RFQ for Supplier {supplierId}. Error: {ex.Message}");
+                    throw new BadRequestCustomException(
+                        "Unable to create Supplier RFQ.",
+                        $"Failed to create Supplier RFQ for Supplier {supplierId}. Error: {ex.Message}");
                 }
+
             }
-            
+
             _logger.LogInfo($"RFQ created successfully. RFQ Id : {rfq.Id}");
 
             return rfq.Id;
