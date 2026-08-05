@@ -31,10 +31,13 @@ namespace Buyer.Application.Features.Commands.UpdateVerificationRequestStatus
             _logger.LogInfo($"Verification request fetched successfully : {request.Request.VerificationRequestId}");
 
             if (verificationRequest == null)
+            {
+                _logger.LogError($"Verification request not found for RequestId : {request.Request.VerificationRequestId}");
                 throw new NotFoundCustomException(
                     "Verification request not found.",
                     "Verification request not found.");
-            _logger .LogError($"Verification request not found : {request.Request.VerificationRequestId}");
+            }
+
 
             verificationRequest.Status = request.Request.Status;
 

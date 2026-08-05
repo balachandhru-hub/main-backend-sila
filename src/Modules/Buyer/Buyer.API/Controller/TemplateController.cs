@@ -105,7 +105,7 @@ namespace Buyer.API.Controllers
             return Ok(result);
         }
         [HttpGet]
-        [Route("api/v1/buyer/supplier-verification-requests")]
+        [Route("api/v1/buyer/supplier-verification-request")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_SUPPLIER_VERIFICATION_REQUESTS")]
         [SwaggerOperation("GetSupplierVerificationRequests")]
@@ -147,7 +147,7 @@ namespace Buyer.API.Controllers
         }
 
         [HttpGet]
-        [Route("api/v1/buyer/supplier-verification-requests-by-supplier")]
+        [Route("api/v1/buyer/supplier-verification-request-by-supplier")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_SUPPLIER_VERIFICATION_REQUESTS_BY_SUPPLIER")]
         [SwaggerOperation("GetSupplierVerificationRequests")]

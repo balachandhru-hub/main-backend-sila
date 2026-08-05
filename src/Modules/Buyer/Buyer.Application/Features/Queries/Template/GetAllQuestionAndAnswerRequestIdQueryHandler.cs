@@ -56,6 +56,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
 
             if (result == null)
             {
+                _logger.LogError($"Supplier Verification Request not found. RequestId : {request.RequestId}");
                 throw new NotFoundCustomException(
                     "Supplier Verification Request not found.",
                     "Invalid Request Id.");

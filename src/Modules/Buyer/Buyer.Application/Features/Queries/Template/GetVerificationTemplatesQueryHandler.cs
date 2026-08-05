@@ -71,7 +71,7 @@ namespace Buyer.Application.Features.Queries.Template
                     TemplateId = template.Id,
                     TemplateCode = template.TemplateCode,
                     TemplateName = template.TemplateName,
-                    TemplateType = "Buyer",
+                    TemplateType = Common.BUYER,
                     Questions = questions.Select(x => new VerificationTemplateQuestionDto
                     {
                         QuestionId = x.Id,
