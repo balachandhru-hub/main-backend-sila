@@ -50,9 +50,9 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             var attachmentResponse = await _buyerApiClient.GetRFQAttachments(
                 request.RFQId,
                 cancellationToken);
-                var questions = await _buyerApiClient.GetRFQQuestions(
-                    request.RFQId,
-                    cancellationToken);
+            var questions = await _buyerApiClient.GetRFQQuestions(
+                request.RFQId,
+                cancellationToken);
 
             _logger.LogInfo($"Fetching RFQ items for SupplierRFQId: {supplierRFQId}");
             var rfqItems = await _repository.SupplierRFQItem
@@ -76,9 +76,9 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     MaterialGroup = item.MaterialGroup,
                     CostCenter = item.CostCenter,
                     Attachments = itemAttachment?.Attachments ?? new List<AssetDto>(),
-                    SupplierRFQItemId=item.Id,
-                    SupplierRFQId=item.SupplierRFQId,
-                    BuyerRFQItemId=item.BuyerRFQItemId
+                    SupplierRFQItemId = item.Id,
+                    SupplierRFQId = item.SupplierRFQId,
+                    BuyerRFQItemId = item.BuyerRFQItemId
 
 
                 });
@@ -101,12 +101,12 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     .FindByCondition(x => x.SupplierQuotationId == quotation.Id)
                     .Select(x => new SupplierQuotationItemDto
                     {
-                         ItemQutationId = x.Id,
+                        ItemQutationId = x.Id,
                         QuotedPrice = x.QuotedPrice
                     })
                     .ToListAsync(cancellationToken);
             }
-           
+
 
 
 
@@ -140,7 +140,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
         },
 
                 SupplierQuotationItems = quotationItems,
-           
+
 
             };
         }
