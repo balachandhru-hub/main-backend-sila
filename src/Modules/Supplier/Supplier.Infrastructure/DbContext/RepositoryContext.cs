@@ -31,6 +31,9 @@ namespace Supplier.Infrastructure.DbContext
        public DbSet<SupplierQuotation> SupplierQuotation {get;set;}
        public DbSet<SupplierQuotationItem> SupplierQuotationItem {get;set;}
         public DbSet<RFQSupplierMapping> RFQSupplierMapping {get;set;}
+        public DbSet<SupplierRFQQuestionAnswer> SupplierRFQQuestionAnswer {get;set;}
+        public DbSet<SupplierRFQAnswerOption> SupplierRFQAnswerOption {get;set;}
+        public DbSet<SupplierCategory> SupplierCategory {get;set;}
 
         public DbSet<SupplierVerificationAnswer> SupplierVerificationAnswer { get; set; }
         public DbSet<SupplierVerificationAnswerOption> SupplierVerificationAnswerOption { get; set; }
@@ -52,6 +55,9 @@ namespace Supplier.Infrastructure.DbContext
             _ = modelBuilder.Entity<RFQSupplierMapping>().HasIndex(a=> a.IsActive);
             _ = modelBuilder.Entity<SupplierVerificationAnswerOption>().HasIndex(a=> a.IsActive);
             _ = modelBuilder.Entity<SupplierVerificationAnswer>().HasIndex(a=> a.IsActive);
+            _=  modelBuilder.Entity<SupplierRFQQuestionAnswer>().HasIndex(a=> a.IsActive);
+            _=  modelBuilder.Entity<SupplierRFQAnswerOption>().HasIndex(a=> a.IsActive);
+            _=  modelBuilder.Entity<SupplierCategory>().HasIndex(a=>a.IsActive);
 
                 modelBuilder.Entity<SupplierQuotationItem>()
                     .HasOne(x => x.SupplierRFQItem)

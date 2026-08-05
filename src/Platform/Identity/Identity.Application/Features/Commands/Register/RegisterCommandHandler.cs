@@ -4,6 +4,8 @@ using Identity.Domain.Enum;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using HashingSystem;
+using SharedKernel.ExceptionHandler;
+using Identity.Domain.Common;
 
 namespace Identity.Application.Features.Commands.Register
 {
@@ -34,7 +36,7 @@ namespace Identity.Application.Features.Commands.Register
 
             if (existingOrganization != null)
             {
-                throw new Exception("Organization already exists.");
+                throw new ConflictCustomException("Organization already exists.", "An organization with this name is already registered.");
             }
 
             // Get Email Verification record
@@ -48,16 +50,18 @@ namespace Identity.Application.Features.Commands.Register
 
             if (emailVerification == null)
             {
-                throw new Exception("Invalid verification token.");
+                throw new BadRequestCustomException("Invalid verification token.", "The verification token is invalid or the email has not been verified.");
             }
 
             // Check token expiry
             if (emailVerification.TemporaryVerificationTokenExpiresOn == null ||
                 emailVerification.TemporaryVerificationTokenExpiresOn <= DateTime.UtcNow)
             {
-                throw new Exception(
-                    "Verification token has expired. Please verify your email again.");
+                throw new BadRequestCustomException(
+                    "Verification token has expired.",
+                    "Please verify your email again.");
             }
+           
 
             // Create Organization
             var organization = new Identity.Domain.Entities.Organization
@@ -107,10 +111,10 @@ namespace Identity.Application.Features.Commands.Register
             await _repository.User.CreateAsync(user);
             string roleName = request.OrganizationType switch
             {
-                OrganizationType.Supplier => "SUPPLIER_ADMINISTRATOR",
-                OrganizationType.Buyer => "BUYER_ADMINISTRATOR",
-                OrganizationType.Platform => "PLATFORM_ADMINISTRATOR",
-                _ => throw new Exception("Invalid organization type.")
+                OrganizationType.Supplier => Common.SUPPLIER_NETWORK_ADMIN_KEY,
+                OrganizationType.Buyer => Common.BUYER_NETWORK_ADMIN_KEY,
+                OrganizationType.Platform => Common.PLATFORM_ADMINISTRATOR,
+                _ => throw new BadRequestCustomException("Invalid organization type.", "The provided organization type is not supported.")
             };
             var role = _repository.Role
                 .FindByConditionAsync(x => x.UserRole == roleName)

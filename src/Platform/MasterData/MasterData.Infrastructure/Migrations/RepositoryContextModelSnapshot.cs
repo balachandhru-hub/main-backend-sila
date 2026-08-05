@@ -79,6 +79,101 @@ namespace MasterData.Infrastructure.Migrations
                     b.ToTable("api_configs", "masterdata");
                 });
 
+            modelBuilder.Entity("MasterData.Domain.Entities.CountryList", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CountryCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("country_code");
+
+                    b.Property<string>("CountryName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("country_name");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("MobileCountryCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("mobile_country_code");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_country_lists");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_country_lists_is_active");
+
+                    b.ToTable("country_lists", "masterdata");
+                });
+
+            modelBuilder.Entity("MasterData.Domain.Entities.Currency", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("CurrencyName")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("currency_name");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<int?>("SortNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_number");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_currencies");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_currencies_is_active");
+
+                    b.ToTable("currencies", "masterdata");
+                });
+
             modelBuilder.Entity("MasterData.Domain.Entities.EmailCCList", b =>
                 {
                     b.Property<Guid>("Id")
@@ -344,6 +439,56 @@ namespace MasterData.Infrastructure.Migrations
                         .HasDatabaseName("ix_metadata_is_active");
 
                     b.ToTable("metadata", "masterdata");
+                });
+
+            modelBuilder.Entity("MasterData.Domain.Entities.Unit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_units");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_units_is_active");
+
+                    b.ToTable("units", "masterdata");
                 });
 
             modelBuilder.Entity("MasterData.Domain.Entities.UnspscCategory", b =>

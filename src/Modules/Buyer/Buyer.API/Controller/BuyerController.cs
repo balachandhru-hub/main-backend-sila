@@ -23,6 +23,7 @@ using Buyer.Domain.Dtos;
 using Buyer.Application.Features.Queries.GetAllRFQ;
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
 using Buyer.Application.Features.Queries.GetRFQAttachments;
+using Buyer.Application.Features.Queries.GetRFQQuestions;
 
 
 namespace Buyer.API.Controllers
@@ -53,9 +54,9 @@ namespace Buyer.API.Controllers
         public async Task<IActionResult> GetOrganizationProfile()
         {
             Guid organizationId = GetOrganizationId();
-            _logger.LogInfo($"Fetching the Organization Profile for ID: {organizationId}");
+            _logger.LogDebug($"Fetching the Organization Profile for ID: {organizationId}");
             var result = await _mediator.Send(new GetOrganizationProfileQuery(organizationId));
-            _logger.LogInfo($"Fetched the Organization Profile for ID: {organizationId}");
+            _logger.LogDebug($"Fetched the Organization Profile for ID: {organizationId}");
             return Ok(result);
         }
 
@@ -73,10 +74,10 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> CreateOrganizationProfile([FromBody] CreateBuyerDto createBuyerDto)
         {
-            _logger.LogInfo($"Creating Organization Profile for Organization: {createBuyerDto.OrganizationName}");
+            _logger.LogDebug($"Creating Organization Profile for Organization: {createBuyerDto.OrganizationName}");
             createBuyerDto.OrganizationId = GetOrganizationId();
             var result = await _mediator.Send(new CreateBuyerProfileCommand(createBuyerDto));
-            _logger.LogInfo($"Created Organization Profile for Organization: {createBuyerDto.OrganizationName}");
+            _logger.LogDebug($"Created Organization Profile for Organization: {createBuyerDto.OrganizationName}");
             return Ok(new SuccessResponseDto { Id = result.ToString(), Message = "Buyer Profile created successfully", Description = "Buyer Profile created successfully", StatusCode = 201 });
         }
         /// <summary>
@@ -93,10 +94,10 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetAllBuyers([FromBody] GetAllBuyersQuery query)
         {
-            _logger.LogInfo("Fetching Buyer Profiles");
+            _logger.LogDebug("Fetching Buyer Profiles");
             var result = await _mediator.Send(query);
 
-            _logger.LogInfo("Buyer Profiles retrieved successfully");
+            _logger.LogDebug("Buyer Profiles retrieved successfully");
 
             return Ok(result);
         }
@@ -115,11 +116,11 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> UpdateBuyerStatus([FromBody] UpdateBuyerStatusCommand command)
         {
-            _logger.LogInfo($"Updating Buyer Status. BuyerId: {command.BuyerId}, Status: {command.Status}");
+            _logger.LogDebug($"Updating Buyer Status. BuyerId: {command.BuyerId}, Status: {command.Status}");
 
             var result = await _mediator.Send(command);
 
-            _logger.LogInfo($"Buyer Status updated successfully. BuyerId: {command.BuyerId}");
+            _logger.LogDebug($"Buyer Status updated successfully. BuyerId: {command.BuyerId}");
 
             return Ok(result);
         }
@@ -134,11 +135,11 @@ namespace Buyer.API.Controllers
         public async Task<IActionResult> UpdateRejectedBuyer(
             [FromBody] UpdateRejectedBuyerCommand command)
         {
-            _logger.LogInfo($"Updating rejected buyer : {command.Buyer.BuyerId}");
+            _logger.LogDebug($"Updating rejected buyer : {command.Buyer.BuyerId}");
 
             await _mediator.Send(command);
 
-            _logger.LogInfo($"Buyer updated successfully : {command.Buyer.BuyerId}");
+            _logger.LogDebug($"Buyer updated successfully : {command.Buyer.BuyerId}");
 
             return Ok(new SuccessResponseDto
             {
@@ -159,7 +160,7 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Buyer not found")]
         public async Task<IActionResult> CreateDepartment([FromBody] CreateBuyerDepartmentDto dto, [FromQuery] Guid? buyerId)
         {
-            _logger.LogInfo($"Creating Department : {dto.Department}");
+            _logger.LogDebug($"Creating Department : {dto.Department}");
 
             dto.BuyerId = buyerId;
 
@@ -389,12 +390,12 @@ namespace Buyer.API.Controllers
             [FromBody] CreateRFQDto rfq)
         {
             Guid organizationId = GetOrganizationId();
-            _logger.LogInfo("Creating RFQ");
+            _logger.LogDebug("Creating RFQ");
 
             Guid rfqId = await _mediator.Send(
         new CreateRFQCommand(organizationId, rfq));
 
-            _logger.LogInfo("RFQ created successfully");
+            _logger.LogDebug("RFQ created successfully");
 
             return Ok(new SuccessResponseDto
             {
@@ -420,12 +421,12 @@ namespace Buyer.API.Controllers
         {
             Guid organizationId = GetOrganizationId();
 
-            _logger.LogInfo($"Fetching Buyer Id for Organization: {organizationId}");
+            _logger.LogDebug($"Fetching Buyer Id for Organization: {organizationId}");
 
             Guid result = await _mediator.Send(
                 new GetBuyerIdQuery(organizationId));
 
-            _logger.LogInfo($"Fetched Buyer Id for Organization: {organizationId}");
+            _logger.LogDebug($"Fetched Buyer Id for Organization: {organizationId}");
 
             return Ok(result);
         }
@@ -493,6 +494,25 @@ namespace Buyer.API.Controllers
 
             return Ok(result);
         }
+        [HttpGet]
+        [Route("api/v1/buyer/internal-rfq-questions")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_RFQ_QUESTIONS")]
+        [SwaggerOperation("GetRFQQuestions")]
+        [SwaggerResponse(200, type: typeof(List<RFQQuestionResponseDto>), description: "Fetched RFQ Questions successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetRFQQuestions(
+            [FromQuery] Guid rfqId)
+        {
+            _logger.LogDebug($"Fetching RFQ Questions for RFQ Id: {rfqId}");
 
-    }
+            var result = await _mediator.Send(
+                new GetRFQQuestionsQuery(rfqId));
+
+            _logger.LogDebug($"Fetched RFQ Questions successfully for RFQ Id: {rfqId}");
+
+            return Ok(result);
+        }
+        }
 }

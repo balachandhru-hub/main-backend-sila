@@ -1296,6 +1296,55 @@ namespace Buyer.Infrastructure.Migrations
                     b.ToTable("rfqquestion_answer", "buyersystem");
                 });
 
+            modelBuilder.Entity("Buyer.Domain.Entities.RFQQuestionAttachmentMapping", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("asset_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("RFQQuestionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("rfqquestion_id");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_rfqquestion_attachment_mapping");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_rfqquestion_attachment_mapping_is_active");
+
+                    b.ToTable("rfqquestion_attachment_mapping", "buyersystem");
+                });
+
             modelBuilder.Entity("Buyer.Domain.Entities.RFQQuestionOption", b =>
                 {
                     b.Property<Guid>("Id")

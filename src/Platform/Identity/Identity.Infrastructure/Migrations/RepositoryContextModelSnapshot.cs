@@ -23,6 +23,9 @@ namespace Identity.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.HasSequence("OrganizationSNSequence", "identitysystem")
+                .StartsAt(2L);
+
             modelBuilder.Entity("Identity.Domain.Entities.ApiKey", b =>
                 {
                     b.Property<Guid>("Id")
@@ -239,6 +242,52 @@ namespace Identity.Infrastructure.Migrations
                     b.ToTable("login_record", "identitysystem");
                 });
 
+            modelBuilder.Entity("Identity.Domain.Entities.ModelMapping", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("ModelName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("model_name");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_model_mapping");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_model_mapping_is_active");
+
+                    b.ToTable("model_mapping", "identitysystem");
+                });
+
             modelBuilder.Entity("Identity.Domain.Entities.Organization", b =>
                 {
                     b.Property<Guid>("Id")
@@ -309,6 +358,13 @@ namespace Identity.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("pin_code");
 
+                    b.Property<string>("SNID")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("snid")
+                        .HasDefaultValueSql("'SN' + RIGHT('00000000000' + CAST(NEXT VALUE FOR [identitysystem].[OrganizationSNSequence] AS VARCHAR(11)), 11)");
+
                     b.Property<string>("State")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -325,6 +381,50 @@ namespace Identity.Infrastructure.Migrations
                         .HasDatabaseName("ix_organizations_is_active");
 
                     b.ToTable("organizations", "identitysystem");
+                });
+
+            modelBuilder.Entity("Identity.Domain.Entities.OrganizationModelMapping", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("ModelId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("model_id");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("organization_id");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_organization_model_mapping");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_organization_model_mapping_is_active");
+
+                    b.ToTable("organization_model_mapping", "identitysystem");
                 });
 
             modelBuilder.Entity("Identity.Domain.Entities.Person", b =>

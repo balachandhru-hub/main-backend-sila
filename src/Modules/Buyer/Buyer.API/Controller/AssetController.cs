@@ -69,11 +69,11 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(statusCode: 401, "Unauthorized", typeof(ErrorResponseDto))]
        public async Task<IActionResult> GetDocument([FromRoute] Guid assetId)
 {
-    _logger.LogInfo($"Retrieving document for Asset Id: {assetId}");
+    _logger.LogDebug($"Retrieving document for Asset Id: {assetId}");
 
     var result = await _mediator.Send(new GetDocumentQuery(assetId));
 
-    _logger.LogInfo($"Document retrieved successfully for Asset Id: {assetId}");
+    _logger.LogDebug($"Document retrieved successfully for Asset Id: {assetId}");
 
     return Ok(result);
 }

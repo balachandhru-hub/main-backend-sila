@@ -27,6 +27,8 @@ namespace Supplier.Domain.Common
         public static readonly string UNVERIFIED_STATUS = "UNVERIFIED";
         public const string SUBMITTED = "SUBMITTED";
         public const string DRAFT = "DRAFT";
+        public const string CATALOG = "CATALOG";
+        public const string NON_CATALOG = "NON_CATALOG";
 
     }
 

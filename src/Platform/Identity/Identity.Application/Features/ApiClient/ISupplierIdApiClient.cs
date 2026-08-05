@@ -6,7 +6,7 @@ namespace Identity.Application.Contracts
 {
     public interface ISupplierIdApiClient
     {
-        Task<Guid> GetSupplierId(
+        Task<Guid?> GetSupplierId(
             string accessToken,
             CancellationToken cancellationToken = default);
     }

@@ -41,6 +41,7 @@ namespace Buyer.Infrastructure.Repository
         private IDefaultVerificationTemplateQuestionRepository _defaultVerificationTemplateQuestionRepository;
         private IDefaultVerificationTemplateRepository _defaultVerificationTemplateRepository;
 
+        private IRFQQuestionAttachmentMappingRepository _rfqQuestionAttachmentMappingRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -342,6 +343,18 @@ namespace Buyer.Infrastructure.Repository
             }
         }
 
+        public IRFQQuestionAttachmentMappingRepository RFQQuestionAttachmentMapping
+        {
+            get
+            {
+                if (_rfqQuestionAttachmentMappingRepository == null)
+                {
+                    _rfqQuestionAttachmentMappingRepository = new RFQQuestionAttachmentMappingRepository(_context);
+                }
+
+                return _rfqQuestionAttachmentMappingRepository;
+            }
+        }
         public bool Save()
         {
             _context.OnBeforeSaving(_userIdentityService.GetCurrentUser());

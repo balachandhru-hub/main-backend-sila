@@ -25,6 +25,9 @@ public interface IRepositoryWrapper
     ICatalogAssetMappingRepository CatalogAssetMapping { get; }
     ISupplierVerificationAnswerRepository SupplierVerificationAnswer { get; }
     ISupplierVerificationAnswerOptionRepository SupplierVerificationAnswerOption { get; }
+    IRFQQuestionAnswerRepository RFQQuestionAnswer { get; }
+    IRFQQuestionAnswerOptionRepository RFQQuestionAnswerOption { get; }
+    ISupplierCategoryRepository SupplierCategory { get; }
 
     bool Save();
     Task<bool> SaveAsync();

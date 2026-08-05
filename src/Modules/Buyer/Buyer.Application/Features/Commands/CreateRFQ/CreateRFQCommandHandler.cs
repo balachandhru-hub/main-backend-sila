@@ -188,6 +188,23 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
 
                 await _repository.RFQQuestion.CreateAsync(rfqQuestion);
 
+                if (question.Attachments != null)
+                {
+                    foreach (var attachment in question.Attachments)
+                    {
+                        Guid assetId = await _mediator.Send(
+                            new UploadAssetCommand(attachment));
+
+                        await _repository.RFQQuestionAttachmentMapping.CreateAsync(
+                            new RFQQuestionAttachmentMapping
+                            {
+                                Id = Guid.NewGuid(),
+                                RFQQuestionId = rfqQuestion.Id,
+                                AssetId = assetId,
+                                Type = attachment.AssetType
+                            });
+                    }
+                }
                 if (question.Options != null)
                 {
                     int order = Common.DISPLAY_ORDER;

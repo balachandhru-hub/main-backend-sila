@@ -59,7 +59,7 @@ namespace Identity.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> SendOtp([FromBody] SendEmailVerificationCommand command)
         {
-            _logger.LogInfo($"Generating OTP for {command.Email}");
+            _logger.LogDebug($"Generating OTP for {command.Email}");
 
             var result = await _mediator.Send(command);
 
@@ -87,6 +87,8 @@ namespace Identity.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error.")]
         public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpCommand command)
         {
+            _logger.LogDebug($"Verifying OTP for {command.Email}");
+
             var result = await _mediator.Send(command);
 
             Response.Cookies.Append(Common.VERIFICATION_TOKEN_COOKIE_NAME, result.TemporaryVerificationToken!,
@@ -123,7 +125,7 @@ namespace Identity.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> Login([FromBody] LoginCommand command)
         {
-            _logger.LogInfo($"Login request received for {command.UserName}");
+            _logger.LogDebug($"Login request received for {command.UserName}");
 
             var result = await _mediator.Send(command);
             Response.Cookies.Append(Common.COOKIE_ACCESS_TOKEN_KEY, result.Token!,
@@ -169,7 +171,7 @@ namespace Identity.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> CreateOrganization([FromBody] RegisterCommand command)
         {
-            _logger.LogInfo($"Creating organization for {command.Email}");
+            _logger.LogDebug($"Creating organization for {command.Email}");
             var verificationToken = Request.Cookies[Common.VERIFICATION_TOKEN_COOKIE_NAME];
             command.VerificationToken = verificationToken;
 
@@ -195,7 +197,7 @@ namespace Identity.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> RefreshToken()
         {
-            _logger.LogInfo("Refresh token request received.");
+            _logger.LogDebug("Refresh token request received.");
 
             string? refreshToken = Request.Cookies["refresh_token"];
 
@@ -249,6 +251,8 @@ namespace Identity.API.Controllers
         [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
         public async Task<IActionResult> GetAllClaim()
         {
+            _logger.LogDebug("Fetching token claims.");
+
             string? token = Request.Cookies[Common.COOKIE_ACCESS_TOKEN_KEY];
             TokenClaimDto result = await _mediator.Send(new GetClaimQuery
             {
@@ -269,6 +273,8 @@ namespace Identity.API.Controllers
         [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
         public async Task<IActionResult> Logout()
         {
+            _logger.LogDebug("Logout request received.");
+
             await _mediator.Send(new LogoutCommand());
  
             return Ok(new SuccessResponseDto

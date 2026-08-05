@@ -92,8 +92,8 @@ namespace Supplier.Infrastructure.ApiClients
             var result = await response.Content.ReadFromJsonAsync<GetRFQAttachmentsDto>(
                 cancellationToken: cancellationToken);
 
-            return result ?? new GetRFQAttachmentsDto();
-        }
+                    return result ?? new GetRFQAttachmentsDto();
+                }
 
         public async Task<SupplierVerificationRequestDetailDto> GetSupplierVerificationRequestDetail(
             Guid requestId,
@@ -165,6 +165,42 @@ namespace Supplier.Infrastructure.ApiClients
                     "Unable to update verification request status.",
                     error);
             }
+        }
+
+        public async Task<List<RFQQuestionResponseDto>> GetRFQQuestions(
+            Guid rfqId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/internal-rfq-questions?rfqId={rfqId}");
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request.Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add("Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch RFQ questions.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<RFQQuestionResponseDto>>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new List<RFQQuestionResponseDto>();
         }
     }
 }

@@ -40,31 +40,28 @@ namespace Supplier.Application.Features.Queries.GetSupplier
         {
             var filter = request.SupplierListDto;
 
-            // Step 1 : Supplier Catalog Filter
-            var catalogQuery = _repository.SupplierCatalog
-                .FindByCondition(x =>
-                    (string.IsNullOrEmpty(filter.SegmentCode) ||
-                     x.SegmentCode == filter.SegmentCode) &&
-                    (string.IsNullOrEmpty(filter.FamilyCode) ||
-                     x.FamilyCode == filter.FamilyCode));
+            var categoryQuery = _repository.SupplierCategory
+            .FindByCondition(x =>
+                x.IsActive &&
+                (!filter.Segment.HasValue || x.Segment == filter.Segment) &&
+                (!filter.Family.HasValue || x.Family == filter.Family));
 
-            // Step 2 : Get Distinct SupplierIds
-            var supplierIds = await catalogQuery
+            var supplierIds = await categoryQuery
                 .Select(x => x.SupplierId)
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
-          
+
 
             // Step 3 : Get Verified SupplierIds for the Buyer
             var verifiedSupplierIds = await _buyerApiClient.GetVerifiedSuppliers(
                 new GetVerifiedSupplierRequestDto
                 {
-                    BuyerId=filter.BuyerId,
+                    BuyerId = filter.BuyerId,
                     Index = filter.Index,
                     Limit = filter.Limit
                 },
-                
+
                 cancellationToken);
 
             verifiedSupplierIds = verifiedSupplierIds
@@ -90,30 +87,30 @@ namespace Supplier.Application.Features.Queries.GetSupplier
 
             // Step 5 : Final Result
             var result = await (
-      from catalog in _repository.SupplierCatalog.FindByCondition(x =>
-          supplierIds.Contains(x.SupplierId) &&
-          (string.IsNullOrEmpty(filter.SegmentCode) || x.SegmentCode == filter.SegmentCode) &&
-          (string.IsNullOrEmpty(filter.FamilyCode) || x.FamilyCode == filter.FamilyCode))
+     from category in _repository.SupplierCategory.FindByCondition(x =>
+         x.IsActive &&
+         supplierIds.Contains(x.SupplierId) &&
+         (!filter.Segment.HasValue || x.Segment == filter.Segment) &&
+         (!filter.Family.HasValue || x.Family == filter.Family))
 
-      join supplier in _repository.SupplierBusinessProfile.FindByCondition(x => true)
-          on catalog.SupplierId equals supplier.Id
+     join supplier in _repository.SupplierBusinessProfile.FindByCondition(x => x.IsActive)
+         on category.SupplierId equals supplier.Id
 
-      where string.IsNullOrEmpty(filter.SearchTerm) ||
-            supplier.OrganizationName.Contains(filter.SearchTerm)
+     where string.IsNullOrEmpty(filter.SearchTerm)
+           || supplier.OrganizationName.Contains(filter.SearchTerm)
 
-      orderby catalog.Price
-
-      select new SupplierListDto
-      {
-          SupplierId = catalog.SupplierId,
-          SupplierName = supplier.OrganizationName,
-          Email = supplier.Email,
-          IsVerified = verifiedSupplierIds.Contains(catalog.SupplierId)
-
-      })
-      .Skip(filter.Index)
-      .Take(filter.Limit)
-      .ToListAsync(cancellationToken);
+     select new SupplierListDto
+     {
+         SupplierId = supplier.Id,
+         SupplierName = supplier.OrganizationName,
+         Email = supplier.Email,
+         IsVerified = verifiedSupplierIds.Contains(supplier.Id)
+     })
+     .Distinct()
+     .OrderBy(x => x.SupplierName)
+     .Skip(filter.Index)
+     .Take(filter.Limit)
+     .ToListAsync(cancellationToken);
 
             return result;
         }

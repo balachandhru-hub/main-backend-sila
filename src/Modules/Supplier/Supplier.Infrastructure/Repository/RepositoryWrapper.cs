@@ -32,11 +32,12 @@ namespace Supplier.Infrastructure.Repository
     private ISupplierQuotationRepository _supplierQuotation;
     private ISupplierQuotationItemRepository _supplierQuotationItem;
         private ISupplierCatalogRepository _supplierCatalog;
-  
-      
+        private IRFQQuestionAnswerRepository _rfqQuestionAnswer;
+        private IRFQQuestionAnswerOptionRepository _rfqQuestionAnswerOption;
         private ICatalogAssetMappingRepository _catalogAssetMapping;
         private ISupplierVerificationAnswerRepository _supplierVerificationAnswer;
         private ISupplierVerificationAnswerOptionRepository _supplierVerificationAnswerOption;
+        private ISupplierCategoryRepository _supplierCategory;
 
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
@@ -183,7 +184,7 @@ namespace Supplier.Infrastructure.Repository
                 return _catalogAssetMapping;
             }
         }
-        public ISupplierVerificationAnswerRepository SupplierVerificationAnswer
+          public ISupplierVerificationAnswerRepository SupplierVerificationAnswer
         {
             get
             {
@@ -196,20 +197,45 @@ namespace Supplier.Infrastructure.Repository
                 return _supplierVerificationAnswer;
             }
         }
-        public ISupplierVerificationAnswerOptionRepository SupplierVerificationAnswerOption
+
+        public IRFQQuestionAnswerRepository RFQQuestionAnswer
         {
             get
             {
-                if (_supplierVerificationAnswerOption == null)
+                if (_rfqQuestionAnswer == null)
                 {
-                    _supplierVerificationAnswerOption =
-                        new SupplierVerificationAnswerOptionRepository(_context);
+                    _rfqQuestionAnswer =
+                        new RFQQuestionAnswerRepository(_context);
                 }
 
-                return _supplierVerificationAnswerOption;
+                return _rfqQuestionAnswer;
+            }
+        }
+        public IRFQQuestionAnswerOptionRepository RFQQuestionAnswerOption
+        {
+            get
+            {
+                if (_rfqQuestionAnswerOption == null)
+                {
+                    _rfqQuestionAnswerOption =
+                        new RFQQuestionAnswerOptionRepository(_context);
+                }
+
+                return _rfqQuestionAnswerOption;
             }
         }
 
+        public ISupplierCategoryRepository SupplierCategory
+        {
+            get
+            {
+                if (_supplierCategory == null)
+                {
+                    _supplierCategory = new SupplierCategoryRepository(_context);
+                }
+                return _supplierCategory;
+            }
+        }
 
         public bool Save()
         {

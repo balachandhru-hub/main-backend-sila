@@ -38,11 +38,11 @@ public class UnspscController : ControllerBase
     [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
     public async Task<IActionResult> Upload([Required] IFormFile file)
     {
-        _logger.LogInfo("Starting UNSPSC upload process.");
+        _logger.LogDebug("Starting UNSPSC upload process.");
 
         var recordsInserted = await _mediator.Send(new UploadUnspscCommand(file));
 
-        _logger.LogInfo($"UNSPSC upload completed. Records inserted: {recordsInserted}");
+        _logger.LogDebug($"UNSPSC upload completed. Records inserted: {recordsInserted}");
 
         return Ok(new
         {
@@ -65,12 +65,12 @@ public class UnspscController : ControllerBase
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 10)
     {
-        _logger.LogInfo($"Received request to get UNSPSC data: PageIndex={pageIndex}, PageSize={pageSize}");
+        _logger.LogDebug($"Received request to get UNSPSC data: PageIndex={pageIndex}, PageSize={pageSize}");
 
         var result = await _mediator.Send(
             new GetUnspscQuery(pageIndex, pageSize));
 
-        _logger.LogInfo($"Retrieved {result.Count} segments.");
+        _logger.LogDebug($"Retrieved {result.Count} segments.");
 
         return Ok(result);
     }
@@ -90,7 +90,7 @@ public class UnspscController : ControllerBase
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 10)
     {
-        _logger.LogInfo($"Received request. Segment={segment}, Family={family}");
+        _logger.LogDebug($"Received request. Segment={segment}, Family={family}");
 
         var result = await _mediator.Send(
             new GetUnspscByVersionQuery(
@@ -99,7 +99,7 @@ public class UnspscController : ControllerBase
                 pageIndex,
                 pageSize));
 
-        _logger.LogInfo($"Retrieved {result.Count} classes.");
+        _logger.LogDebug($"Retrieved {result.Count} classes.");
 
         return Ok(result);
     }
@@ -119,7 +119,7 @@ public class UnspscController : ControllerBase
     [FromQuery] int pageSize = 10,
     [FromQuery] string? searchTerm = null)
     {
-        _logger.LogInfo($"Received request to get UNSPSC segments: PageIndex={pageIndex}, PageSize={pageSize}");
+        _logger.LogDebug($"Received request to get UNSPSC segments: PageIndex={pageIndex}, PageSize={pageSize}");
 
         var result = await _mediator.Send(
     new GetUnspscsegmentQuery(
@@ -127,7 +127,7 @@ public class UnspscController : ControllerBase
         pageSize,
         searchTerm));
 
-        _logger.LogInfo($"Retrieved {result.Count} segments.");
+        _logger.LogDebug($"Retrieved {result.Count} segments.");
 
         return Ok(result);
     }
@@ -147,7 +147,7 @@ public class UnspscController : ControllerBase
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 10)
     {
-        _logger.LogInfo($"Received request to get families. Segment={segment}, PageIndex={pageIndex}, PageSize={pageSize}");
+        _logger.LogDebug($"Received request to get families. Segment={segment}, PageIndex={pageIndex}, PageSize={pageSize}");
 
         var result = await _mediator.Send(
             new GetUnspscFamilyQuery(
@@ -155,7 +155,7 @@ public class UnspscController : ControllerBase
                 pageIndex,
                 pageSize));
 
-        _logger.LogInfo($"Retrieved {result.Count} families.");
+        _logger.LogDebug($"Retrieved {result.Count} families.");
 
         return Ok(result);
     }

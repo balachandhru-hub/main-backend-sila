@@ -6,7 +6,7 @@ namespace Supplier.Application.Contracts
     {
         Task<List<Guid>> GetVerifiedSuppliers(
             GetVerifiedSupplierRequestDto request,
-            
+
             CancellationToken cancellationToken = default);
         Task<GetRFQAttachmentsDto> GetRFQAttachments(
     Guid rfqId,
@@ -18,6 +18,10 @@ namespace Supplier.Application.Contracts
     Guid verificationRequestId,
     string status,
     CancellationToken cancellationToken = default);
+   
+        Task<List<RFQQuestionResponseDto>> GetRFQQuestions(
+        Guid rfqId,
+        CancellationToken cancellationToken = default);
     }
-    
+
 }

@@ -417,9 +417,26 @@ namespace Supplier.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("catalog_name");
 
-                    b.Property<string>("CommodityCode")
+                    b.Property<string>("CatalogType")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("commodity_code");
+                        .HasColumnName("catalog_type");
+
+                    b.Property<long?>("Class")
+                        .HasColumnType("bigint")
+                        .HasColumnName("class");
+
+                    b.Property<string>("ClassTitle")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("class_title");
+
+                    b.Property<long?>("Commodity")
+                        .HasColumnType("bigint")
+                        .HasColumnName("commodity");
+
+                    b.Property<string>("CommodityTitle")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("commodity_title");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
@@ -438,29 +455,37 @@ namespace Supplier.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
-                    b.Property<string>("FamilyCode")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("family_code");
+                    b.Property<long?>("Family")
+                        .HasColumnType("bigint")
+                        .HasColumnName("family");
 
-                    b.Property<string>("FamilyName")
+                    b.Property<string>("FamilyTitle")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("family_name");
+                        .HasColumnName("family_title");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
-                    b.Property<decimal>("Price")
+                    b.Property<bool>("IsPunchOut")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_punch_out");
+
+                    b.Property<decimal?>("Price")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("price");
 
-                    b.Property<string>("SegmentCode")
+                    b.Property<string>("PunchOutUrl")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("segment_code");
+                        .HasColumnName("punch_out_url");
 
-                    b.Property<string>("SegmentName")
+                    b.Property<long?>("Segment")
+                        .HasColumnType("bigint")
+                        .HasColumnName("segment");
+
+                    b.Property<string>("SegmentTitle")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("segment_name");
+                        .HasColumnName("segment_title");
 
                     b.Property<Guid>("SupplierId")
                         .HasColumnType("uniqueidentifier")
@@ -485,6 +510,79 @@ namespace Supplier.Infrastructure.Migrations
                         .HasDatabaseName("ix_supplier_catalog_supplier_id");
 
                     b.ToTable("supplier_catalog", "supplier");
+                });
+
+            modelBuilder.Entity("Supplier.Domain.Entities.SupplierCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<long?>("Class")
+                        .HasColumnType("bigint")
+                        .HasColumnName("class");
+
+                    b.Property<string>("ClassTitle")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("class_title");
+
+                    b.Property<long?>("Commodity")
+                        .HasColumnType("bigint")
+                        .HasColumnName("commodity");
+
+                    b.Property<string>("CommodityTitle")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("commodity_title");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<long?>("Family")
+                        .HasColumnType("bigint")
+                        .HasColumnName("family");
+
+                    b.Property<string>("FamilyTitle")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("family_title");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<long>("Segment")
+                        .HasColumnType("bigint")
+                        .HasColumnName("segment");
+
+                    b.Property<string>("SegmentTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("segment_title");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_id");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_supplier_category");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_supplier_category_is_active");
+
+                    b.ToTable("supplier_category", "supplier");
                 });
 
             modelBuilder.Entity("Supplier.Domain.Entities.SupplierDispatchLocation", b =>
@@ -835,6 +933,50 @@ namespace Supplier.Infrastructure.Migrations
                     b.ToTable("supplier_rfq", "supplier");
                 });
 
+            modelBuilder.Entity("Supplier.Domain.Entities.SupplierRFQAnswerOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("RFQQuestionOptionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("rfqquestion_option_id");
+
+                    b.Property<Guid>("SupplierRFQQuestionAnswerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_rfqquestion_answer_id");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_supplier_rfqanswer_option");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_supplier_rfqanswer_option_is_active");
+
+                    b.ToTable("supplier_rfqanswer_option", "supplier");
+                });
+
             modelBuilder.Entity("Supplier.Domain.Entities.SupplierRFQItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -906,6 +1048,79 @@ namespace Supplier.Infrastructure.Migrations
                         .HasDatabaseName("ix_supplier_rfqitem_supplier_rfqid");
 
                     b.ToTable("supplier_rfqitem", "supplier");
+                });
+
+            modelBuilder.Entity("Supplier.Domain.Entities.SupplierRFQQuestionAnswer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Answer")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("answer");
+
+                    b.Property<DateTime?>("AnsweredOn")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("answered_on");
+
+                    b.Property<Guid?>("AssetId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("asset_id");
+
+                    b.Property<Guid>("BuyerRFQId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("buyer_rfqid");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid?>("QuestionOptionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("question_option_id");
+
+                    b.Property<string>("RFQNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("rfqnumber");
+
+                    b.Property<Guid>("RFQQuestionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("rfqquestion_id");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_id");
+
+                    b.Property<Guid>("SupplierRFQId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_rfqid");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_supplier_rfqquestion_answer");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_supplier_rfqquestion_answer_is_active");
+
+                    b.ToTable("supplier_rfqquestion_answer", "supplier");
                 });
 
             modelBuilder.Entity("Supplier.Domain.Entities.SupplierRegistration", b =>

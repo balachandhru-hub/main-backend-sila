@@ -21,6 +21,9 @@ public class RepositoryWrapper : IRepositoryWrapper
     private IEmailFailedDetailRepository _emailFailedDetail;
     private IEmailCCListRepository _emailCCList;
     private IMetadataRepository _metadata;
+    private ICountryListRepository _countryList;
+    private ICurrencyRepository _currency;
+    private IUnitRepository _unit;
 
     public RepositoryWrapper(
         RepositoryContext repositoryContext,
@@ -114,6 +117,39 @@ public class RepositoryWrapper : IRepositoryWrapper
                 _metadata = new MetadataRepository(_context);
 
             return _metadata;
+        }
+    }
+
+    public ICountryListRepository CountryList
+    {
+        get
+        {
+            if (_countryList == null)
+                _countryList = new CountryListRepository(_context);
+
+            return _countryList;
+        }
+    }
+
+    public ICurrencyRepository Currency
+    {
+        get
+        {
+            if (_currency == null)
+                _currency = new CurrencyRepository(_context);
+
+            return _currency;
+        }
+    }
+
+    public IUnitRepository Unit
+    {
+        get
+        {
+            if (_unit == null)
+                _unit = new UnitRepository(_context);
+
+            return _unit;
         }
     }
 

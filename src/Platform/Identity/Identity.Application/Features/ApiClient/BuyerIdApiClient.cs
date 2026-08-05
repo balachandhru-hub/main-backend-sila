@@ -19,7 +19,7 @@ namespace Identity.Infrastructure.ApiClients
             _configuration = configuration;
         }
 
-        public async Task<Guid> GetBuyerId(
+        public async Task<Guid?> GetBuyerId(
             string accessToken,
             CancellationToken cancellationToken = default)
         {
@@ -41,10 +41,11 @@ namespace Identity.Infrastructure.ApiClients
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
-
-                throw new BadRequestCustomException(
-                    "Unable to fetch Buyer Id.",
-                    error);
+                if(response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return null;
+                }
+                throw new BadRequestCustomException("Unable to fetch Buyer Id.", error);
             }
 
             return await response.Content.ReadFromJsonAsync<Guid>(cancellationToken: cancellationToken);

@@ -49,11 +49,11 @@ namespace Identity.API.Controllers
             {
                 command.OrganizationId = GetOrganizationId();
 
-                _logger.LogInfo($"Updating organization status : {command.OrganizationId}");
+                _logger.LogDebug($"Updating organization status : {command.OrganizationId}");
 
                 await _mediator.Send(command);
 
-                _logger.LogInfo($"Organization updated successfully : {command.OrganizationId}");
+                _logger.LogDebug($"Organization updated successfully : {command.OrganizationId}");
 
                 return Ok(new SuccessResponseDto
                 {

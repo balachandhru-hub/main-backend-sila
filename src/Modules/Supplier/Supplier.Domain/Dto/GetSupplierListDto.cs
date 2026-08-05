@@ -11,10 +11,10 @@ namespace Supplier.Domain.Dto
         public string? SearchTerm { get; set; }
 
         // Optional
-        public string? SegmentCode { get; set; }
+        public long? Segment { get; set; }
 
         // Optional
-        public string? FamilyCode { get; set; }
+        public long? Family { get; set; }
 
         // Optional
         // null = All

@@ -208,5 +208,52 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result ?? new GetQuestionsAnswersForSupplierDto();
         }
+        public async Task<SupplierRFQAnswerResponseDto> GetSupplierRFQAnswers(
+    Guid buyerRFQId,
+    CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo($"Fetching Supplier RFQ Answers. BuyerRFQId: {buyerRFQId}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+            _logger.LogInfo($"Supplier Service Base URL: {supplierUrl}");
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/internal-rfq-answer/{buyerRFQId}");
+            _logger.LogInfo($"Request URL: {request.RequestUri}");
+           
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                _logger.LogInfo("Adding access token to request headers.");
+
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to fetch Supplier RFQ Answers. Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch Supplier RFQ Answers.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<SupplierRFQAnswerResponseDto>(
+                cancellationToken: cancellationToken);
+
+            _logger.LogInfo($"Supplier RFQ Answers fetched successfully. BuyerRFQId: {buyerRFQId}");
+
+            return result ?? new SupplierRFQAnswerResponseDto();
+        }
     }
 }
