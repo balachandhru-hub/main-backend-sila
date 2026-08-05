@@ -45,6 +45,7 @@ namespace Supplier.Application.Features.Queries
 
             if (!answers.Any())
             {
+                _logger.LogError($"No verification answers found for RequestId : {request.SupplierVerificationRequestId}");
                 throw new NotFoundCustomException(
                     "Verification answers not found.",
                     "No answers available for this verification request.");

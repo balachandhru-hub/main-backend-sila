@@ -3,6 +3,7 @@ using Buyer.Domain.Dto;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Features.Queries.SupplierVerification
 {
@@ -12,19 +13,23 @@ namespace Buyer.Application.Features.Queries.SupplierVerification
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ISupplierApiClient _supplierApiClient;
+        private readonly ILoggerManager _logger;
 
         public GetSupplierVerificationRequestListQueryHandler(
             IRepositoryWrapper repository,
-            ISupplierApiClient supplierApiClient)
+            ISupplierApiClient supplierApiClient,
+            ILoggerManager logger)
         {
             _repository = repository;
             _supplierApiClient = supplierApiClient;
+            _logger = logger;
         }
 
         public async Task<List<SupplierVerificationRequestListDto>> Handle(
             GetSupplierVerificationRequestListQuery request,
             CancellationToken cancellationToken)
         {
+            _logger.LogInfo($"Fetching supplier verification requests for BuyerOrganizationId: {request.BuyerOrganizationId}, Index: {request.Index}, Limit: {request.Limit}");
             var requests = await _repository.SupplierVerificationRequest
                 .FindByCondition(x =>
                     x.BuyerOrganizationId == request.BuyerOrganizationId &&
@@ -33,6 +38,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerification
                 .Skip(request.Index)
                 .Take(request.Limit)
                 .ToListAsync(cancellationToken);
+                _logger.LogInfo($"Fetched {requests.Count} supplier verification requests for BuyerOrganizationId: {request.BuyerOrganizationId}");
 
             var result = new List<SupplierVerificationRequestListDto>();
 
@@ -57,6 +63,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerification
                     var defaultTemplate = await _repository.DefaultVerificationTemplateRepository
                         .FindByCondition(x => x.Id == item.RFQVerificationTemplateId)
                         .FirstOrDefaultAsync(cancellationToken);
+                        _logger.LogInfo($"Fetched default template for templateId: {item.RFQVerificationTemplateId}");
 
                     if (defaultTemplate != null)
                     {

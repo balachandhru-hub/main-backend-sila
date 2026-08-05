@@ -45,6 +45,7 @@ namespace Supplier.Application.Features.Commands.Verification
 
             if (verificationRequest == null)
             {
+                _logger.LogError($"Supplier Verification Request not found. RequestId : {request.Verification.VerificationRequestId}");
                 throw new NotFoundCustomException(
                     "Supplier Verification Request not found.",
                     "Invalid Supplier Verification Request.");
@@ -52,6 +53,7 @@ namespace Supplier.Application.Features.Commands.Verification
 
             if (verificationRequest.Status.Equals(Common.SUBMITTED, StringComparison.OrdinalIgnoreCase))
             {
+                _logger.LogError($"Verification already submitted. RequestId : {request.Verification.VerificationRequestId}");
                 throw new BadRequestCustomException(
                     "Verification already submitted.",
                     "You cannot modify submitted verification.");

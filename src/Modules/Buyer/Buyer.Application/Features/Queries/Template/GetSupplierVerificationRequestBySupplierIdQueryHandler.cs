@@ -3,6 +3,7 @@ using Buyer.Domain.Dto;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Features.Queries.SupplierVerification
 {
@@ -12,13 +13,16 @@ namespace Buyer.Application.Features.Queries.SupplierVerification
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ISupplierApiClient _supplierApiClient;
+        private readonly ILoggerManager _logger;
 
         public GetSupplierVerificationRequestBySupplierIdQueryHandler(
             IRepositoryWrapper repository,
-            ISupplierApiClient supplierApiClient)
+            ISupplierApiClient supplierApiClient,
+            ILoggerManager logger)
         {
             _repository = repository;
             _supplierApiClient = supplierApiClient;
+            _logger = logger;
         }
 
         public async Task<List<SupplierVerificationRequestListBySupplierIdDto>> Handle(
@@ -47,6 +51,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerification
                 var template = await _repository.VerificationTemplate
                     .FindByCondition(x => x.Id == item.RFQVerificationTemplateId)
                     .FirstOrDefaultAsync(cancellationToken);
+                    _logger.LogInfo($"Fetched template for templateId: {item.RFQVerificationTemplateId}");
 
                 if (template != null)
                 {
@@ -57,6 +62,8 @@ namespace Buyer.Application.Features.Queries.SupplierVerification
                     var defaultTemplate = await _repository.DefaultVerificationTemplateRepository
                         .FindByCondition(x => x.Id == item.RFQVerificationTemplateId)
                         .FirstOrDefaultAsync(cancellationToken);
+
+                    _logger.LogInfo($"Fetched default template for templateId: {item.RFQVerificationTemplateId}");
 
                     if (defaultTemplate != null)
                     {
@@ -69,6 +76,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerification
                         x.VerificationTemplateId == item.RFQVerificationTemplateId)
                     .OrderBy(x => x.DisplayOrder)
                     .ToListAsync(cancellationToken);
+                _logger.LogInfo($"Fetched {questionEntities.Count} questions for templateId: {item.RFQVerificationTemplateId}");
 
                 var questionIds = questionEntities
                     .Select(x => x.Id)
@@ -79,6 +87,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerification
                     .FindByCondition(x => questionIds.Contains(x.VerificationTemplateQuestionId))
                     .OrderBy(x => x.DisplayOrder)
                     .ToListAsync(cancellationToken);
+                    _logger.LogInfo($"Fetched {optionEntities.Count} options for questions related to templateId: {item.RFQVerificationTemplateId}");
 
               
                 var questions = questionEntities

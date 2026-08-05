@@ -34,6 +34,7 @@ namespace Buyer.Application.Features.Commands.UpdateVerificationRequestStatus
                 throw new NotFoundCustomException(
                     "Verification request not found.",
                     "Verification request not found.");
+            _logger .LogError($"Verification request not found : {request.Request.VerificationRequestId}");
 
             verificationRequest.Status = request.Request.Status;
 
