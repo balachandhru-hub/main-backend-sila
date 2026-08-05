@@ -51,7 +51,7 @@ namespace Buyer.API.Controllers
        
 
         [HttpGet]
-        [Route("api/v1/buyer/verification-templates")]
+        [Route("api/v1/buyer/verification-template")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_VERIFICATION_TEMPLATES")]
         [SwaggerOperation("GetVerificationTemplates")]
