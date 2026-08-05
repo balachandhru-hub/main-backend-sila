@@ -121,5 +121,92 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result ?? new GetAllSupplierQuotationDto();
         }
+
+        public async Task<SupplierProfileDto> GetSupplierById(
+    Guid supplierId,
+    CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo($"Fetching Supplier Details. SupplierId: {supplierId}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/{supplierId}");
+
+            // Get access token from current request cookie
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                _logger.LogInfo("Adding access token to request headers.");
+
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to fetch Supplier Details. Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch Supplier Details.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<SupplierProfileDto>(
+                cancellationToken: cancellationToken);
+
+            _logger.LogInfo($"Supplier Details fetched successfully. SupplierId: {supplierId}");
+
+            return result ?? new SupplierProfileDto();
+        }
+        public async Task<GetQuestionsAnswersForSupplierDto> GetQuestionsAnswersForSupplier(
+            Guid requestId,
+            CancellationToken cancellationToken = default)
+        {
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var requestMessage = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/questions-answers?requestId={requestId}");
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request.Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                requestMessage.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(
+                requestMessage,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch supplier verification answers.",
+                    error);
+            }
+
+            var result =
+                await response.Content.ReadFromJsonAsync<GetQuestionsAnswersForSupplierDto>(
+                    cancellationToken: cancellationToken);
+
+            return result ?? new GetQuestionsAnswersForSupplierDto();
+        }
     }
 }

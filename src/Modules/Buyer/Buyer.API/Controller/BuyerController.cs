@@ -12,7 +12,6 @@ using Buyer.Application.Features.Queries.GetAllBuyers;
 using Buyer.Application.Features.StatusUpdate.Commands;
 using Buyer.Application.Features.Commands.Buyer.UpdateRejectedBuyer;
 using Buyer.Application.Features.Commands.Department;
-using Microsoft.AspNetCore.Identity;
 using Buyer.Application.Features.Commands.CostCenter;
 using Buyer.Application.Features.Queries.Department;
 using Buyer.Application.Features.Queries.CostCenter;
@@ -24,6 +23,8 @@ using Buyer.Domain.Dtos;
 using Buyer.Application.Features.Queries.GetAllRFQ;
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
 using Buyer.Application.Features.Queries.GetRFQAttachments;
+
+
 namespace Buyer.API.Controllers
 {
     [ApiController]
@@ -492,5 +493,6 @@ namespace Buyer.API.Controllers
 
             return Ok(result);
         }
+
     }
 }

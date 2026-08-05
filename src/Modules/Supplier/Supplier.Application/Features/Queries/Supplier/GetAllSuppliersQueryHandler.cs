@@ -1,5 +1,6 @@
 using MediatR;
 using SharedKernel.Dto;
+using SharedKernel.LoggerServices;
 using Supplier.Domain.Dto;
 using Supplier.Infrastructure.Contracts.IRepository;
 
@@ -9,28 +10,29 @@ namespace Supplier.Application.Features.Queries.Supplier
         : IRequestHandler<GetAllSuppliersQuery, List<SupplierProfileDto>>
     {
         private readonly IRepositoryWrapper _repositoryWrapper;
+        private readonly ILoggerManager _logger;
 
-        public GetAllSuppliersQueryHandler(IRepositoryWrapper repositoryWrapper)
+        public GetAllSuppliersQueryHandler(IRepositoryWrapper repositoryWrapper, ILoggerManager logger)
         {
             _repositoryWrapper = repositoryWrapper;
+            _logger = logger;
         }
 
 
-        public async Task<List<SupplierProfileDto>> Handle(
- GetAllSuppliersQuery request,
- CancellationToken cancellationToken)
+        public async Task<List<SupplierProfileDto>> Handle(GetAllSuppliersQuery request, CancellationToken cancellationToken)
         {
+            _logger.LogInfo($"Fetching all suppliers with filters - OrganizationName: {request.OrganizationName}, Status: {request.Status}, Index: {request.Index}, Limit: {request.Limit}");
             var query = _repositoryWrapper.SupplierBusinessProfile
                 .FindByCondition(x => x.IsActive);
 
-            // Filter by Organization Name
+
             if (!string.IsNullOrWhiteSpace(request.OrganizationName))
             {
                 query = query.Where(x =>
                     x.OrganizationName.Contains(request.OrganizationName));
             }
 
-            // Filter by Status
+
             if (!string.IsNullOrWhiteSpace(request.Status))
             {
                 query = query.Where(x =>
@@ -75,13 +77,13 @@ namespace Supplier.Application.Features.Queries.Supplier
                         YearEstablished = supplier.YearEstablished,
                         Website = supplier.Website,
                         Description = supplier.Description,
-                        Status=supplier.Status,
-                        Comment=supplier.Comment
+                        Status = supplier.Status,
+                        Comment = supplier.Comment
                     }
                 };
 
 
-                // Registrations
+
                 var registrations = _repositoryWrapper.SupplierRegistration
                     .FindByCondition(x =>
                         x.SupplierId == supplier.Id &&
@@ -127,7 +129,7 @@ namespace Supplier.Application.Features.Queries.Supplier
                 }
 
 
-                // Bank Accounts
+
                 dto.BankAccounts = _repositoryWrapper.SupplierBankAccount
                     .FindByCondition(x =>
                         x.SupplierId == supplier.Id &&
@@ -147,7 +149,7 @@ namespace Supplier.Application.Features.Queries.Supplier
                     .ToList();
 
 
-                // Dispatch Locations
+
                 dto.DispatchLocations = _repositoryWrapper.SupplierDispatchLocation
                     .FindByCondition(x =>
                         x.SupplierId == supplier.Id &&

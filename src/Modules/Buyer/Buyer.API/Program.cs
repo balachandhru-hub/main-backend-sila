@@ -86,7 +86,7 @@ namespace Buyer.API
             using (var scope = app.Services.CreateScope())
             {
                 DBMigration.UpdateDatabase(scope.ServiceProvider);
-                // SeedData.Initialize(scope.ServiceProvider);
+                SeedData.Initialize(scope.ServiceProvider);
             }
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions

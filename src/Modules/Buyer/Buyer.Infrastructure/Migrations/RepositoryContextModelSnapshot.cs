@@ -667,6 +667,115 @@ namespace Buyer.Infrastructure.Migrations
                     b.ToTable("buyer_supplier_mapping", "buyersystem");
                 });
 
+            modelBuilder.Entity("Buyer.Domain.Entities.DefaultVerificationTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("TemplateCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("template_code");
+
+                    b.Property<string>("TemplateName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("template_name");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_default_verification_template");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_default_verification_template_is_active");
+
+                    b.ToTable("default_verification_template", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.DefaultVerificationTemplateQuestion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<Guid>("DefaultVerificationTemplateId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("default_verification_template_id");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("display_order");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("question");
+
+                    b.Property<string>("QuestionKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("question_key");
+
+                    b.Property<string>("QuestionType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("question_type");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_default_verification_template_question");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_default_verification_template_question_is_active");
+
+                    b.ToTable("default_verification_template_question", "buyersystem");
+                });
+
             modelBuilder.Entity("Buyer.Domain.Entities.ItemBuyerMaster", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1491,6 +1600,10 @@ namespace Buyer.Infrastructure.Migrations
                     b.Property<Guid>("BuyerId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("buyer_id");
+
+                    b.Property<string>("Category")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("category");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")

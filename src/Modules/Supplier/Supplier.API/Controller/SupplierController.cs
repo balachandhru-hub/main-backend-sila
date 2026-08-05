@@ -23,6 +23,8 @@ using Supplier.Application.Features.Queries.GetSupplier;
 using Supplier.Application.Features.Queries.GetAllSupplierRFQ;
 using Supplier.Application.Features.Queries.GetSupplierAllRFQ;
 using Supplier.Application.Features.Queries.GetSupplierQuotation;
+using Supplier.Application.Features.Commands.SubmitVerification;
+using Supplier.Application.Features.Queries;
 
 
 namespace Supplier.API.Controllers
@@ -424,7 +426,7 @@ namespace Supplier.API.Controllers
             return Ok(result);
         }
 
-         [HttpPost]
+        [HttpPost]
         [Route("api/v1/supplier/rfq-master-data")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_SUPPLIER_RFQ_MASTER_DATA")]
@@ -433,13 +435,13 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetRFQList(
-     [FromBody] GetSupplierRFQListQuery query)
+    [FromBody] GetSupplierRFQListQuery query)
         {
             var result = await _mediator.Send(query);
 
             return Ok(result);
         }
-         [HttpGet]
+        [HttpGet]
         [Route("api/v1/supplier/rfq-by-id")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_SUPPLIER_RFQ_BY_ID")]
@@ -457,7 +459,7 @@ namespace Supplier.API.Controllers
             return Ok(result);
         }
 
-         [HttpGet]
+        [HttpGet]
         [Route("api/v1/supplier/quotation-rfq-by-id")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_SUPPLIER_QUOTATION_RFQ_BY_ID")]
@@ -471,6 +473,62 @@ namespace Supplier.API.Controllers
             {
                 RFQId = rfqId
             });
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("api/v1/supplier/{supplierId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_BY_ID")]
+        [SwaggerOperation("GetSupplierById")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier catalog updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier catalog not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetSupplierById(Guid supplierId)
+        {
+            var result = await _mediator.Send(new GetSupplierByIdQuery
+            {
+                SupplierId = supplierId
+            });
+
+            return Ok(result);
+        }
+
+        [HttpPut]
+        [Route("api/v1/supplier/submit-verification")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "SUBMIT_SUPPLIER_VERIFICATION")]
+        [SwaggerOperation("SubmitSupplierVerification")]
+        [SwaggerResponse(200, type: typeof(bool), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> SubmitVerification(
+             [FromBody] SubmitVerificationDto request)
+        {
+            var result = await _mediator.Send(
+                new SubmitVerificationCommand(request));
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("api/v1/supplier/questions-answers")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_QUESTIONS_ANSWERS_FOR_SUPPLIER")]
+        [SwaggerOperation("GetQuestionsAnswersForSupplier")]
+        [SwaggerResponse(200, type: typeof(GetQuestionsAnswersForSupplierDto), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetQuestionsAnswersForSupplier(
+    Guid requestId)
+        {
+            var result = await _mediator.Send(
+                new GetQuestionsAnswersForSupplierQuery
+                {
+                    SupplierVerificationRequestId = requestId
+                });
 
             return Ok(result);
         }
