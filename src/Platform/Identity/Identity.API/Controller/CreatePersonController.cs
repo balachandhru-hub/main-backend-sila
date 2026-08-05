@@ -15,6 +15,7 @@ using Identity.Application.Features.Commands.SaveOrganizationModelMapping;
 using Identity.Application.Features.Queries.GetOrganizationUser;
 using System.Security.Claims;
 using Identity.Application.Features.Queries.GetPersonDetail;
+using Identity.Application.Features.Commands.DeletePerson;
 
 
 
@@ -72,6 +73,7 @@ namespace Identity.API.Controllers
         }
         [HttpGet]
         [Route("api/v1/identity/model")]
+        [ValidateModelState]
         [ApiAuthorization(Name = "GET_MODEL")]
         [SwaggerOperation("GetAllModel")]
         [SwaggerResponse(200, type: typeof(List<ModelDto>), description: "Success")]
@@ -135,6 +137,7 @@ namespace Identity.API.Controllers
         }
         [HttpGet]
         [Route("api/v1/identity/organization-users")]
+        [ValidateModelState]
         [ApiAuthorization(Name = "GET_ORGANIZATION_USERS")]
         [SwaggerOperation("GetOrganizationUsers")]
         [SwaggerResponse(200, type: typeof(List<UserListDto>), description: "Success")]
@@ -163,6 +166,7 @@ namespace Identity.API.Controllers
         }
         [HttpGet]
         [Route("api/v1/identity/person-detail")]
+        [ValidateModelState]
         [ApiAuthorization(Name = "GET_PERSON_DETAIL")]
         [SwaggerOperation("GetPersonDetail")]
         [SwaggerResponse(200, type: typeof(PersonDetailDto), description: "Success")]
@@ -178,6 +182,34 @@ namespace Identity.API.Controllers
                 });
             _logger.LogDebug($"Person details fetched successfully for PersonId: {personId}");
             return Ok(result);
+        }
+        [HttpDelete]
+        [Route("api/v1/identity/delete-person")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "DELETE_PERSON")]
+        [SwaggerOperation("DeletePerson")]
+        [SwaggerResponse(200, type: typeof(bool), description: "Person deleted successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> DeletePerson([FromQuery] Guid personId)
+        {
+            _logger.LogDebug($"Deleting person. PersonId: {personId}");
+
+            var result = await _mediator.Send(
+                new DeletePersonCommand
+                {
+                    PersonId = personId
+                });
+
+            _logger.LogDebug($"Person deleted successfully. PersonId: {personId}");
+
+            return Ok(new SuccessResponseDto
+            {
+                Id = result.ToString(),
+                Message = "Person deleted successfully",
+                Description = "Person deleted successfully",
+                StatusCode = 200
+            });
         }
     }
 }
