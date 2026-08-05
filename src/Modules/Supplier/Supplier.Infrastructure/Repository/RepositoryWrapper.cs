@@ -26,11 +26,11 @@ namespace Supplier.Infrastructure.Repository
         private IAssetRepository _asset;
         private ISupplierRFQRepository _supplierRFQ;
 
-    private ISupplierRFQItemRepository _supplierRFQItem ;
+        private ISupplierRFQItemRepository _supplierRFQItem;
 
-    private IRFQSupplierMappingRepository _rfqSupplierMapping ;
-    private ISupplierQuotationRepository _supplierQuotation;
-    private ISupplierQuotationItemRepository _supplierQuotationItem;
+        private IRFQSupplierMappingRepository _rfqSupplierMapping;
+        private ISupplierQuotationRepository _supplierQuotation;
+        private ISupplierQuotationItemRepository _supplierQuotationItem;
         private ISupplierCatalogRepository _supplierCatalog;
         private IRFQQuestionAnswerRepository _rfqQuestionAnswer;
         private IRFQQuestionAnswerOptionRepository _rfqQuestionAnswerOption;
@@ -104,7 +104,7 @@ namespace Supplier.Infrastructure.Repository
         {
             get
             {
-                if (_supplierRFQ == null) 
+                if (_supplierRFQ == null)
                 {
                     _supplierRFQ = new SupplierRFQRepository(_context);
                 }
@@ -115,7 +115,7 @@ namespace Supplier.Infrastructure.Repository
         {
             get
             {
-                if (_supplierRFQItem == null) 
+                if (_supplierRFQItem == null)
                 {
                     _supplierRFQItem = new SupplierRFQItemRepository(_context);
                 }
@@ -126,7 +126,7 @@ namespace Supplier.Infrastructure.Repository
         {
             get
             {
-                if (_rfqSupplierMapping == null) 
+                if (_rfqSupplierMapping == null)
                 {
                     _rfqSupplierMapping = new RFQSupplierMappingRepository(_context);
                 }
@@ -137,7 +137,7 @@ namespace Supplier.Infrastructure.Repository
         {
             get
             {
-                if (_supplierQuotation == null) 
+                if (_supplierQuotation == null)
                 {
                     _supplierQuotation = new SupplierQuotationRepository(_context);
                 }
@@ -148,7 +148,7 @@ namespace Supplier.Infrastructure.Repository
         {
             get
             {
-                if (_supplierQuotationItem == null) 
+                if (_supplierQuotationItem == null)
                 {
                     _supplierQuotationItem = new SupplierQuotationItemRepository(_context);
                 }
@@ -156,7 +156,7 @@ namespace Supplier.Infrastructure.Repository
             }
         }
 
-         
+
         public ISupplierCatalogRepository SupplierCatalog
         {
             get
@@ -184,7 +184,7 @@ namespace Supplier.Infrastructure.Repository
                 return _catalogAssetMapping;
             }
         }
-          public ISupplierVerificationAnswerRepository SupplierVerificationAnswer
+        public ISupplierVerificationAnswerRepository SupplierVerificationAnswer
         {
             get
             {
@@ -234,6 +234,19 @@ namespace Supplier.Infrastructure.Repository
                     _supplierCategory = new SupplierCategoryRepository(_context);
                 }
                 return _supplierCategory;
+            }
+        }
+
+        public ISupplierVerificationAnswerOptionRepository SupplierVerificationAnswerOption
+        {
+            get
+            {
+                if (_supplierVerificationAnswerOption == null)
+                {
+                    _supplierVerificationAnswerOption = new SupplierVerificationAnswerOptionRepository(_context);
+                }
+
+                return _supplierVerificationAnswerOption;
             }
         }
 
