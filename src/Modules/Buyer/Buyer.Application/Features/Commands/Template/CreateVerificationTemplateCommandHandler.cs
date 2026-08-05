@@ -39,26 +39,25 @@ namespace Buyer.Application.Features.Commands.UpdateBuyerStatus
         {
             _logger.LogInfo("Creating verification template.");
 
-            var buyerId = await _repository.BuyerBusinessProfile
-               .FindByCondition(x => x.OrganizationId == request.OrganizationId)
-               .Select(x => x.Id)
-               .FirstOrDefaultAsync(cancellationToken);
+            BuyerBusinessProfile buyer = await _repository.BuyerBusinessProfile
+                .FindByCondition(x => x.OrganizationId == request.OrganizationId)
+                .FirstOrDefaultAsync(cancellationToken);
 
-                _logger.LogInfo($"BuyerId fetched successfully: {buyerId} for OrganizationId: {request.OrganizationId}");
+            _logger.LogInfo($"BuyerId fetched successfully: {buyer.Id} for OrganizationId: {request.OrganizationId}");
 
             var templateCount = await _repository.VerificationTemplate
-                .FindByCondition(x => x.BuyerId == buyerId)
+                .FindByCondition(x => x.BuyerId == buyer.Id)
                 .CountAsync(cancellationToken);
-            _logger.LogInfo($"Existing template count for BuyerId {buyerId}: {templateCount}");
+            _logger.LogInfo($"Existing template count for BuyerId {buyer.Id}: {templateCount}");
 
             var template = new VerificationTemplate
             {
                 Id = Guid.NewGuid(),
-                BuyerId = buyerId,
+                BuyerId = buyer.Id,
                 TemplateCode = $"TMP{(templateCount + 1):000}",
                 TemplateName = request.VerificationTemplateDto.TemplateName,
                 Description = request.VerificationTemplateDto.Description,
-                Category=request.VerificationTemplateDto.Category,
+                Category = request.VerificationTemplateDto.Category,
             };
 
             _repository.VerificationTemplate.Create(template);

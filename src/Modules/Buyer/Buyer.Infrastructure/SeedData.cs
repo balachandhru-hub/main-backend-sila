@@ -3,7 +3,7 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using System.Globalization;
 using System.Text;
-using  Buyer.Domain.Entities;
+using Buyer.Domain.Entities;
 using Buyer.Infrastructure.DbContext;
 
 
@@ -57,7 +57,7 @@ namespace Buyer.Infrastructure
                 csvReader.Dispose();
             }
         }
- public static void CreateDefaultVerificationTemplateQuestion(Stream stream, RepositoryContext context)
+        public static void CreateDefaultVerificationTemplateQuestion(Stream stream, RepositoryContext context)
         {
             using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
             {
@@ -71,29 +71,29 @@ namespace Buyer.Infrastructure
                 System.Collections.Generic.IEnumerable<DefaultVerificationTemplateQuestion> entries = csvReader.GetRecords<DefaultVerificationTemplateQuestion>();
                 List<DefaultVerificationTemplateQuestion> csvCount = entries.ToList();
                 foreach (DefaultVerificationTemplateQuestion entry in csvCount)
-{
-    var existingEntry = context.DefaultVerificationTemplateQuestion.Find(entry.Id);
+                {
+                    var existingEntry = context.DefaultVerificationTemplateQuestion.Find(entry.Id);
 
-    if (existingEntry != null)
-    {
-        var originalValues = context.Entry(existingEntry).OriginalValues;
+                    if (existingEntry != null)
+                    {
+                        var originalValues = context.Entry(existingEntry).OriginalValues;
 
-        context.Entry(existingEntry).CurrentValues.SetValues(entry);
+                        context.Entry(existingEntry).CurrentValues.SetValues(entry);
 
-        existingEntry.DateCreated = originalValues.GetValue<DateTime>("DateCreated");
-        existingEntry.CreatedBy = originalValues.GetValue<Guid>("CreatedBy");
-        existingEntry.IsActive = originalValues.GetValue<bool>("IsActive");
-    }
-    else
-    {
-        context.DefaultVerificationTemplateQuestion.Add(entry);
-    }
-}
+                        existingEntry.DateCreated = originalValues.GetValue<DateTime>("DateCreated");
+                        existingEntry.CreatedBy = originalValues.GetValue<Guid>("CreatedBy");
+                        existingEntry.IsActive = originalValues.GetValue<bool>("IsActive");
+                    }
+                    else
+                    {
+                        context.DefaultVerificationTemplateQuestion.Add(entry);
+                    }
+                }
             }
         }
 
-       
-        
+
+
 
 
 
@@ -114,8 +114,8 @@ namespace Buyer.Infrastructure
             stream = new FileStream(Path.Combine(basePath, "DefaultVerificationTemplateQuestion.csv"), FileMode.Open, FileAccess.Read);
 
             CreateDefaultVerificationTemplateQuestion(stream, context);
-           
-           
+
+
 
         }
 

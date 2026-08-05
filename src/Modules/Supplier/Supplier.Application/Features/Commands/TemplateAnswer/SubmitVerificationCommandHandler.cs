@@ -41,6 +41,7 @@ namespace Supplier.Application.Features.Commands.Verification
                 await _buyerApiClient.GetSupplierVerificationRequestDetail(
                     request.Verification.VerificationRequestId,
                     cancellationToken);
+                    _logger.LogInfo($"Supplier Verification Request fetched successfully. RequestId : {request.Verification.VerificationRequestId}");
 
             if (verificationRequest == null)
             {
@@ -66,12 +67,14 @@ namespace Supplier.Application.Features.Commands.Verification
                         new UploadAssetCommand(answer.Attachment),
                         cancellationToken);
                 }
+                _logger.LogInfo($"Asset uploaded successfully for QuestionId : {answer.VerificationTemplateQuestionId} and RequestId : {request.Verification.VerificationRequestId}. AssetId : {assetId}");
 
                 var existingAnswer = await _repository.SupplierVerificationAnswer
                     .FindByCondition(x =>
                         x.SupplierVerificationRequestId == request.Verification.VerificationRequestId &&
                         x.VerificationTemplateQuestionId == answer.VerificationTemplateQuestionId)
                     .FirstOrDefaultAsync(cancellationToken);
+                    _logger.LogInfo($"Existing answer fetched successfully for QuestionId : {answer.VerificationTemplateQuestionId} and RequestId : {request.Verification.VerificationRequestId}");
 
                 if (existingAnswer == null)
                 {
@@ -112,7 +115,7 @@ namespace Supplier.Application.Features.Commands.Verification
 
             _logger.LogInfo("Verification answers saved successfully.");
 
-            // Update Buyer Status
+           
             if (request.Verification.Status.Equals(Common.DRAFT, StringComparison.OrdinalIgnoreCase))
             {
                 await _buyerApiClient.UpdateVerificationRequestStatus(

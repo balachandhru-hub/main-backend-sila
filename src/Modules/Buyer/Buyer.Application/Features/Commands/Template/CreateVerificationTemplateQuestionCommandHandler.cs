@@ -31,11 +31,9 @@ namespace Buyer.Application.Features.Commands.Template
             var template = await _repository.VerificationTemplate
                 .FindByCondition(x => x.Id == dto.VerificationTemplateId)
                 .FirstOrDefaultAsync(cancellationToken);
+                _logger.LogInfo($"Verification template fetched successfully. TemplateId : {dto.VerificationTemplateId}");
 
-            if (template == null)
-            {
-                throw new Exception("Verification Template not found.");
-            }
+           
 
             var question = new VerificationTemplateQuestion
             {
@@ -45,7 +43,7 @@ namespace Buyer.Application.Features.Commands.Template
                 QuestionType = dto.QuestionType,
                 IsRequired = dto.IsRequired,
                 DisplayOrder = dto.DisplayOrder
-                // Placeholder = dto.Placeholder
+               
             };
 
             _repository.VerificationTemplateQuestion.Create(question);

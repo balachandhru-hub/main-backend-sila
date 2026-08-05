@@ -41,6 +41,7 @@ namespace Supplier.Application.Features.Queries
                     VerificationTemplateQuestionOptionId = x.VerificationTemplateQuestionOptionId
                 })
                 .ToListAsync(cancellationToken);
+                _logger.LogInfo($"Verification answers fetched successfully. RequestId : {request.SupplierVerificationRequestId}");
 
             if (!answers.Any())
             {

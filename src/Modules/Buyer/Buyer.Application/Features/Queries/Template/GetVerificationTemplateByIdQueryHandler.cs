@@ -1,3 +1,4 @@
+using Buyer.Domain.Common;
 using Buyer.Domain.Dto;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
@@ -58,7 +59,7 @@ namespace Buyer.Application.Features.Queries.Template
                     TemplateId = buyerTemplate.Id,
                     TemplateCode = buyerTemplate.TemplateCode,
                     TemplateName = buyerTemplate.TemplateName,
-                    TemplateType = "Buyer",
+                    TemplateType = Common.BUYER,
                     Questions = questionDtos
                 };
             }
@@ -80,7 +81,7 @@ namespace Buyer.Application.Features.Queries.Template
                     TemplateId = defaultTemplate.Id,
                     TemplateCode = defaultTemplate.TemplateCode,
                     TemplateName = defaultTemplate.TemplateName,
-                    TemplateType = "Default",
+                    TemplateType = Common.DEFAULT,
                     Questions = questions.Select(x => new VerificationTemplateQuestionDto
                     {
                         QuestionId = x.Id,
