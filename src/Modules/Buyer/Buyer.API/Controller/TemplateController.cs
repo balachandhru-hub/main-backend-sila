@@ -188,7 +188,7 @@ namespace Buyer.API.Controllers
         }
 
         [HttpGet]
-        [Route("api/v1/buyer/questions-answers")]
+        [Route("api/v1/buyer/answers")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_QUESTIONS_ANSWERS")]
         [SwaggerOperation("GetQuestionsAnswersForSupplier")]

@@ -44,14 +44,12 @@ namespace Buyer.Application.Features.Commands.UpdateBuyerStatus
                .Select(x => x.Id)
                .FirstOrDefaultAsync(cancellationToken);
 
-            if (buyerId == Guid.Empty)
-            {
-                throw new Exception("Buyer Business Profile not found.");
-            }
+                _logger.LogInfo($"BuyerId fetched successfully: {buyerId} for OrganizationId: {request.OrganizationId}");
 
             var templateCount = await _repository.VerificationTemplate
                 .FindByCondition(x => x.BuyerId == buyerId)
                 .CountAsync(cancellationToken);
+            _logger.LogInfo($"Existing template count for BuyerId {buyerId}: {templateCount}");
 
             var template = new VerificationTemplate
             {
