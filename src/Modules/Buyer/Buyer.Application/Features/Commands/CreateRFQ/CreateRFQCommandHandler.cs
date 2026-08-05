@@ -61,21 +61,6 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     "Buyer does not exist.");
             }
 
-            var existingRFQ = _repository.RFQ
-                .FindFirstByCondition(x =>
-                    x.BuyerId == buyer.Id &&
-                    x.Department == request.RFQ.Department &&
-                    x.IsActive);
-
-            if (existingRFQ != null)
-            {
-                _logger.LogError(
-    $"Duplicate RFQ creation attempted. BuyerId: {buyer.Id}, Department: {request.RFQ.Department}");
-                throw new BadRequestCustomException(
-    "Department already exists.",
-    "The selected Department already exists for this buyer.");
-            }
-
             var rfqNumber = $"RFQ-{DateTime.UtcNow:yyyyMMddHHmmss}";
 
             var rfq = new RFQ
