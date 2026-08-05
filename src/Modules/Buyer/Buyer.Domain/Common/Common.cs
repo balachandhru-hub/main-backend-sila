@@ -33,12 +33,10 @@ namespace Buyer.Domain.Common
                 public const string PENDING = "PENDING";
                 public static readonly string RFQ_ITEM_ATTACHMENT = "RFQ_ITEM_ATTACHMENT";
                 public const string DEFAULT = "DEFAULT";
-                public const string DEFAULT_TEMPLATE_CODE_1 = "DT001";
-                public const string DEFAULT_TEMPLATE_CODE_2 = "DT002";
-                public const string DEFAULT_TEMPLATE_CODE_3 = "DT003";
                 public const string SUBMITTED = "SUBMITTED";
                 public const string DRAFT = "DRAFT";
                 public static Guid SUPPLIER_ROLE_ID = new Guid("735bb267-fec0-489f-8249-d3d65b3857ea");
                 public static Guid BUYER_ROLE_ID = new Guid("c95f5a1b-4aec-4647-9328-895a58193ec4");
+                public const string DEFAULT_TEMPLATE = "DEFAULT_TEMPLATE";
         }
 }

@@ -9,9 +9,9 @@ fe7676aa-8295-405e-af26-b5ad63323f2e,dd5a50b8-f087-4f0a-a004-ce43e92ce2b9,GST Nu
 d9337bc1-957e-452b-9a26-d17dda5a84b0,dd5a50b8-f087-4f0a-a004-ce43e92ce2b9,State,State,Label,8
 016a906f-106e-4bef-a853-9a9b6b998fd1,dd5a50b8-f087-4f0a-a004-ce43e92ce2b9,City,City,Label,9
 41daae20-f320-4937-bedc-da1f7d6ff9ab,dd5a50b8-f087-4f0a-a004-ce43e92ce2b9,Address,Address,Label,10
-a591a89d-0c10-43ca-8826-87ed13b4aa34,ee301119-11c4-4fa4-b370-fbec9072b3de,Bank Name,BankName,Label,1
-8e05e887-6905-4bac-b174-73f03b4f3ec2,ee301119-11c4-4fa4-b370-fbec9072b3de,Account Number,AccountNumber,Label,2
-17291663-54e4-465a-b144-7fd98eaada0a,ee301119-11c4-4fa4-b370-fbec9072b3de,IFSC Code,IFSCCode,Label,3
-f39ec91c-d745-4e32-b49b-e0ecd4180317,ee301119-11c4-4fa4-b370-fbec9072b3de,Bank Branch,BranchName,Label,4
-7e1783ea-ebd8-4334-b01d-8b36d4336ecd,14fddd80-0915-4171-88ee-16939011a72d,MSME Certificate,MSMECertificate,File,1
-4aa5f5bd-df4e-4bf5-94f3-dd328a2417f0,14fddd80-0915-4171-88ee-16939011a72d,ISO Certificate,ISOCertificate,File,2
+a591a89d-0c10-43ca-8826-87ed13b4aa34,dd5a50b8-f087-4f0a-a004-ce43e92ce2b9,Bank Name,BankName,Label,1
+8e05e887-6905-4bac-b174-73f03b4f3ec2,dd5a50b8-f087-4f0a-a004-ce43e92ce2b9,Account Number,AccountNumber,Label,2
+17291663-54e4-465a-b144-7fd98eaada0a,dd5a50b8-f087-4f0a-a004-ce43e92ce2b9,IFSC Code,IFSCCode,Label,3
+f39ec91c-d745-4e32-b49b-e0ecd4180317,dd5a50b8-f087-4f0a-a004-ce43e92ce2b9,Bank Branch,BranchName,Label,4
+7e1783ea-ebd8-4334-b01d-8b36d4336ecd,dd5a50b8-f087-4f0a-a004-ce43e92ce2b9,MSME Certificate,MSMECertificate,File,1
+4aa5f5bd-df4e-4bf5-94f3-dd328a2417f0,dd5a50b8-f087-4f0a-a004-ce43e92ce2b9,ISO Certificate,ISOCertificate,File,2

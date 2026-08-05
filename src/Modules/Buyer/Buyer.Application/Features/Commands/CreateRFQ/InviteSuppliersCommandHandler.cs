@@ -38,9 +38,8 @@ namespace Buyer.Application.Features.Commands.InviteSuppliers
 
             if (template != null &&
                 (
-                    template.TemplateCode == Common.DEFAULT_TEMPLATE_CODE_1 ||
-                    template.TemplateCode == Common.DEFAULT_TEMPLATE_CODE_2 ||
-                    template.TemplateCode == Common.DEFAULT_TEMPLATE_CODE_3
+                    template.TemplateCode == Common.DEFAULT_TEMPLATE
+                    
                 ))
             {
                 status = Common.DEFAULT;

@@ -23,13 +23,8 @@ using Buyer.Domain.Dtos;
 using Buyer.Application.Features.Queries.GetAllRFQ;
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
 using Buyer.Application.Features.Queries.GetRFQAttachments;
-using Buyer.Application.Features.Commands.Template;
-using Buyer.Application.Features.Queries.DefaultTemplate;
-using Buyer.Application.Features.Queries.Template;
-using Buyer.Application.Features.Queries.SupplierVerification;
-using Buyer.Application.Features.Queries.SupplierVerificationRequest;
-using Buyer.Application.Features.Commands.UpdateVerificationRequestStatus;
-// using Buyer.Application.Features.Queries.SupplierVerificationRequest;
+
+
 namespace Buyer.API.Controllers
 {
     [ApiController]

@@ -52,6 +52,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                     DueDate = x.DueDate
                 })
                 .FirstOrDefaultAsync(cancellationToken);
+                _logger.LogInfo($"Supplier Verification Request fetched successfully : {request.RequestId}");
 
             if (result == null)
             {
@@ -94,22 +95,19 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
             }
 
 
-            var roleIdClaim = _httpContextAccessor.HttpContext?.User?
-    .FindFirst("roleId")?.Value;
-
-            Guid.TryParse(roleIdClaim, out Guid roleId);
+           
 
             bool showAnswers = false;
 
 
-            if (roleId == Common.SUPPLIER_ROLE_ID)
+            if (request.RoleId == Common.SUPPLIER_ROLE_ID)
             {
                 showAnswers =
                     result.Status.Equals(Common.SUBMITTED, StringComparison.OrdinalIgnoreCase) ||
                     result.Status.Equals(Common.DEFAULT, StringComparison.OrdinalIgnoreCase);
             }
 
-            else if (roleId == Common.BUYER_ROLE_ID)
+            else if (request.RoleId == Common.BUYER_ROLE_ID)
             {
                 showAnswers =
                     !result.Status.Equals(Common.DRAFT, StringComparison.OrdinalIgnoreCase) &&

@@ -7,5 +7,6 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
         : IRequest<SupplierVerificationRequestDetailQuestinandAnswerDto>
     {
         public Guid RequestId { get; set; }
+        public Guid RoleId { get; set; }
     }
 }

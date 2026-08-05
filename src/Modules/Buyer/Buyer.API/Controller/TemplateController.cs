@@ -1,19 +1,17 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using Buyer.Application.Features.Queries.GetOrganizationProfile;
 using SharedKernel.LoggerServices;
 using SharedKernel.Dto;
 using SharedKernel.Attributes;
 using Buyer.Domain.Dto;
 using SharedKernel.Controllers;
 using Buyer.Application.Features.Commands.Template;
-using Buyer.Application.Features.Queries.DefaultTemplate;
 using Buyer.Application.Features.Queries.Template;
 using Buyer.Application.Features.Queries.SupplierVerification;
 using Buyer.Application.Features.Queries.SupplierVerificationRequest;
 using Buyer.Application.Features.Commands.UpdateVerificationRequestStatus;
-// using Buyer.Application.Features.Queries.SupplierVerificationRequest;
+
 namespace Buyer.API.Controllers
 {
     [ApiController]
@@ -48,43 +46,9 @@ namespace Buyer.API.Controllers
             return Ok(id);
         }
 
-        [HttpPost]
-        [Route("api/v1/buyer/create-default-template")]
-        [ValidateModelState]
-        [ApiAuthorization(Name = "CREATE_VERIFICATION_DEFAULT_TEMPLATE")]
-        [SwaggerOperation("CreateVerificationDefaultTemplate")]
-        [SwaggerResponse(200, type: typeof(Guid), description: "Success")]
-        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
-        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> CreateDefaultTemplate()
-        {
-            Guid organizationId = GetOrganizationId();
+        
 
-            var id = await _mediator.Send(new CreateVerificationDefaultTemplateCommand
-            {
-                OrganizationId = organizationId
-            });
-
-            return Ok(id);
-        }
-
-        [HttpGet]
-        [Route("api/v1/buyer/default-verification-template")]
-        [ValidateModelState]
-        [ApiAuthorization(Name = "GET_DEFAULT_VERIFICATION_TEMPLATE")]
-        [SwaggerOperation("GetDefaultVerificationTemplate")]
-        [SwaggerResponse(200, type: typeof(GetDefaultVerificationTemplateDto), description: "Success")]
-        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
-        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetDefaultVerificationTemplate([FromQuery] Guid supplierId)
-        {
-            var result = await _mediator.Send(new GetDefaultVerificationTemplateQuery
-            {
-                SupplierId = supplierId
-            });
-
-            return Ok(result);
-        }
+       
 
         [HttpGet]
         [Route("api/v1/buyer/verification-templates")]
@@ -216,6 +180,7 @@ namespace Buyer.API.Controllers
         public async Task<IActionResult> UpdateVerificationRequestStatus(
     UpdateVerificationRequestStatusDto request)
         {
+            
             var result = await _mediator.Send(
                 new UpdateVerificationRequestStatusCommand(request));
 
@@ -223,7 +188,7 @@ namespace Buyer.API.Controllers
         }
 
         [HttpGet]
-        [Route("api/v1/supplier/questions-answers")]
+        [Route("api/v1/buyer/questions-answers")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_QUESTIONS_ANSWERS")]
         [SwaggerOperation("GetQuestionsAnswersForSupplier")]
@@ -232,10 +197,12 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetQuestionsAnswersForSupplier(Guid requestId)
         {
+            Guid roleId = GetRoleId();
             var result = await _mediator.Send(
                 new GetSupplierVerificationRequestDetailbyRequestIdQuery
                 {
-                    RequestId = requestId
+                    RequestId = requestId,
+                    RoleId = roleId
                 });
 
             return Ok(result);
