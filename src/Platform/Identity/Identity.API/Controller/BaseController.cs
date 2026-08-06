@@ -34,5 +34,18 @@ namespace Identity.API.Controllers
 
             return userId;
         }
+        protected Guid GetPersonId()
+        {
+            var claim = User.FindFirst("PersonId")?.Value;
+
+            if (!Guid.TryParse(claim, out Guid personId))
+            {
+                throw new UnAuthorizedCustomException(
+                    "Unauthorized",
+                    "Person claim not found.");
+            }
+
+            return personId;
+        }
     }
 }

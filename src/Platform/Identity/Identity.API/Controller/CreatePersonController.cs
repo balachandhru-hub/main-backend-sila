@@ -175,6 +175,10 @@ namespace Identity.API.Controllers
         public async Task<IActionResult> GetPersonDetail([FromQuery] Guid personId)
         {
             _logger.LogDebug($"Fetching person details for PersonId: {personId}");
+            if (personId == Guid.Empty)
+            {
+                personId = GetPersonId();
+            }
             var result = await _mediator.Send(
                 new GetPersonDetailQuery
                 {
