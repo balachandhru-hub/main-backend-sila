@@ -2,18 +2,19 @@ namespace Supplier.Domain.Dto
 {
     public class SupplierProfileDto
     {
-        public Guid Id { get; set; }
+        
+    public Guid OrganizationId { get; set; }
 
-        public Guid OrganizationId { get; set; }
+    public string? SNID { get; set; }        
+    public SupplierBusinessProfileDto BusinessProfile { get; set; }
 
-        public SupplierBusinessProfileDto BusinessProfile { get; set; }
+    public List<SupplierRegistrationDto> Registrations { get; set; } 
 
-        public List<SupplierRegistrationResponseDto> Registrations { get; set; } = new();
+    public List<SupplierBankAccountDto> BankAccounts { get; set; } 
 
-        public List<SupplierBankAccountDto> BankAccounts { get; set; } = new();
+    public List<SupplierDispatchLocationDto> DispatchLocations { get; set; } 
 
-        public List<SupplierDispatchLocationDto> DispatchLocations { get; set; } = new();
-
-        public List<SupplierCategoryDto> Categories { get; set; } = new();
-    }
+    public List<SupplierCategoryDto> SupplierCategories { get; set; } 
+    
 }
+    }

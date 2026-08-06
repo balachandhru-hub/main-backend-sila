@@ -3,7 +3,7 @@ using MediatR;
 
 namespace Buyer.Application.Features.Queries.GetAllBuyers
 {
-    public class GetAllBuyersQuery : IRequest<List<OrganizationDto>>
+    public class GetAllBuyersQuery : IRequest<List<GetAllBuyerDto>>
     {
         public int Index { get; set; } 
 

@@ -11,7 +11,7 @@ namespace Supplier.Domain.Entities
 
         public Guid OrganizationId { get; set; }
         public string OrganizationName { get; set; }
-
+        public string SNID { get; set; } 
         public string Email { get; set; }
 
         public string Phone { get; set; }
@@ -44,6 +44,7 @@ namespace Supplier.Domain.Entities
         public string? Description { get; set; }
          public string Status {get;set;}
         public string? Comment {get;set;}
+         
         public SupplierBusinessProfile() { }
     }
 }
