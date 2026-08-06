@@ -97,14 +97,15 @@ namespace Supplier.Application.Features.Queries.GetSupplier
          on category.SupplierId equals supplier.Id
 
      where string.IsNullOrEmpty(filter.SearchTerm)
-           || supplier.OrganizationName.Contains(filter.SearchTerm)
+           || supplier.OrganizationName.Contains(filter.SearchTerm)||supplier.SNID.Contains(filter.SearchTerm)
 
      select new SupplierListDto
      {
          SupplierId = supplier.Id,
          SupplierName = supplier.OrganizationName,
          Email = supplier.Email,
-         IsVerified = verifiedSupplierIds.Contains(supplier.Id)
+         IsVerified = verifiedSupplierIds.Contains(supplier.Id),
+         SNID = supplier.SNID
      })
      .Distinct()
      .OrderBy(x => x.SupplierName)
