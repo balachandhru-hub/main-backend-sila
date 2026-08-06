@@ -14,6 +14,7 @@ namespace Buyer.Domain.Entities
 
         // Company Information
         public string OrganizationName { get; set; }
+        public string SNID { get; set; } 
 
         public string Email { get; set; }
 

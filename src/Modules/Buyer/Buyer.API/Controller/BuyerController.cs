@@ -50,6 +50,7 @@ namespace Buyer.API.Controllers
         public async Task<IActionResult> GetOrganizationProfile()
         {
             Guid organizationId = GetOrganizationId();
+            string snid = GetSNID();
             _logger.LogDebug($"Fetching the Organization Profile for ID: {organizationId}");
             var result = await _mediator.Send(new GetOrganizationProfileQuery(organizationId));
             _logger.LogDebug($"Fetched the Organization Profile for ID: {organizationId}");
@@ -72,6 +73,7 @@ namespace Buyer.API.Controllers
         {
             _logger.LogDebug($"Creating Organization Profile for Organization: {createBuyerDto.OrganizationName}");
             createBuyerDto.OrganizationId = GetOrganizationId();
+            createBuyerDto.SNID=GetSNID();
             var result = await _mediator.Send(new CreateBuyerProfileCommand(createBuyerDto));
             _logger.LogDebug($"Created Organization Profile for Organization: {createBuyerDto.OrganizationName}");
             return Ok(new SuccessResponseDto { Id = result.ToString(), Message = "Buyer Profile created successfully", Description = "Buyer Profile created successfully", StatusCode = 201 });

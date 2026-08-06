@@ -5,6 +5,7 @@ using Supplier.Infrastructure.Contracts.IRepository;
 using SharedKernel.LoggerServices;
 using Microsoft.AspNetCore.Http.HttpResults;
 using SharedKernel.ExceptionHandler;
+using Supplier.Domain.Common;
 
 namespace Supplier.Application.Features.Commands.SupplierAnswers
 {
@@ -128,7 +129,9 @@ namespace Supplier.Application.Features.Commands.SupplierAnswers
                         });
                 }
             }
+        supplierRFQ.Status = Common.SUBMITTED_STATUS;
 
+        _repository.SupplierRFQ.Update(supplierRFQ);
             await _repository.SaveAsync();
 
             _logger.LogInfo(

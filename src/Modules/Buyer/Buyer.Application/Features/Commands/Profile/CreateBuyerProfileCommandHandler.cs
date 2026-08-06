@@ -36,6 +36,7 @@ namespace Buyer.Application.Features.Profile.Commands
             {
                 Id = Guid.NewGuid(),
                 OrganizationId = request.CreateBuyerDto.OrganizationId,
+                SNID = request.CreateBuyerDto.SNID,
                 OrganizationName = request.CreateBuyerDto.OrganizationName,
                 Email = request.CreateBuyerDto.Email,
                 Phone = request.CreateBuyerDto.Phone,

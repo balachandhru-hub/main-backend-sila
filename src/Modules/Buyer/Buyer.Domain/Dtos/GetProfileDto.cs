@@ -8,6 +8,8 @@ namespace Buyer.Domain.Dto
 
         public Guid OrganizationId { get; set; }
 
+        public string SNID { get; set; }
+
         public BusinessProfileDto BusinessProfile { get; set; } = new();
 
         public List<RegistrationDto> Registrations { get; set; } = new();
