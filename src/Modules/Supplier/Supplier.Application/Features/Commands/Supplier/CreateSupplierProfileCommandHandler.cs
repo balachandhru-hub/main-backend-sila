@@ -40,15 +40,15 @@ namespace Supplier.Application.Features.Commands.Supplier
     _logger.LogInfo("Starting supplier profile creation process.");
 
     var existingProfile = await _repository.SupplierBusinessProfile
-        .FindFirstByConditionAsync(x => x.OrganizationId == request.OrganizationId);
+        .FindFirstByConditionAsync(x => x.OrganizationId == request.SupplierProfileDto.OrganizationId);
 
     if (existingProfile != null)
     {
-        _logger.LogError($"Supplier profile already exists for organization {request.OrganizationId}");
+        _logger.LogError($"Supplier profile already exists for organization {request.SupplierProfileDto.OrganizationId}");
 
         throw new PreConditionFailedCustomException(
             "A supplier profile for this organization already exists.",
-            $"A supplier profile already exists for organization {request.OrganizationId}.");
+            $"A supplier profile already exists for organization {request.SupplierProfileDto.OrganizationId}.");
     }
 
     _logger.LogInfo("Creating Supplier Business Profile.");
@@ -56,27 +56,28 @@ namespace Supplier.Application.Features.Commands.Supplier
     SupplierBusinessProfile supplierProfile = new SupplierBusinessProfile
     {
         Id = Guid.NewGuid(),
-        OrganizationId = request.OrganizationId,
+        OrganizationId = request.SupplierProfileDto.OrganizationId,
+        SNID = request.SupplierProfileDto.SNID,
 
-        OrganizationName = request.BusinessProfile.OrganizationName,
-        Email = request.BusinessProfile.Email,
-        Phone = request.BusinessProfile.Phone,
+        OrganizationName = request.SupplierProfileDto.BusinessProfile.OrganizationName,
+        Email = request.SupplierProfileDto.BusinessProfile.Email,
+        Phone = request.SupplierProfileDto.BusinessProfile.Phone,
 
-        Country = request.BusinessProfile.Country,
-        AddressLine1 = request.BusinessProfile.AddressLine1,
-        AddressLine2 = request.BusinessProfile.AddressLine2,
-        City = request.BusinessProfile.City,
-        State = request.BusinessProfile.State,
-        PinCode = request.BusinessProfile.PinCode,
+        Country = request.SupplierProfileDto.BusinessProfile.Country,
+        AddressLine1 = request.SupplierProfileDto.BusinessProfile.AddressLine1,
+        AddressLine2 = request.SupplierProfileDto.BusinessProfile.AddressLine2,
+        City = request.SupplierProfileDto.BusinessProfile.City,
+        State = request.SupplierProfileDto.BusinessProfile.State,
+        PinCode = request.SupplierProfileDto.BusinessProfile.PinCode,
 
-        Industry = request.BusinessProfile.Industry,
-        BusinessType = request.BusinessProfile.BusinessType,
-        EmployeeCount = request.BusinessProfile.EmployeeCount,
-        AnnualTurnover = request.BusinessProfile.AnnualTurnover,
-        Currency = request.BusinessProfile.Currency,
-        YearEstablished = request.BusinessProfile.YearEstablished,
-        Website = request.BusinessProfile.Website,
-        Description = request.BusinessProfile.Description,
+        Industry = request.SupplierProfileDto.BusinessProfile.Industry,
+        BusinessType = request.SupplierProfileDto.BusinessProfile.BusinessType,
+        EmployeeCount = request.SupplierProfileDto.BusinessProfile.EmployeeCount,
+        AnnualTurnover = request.SupplierProfileDto.BusinessProfile.AnnualTurnover,
+        Currency = request.SupplierProfileDto.BusinessProfile.Currency,
+        YearEstablished = request.SupplierProfileDto.BusinessProfile.YearEstablished,
+        Website = request.SupplierProfileDto.BusinessProfile.Website,
+        Description = request.SupplierProfileDto.BusinessProfile.Description,
         Status = Common.PENDING_STATUS
     };
 
@@ -86,7 +87,7 @@ namespace Supplier.Application.Features.Commands.Supplier
     // Registrations
     //---------------------------------------------------------
 
-    if (request.Registrations != null && request.Registrations.Any())
+    if (request.SupplierProfileDto.Registrations != null && request.SupplierProfileDto.Registrations.Any())
     {
         _logger.LogInfo("Fetching document metadata.");
 
@@ -125,7 +126,7 @@ namespace Supplier.Application.Features.Commands.Supplier
 
         List<SupplierRegistration> registrations = new();
 
-        foreach (var registration in request.Registrations)
+        foreach (var registration in request.SupplierProfileDto.Registrations)
         {
             if (!metadataLookup.TryGetValue(registration.RegistrationType, out Guid metadataId))
             {
@@ -169,13 +170,13 @@ namespace Supplier.Application.Features.Commands.Supplier
     // Bank Accounts
     //---------------------------------------------------------
 
-    if (request.BankAccounts != null && request.BankAccounts.Any())
+    if (request.SupplierProfileDto.BankAccounts != null && request.SupplierProfileDto.BankAccounts.Any())
     {
         _logger.LogInfo("Creating Supplier Bank Accounts.");
 
         List<SupplierBankAccount> bankAccounts = new();
 
-        foreach (var account in request.BankAccounts)
+        foreach (var account in request.SupplierProfileDto.BankAccounts)
         {
             SupplierBankAccount bankAccount = new SupplierBankAccount
             {
@@ -204,13 +205,13 @@ namespace Supplier.Application.Features.Commands.Supplier
     // Dispatch Locations
     //---------------------------------------------------------
 
-    if (request.DispatchLocations != null && request.DispatchLocations.Any())
+    if (request.SupplierProfileDto.DispatchLocations != null && request.SupplierProfileDto.DispatchLocations.Any())
     {
         _logger.LogInfo("Creating Supplier Dispatch Locations.");
 
         List<SupplierDispatchLocation> dispatchLocations = new();
 
-        foreach (var location in request.DispatchLocations)
+        foreach (var location in request.SupplierProfileDto.DispatchLocations)
         {
             SupplierDispatchLocation dispatchLocation = new SupplierDispatchLocation
             {
@@ -241,13 +242,13 @@ namespace Supplier.Application.Features.Commands.Supplier
     // Categories
     //---------------------------------------------------------
 
-    if (request.SupplierCategories != null && request.SupplierCategories.Any())
+    if (request.SupplierProfileDto.SupplierCategories != null && request.SupplierProfileDto.SupplierCategories.Any())
     {
         _logger.LogInfo("Creating Supplier Categories.");
 
         List<SupplierCategory> categories = new();
 
-        foreach (var category in request.SupplierCategories)
+        foreach (var category in request.SupplierProfileDto.SupplierCategories)
         {
             categories.Add(new SupplierCategory
             {
@@ -273,7 +274,7 @@ namespace Supplier.Application.Features.Commands.Supplier
 
     await _repository.SaveAsync();
 
-    _logger.LogInfo($"Successfully registered Supplier Profile for Organization Id : {request.OrganizationId}");
+    _logger.LogInfo($"Successfully registered Supplier Profile for Organization Id : {request.SupplierProfileDto.OrganizationId}");
 
     return supplierProfile.Id;
 }

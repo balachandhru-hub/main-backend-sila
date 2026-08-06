@@ -33,6 +33,7 @@ public class GetOrganizationProfileQueryHandler
         {
             Id = organization.Id,
             OrganizationId = organization.OrganizationId,
+            SNID = organization.SNID,
             BusinessProfile = new BusinessProfileDto
             {
                 OrganizationName = organization.OrganizationName,

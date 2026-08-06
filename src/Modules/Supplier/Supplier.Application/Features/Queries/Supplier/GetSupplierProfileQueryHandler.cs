@@ -8,7 +8,7 @@ using Supplier.Infrastructure.Contracts.IRepository;
 namespace Supplier.Application.Features.Queries.Supplier
 {
     public class GetSupplierProfileQueryHandler
-        : IRequestHandler<GetSupplierProfileQuery, SupplierProfileDto>
+        : IRequestHandler<GetSupplierProfileQuery, OrganizationDto>
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
@@ -21,7 +21,7 @@ namespace Supplier.Application.Features.Queries.Supplier
             _logger = logger;
         }
 
-        public Task<SupplierProfileDto> Handle(
+        public Task<OrganizationDto> Handle(
             GetSupplierProfileQuery request,
             CancellationToken cancellationToken)
         {
@@ -56,11 +56,16 @@ namespace Supplier.Application.Features.Queries.Supplier
                     x.SupplierId == supplier.Id &&
                     x.IsActive)
                 .ToList();
+                var categories = _repository.SupplierCategory
+                .FindByCondition(x =>
+                    x.SupplierId == supplier.Id &&
+                    x.IsActive)
+                .ToList();
 
-            var result = new SupplierProfileDto
+            var result = new OrganizationDto
             {
-                Id = supplier.Id,
                 OrganizationId = supplier.OrganizationId,
+               SNID=supplier.SNID,
 
                 BusinessProfile = new SupplierBusinessProfileDto
                 {
@@ -147,6 +152,17 @@ namespace Supplier.Application.Features.Queries.Supplier
                     ContactEmail = x.ContactEmail,
                     ContactPhone = x.ContactPhone,
                     IsDefault = x.IsDefault
+                }).ToList(),
+                SupplierCategories = categories.Select(x => new SupplierCategoryDto
+                {
+                    Segment = x.Segment,
+                    SegmentTitle = x.SegmentTitle,
+                    Family = x.Family,
+                    FamilyTitle = x.FamilyTitle,
+                    Class = x.Class,
+                    ClassTitle = x.ClassTitle,
+                    Commodity = x.Commodity,
+                    CommodityTitle = x.CommodityTitle
                 }).ToList()
             };
 

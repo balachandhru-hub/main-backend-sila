@@ -19,6 +19,19 @@ namespace SharedKernel.Controllers
 
             return organizationId;
         }
+        protected string GetSNID()
+        {
+            var claim = User.FindFirst("SNID")?.Value;
+
+            if (string.IsNullOrWhiteSpace(claim))
+            {
+                throw new UnAuthorizedCustomException(
+                    "Unauthorized",
+                    "SNID claim not found.");
+            }
+
+            return claim;
+        }
 
         protected Guid GetUserId()
         {

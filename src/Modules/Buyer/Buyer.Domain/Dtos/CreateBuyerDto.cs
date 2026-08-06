@@ -5,6 +5,7 @@ namespace Buyer.Domain.Dto
     public class CreateBuyerDto
     {
         public Guid OrganizationId { get; set; }
+        public string? SNID { get; set; }
         public string OrganizationName { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
