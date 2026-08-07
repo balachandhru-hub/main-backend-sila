@@ -86,14 +86,14 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(200, type: typeof(OrganizationDto), description: "Supplier profile fetched successfully")]
         [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier not found")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetSupplierProfile()
+        public async Task<IActionResult> GetSupplierProfile([FromQuery] Guid? organizationId)
         {
-            Guid organizationId = GetOrganizationId();
+            Guid orgId = GetOrganizationId();
             string snid=GetSNID();
 
-            var result = await _mediator.Send(new GetSupplierProfileQuery(organizationId));
+            var result = await _mediator.Send(new GetSupplierProfileQuery(orgId));
 
-            _logger.LogDebug($"Supplier profile fetched successfully: {organizationId}");
+            _logger.LogDebug($"Supplier profile fetched successfully: {orgId}");
 
             return Ok(result);
         }
