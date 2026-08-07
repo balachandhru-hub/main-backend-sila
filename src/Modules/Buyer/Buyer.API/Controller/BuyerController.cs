@@ -49,7 +49,7 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetOrganizationProfile([FromQuery] Guid? organizationId)
         {
-            Guid orgId = GetOrganizationId();
+            Guid orgId = organizationId??GetOrganizationId();
             string snid = GetSNID();
             _logger.LogDebug($"Fetching the Organization Profile for ID: {organizationId}");
             var result = await _mediator.Send(new GetOrganizationProfileQuery(orgId));
