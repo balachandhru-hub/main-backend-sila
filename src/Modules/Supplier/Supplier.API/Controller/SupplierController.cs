@@ -88,7 +88,7 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetSupplierProfile([FromQuery] Guid? organizationId)
         {
-            Guid orgId = GetOrganizationId();
+            Guid orgId = organizationId??GetOrganizationId();
             string snid=GetSNID();
 
             var result = await _mediator.Send(new GetSupplierProfileQuery(orgId));
