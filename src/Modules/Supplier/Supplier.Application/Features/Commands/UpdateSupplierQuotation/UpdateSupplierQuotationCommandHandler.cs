@@ -97,15 +97,14 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                             $"Quotation Item with ID {item.SupplierRFQItemId} was not found.");
                     }
 
-                    // First update -> use request quoted price
-                    // Next updates -> use already saved quoted price
+                   
                     decimal basePrice = quotationItem.QuotedPrice > 0
                         ? quotationItem.QuotedPrice
                         : item.QuotedPrice;
 
                     decimal finalQuotedPrice = basePrice;
 
-                    // Discount only (Per Item)
+               
                     if (quotation.Discount.HasValue)
                     {
                         _logger.LogInfo(
@@ -193,8 +192,12 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
             }
 
             quotation.TotalPrice = total;
+            quotation.Status = Common.SUBMITTED_STATUS;
+
+       
 
             _repository.SupplierQuotation.Update(quotation);
+            
 
             await _repository.SaveAsync();
 
