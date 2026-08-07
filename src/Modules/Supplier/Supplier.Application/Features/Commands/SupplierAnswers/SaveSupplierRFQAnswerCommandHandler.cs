@@ -129,9 +129,7 @@ namespace Supplier.Application.Features.Commands.SupplierAnswers
                         });
                 }
             }
-        supplierRFQ.Status = Common.SUBMITTED_STATUS;
-
-        _repository.SupplierRFQ.Update(supplierRFQ);
+       
             await _repository.SaveAsync();
 
             _logger.LogInfo(
