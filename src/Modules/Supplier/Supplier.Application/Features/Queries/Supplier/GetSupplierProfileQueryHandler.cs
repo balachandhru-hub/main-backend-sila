@@ -10,14 +10,14 @@ namespace Supplier.Application.Features.Queries.Supplier
     public class GetSupplierProfileQueryHandler
         : IRequestHandler<GetSupplierProfileQuery, OrganizationDto>
     {
-        private readonly IRepositoryWrapper _repository;
+        private readonly IRepositoryWrapper _repositoryWrapper;
         private readonly ILoggerManager _logger;
 
         public GetSupplierProfileQueryHandler(
-            IRepositoryWrapper repository,
+            IRepositoryWrapper repositoryWrapper,
             ILoggerManager logger)
         {
-            _repository = repository;
+            _repositoryWrapper = repositoryWrapper;
             _logger = logger;
         }
 
@@ -27,7 +27,17 @@ namespace Supplier.Application.Features.Queries.Supplier
         {
             _logger.LogInfo($"Fetching supplier profile for OrganizationId : {request.OrganizationId}");
 
-            var supplier = _repository.SupplierBusinessProfile
+            var organization = _repositoryWrapper.SupplierBusinessProfile
+                .FindFirstByCondition(o => o.IsActive && o.OrganizationId == request.OrganizationId);
+
+            if (organization == null)
+            {
+                _logger.LogError($"Organization with ID {request.OrganizationId} not found.");
+                throw new  NoContentCustomException(
+                    "Organization Not Found",
+                    $"Organization with ID {request.OrganizationId} not found.");
+            }
+            var supplier = _repositoryWrapper.SupplierBusinessProfile
                 .FindFirstByCondition(x =>
                     x.OrganizationId == request.OrganizationId &&
                     x.IsActive);
@@ -39,24 +49,24 @@ namespace Supplier.Application.Features.Queries.Supplier
                         "Supplier profile exists, but no related data is available.");
                 }
 
-            var registrations = _repository.SupplierRegistration
+            var registrations = _repositoryWrapper.SupplierRegistration
                 .FindByCondition(x =>
                     x.SupplierId == supplier.Id &&
                     x.IsActive)
                 .ToList();
 
-            var bankAccounts = _repository.SupplierBankAccount
+            var bankAccounts = _repositoryWrapper.SupplierBankAccount
                 .FindByCondition(x =>
                     x.SupplierId == supplier.Id &&
                     x.IsActive)
                 .ToList();
 
-            var dispatchLocations = _repository.SupplierDispatchLocation
+            var dispatchLocations = _repositoryWrapper.SupplierDispatchLocation
                 .FindByCondition(x =>
                     x.SupplierId == supplier.Id &&
                     x.IsActive)
                 .ToList();
-                var categories = _repository.SupplierCategory
+                var categories = _repositoryWrapper.SupplierCategory
                 .FindByCondition(x =>
                     x.SupplierId == supplier.Id &&
                     x.IsActive)
@@ -64,6 +74,7 @@ namespace Supplier.Application.Features.Queries.Supplier
 
             var result = new OrganizationDto
             {
+                Id = organization.Id,
                 OrganizationId = supplier.OrganizationId,
                SNID=supplier.SNID,
 
@@ -99,7 +110,7 @@ namespace Supplier.Application.Features.Queries.Supplier
 
                     if (x.AssetId.HasValue)
                     {
-                        var asset = _repository.Asset.FindFirstByCondition(a =>
+                        var asset = _repositoryWrapper.Asset.FindFirstByCondition(a =>
                             a.Id == x.AssetId.Value &&
                             a.IsActive);
 
