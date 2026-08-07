@@ -47,13 +47,13 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(200, type: typeof(OrganizationDto), description: "Fetched the Organization Profile successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetOrganizationProfile()
+        public async Task<IActionResult> GetOrganizationProfile([FromQuery] Guid? organizationId)
         {
-            Guid organizationId = GetOrganizationId();
+            Guid orgId = GetOrganizationId();
             string snid = GetSNID();
             _logger.LogDebug($"Fetching the Organization Profile for ID: {organizationId}");
-            var result = await _mediator.Send(new GetOrganizationProfileQuery(organizationId));
-            _logger.LogDebug($"Fetched the Organization Profile for ID: {organizationId}");
+            var result = await _mediator.Send(new GetOrganizationProfileQuery(orgId));
+            _logger.LogDebug($"Fetched the Organization Profile for ID: {orgId}");
             return Ok(result);
         }
 
