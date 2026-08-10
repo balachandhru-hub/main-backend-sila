@@ -208,7 +208,7 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result ?? new GetQuestionsAnswersForSupplierDto();
         }
-        public async Task<SupplierRFQAnswerResponseDto> GetSupplierRFQAnswers(
+        public async Task<SupplierRFQAnswerDto> GetSupplierRFQAnswers(
     Guid buyerRFQId,
     CancellationToken cancellationToken = default)
         {
@@ -248,12 +248,23 @@ namespace Buyer.Infrastructure.ApiClients
                     error);
             }
 
-            var result = await response.Content.ReadFromJsonAsync<SupplierRFQAnswerResponseDto>(
-                cancellationToken: cancellationToken);
+             var supplierAnswer =
+        await response.Content.ReadFromJsonAsync<SupplierRFQAnswerResponseDto>(
+            cancellationToken: cancellationToken);
 
-            _logger.LogInfo($"Supplier RFQ Answers fetched successfully. BuyerRFQId: {buyerRFQId}");
+    if (supplierAnswer == null)
+    {
+        return new SupplierRFQAnswerDto();
+    }
 
-            return result ?? new SupplierRFQAnswerResponseDto();
+    var result = new SupplierRFQAnswerDto();
+
+    result.SupplierAnswers.Add(supplierAnswer);
+
+    _logger.LogInfo(
+        $"Supplier RFQ Answers fetched successfully. BuyerRFQId: {buyerRFQId}");
+
+    return result;
+}
         }
     }
-}

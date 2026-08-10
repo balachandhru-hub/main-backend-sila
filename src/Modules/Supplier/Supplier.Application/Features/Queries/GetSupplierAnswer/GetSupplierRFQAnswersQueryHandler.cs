@@ -51,7 +51,9 @@ namespace Supplier.Application.Features.Queries.SupplierAnswers
             var response = new SupplierRFQAnswerResponseDto
             {
                 
-                SupplierRFQId = supplierRFQ.Id
+                SupplierRFQId = supplierRFQ.Id,
+                SupplierId = supplierRFQ.SupplierId
+                
             };
 
             foreach (var answer in answers)

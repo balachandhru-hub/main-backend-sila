@@ -3,6 +3,7 @@ namespace Buyer.Domain.Dto
 {
     public class RFQQuestionDto
     {
+        public Guid Id { get; set; }
         public string Question { get; set; }
 
         public string QuestionType { get; set; }
