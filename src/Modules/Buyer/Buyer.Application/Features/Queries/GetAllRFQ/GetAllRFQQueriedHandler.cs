@@ -130,32 +130,65 @@
                 }
 
 
-     foreach (var supplier in supplierAnswers.SupplierAnswers)
+    foreach (var supplier in supplierAnswers.SupplierAnswers)
 {
     foreach (var supplierAnswer in supplier.Answers)
     {
-       
-        if (supplierAnswer.QuestionOptionIds != null &&
-            supplierAnswer.QuestionOptionIds.Any())
+        var question = questions.FirstOrDefault(q =>
+            q.Id == supplierAnswer.RFQQuestionId);
+
+        if (question == null)
+            continue;
+
+        // RADIO
+        if (question.QuestionType.Equals(
+            Common.RADIO_BUTTON,
+            StringComparison.OrdinalIgnoreCase))
         {
-           
-            supplierAnswer.QuestionOptionIds =
-                supplierAnswer.QuestionOptionIds
-                    .Distinct()
+            // Radio uses ONLY QuestionOptionId
+            if (supplierAnswer.QuestionOptionId.HasValue)
+            {
+                var selectedOption = questionOptions.FirstOrDefault(x =>
+                    x.Id == supplierAnswer.QuestionOptionId.Value &&
+                    x.RFQQuestionId == supplierAnswer.RFQQuestionId);
+
+                if (selectedOption != null)
+                {
+                    supplierAnswer.Answer = selectedOption.OptionText;
+                }
+            }
+
+            // Radio does not use multiple option IDs
+            supplierAnswer.QuestionOptionIds = new List<Guid>();
+
+            continue;
+        }
+
+        // CHECKBOX
+        if (question.QuestionType.Equals(
+            Common.CHECKBOX,
+            StringComparison.OrdinalIgnoreCase))
+        {
+            // Checkbox uses ONLY QuestionOptionIds
+            if (supplierAnswer.QuestionOptionIds != null &&
+                supplierAnswer.QuestionOptionIds.Any())
+            {
+                supplierAnswer.QuestionOptionIds =
+                    supplierAnswer.QuestionOptionIds
+                        .Distinct()
+                        .ToList();
+
+                var selectedOptions = questionOptions
+                    .Where(x =>
+                        x.RFQQuestionId == supplierAnswer.RFQQuestionId &&
+                        supplierAnswer.QuestionOptionIds.Contains(x.Id))
+                    .OrderBy(x => x.DisplayOrder)
+                    .Select(x => x.OptionText)
                     .ToList();
 
-         
-            var selectedOptions = questionOptions
-                .Where(x =>
-                    x.RFQQuestionId == supplierAnswer.RFQQuestionId &&
-                    supplierAnswer.QuestionOptionIds.Contains(x.Id))
-                .OrderBy(x => x.DisplayOrder)
-                .Select(x => x.OptionText)
-                .Distinct()
-                .ToList();
-
-           
-            supplierAnswer.Answer = string.Join(", ", selectedOptions);
+                supplierAnswer.Answer =
+                    string.Join(", ", selectedOptions);
+            }
 
            
             supplierAnswer.QuestionOptionId = null;
@@ -163,22 +196,7 @@
             continue;
         }
 
-      
-        if (supplierAnswer.QuestionOptionId.HasValue)
-        {
-            var selectedOption = questionOptions
-                .FirstOrDefault(x =>
-                    x.Id == supplierAnswer.QuestionOptionId.Value &&
-                    x.RFQQuestionId == supplierAnswer.RFQQuestionId);
-
-            if (selectedOption != null)
-            {
-                supplierAnswer.Answer = selectedOption.OptionText;
-            }
-
-            continue;
-        }
-
+        
     }
 }
 
