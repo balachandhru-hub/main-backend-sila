@@ -23,5 +23,7 @@ namespace Identity.Domain.Dto
         public Guid RoleId { get; set; }
 
         public string RoleName { get; set; }
+        public string OrganizationName { get; set; }
+        public string OrganizationEmail { get; set; }
     }
 }

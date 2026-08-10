@@ -41,6 +41,9 @@ namespace Identity.Application.Features.Queries.GetPersonDetail
 
                     join r in _repository.Role.FindByConditionAsync(x => x.IsActive)
                         on urm.RoleId equals r.Id
+                    
+                    join o in _repository.Organization.FindByConditionAsync(x => x.IsActive)
+                        on p.OrganizationId equals o.Id
 
                     select new PersonDetailDto
                     {
@@ -54,7 +57,9 @@ namespace Identity.Application.Features.Queries.GetPersonDetail
                         AddressLine = p.AddressLine,
                         Country = p.Country,
                         RoleId = r.Id,
-                        RoleName = r.UserRole
+                        RoleName = r.UserRole,
+                        OrganizationName = o.OrganizationName,
+                        OrganizationEmail = o.Email
                     }
 
                 ).FirstOrDefault();
