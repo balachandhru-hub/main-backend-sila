@@ -108,6 +108,7 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 "CatalogName",
                 "Description",
                 "Price",
+                "Currency",
                 "UnitOfMeasure",
                 "CatalogType",
                 "IsPunchOut",
@@ -163,18 +164,19 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 var catalogName = row.Cell(1).GetString().Trim();
                 var description = row.Cell(2).GetString().Trim();
                 var priceRaw = row.Cell(3).GetString().Trim();
-                var unitOfMeasure = row.Cell(4).GetString().Trim();
-                var catalogTypeRaw = row.Cell(5).GetString().Trim().ToUpper();
-                var isPunchOutRaw = row.Cell(6).GetString().Trim();
-                var punchOutUrl = row.Cell(7).GetString().Trim();
-                var segmentRaw = row.Cell(8).GetString().Trim();
-                var segmentTitle = row.Cell(9).GetString().Trim();
-                var familyRaw = row.Cell(10).GetString().Trim();
-                var familyTitle = row.Cell(11).GetString().Trim();
-                var classRaw = row.Cell(12).GetString().Trim();
-                var classTitle = row.Cell(13).GetString().Trim();
-                var commodityRaw = row.Cell(14).GetString().Trim();
-                var commodityTitle = row.Cell(15).GetString().Trim();
+                var currency = row.Cell(4).GetString().Trim();
+                var unitOfMeasure = row.Cell(5).GetString().Trim();
+                var catalogTypeRaw = row.Cell(6).GetString().Trim().ToUpper();
+                var isPunchOutRaw = row.Cell(7).GetString().Trim();
+                var punchOutUrl = row.Cell(8).GetString().Trim();
+                var segmentRaw = row.Cell(9).GetString().Trim();
+                var segmentTitle = row.Cell(10).GetString().Trim();
+                var familyRaw = row.Cell(11).GetString().Trim();
+                var familyTitle = row.Cell(12).GetString().Trim();
+                var classRaw = row.Cell(13).GetString().Trim();
+                var classTitle = row.Cell(14).GetString().Trim();
+                var commodityRaw = row.Cell(15).GetString().Trim();
+                var commodityTitle = row.Cell(16).GetString().Trim();
 
                 if (string.IsNullOrWhiteSpace(description))
                 {
@@ -242,6 +244,7 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                     CatalogName = string.IsNullOrWhiteSpace(catalogName) ? null! : catalogName,
                     Description = description,
                     Price = price,
+                    Currency = string.IsNullOrWhiteSpace(currency) ? null : currency,
                     UnitOfMeasure = unitOfMeasure,
                     CatalogType = catalogTypeRaw,
                     IsPunchOut = isPunchOut,
