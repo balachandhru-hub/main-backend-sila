@@ -39,5 +39,7 @@ namespace Buyer.Domain.Common
                 public static Guid BUYER_ROLE_ID = new Guid("c95f5a1b-4aec-4647-9328-895a58193ec4");
                 public const string DEFAULT_TEMPLATE = "DEFAULT_TEMPLATE";
                 public const string BUYER = "BUYER";
+                public const string RADIO_BUTTON = "Radio";
+                public const string CHECKBOX = "Checkbox";
         }
 }
