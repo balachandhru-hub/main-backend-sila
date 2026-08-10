@@ -28,4 +28,15 @@ public interface IUnspscRepository
     long segment,
     int pageIndex,
     int pageSize);
+       Task<List<UnspscClassDto>> GetClassAsync(
+            
+            long family,
+            int pageIndex,
+            int pageSize);
+
+        Task<List<UnspscCommodityDto>> GetCommodityAsync(
+          
+            long @class,
+            int pageIndex,
+            int pageSize);
 }

@@ -44,6 +44,7 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                     CatalogName = catalog.CatalogName,
                     Description = catalog.Description,
                     Price = catalog.Price,
+                    Currency = catalog.Currency,
                     UnitOfMeasure = catalog.UnitOfMeasure,
 
                     Segment = catalog.Segment,
