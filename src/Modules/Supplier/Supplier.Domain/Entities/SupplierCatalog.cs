@@ -21,6 +21,7 @@ namespace Supplier.Domain.Entities
 
      
         public decimal? Price { get; set; }
+         public string Currency { get; set; }
 
         [Required]
         public string UnitOfMeasure { get; set; }

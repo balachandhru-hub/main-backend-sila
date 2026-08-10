@@ -160,5 +160,65 @@ public class UnspscController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Returns Classes for  Family.
+    /// </summary>
+    [HttpGet]
+    [Route("api/v1/masterdata/unspsc/class")]
+    [ValidateModelState]
+    [ApiAuthorization(Name = "GET_CLASS")]
+    [SwaggerOperation("GetUnspscClass")]
+    [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Classes retrieved successfully")]
+    [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+    public async Task<IActionResult> GetClass(
+       
+        [FromQuery] long family,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        _logger.LogDebug(
+            $"Received request to get UNSPSC classes:Family={family}, PageIndex={pageIndex}, PageSize={pageSize}");
+
+        var result = await _mediator.Send(
+            new GetUnspscClassQuery(
+                
+                family,
+                pageIndex,
+                pageSize));
+
+        _logger.LogDebug($"Retrieved {result.Count} classes.");
+
+        return Ok(result);
+    }
+    /// <summary>
+    /// Returns Commodities for Class.
+    /// </summary>
+    [HttpGet]
+    [Route("api/v1/masterdata/unspsc/commodity")]
+    [ValidateModelState]
+    [ApiAuthorization(Name = "GET_COMMODITY")]
+    [SwaggerOperation("GetUnspscCommodity")]
+    [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Commodities retrieved successfully")]
+    [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+    public async Task<IActionResult> GetCommodity(
+    
+        [FromQuery] long @class,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        _logger.LogDebug(
+            $"Received request to get UNSPSC commodities:  Class={@class}, PageIndex={pageIndex}, PageSize={pageSize}");
+
+        var result = await _mediator.Send(
+            new GetUnspscCommodityQuery(
+               
+                @class,
+                pageIndex,
+                pageSize));
+
+        _logger.LogDebug($"Retrieved {result.Count} commodities.");
+
+        return Ok(result);
+    }
 
 }
