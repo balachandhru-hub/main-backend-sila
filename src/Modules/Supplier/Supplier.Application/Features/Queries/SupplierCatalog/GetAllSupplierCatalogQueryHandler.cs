@@ -41,6 +41,7 @@ namespace Supplier.Application.Features.Queries.SupplierCatalog
                     CatalogName = catalog.CatalogName,
                     Description = catalog.Description,
                     Price = catalog.Price,
+                    Currency = catalog.Currency,
                     UnitOfMeasure = catalog.UnitOfMeasure,
                     CatalogType = catalog.CatalogType,
                     IsPunchOut = catalog.IsPunchOut,

@@ -107,6 +107,7 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 CatalogName = request.Catalog.CatalogName,
                 Description = request.Catalog.Description,
                 Price = request.Catalog.Price,
+               Currency = request.Catalog.Currency,
                 UnitOfMeasure = request.Catalog.UnitOfMeasure,
                    Segment = request.Catalog.Segment,
                 SegmentTitle = request.Catalog.SegmentTitle,

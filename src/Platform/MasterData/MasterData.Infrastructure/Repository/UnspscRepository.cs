@@ -191,7 +191,8 @@ public class UnspscRepository : IUnspscRepository
 
         return await _context.UnspscCategories
         .Where(x => x.Segment == segment &&
-                    x.Family.HasValue)
+                    x.Family.HasValue&&
+                    x.IsActive)
         .Select(x => new
         {
             x.Family,
@@ -207,5 +208,67 @@ public class UnspscRepository : IUnspscRepository
             Title = x.FamilyTitle
         })
         .ToListAsync();
+    }
+    public async Task<List<UnspscClassDto>> GetClassAsync(
+   
+    long family,
+    int pageIndex,
+    int pageSize)
+    {
+        _logger.LogInfo(
+            $"Retrieving classes  Family={family}");
+
+        return await _context.UnspscCategories
+            .Where(x =>
+               
+                x.Family == family &&
+                x.Class.HasValue &&
+                x.IsActive)
+            .Select(x => new
+            {
+                x.Class,
+                x.ClassTitle
+            })
+            .Distinct()
+            .OrderBy(x => x.Class)
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new UnspscClassDto
+            {
+                Class = x.Class,
+                ClassTitle = x.ClassTitle
+            })
+            .ToListAsync();
+    }
+    public async Task<List<UnspscCommodityDto>> GetCommodityAsync(
+   
+    long @class,
+    int pageIndex,
+    int pageSize)
+    {
+        _logger.LogInfo(
+            $"Retrieving commodities for , Class={@class}");
+
+        return await _context.UnspscCategories
+            .Where(x =>
+               
+                x.Class == @class &&
+                x.Commodity.HasValue &&
+                x.IsActive)
+            .Select(x => new
+            {
+                x.Commodity,
+                x.CommodityTitle
+            })
+            .Distinct()
+            .OrderBy(x => x.Commodity)
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new UnspscCommodityDto
+            {
+                Commodity = x.Commodity,
+                CommodityTitle = x.CommodityTitle
+            })
+            .ToListAsync();
     }
 }
