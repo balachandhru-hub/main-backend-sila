@@ -17,7 +17,7 @@ CancellationToken cancellationToken = default);
         Task<GetQuestionsAnswersForSupplierDto> GetQuestionsAnswersForSupplier(
         Guid requestId,
         CancellationToken cancellationToken = default);
-       Task<SupplierRFQAnswerResponseDto?> GetSupplierRFQAnswers(
+       Task<SupplierRFQAnswerDto?> GetSupplierRFQAnswers(
         Guid buyerRFQId,
         CancellationToken cancellationToken);
     }

@@ -62,7 +62,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 );
             }
             var buyerId = rfq.BuyerId;
-            
+
             GetAllSupplierQuotationDto? supplierQuotation = null;
 
             try
@@ -76,26 +76,27 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 // Ignore if quotation is not created yet
                 supplierQuotation = new GetAllSupplierQuotationDto();
             }
-            
-                SupplierRFQAnswerResponseDto? supplierAnswers = null;
 
-                try
-                {
-                    _logger.LogInfo($"Fetching Supplier RFQ Answers for BuyerRFQId: {request.RFQId}");
-                    supplierAnswers = await _supplierApiClient.GetSupplierRFQAnswers(
-                        request.RFQId,
-                        cancellationToken);
-                }
-                catch
-                {
-                    _logger.LogInfo($"No Supplier RFQ Answers found for BuyerRFQId: {request.RFQId}");
-                    supplierAnswers = new SupplierRFQAnswerResponseDto();
-                }
+            SupplierRFQAnswerDto? supplierAnswers = null;
+
+            try
+            {
+                _logger.LogInfo($"Fetching Supplier RFQ Answers for BuyerRFQId: {request.RFQId}");
+                supplierAnswers = await _supplierApiClient.GetSupplierRFQAnswers(
+                    request.RFQId,
+                    cancellationToken);
+            }
+            catch
+            {
+                _logger.LogInfo($"No Supplier RFQ Answers found for BuyerRFQId: {request.RFQId}");
+                supplierAnswers = new SupplierRFQAnswerDto();
+            }
             var questions = await _repository.RFQQuestion
                 .FindByCondition(x => x.RFQId == request.RFQId)
                 .OrderBy(x => x.DisplayOrder)
                 .Select(x => new RFQQuestionDto
                 {
+                    Id = x.Id,
                     Question = x.Question,
                     QuestionType = x.QuestionType,
                     IsRequired = x.IsRequired,
@@ -103,6 +104,65 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                     Options = new List<string>()
                 })
                 .ToListAsync(cancellationToken);
+            // STEP 2: Get options for these questions
+            var questionIds = questions
+                .Select(x => x.Id)
+                .ToList();
+
+            var questionOptions = await _repository.RFQQuestionOption
+                .FindByCondition(x =>
+                    questionIds.Contains(x.RFQQuestionId) &&
+                    x.IsActive)
+                .OrderBy(x => x.DisplayOrder)
+                .ToListAsync(cancellationToken);
+
+
+
+
+
+            foreach (var question in questions)
+            {
+                question.Options = questionOptions
+                    .Where(x => x.RFQQuestionId == question.Id)
+                    .OrderBy(x => x.DisplayOrder)
+                    .Select(x => x.OptionText)
+                    .ToList();
+            }
+
+
+            foreach (var supplier in supplierAnswers.SupplierAnswers)
+            {
+                foreach (var supplierAnswer in supplier.Answers)
+                {
+
+                    if (supplierAnswer.QuestionOptionId.HasValue)
+                    {
+                        var selectedOption = questionOptions
+                            .FirstOrDefault(x =>
+                                x.Id == supplierAnswer.QuestionOptionId.Value);
+
+                        if (selectedOption != null)
+                        {
+                            supplierAnswer.Answer = selectedOption.OptionText;
+                        }
+                    }
+
+
+                    if (supplierAnswer.QuestionOptionIds != null &&
+                        supplierAnswer.QuestionOptionIds.Any())
+                    {
+                        var selectedOptions = questionOptions
+                            .Where(x =>
+                                supplierAnswer.QuestionOptionIds.Contains(x.Id))
+                            .OrderBy(x => x.DisplayOrder)
+                            .Select(x => x.OptionText)
+                            .ToList();
+
+                        supplierAnswer.Answer = string.Join(", ", selectedOptions);
+                    }
+                }
+            }
+
 
             var rfqItems = await _repository.RFQItem
      .FindByCondition(x => x.RFQId == request.RFQId)
@@ -148,7 +208,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                     MaterialGroup = item.MaterialGroup,
                     CostCenter = item.CostCenter,
                     Attachments = attachments,
-                    
+
 
                 });
             }
@@ -246,7 +306,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
 
                 SupplierQuotationItems = supplierQuotation?.SupplierQuotationItems
         ?? new List<SupplierQuotationItemDto>(),
-         SupplierAnswers = supplierAnswers ?? new SupplierRFQAnswerResponseDto()
+                SupplierAnswers = supplierAnswers
             };
         }
     }
