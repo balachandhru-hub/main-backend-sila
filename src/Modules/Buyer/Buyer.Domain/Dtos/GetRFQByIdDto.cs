@@ -38,7 +38,7 @@ namespace Buyer.Domain.Dtos
 
         public Guid RFQVerificationTemplateId { get; set; }
         public List<GetAllSupplierQuotationDto> SupplierQuotation { get; set; }
-        public SupplierRFQAnswerResponseDto? SupplierAnswers { get; set; }
+        public SupplierRFQAnswerDto? SupplierAnswers { get; set; }
 
         public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; }
     }

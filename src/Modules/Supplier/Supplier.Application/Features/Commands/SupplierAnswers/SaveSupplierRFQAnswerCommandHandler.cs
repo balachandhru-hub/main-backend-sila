@@ -35,7 +35,7 @@ namespace Supplier.Application.Features.Commands.SupplierAnswers
 
             var supplierRFQ = _repository.SupplierRFQ
                 .FindFirstByCondition(x =>
-                    x.Id == request.Answer.SupplierRFQId &&
+                    x.BuyerRFQId  == request.Answer.SupplierRFQId &&
                     x.IsActive);
 
             if (supplierRFQ == null)

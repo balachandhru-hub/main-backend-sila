@@ -208,7 +208,7 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result ?? new GetQuestionsAnswersForSupplierDto();
         }
-        public async Task<SupplierRFQAnswerResponseDto> GetSupplierRFQAnswers(
+        public async Task<SupplierRFQAnswerDto> GetSupplierRFQAnswers(
     Guid buyerRFQId,
     CancellationToken cancellationToken = default)
         {
@@ -220,7 +220,7 @@ namespace Buyer.Infrastructure.ApiClients
                 HttpMethod.Get,
                 $"{supplierUrl}/api/v1/supplier/internal-rfq-answer/{buyerRFQId}");
             _logger.LogInfo($"Request URL: {request.RequestUri}");
-           
+
             var accessToken = _httpContextAccessor.HttpContext?
                 .Request
                 .Cookies[Common.ACCESS_TOKEN];
@@ -242,18 +242,30 @@ namespace Buyer.Infrastructure.ApiClients
                     $"Failed to fetch Supplier RFQ Answers. Status Code: {response.StatusCode}");
 
                 var error = await response.Content.ReadAsStringAsync();
-
+                _logger.LogError($"Error response: {error}");
                 throw new BadRequestCustomException(
                     "Unable to fetch Supplier RFQ Answers.",
                     error);
             }
-
-            var result = await response.Content.ReadFromJsonAsync<SupplierRFQAnswerResponseDto>(
-                cancellationToken: cancellationToken);
-
             _logger.LogInfo($"Supplier RFQ Answers fetched successfully. BuyerRFQId: {buyerRFQId}");
+            var supplierAnswer =
+       await response.Content.ReadFromJsonAsync<SupplierRFQAnswerResponseDto>(
+           cancellationToken: cancellationToken);
 
-            return result ?? new SupplierRFQAnswerResponseDto();
+            if (supplierAnswer == null)
+            {
+                _logger.LogInfo($"No Supplier RFQ Answers found for BuyerRFQId: {buyerRFQId}");
+                return new SupplierRFQAnswerDto();
+            }
+            _logger.LogInfo($"Supplier RFQ Answers found for BuyerRFQId: {buyerRFQId}, SupplierRFQId: {supplierAnswer.SupplierRFQId}");
+            var result = new SupplierRFQAnswerDto();
+
+            result.SupplierAnswers.Add(supplierAnswer);
+
+            _logger.LogInfo(
+                $"Supplier RFQ Answers fetched successfully. BuyerRFQId: {buyerRFQId}");
+
+            return result;
         }
     }
 }
