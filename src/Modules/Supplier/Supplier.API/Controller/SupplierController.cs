@@ -56,11 +56,13 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> CreateSupplierProfile(
-            [FromBody] CreateSupplierProfileCommand command)
+            [FromBody] SupplierProfileDto supplierProfileDto)
         {
             _logger.LogDebug("Creating supplier profile.");
+            supplierProfileDto.OrganizationId = GetOrganizationId();
+            supplierProfileDto.SNID=GetSNID();
 
-            var supplierId = await _mediator.Send(command);
+            var supplierId = await _mediator.Send(new CreateSupplierProfileCommand(supplierProfileDto));
 
             _logger.LogDebug("Supplier profile created successfully.");
 
@@ -77,19 +79,21 @@ namespace Supplier.API.Controllers
         /// </summary>
         [HttpGet]
         [Route("api/v1/supplier/profile")]
+        
         [ApiAuthorization(Name = "GET_SUPPLIER_PROFILE")]
         [ValidateModelState]
         [SwaggerOperation("GetSupplierProfile")]
-        [SwaggerResponse(200, type: typeof(SupplierProfileDto), description: "Supplier profile fetched successfully")]
+        [SwaggerResponse(200, type: typeof(OrganizationDto), description: "Supplier profile fetched successfully")]
         [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier not found")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetSupplierProfile()
+        public async Task<IActionResult> GetSupplierProfile([FromQuery] Guid? organizationId)
         {
-            Guid organizationId = GetOrganizationId();
+            Guid orgId = organizationId??GetOrganizationId();
+            string snid=GetSNID();
 
-            var result = await _mediator.Send(new GetSupplierProfileQuery(organizationId));
+            var result = await _mediator.Send(new GetSupplierProfileQuery(orgId));
 
-            _logger.LogDebug($"Supplier profile fetched successfully: {organizationId}");
+            _logger.LogDebug($"Supplier profile fetched successfully: {orgId}");
 
             return Ok(result);
         }

@@ -8,26 +8,36 @@ using Supplier.Infrastructure.Contracts.IRepository;
 namespace Supplier.Application.Features.Queries.Supplier
 {
     public class GetSupplierProfileQueryHandler
-        : IRequestHandler<GetSupplierProfileQuery, SupplierProfileDto>
+        : IRequestHandler<GetSupplierProfileQuery, OrganizationDto>
     {
-        private readonly IRepositoryWrapper _repository;
+        private readonly IRepositoryWrapper _repositoryWrapper;
         private readonly ILoggerManager _logger;
 
         public GetSupplierProfileQueryHandler(
-            IRepositoryWrapper repository,
+            IRepositoryWrapper repositoryWrapper,
             ILoggerManager logger)
         {
-            _repository = repository;
+            _repositoryWrapper = repositoryWrapper;
             _logger = logger;
         }
 
-        public Task<SupplierProfileDto> Handle(
+        public Task<OrganizationDto> Handle(
             GetSupplierProfileQuery request,
             CancellationToken cancellationToken)
         {
             _logger.LogInfo($"Fetching supplier profile for OrganizationId : {request.OrganizationId}");
 
-            var supplier = _repository.SupplierBusinessProfile
+            var organization = _repositoryWrapper.SupplierBusinessProfile
+                .FindFirstByCondition(o => o.IsActive && o.OrganizationId == request.OrganizationId);
+
+            if (organization == null)
+            {
+                _logger.LogError($"Organization with ID {request.OrganizationId} not found.");
+                throw new  NoContentCustomException(
+                    "Organization Not Found",
+                    $"Organization with ID {request.OrganizationId} not found.");
+            }
+            var supplier = _repositoryWrapper.SupplierBusinessProfile
                 .FindFirstByCondition(x =>
                     x.OrganizationId == request.OrganizationId &&
                     x.IsActive);
@@ -39,28 +49,34 @@ namespace Supplier.Application.Features.Queries.Supplier
                         "Supplier profile exists, but no related data is available.");
                 }
 
-            var registrations = _repository.SupplierRegistration
+            var registrations = _repositoryWrapper.SupplierRegistration
                 .FindByCondition(x =>
                     x.SupplierId == supplier.Id &&
                     x.IsActive)
                 .ToList();
 
-            var bankAccounts = _repository.SupplierBankAccount
+            var bankAccounts = _repositoryWrapper.SupplierBankAccount
                 .FindByCondition(x =>
                     x.SupplierId == supplier.Id &&
                     x.IsActive)
                 .ToList();
 
-            var dispatchLocations = _repository.SupplierDispatchLocation
+            var dispatchLocations = _repositoryWrapper.SupplierDispatchLocation
+                .FindByCondition(x =>
+                    x.SupplierId == supplier.Id &&
+                    x.IsActive)
+                .ToList();
+                var categories = _repositoryWrapper.SupplierCategory
                 .FindByCondition(x =>
                     x.SupplierId == supplier.Id &&
                     x.IsActive)
                 .ToList();
 
-            var result = new SupplierProfileDto
+            var result = new OrganizationDto
             {
-                Id = supplier.Id,
+                Id = organization.Id,
                 OrganizationId = supplier.OrganizationId,
+               SNID=supplier.SNID,
 
                 BusinessProfile = new SupplierBusinessProfileDto
                 {
@@ -94,7 +110,7 @@ namespace Supplier.Application.Features.Queries.Supplier
 
                     if (x.AssetId.HasValue)
                     {
-                        var asset = _repository.Asset.FindFirstByCondition(a =>
+                        var asset = _repositoryWrapper.Asset.FindFirstByCondition(a =>
                             a.Id == x.AssetId.Value &&
                             a.IsActive);
 
@@ -147,6 +163,17 @@ namespace Supplier.Application.Features.Queries.Supplier
                     ContactEmail = x.ContactEmail,
                     ContactPhone = x.ContactPhone,
                     IsDefault = x.IsDefault
+                }).ToList(),
+                SupplierCategories = categories.Select(x => new SupplierCategoryDto
+                {
+                    Segment = x.Segment,
+                    SegmentTitle = x.SegmentTitle,
+                    Family = x.Family,
+                    FamilyTitle = x.FamilyTitle,
+                    Class = x.Class,
+                    ClassTitle = x.ClassTitle,
+                    Commodity = x.Commodity,
+                    CommodityTitle = x.CommodityTitle
                 }).ToList()
             };
 

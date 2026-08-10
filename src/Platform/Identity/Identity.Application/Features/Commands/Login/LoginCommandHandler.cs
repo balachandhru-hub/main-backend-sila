@@ -172,6 +172,7 @@ namespace Identity.Application.Features.Auth.Commands.Login
                     new Claim("UserId", user.Id.ToString()),
                     new Claim("OrganizationId", person.OrganizationId.ToString()),
                     new Claim("Permissions", permissionJson),
+                    new Claim("SNID", organization.SNID),
                     new Claim("OrganizationType", organization.OrganizationType.ToString()),
                 };
 

@@ -8,7 +8,7 @@ using Supplier.Infrastructure.Contracts.IRepository;
 namespace Supplier.Application.Features.Queries.Supplier
 {
     public class GetSupplierByIdQueryHandler
-        : IRequestHandler<GetSupplierByIdQuery, SupplierProfileDto>
+        : IRequestHandler<GetSupplierByIdQuery, OrganizationDto>
     {
         private readonly IRepositoryWrapper _repository;
 
@@ -17,7 +17,7 @@ namespace Supplier.Application.Features.Queries.Supplier
             _repository = repository;
         }
 
-        public async Task<SupplierProfileDto> Handle(
+        public async Task<OrganizationDto> Handle(
             GetSupplierByIdQuery request,
             CancellationToken cancellationToken)
         {
@@ -34,10 +34,11 @@ namespace Supplier.Application.Features.Queries.Supplier
                     "Supplier does not exist.");
             }
 
-            var dto = new SupplierProfileDto
+            var dto = new OrganizationDto
             {
-                Id = supplier.Id,
+                
                 OrganizationId = supplier.OrganizationId,
+                SNID = supplier.SNID,
 
                 BusinessProfile = new SupplierBusinessProfileDto
                 {
@@ -107,7 +108,20 @@ namespace Supplier.Application.Features.Queries.Supplier
                     IsDefault = x.IsDefault
                 })
                 .ToListAsync(cancellationToken);
-
+           dto.SupplierCategories = await _repository.SupplierCategory
+            .FindByCondition(x => x.SupplierId == supplier.Id && x.IsActive)
+            .Select(x => new SupplierCategoryDto
+            {
+                Segment = x.Segment,
+                SegmentTitle = x.SegmentTitle,
+                Family = x.Family,
+                FamilyTitle = x.FamilyTitle,
+                Class = x.Class,
+                ClassTitle = x.ClassTitle,
+                Commodity = x.Commodity,
+                CommodityTitle = x.CommodityTitle
+            })
+            .ToListAsync(cancellationToken);
             return dto;
         }
     }

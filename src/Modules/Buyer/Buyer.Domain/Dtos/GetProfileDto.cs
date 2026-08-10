@@ -6,7 +6,9 @@ namespace Buyer.Domain.Dto
     {
         public Guid Id { get; set; }
 
-        public Guid OrganizationId { get; set; }
+        public Guid? OrganizationId { get; set; }
+
+        public string SNID { get; set; }
 
         public BusinessProfileDto BusinessProfile { get; set; } = new();
 

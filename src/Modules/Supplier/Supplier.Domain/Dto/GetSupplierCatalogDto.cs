@@ -9,6 +9,7 @@ public class GetSupplierCatalogDto
     public string Description { get; set; }
 
     public decimal? Price { get; set; }
+    public string Currency { get; set; }
 
     public string UnitOfMeasure { get; set; }
     public long? Segment {get;set;}
