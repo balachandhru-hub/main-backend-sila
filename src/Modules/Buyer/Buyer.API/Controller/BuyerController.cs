@@ -20,6 +20,8 @@ using Buyer.Application.Features.Profile.Queries.GetBuyerId;
 using Buyer.Application.Features.Queries.GetAllSupplier;
 using Buyer.Domain.Dtos;
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
+using Buyer.Application.Features.Commands.UpdateDeliveryLocation;
+using Buyer.Application.Features.Commands.UpdateBankAccount;
 
 
 namespace Buyer.API.Controllers
@@ -49,7 +51,7 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetOrganizationProfile([FromQuery] Guid? organizationId)
         {
-            Guid orgId = organizationId??GetOrganizationId();
+            Guid orgId = organizationId ?? GetOrganizationId();
             string snid = GetSNID();
             _logger.LogDebug($"Fetching the Organization Profile for ID: {organizationId}");
             var result = await _mediator.Send(new GetOrganizationProfileQuery(orgId));
@@ -73,7 +75,7 @@ namespace Buyer.API.Controllers
         {
             _logger.LogDebug($"Creating Organization Profile for Organization: {createBuyerDto.OrganizationName}");
             createBuyerDto.OrganizationId = GetOrganizationId();
-            createBuyerDto.SNID=GetSNID();
+            createBuyerDto.SNID = GetSNID();
             var result = await _mediator.Send(new CreateBuyerProfileCommand(createBuyerDto));
             _logger.LogDebug($"Created Organization Profile for Organization: {createBuyerDto.OrganizationName}");
             return Ok(new SuccessResponseDto { Id = result.ToString(), Message = "Buyer Profile created successfully", Description = "Buyer Profile created successfully", StatusCode = 201 });
@@ -377,7 +379,7 @@ namespace Buyer.API.Controllers
                 Id = command.Buyer.OrganizationId.ToString()
             });
         }
-        
+
         /// <summary>
         /// Get Buyer Id
         /// </summary>
@@ -419,6 +421,64 @@ namespace Buyer.API.Controllers
             return Ok(result);
         }
 
-        
+        [HttpPut]
+        [Route("api/v1/buyer/delivery-location/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_BUYER_DELIVERY_LOCATION")]
+        [SwaggerOperation("UpdateBuyerDeliveryLocation")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Delivery location updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateDeliveryLocation(
+            Guid id,
+            [FromBody] UpdateDeliveryLocationDto request)
+        {
+            var updatedId = await _mediator.Send(
+                new UpdateDeliveryLocationCommand
+                {
+                    Id = id,
+                    Data = request
+                });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Delivery location updated successfully.",
+                Id = updatedId.ToString()
+            });
         }
+
+
+        [HttpPut]
+        [Route("api/v1/buyer/bank-account/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_BUYER_BANK_ACCOUNT")]
+        [SwaggerOperation("UpdateBuyerBankAccount")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Bank account updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateBankAccount(
+            Guid id,
+            [FromBody] UpdateBankAccountDto request)
+        {
+            var updatedId = await _mediator.Send(
+                new UpdateBankAccountCommand
+                {
+                    Id = id,
+                    Data = request
+                });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Bank account updated successfully.",
+                Id = updatedId.ToString()
+            });
+        }
+
+
+
+    }
 }
