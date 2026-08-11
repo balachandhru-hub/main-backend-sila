@@ -33,10 +33,10 @@ namespace Supplier.Application.Features.Commands.SupplierAnswers
             _logger.LogInfo(
                 $"Saving supplier answers for SupplierRFQ : {request.Answer.SupplierRFQId}");
 
-            var supplierRFQ = _repository.SupplierRFQ
-                .FindFirstByCondition(x =>
-                    x.BuyerRFQId  == request.Answer.SupplierRFQId &&
-                    x.IsActive);
+             var supplierRFQ = _repository.SupplierRFQ
+        .FindFirstByCondition(x =>
+            x.Id == request.Answer.SupplierRFQId &&
+            x.IsActive);
 
             if (supplierRFQ == null)
             {
