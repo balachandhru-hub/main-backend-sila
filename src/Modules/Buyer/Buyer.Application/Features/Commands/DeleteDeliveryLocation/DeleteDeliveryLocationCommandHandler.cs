@@ -19,17 +19,23 @@ namespace Buyer.Application.Features.Commands.DeleteDeliveryLocation
 
         public async Task<Guid> Handle(DeleteDeliveryLocationCommand request, CancellationToken cancellationToken)
         {
-            _logger.LogInfo($"Deleting Delivery Location Id: {request.Id}");
+            _logger.LogInfo($"Soft deleting Delivery Location Id: {request.Id} for BuyerId: {request.BuyerId}");
 
             var location = await _repository.BuyerDeliveryLocation
                 .FindByCondition(x => x.Id == request.Id && x.BuyerId == request.BuyerId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (location == null)
+            {
+                _logger.LogError($"Delivery Location not found. Id: {request.Id}, BuyerId: {request.BuyerId}");
                 throw new NotFoundCustomException("Delivery location not found.", "The delivery location does not exist or does not belong to the specified buyer.");
+            }
+
+            _logger.LogInfo($"Delivery Location found. Marking as inactive. Id: {request.Id}");
 
             location.IsActive = false;
             _repository.BuyerDeliveryLocation.Update(location);
+            _logger.LogInfo($"Saving soft delete for Delivery Location Id: {request.Id}");
             await _repository.SaveAsync();
 
             _logger.LogInfo($"Delivery Location soft deleted successfully. Id: {request.Id}");

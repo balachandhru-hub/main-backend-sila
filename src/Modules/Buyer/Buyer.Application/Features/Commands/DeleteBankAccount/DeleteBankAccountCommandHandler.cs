@@ -19,17 +19,23 @@ namespace Buyer.Application.Features.Commands.DeleteBankAccount
 
         public async Task<Guid> Handle(DeleteBankAccountCommand request, CancellationToken cancellationToken)
         {
-            _logger.LogInfo($"Deleting Bank Account Id: {request.Id}");
+            _logger.LogInfo($"Soft deleting Bank Account Id: {request.Id} for BuyerId: {request.BuyerId}");
 
             var bankAccount = await _repository.BuyerBankAccount
                 .FindByCondition(x => x.Id == request.Id && x.BuyerId == request.BuyerId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (bankAccount == null)
+            {
+                _logger.LogError($"Bank Account not found. Id: {request.Id}, BuyerId: {request.BuyerId}");
                 throw new NotFoundCustomException("Bank account not found.", "The bank account does not exist or does not belong to the specified buyer.");
+            }
+
+            _logger.LogInfo($"Bank Account found. Marking as inactive. Id: {request.Id}");
 
             bankAccount.IsActive = false;
             _repository.BuyerBankAccount.Update(bankAccount);
+            _logger.LogInfo($"Saving soft delete for Bank Account Id: {request.Id}");
             await _repository.SaveAsync();
 
             _logger.LogInfo($"Bank Account soft deleted successfully. Id: {request.Id}");

@@ -22,7 +22,12 @@ namespace Buyer.Application.Features.Commands.CreateDeliveryLocation
             _logger.LogInfo($"Creating Delivery Location for BuyerId: {request.BuyerId}");
 
             if (request.BuyerId == Guid.Empty)
+            {
+                _logger.LogError("BuyerId is empty. Cannot create delivery location.");
                 throw new PreConditionFailedCustomException("Invalid buyer information.", "BuyerId is required.");
+            }
+
+            _logger.LogInfo($"BuyerId validated. Proceeding to create delivery location: {request.Data.LocationName}");
 
             var location = new BuyerDeliveryLocation
             {
@@ -42,6 +47,7 @@ namespace Buyer.Application.Features.Commands.CreateDeliveryLocation
             };
 
             _repository.BuyerDeliveryLocation.Create(location);
+            _logger.LogInfo($"Saving delivery location to database for BuyerId: {request.BuyerId}");
             await _repository.SaveAsync();
 
             _logger.LogInfo($"Delivery Location created successfully. Id: {location.Id}");

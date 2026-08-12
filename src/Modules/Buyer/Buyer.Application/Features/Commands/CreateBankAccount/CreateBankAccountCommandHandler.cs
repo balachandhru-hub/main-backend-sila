@@ -22,7 +22,27 @@ namespace Buyer.Application.Features.Commands.CreateBankAccount
             _logger.LogInfo($"Creating Bank Account for BuyerId: {request.BuyerId}");
 
             if (request.BuyerId == Guid.Empty)
+            {
+                _logger.LogError("BuyerId is empty. Cannot create bank account.");
                 throw new PreConditionFailedCustomException("Invalid buyer information.", "BuyerId is required.");
+            }
+
+            _logger.LogInfo($"Checking for duplicate account number: {request.Data.AccountNumber} for BuyerId: {request.BuyerId}");
+
+            var existing = _repository.BuyerBankAccount
+                .FindByCondition(x =>
+                    x.BuyerId == request.BuyerId &&
+                    x.AccountNumber == request.Data.AccountNumber &&
+                    x.IsActive)
+                .Any();
+
+            if (existing)
+            {
+                _logger.LogError($"Duplicate bank account. AccountNumber: {request.Data.AccountNumber} already exists for BuyerId: {request.BuyerId}");
+                throw new ConflictCustomException("Duplicate bank account.", "A bank account with the same account number already exists for this buyer.");
+            }
+
+            _logger.LogInfo($"No duplicate found. Proceeding to create bank account for BuyerId: {request.BuyerId}");
 
             var bankAccount = new BuyerBankAccount
             {
@@ -41,6 +61,7 @@ namespace Buyer.Application.Features.Commands.CreateBankAccount
             };
 
             _repository.BuyerBankAccount.Create(bankAccount);
+            _logger.LogInfo($"Saving bank account to database for BuyerId: {request.BuyerId}");
             await _repository.SaveAsync();
 
             _logger.LogInfo($"Bank Account created successfully. Id: {bankAccount.Id}");
