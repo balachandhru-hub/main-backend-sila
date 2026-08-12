@@ -28,7 +28,7 @@ namespace Supplier.Domain.Common
         public const string SUBMITTED = "SUBMITTED";
         public const string DRAFT = "DRAFT";
         public const string CATALOG = "CATALOG";
-        public const string NON_CATALOG = "NON_CATALOG";
+        public const string NON_CATALOG = "NONCATALOG";
         public const string SUBMITTED_STATUS = "SUBMITTED";
 
     }
