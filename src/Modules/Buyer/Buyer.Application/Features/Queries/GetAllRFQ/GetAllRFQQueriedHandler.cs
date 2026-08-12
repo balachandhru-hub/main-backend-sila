@@ -145,20 +145,13 @@
             Common.RADIO_BUTTON,
             StringComparison.OrdinalIgnoreCase))
         {
-            // Radio uses ONLY QuestionOptionId
-            if (supplierAnswer.QuestionOptionId.HasValue)
-            {
-                var selectedOption = questionOptions.FirstOrDefault(x =>
+            var selectedOption = supplierAnswer.QuestionOptionId.HasValue
+                ? questionOptions.FirstOrDefault(x =>
                     x.Id == supplierAnswer.QuestionOptionId.Value &&
-                    x.RFQQuestionId == supplierAnswer.RFQQuestionId);
+                    x.RFQQuestionId == supplierAnswer.RFQQuestionId)
+                : null;
 
-                if (selectedOption != null)
-                {
-                    supplierAnswer.Answer = selectedOption.OptionText;
-                }
-            }
-
-            // Radio does not use multiple option IDs
+            supplierAnswer.Answer = selectedOption?.OptionText ?? string.Empty;
             supplierAnswer.QuestionOptionIds = new List<Guid>();
 
             continue;
