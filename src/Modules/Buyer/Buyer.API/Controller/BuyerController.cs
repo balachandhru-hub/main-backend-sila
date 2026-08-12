@@ -22,6 +22,10 @@ using Buyer.Domain.Dtos;
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
 using Buyer.Application.Features.Commands.UpdateDeliveryLocation;
 using Buyer.Application.Features.Commands.UpdateBankAccount;
+using Buyer.Application.Features.Commands.CreateBankAccount;
+using Buyer.Application.Features.Commands.DeleteBankAccount;
+using Buyer.Application.Features.Commands.CreateDeliveryLocation;
+using Buyer.Application.Features.Commands.DeleteDeliveryLocation;
 
 
 namespace Buyer.API.Controllers
@@ -421,6 +425,62 @@ namespace Buyer.API.Controllers
             return Ok(result);
         }
 
+        [HttpPost]
+        [Route("api/v1/buyer/delivery-location")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "CREATE_BUYER_DELIVERY_LOCATION")]
+        [SwaggerOperation("CreateBuyerDeliveryLocation")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Delivery location created successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> CreateDeliveryLocation(
+            [FromQuery] Guid buyerId,
+            [FromBody] BuyerDeliveryLocationDto request)
+        {
+            var createdId = await _mediator.Send(
+                new CreateDeliveryLocationCommand
+                {
+                    BuyerId = buyerId,
+                    Data = request
+                });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 201,
+                Message = "Success",
+                Description = "Delivery location created successfully.",
+                Id = createdId.ToString()
+            });
+        }
+
+        [HttpDelete]
+        [Route("api/v1/buyer/delivery-location/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "DELETE_BUYER_DELIVERY_LOCATION")]
+        [SwaggerOperation("DeleteBuyerDeliveryLocation")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Delivery location deleted successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> DeleteDeliveryLocation(
+            Guid id,
+            [FromQuery] Guid buyerId)
+        {
+            var deletedId = await _mediator.Send(
+                new DeleteDeliveryLocationCommand
+                {
+                    Id = id,
+                    BuyerId = buyerId
+                });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Delivery location deleted successfully.",
+                Id = deletedId.ToString()
+            });
+        }
+
         [HttpPut]
         [Route("api/v1/buyer/delivery-location/{id}")]
         [ValidateModelState]
@@ -449,6 +509,62 @@ namespace Buyer.API.Controllers
             });
         }
 
+
+        [HttpPost]
+        [Route("api/v1/buyer/bank-account")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "CREATE_BUYER_BANK_ACCOUNT")]
+        [SwaggerOperation("CreateBuyerBankAccount")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Bank account created successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> CreateBankAccount(
+            [FromQuery] Guid buyerId,
+            [FromBody] BuyerBankAccountDto request)
+        {
+            var createdId = await _mediator.Send(
+                new CreateBankAccountCommand
+                {
+                    BuyerId = buyerId,
+                    Data = request
+                });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 201,
+                Message = "Success",
+                Description = "Bank account created successfully.",
+                Id = createdId.ToString()
+            });
+        }
+
+        [HttpDelete]
+        [Route("api/v1/buyer/bank-account/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "DELETE_BUYER_BANK_ACCOUNT")]
+        [SwaggerOperation("DeleteBuyerBankAccount")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Bank account deleted successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> DeleteBankAccount(
+            Guid id,
+            [FromQuery] Guid buyerId)
+        {
+            var deletedId = await _mediator.Send(
+                new DeleteBankAccountCommand
+                {
+                    Id = id,
+                    BuyerId = buyerId
+                });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Bank account deleted successfully.",
+                Id = deletedId.ToString()
+            });
+        }
 
         [HttpPut]
         [Route("api/v1/buyer/bank-account/{id}")]
