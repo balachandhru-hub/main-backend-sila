@@ -80,11 +80,8 @@ namespace Buyer.API.Controllers
         {
             var questionId = await _mediator.Send(command);
 
-            return Ok(new
-            {
-                Message = "Verification template question created successfully.",
-                QuestionId = questionId
-            });
+            return Ok(questionId);
+            
         }
 
         [HttpGet]
