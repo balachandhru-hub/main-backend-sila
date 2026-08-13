@@ -267,5 +267,46 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result;
         }
+
+        public async Task<Guid> GetSupplierId(
+    CancellationToken cancellationToken = default)
+        {
+            var supplierUrl =
+                _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var requestMessage = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/id");
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                requestMessage.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(
+                requestMessage,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch Supplier Id.",
+                    error);
+            }
+
+            var result = await response.Content
+                .ReadFromJsonAsync<Guid>(
+                    cancellationToken: cancellationToken);
+
+            return result;
+        }
     }
 }

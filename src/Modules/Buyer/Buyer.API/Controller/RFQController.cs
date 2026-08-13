@@ -11,6 +11,7 @@ using Buyer.Domain.Dtos;
 using Buyer.Application.Features.Queries.GetAllRFQ;
 using Buyer.Application.Features.Queries.GetRFQAttachments;
 using Buyer.Application.Features.Queries.GetRFQQuestions;
+using Buyer.Application.Features.Queries.Invitation;
 
 namespace Buyer.API.Controllers
 {
@@ -118,6 +119,60 @@ namespace Buyer.API.Controllers
                 new GetRFQQuestionsQuery(rfqId));
 
             _logger.LogDebug($"Fetched RFQ Questions successfully for RFQ Id: {rfqId}");
+
+            return Ok(result);
+        }
+        [HttpGet]
+        [Route("api/v1/buyer/supplier-invitation")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_INVITATION")]
+        [SwaggerOperation("GetSupplierInvitations")]
+        [SwaggerResponse(200, type: typeof(List<RFQListDto>), description: "Fetched Supplier Invitations successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetSupplierInvitations(
+            [FromQuery] int index,
+            [FromQuery] int limit)
+        {
+            
+            _logger.LogDebug($"Fetching Supplier Invitations for Index: {index}, Limit: {limit}");
+            Guid organizationId = GetOrganizationId();
+            var result = await _mediator.Send(
+                new SupplierInvitationQuery
+                {
+                    OrganizationId = organizationId,
+                    Index = index,
+                    Limit = limit
+                });
+
+            _logger.LogDebug($"Fetched Supplier Invitations successfully for Index: {index}, Limit: {limit}");
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("api/v1/buyer/buyer-invitation")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_BUYER_INVITATION")]
+        [SwaggerOperation("GetBuyerInvitations")]
+        [SwaggerResponse(200, type: typeof(List<RFQListDto>), description: "Fetched Buyer Invitations successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetBuyerInvitations(
+            [FromQuery] int index,
+            [FromQuery] int limit)
+        {
+            _logger.LogDebug($"Fetching Buyer Invitations for Index: {index}, Limit: {limit}");
+            Guid organizationId = GetOrganizationId();
+            var result = await _mediator.Send(
+                new BuyerInvitationQuery
+                {
+                    OrganizationId = organizationId,
+                    Index = index,
+                    Limit = limit
+                });
+
+            _logger.LogDebug($"Fetched Buyer Invitations successfully for Index: {index}, Limit: {limit}");
 
             return Ok(result);
         }
