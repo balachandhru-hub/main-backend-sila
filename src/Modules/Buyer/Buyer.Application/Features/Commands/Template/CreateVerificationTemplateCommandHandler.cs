@@ -56,8 +56,8 @@ namespace Buyer.Application.Features.Commands.UpdateBuyerStatus
                 BuyerId = buyer.Id,
                 TemplateCode = $"TMP{(templateCount + 1):000}",
                 TemplateName = request.VerificationTemplateDto.TemplateName,
-                Description = request.VerificationTemplateDto.Description,
-                Category = request.VerificationTemplateDto.Category,
+                Description = request.VerificationTemplateDto.Description
+      
             };
 
             _repository.VerificationTemplate.Create(template);
