@@ -1,3 +1,4 @@
+using SharedKernel.Dto;
 namespace Supplier.Domain.Dto
 {
     public class BuyerCatalogDto
@@ -34,6 +35,7 @@ namespace Supplier.Domain.Dto
         public string? CatalogType { get; set; }
 
         public bool IsPunchOut { get; set; }
+    public AssetDto? Asset { get; set; }
 
         public string? PunchOutUrl { get; set; }
 
