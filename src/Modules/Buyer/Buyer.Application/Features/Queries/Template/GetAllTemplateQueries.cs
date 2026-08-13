@@ -6,7 +6,7 @@ namespace Buyer.Application.Features.Queries.Template
     public class GetVerificationTemplatesQuery
         : IRequest<List<VerificationTemplateResponseDto>>
     {
-        public Guid BuyerId { get; set; }
+        public Guid OrganizationId { get; set; }
 
 
     }

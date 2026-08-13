@@ -51,20 +51,22 @@ namespace Buyer.API.Controllers
        
 
         [HttpGet]
-        [Route("api/v1/buyer/verification-template")]
+        [Route("api/v1/buyer/get-verification-template")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_VERIFICATION_TEMPLATES")]
         [SwaggerOperation("GetVerificationTemplates")]
         [SwaggerResponse(200, type: typeof(List<VerificationTemplateResponseDto>), description: "Success")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetVerificationTemplates([FromQuery] Guid buyerId)
+        public async Task<IActionResult> GetVerificationTemplates()
         {
+            Guid organizationId = GetOrganizationId();
+           
+
             var result = await _mediator.Send(new GetVerificationTemplatesQuery
             {
-                BuyerId = buyerId
+                OrganizationId = organizationId
             });
-
             return Ok(result);
         }
         [HttpPost]

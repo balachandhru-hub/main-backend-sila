@@ -22,6 +22,16 @@ namespace Buyer.Application.Features.Queries.Template
             CancellationToken cancellationToken)
         {
             var result = new List<VerificationTemplateResponseDto>();
+               var buyerId = await _repository.BuyerBusinessProfile
+                .FindByCondition(x => x.OrganizationId == request.OrganizationId)
+                .Select(x => x.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (buyerId == Guid.Empty)
+            {
+                throw new KeyNotFoundException(
+                    "Buyer not found for the given OrganizationId.");
+            }
 
             // Default Templates
             var defaultTemplates = await _repository.DefaultVerificationTemplateRepository
@@ -55,7 +65,7 @@ namespace Buyer.Application.Features.Queries.Template
 
             // Buyer Templates
             var buyerTemplates = await _repository.VerificationTemplate
-                .FindByCondition(x => x.BuyerId == request.BuyerId && x.IsActive)
+                .FindByCondition(x => x.BuyerId == buyerId && x.IsActive)
                 .OrderBy(x => x.TemplateCode)
                 .ToListAsync(cancellationToken);
 
