@@ -3,6 +3,7 @@ using Supplier.Domain.Dto;
 using Supplier.Infrastructure.Contracts.IRepository;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
+using SharedKernel.Dto;
 
 namespace Supplier.Application.Features.Queries.BuyerCatalog
 {
@@ -77,21 +78,25 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                     x.Description.Contains(search));
             }
 
-            if (request.Segment.HasValue){
+            if (request.Segment.HasValue)
+            {
                 _logger.LogInfo($"Applying segment filter: {request.Segment}");
-            catalogQuery = catalogQuery.Where(x => x.Segment == request.Segment);
+                catalogQuery = catalogQuery.Where(x => x.Segment == request.Segment);
             }
-            if (request.Family.HasValue){
+            if (request.Family.HasValue)
+            {
                 _logger.LogInfo($"Applying family filter: {request.Family}");
-            catalogQuery = catalogQuery.Where(x => x.Family == request.Family);
+                catalogQuery = catalogQuery.Where(x => x.Family == request.Family);
             }
-            if (request.Class.HasValue){
+            if (request.Class.HasValue)
+            {
                 _logger.LogInfo($"Applying class filter: {request.Class}");
-            catalogQuery = catalogQuery.Where(x => x.Class == request.Class);
+                catalogQuery = catalogQuery.Where(x => x.Class == request.Class);
             }
-            if (request.Commodity.HasValue){
+            if (request.Commodity.HasValue)
+            {
                 _logger.LogInfo($"Applying commodity filter: {request.Commodity}");
-            catalogQuery = catalogQuery.Where(x => x.Commodity == request.Commodity);
+                catalogQuery = catalogQuery.Where(x => x.Commodity == request.Commodity);
             }
 
 
@@ -103,7 +108,52 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                 .Skip(request.Index)
                 .Take(request.Limit)
                 .ToList();
+            foreach (var catalog in result)
+            {
+                if (!catalog.CatalogId.HasValue)
+                {
+                    _logger.LogInfo($"Catalog ID is null for supplier ID: {catalog.SupplierId}");
+                    throw new NotFoundCustomException(
+                        "Catalog ID is null.",
+                        $"Catalog ID is null for supplier ID: {catalog.SupplierId}");
+                }
 
+                var catalogAssetMapping = _repository.CatalogAssetMapping
+                    .FindFirstByCondition(x =>
+                        x.CatalogId == catalog.CatalogId.Value &&
+                        x.IsActive);
+
+                if (catalogAssetMapping == null)
+                {
+                    _logger.LogInfo($"No asset mapping found for catalog ID: {catalog.CatalogId.Value}");
+                    throw new NotFoundCustomException(
+                        "No asset mapping found.",
+                        $"No asset mapping found for catalog ID: {catalog.CatalogId.Value}");
+                }
+
+                var asset = _repository.Asset
+                    .FindFirstByCondition(x =>
+                        x.Id == catalogAssetMapping.AssetId &&
+                        x.IsActive);
+
+                if (asset == null)
+                {
+                    _logger.LogInfo($"No asset found for asset ID: {catalogAssetMapping.AssetId}");
+                    throw new NotFoundCustomException(
+                        "No asset found.",
+                        $"No asset found for asset ID: {catalogAssetMapping.AssetId}");
+                }
+                            ;
+
+                catalog.Asset = new AssetDto
+                {
+                    Id = asset.Id,
+                    AssetType = asset.AssetType?.ToString(),
+                    AssetName = asset.AssetName,
+                    FileType = asset.FileType.ToString(),
+                    FileName = asset.FileName
+                };
+            }
             _logger.LogInfo($"Fetched {result.Count} records out of {catalogCount} total records.");
             int remaining = request.Limit - result.Count;
 
@@ -128,25 +178,29 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                     _repository.SupplierCategory
                     .FindByCondition(x => x.IsActive);
 
-                if (request.Segment.HasValue){
+                if (request.Segment.HasValue)
+                {
                     _logger.LogInfo($"Filtering SupplierCategory by segment: {request.Segment}");
-                supplierCategoryQuery =
-                    supplierCategoryQuery.Where(x => x.Segment == request.Segment);
+                    supplierCategoryQuery =
+                        supplierCategoryQuery.Where(x => x.Segment == request.Segment);
                 }
-                if (request.Family.HasValue){
+                if (request.Family.HasValue)
+                {
                     _logger.LogInfo($"Filtering SupplierCategory by family: {request.Family}");
-                supplierCategoryQuery =
-                    supplierCategoryQuery.Where(x => x.Family == request.Family);
+                    supplierCategoryQuery =
+                        supplierCategoryQuery.Where(x => x.Family == request.Family);
                 }
-                if (request.Class.HasValue){
+                if (request.Class.HasValue)
+                {
                     _logger.LogInfo($"Filtering SupplierCategory by class: {request.Class}");
-                supplierCategoryQuery =
-                    supplierCategoryQuery.Where(x => x.Class == request.Class);
+                    supplierCategoryQuery =
+                        supplierCategoryQuery.Where(x => x.Class == request.Class);
                 }
-                if (request.Commodity.HasValue){
+                if (request.Commodity.HasValue)
+                {
                     _logger.LogInfo($"Filtering SupplierCategory by commodity: {request.Commodity}");
-                supplierCategoryQuery =
-                    supplierCategoryQuery.Where(x => x.Commodity == request.Commodity);
+                    supplierCategoryQuery =
+                        supplierCategoryQuery.Where(x => x.Commodity == request.Commodity);
                 }
                 var supplierIds = supplierCategoryQuery
                     .Select(x => x.SupplierId)
@@ -195,7 +249,7 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
 
                         PunchOutUrl = catalog.PunchOutUrl,
 
-                       
+
                     };
 
 
@@ -246,7 +300,55 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                     .Take(remaining)
                     .ToList();
 
+                foreach (var catalog in additionalCatalogs)
+                {
+                    if (!catalog.CatalogId.HasValue)
+                    {
+                        _logger.LogInfo($"Catalog ID is null for supplier ID: {catalog.SupplierId}");
+                        throw new NotFoundCustomException(
+                            "Catalog ID is null.",
+                            $"Catalog ID is null for supplier ID: {catalog.SupplierId}");
+                    }
+                    _logger.LogInfo($"Fetching asset mapping for catalog ID: {catalog.CatalogId.Value}");
+                    var catalogAssetMapping = _repository.CatalogAssetMapping
+                        .FindFirstByCondition(x =>
+                            x.CatalogId == catalog.CatalogId.Value &&
+                            x.IsActive);
+
+                    if (catalogAssetMapping == null)
+                    {
+                        _logger.LogInfo($"No asset mapping found for catalog ID: {catalog.CatalogId.Value}");
+                        throw new NotFoundCustomException(
+                            "No asset mapping found.",
+                            $"No asset mapping found for catalog ID: {catalog.CatalogId.Value}");
+                    }
+
+
+                    var asset = _repository.Asset
+                        .FindFirstByCondition(x =>
+                            x.Id == catalogAssetMapping.AssetId &&
+                            x.IsActive);
+
+                    if (asset == null)
+                    {
+                        _logger.LogInfo($"No asset found for asset ID: {catalogAssetMapping.AssetId}");
+                        throw new NotFoundCustomException(
+                            "No asset found.",
+                            $"No asset found for asset ID: {catalogAssetMapping.AssetId}");
+                    }
+
+                    catalog.Asset = new AssetDto
+                    {
+                        Id = asset.Id,
+                        AssetType = asset.AssetType?.ToString(),
+                        AssetName = asset.AssetName,
+                        FileType = asset.FileType.ToString(),
+                        FileName = asset.FileName
+                    };
+                }
+
                 result.AddRange(additionalCatalogs);
+
             }
 
 
