@@ -20,6 +20,8 @@ using Supplier.API.Hubs;
 
 using Supplier.Application.Features.Commands.SubmitVerification;
 using Supplier.Application.Features.Queries;
+using Supplier.Application.Features.Commands.CreateSupplierBankAccount;
+using Supplier.Application.Features.Commands.CreateSupplierDispatchLocation;
 
 
 
@@ -293,6 +295,70 @@ namespace Supplier.API.Controllers
                 new SubmitVerificationCommand(request));
 
             return Ok(result);
+        }
+
+        [HttpPost]
+        [Route("api/v1/supplier/bank-account")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "CREATE_SUPPLIER_BANK_ACCOUNT")]
+        [SwaggerOperation("CreateSupplierBankAccount")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Bank account created successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> CreateBankAccount(
+            [FromQuery] Guid supplierId,
+            [FromBody] SupplierBankAccountDto request)
+        {
+            _logger.LogDebug($"Creating bank account for SupplierId: {supplierId}");
+
+            var createdId = await _mediator.Send(
+                new CreateSupplierBankAccountCommand
+                {
+                    SupplierId = supplierId,
+                    Data = request
+                });
+
+            _logger.LogDebug($"Bank account created successfully. Id: {createdId}");
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 201,
+                Message = "Success",
+                Description = "Bank account created successfully.",
+                Id = createdId.ToString()
+            });
+        }
+
+        [HttpPost]
+        [Route("api/v1/supplier/dispatch-location")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "CREATE_SUPPLIER_DISPATCH_LOCATION")]
+        [SwaggerOperation("CreateSupplierDispatchLocation")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Dispatch location created successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> CreateDispatchLocation(
+            [FromQuery] Guid supplierId,
+            [FromBody] SupplierDispatchLocationDto request)
+        {
+            _logger.LogDebug($"Creating dispatch location for SupplierId: {supplierId}");
+
+            var createdId = await _mediator.Send(
+                new CreateSupplierDispatchLocationCommand
+                {
+                    SupplierId = supplierId,
+                    Data = request
+                });
+
+            _logger.LogDebug($"Dispatch location created successfully. Id: {createdId}");
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 201,
+                Message = "Success",
+                Description = "Dispatch location created successfully.",
+                Id = createdId.ToString()
+            });
         }
 
         [HttpGet]
