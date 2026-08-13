@@ -434,9 +434,9 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> CreateDeliveryLocation(
-            [FromQuery] Guid buyerId,
             [FromBody] BuyerDeliveryLocationDto request)
         {
+            Guid buyerId = await _mediator.Send(new GetBuyerIdQuery(GetOrganizationId()));
             var createdId = await _mediator.Send(
                 new CreateDeliveryLocationCommand
                 {
@@ -461,10 +461,9 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Delivery location deleted successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> DeleteDeliveryLocation(
-            Guid id,
-            [FromQuery] Guid buyerId)
+        public async Task<IActionResult> DeleteDeliveryLocation(Guid id)
         {
+            Guid buyerId = await _mediator.Send(new GetBuyerIdQuery(GetOrganizationId()));
             var deletedId = await _mediator.Send(
                 new DeleteDeliveryLocationCommand
                 {
@@ -519,9 +518,9 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> CreateBankAccount(
-            [FromQuery] Guid buyerId,
             [FromBody] BuyerBankAccountDto request)
         {
+            Guid buyerId = await _mediator.Send(new GetBuyerIdQuery(GetOrganizationId()));
             var createdId = await _mediator.Send(
                 new CreateBankAccountCommand
                 {
@@ -546,10 +545,9 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Bank account deleted successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> DeleteBankAccount(
-            Guid id,
-            [FromQuery] Guid buyerId)
+        public async Task<IActionResult> DeleteBankAccount(Guid id)
         {
+            Guid buyerId = await _mediator.Send(new GetBuyerIdQuery(GetOrganizationId()));
             var deletedId = await _mediator.Send(
                 new DeleteBankAccountCommand
                 {

@@ -306,9 +306,9 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> CreateBankAccount(
-            [FromQuery] Guid supplierId,
             [FromBody] SupplierBankAccountDto request)
         {
+            Guid supplierId = await _mediator.Send(new GetSupplierIdQuery(GetOrganizationId()));
             _logger.LogDebug($"Creating bank account for SupplierId: {supplierId}");
 
             var createdId = await _mediator.Send(
@@ -338,9 +338,9 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> CreateDispatchLocation(
-            [FromQuery] Guid supplierId,
             [FromBody] SupplierDispatchLocationDto request)
         {
+            Guid supplierId = await _mediator.Send(new GetSupplierIdQuery(GetOrganizationId()));
             _logger.LogDebug($"Creating dispatch location for SupplierId: {supplierId}");
 
             var createdId = await _mediator.Send(
