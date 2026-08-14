@@ -51,6 +51,7 @@ namespace Buyer.Application.Features.Queries.Template
                     TemplateId = template.Id,
                     TemplateCode = template.TemplateCode,
                     TemplateName = template.TemplateName,
+                    Description = template.Description,
                     TemplateType = Common.DEFAULT,
                     Questions = questions.Select(x => new VerificationTemplateQuestionDto
                     {
@@ -81,6 +82,7 @@ namespace Buyer.Application.Features.Queries.Template
                     TemplateId = template.Id,
                     TemplateCode = template.TemplateCode,
                     TemplateName = template.TemplateName,
+                    Description = template.Description,
                     TemplateType = Common.BUYER,
                     Questions = questions.Select(x => new VerificationTemplateQuestionDto
                     {
@@ -91,6 +93,11 @@ namespace Buyer.Application.Features.Queries.Template
                     }).ToList()
                 });
             }
+                   result = result
+                .OrderBy(x => x.TemplateCode)
+                .Skip(request.Index)
+                .Take(request.Limit)
+                .ToList();
 
             return result;
         }

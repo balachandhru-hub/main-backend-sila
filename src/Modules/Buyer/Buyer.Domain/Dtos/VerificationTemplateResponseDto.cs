@@ -10,6 +10,7 @@ namespace Buyer.Domain.Dto
 
         // Default / Buyer
         public string TemplateType { get; set; }
+        public string? Description { get; set; }
 
         public List<VerificationTemplateQuestionDto> Questions { get; set; } = new();
     }
