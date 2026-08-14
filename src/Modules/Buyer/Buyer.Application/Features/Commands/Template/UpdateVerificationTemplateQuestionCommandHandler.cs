@@ -1,9 +1,9 @@
+using Buyer.Domain.Dto;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.LoggerServices;
-using Buyer.Domain.Dto;
 
 namespace Buyer.Application.Features.Commands.Template
 {
@@ -31,9 +31,9 @@ namespace Buyer.Application.Features.Commands.Template
                 $"Processing verification template question. " +
                 $"QuestionId: {dto.Id}, TemplateId: {dto.VerificationTemplateId}");
 
-      
-            //  Validate Template
-          
+
+            //  CHECK TEMPLATE
+
             var template = await _repository.VerificationTemplate
                 .FindByCondition(x => x.Id == dto.VerificationTemplateId)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -50,10 +50,11 @@ namespace Buyer.Application.Features.Commands.Template
 
             // CREATE NEW QUESTION
 
+
             if (!dto.Id.HasValue || dto.Id == Guid.Empty)
             {
                 _logger.LogInfo(
-                    "QuestionId is empty. Creating a new verification template question.");
+                    "QuestionId is empty. Creating new question.");
 
                 var newQuestion = new VerificationTemplateQuestion
                 {
@@ -65,20 +66,23 @@ namespace Buyer.Application.Features.Commands.Template
                     DisplayOrder = dto.DisplayOrder
                 };
 
-                _repository.VerificationTemplateQuestion.Create(newQuestion);
+                _repository.VerificationTemplateQuestion
+                    .Create(newQuestion);
 
-                // Add options
+                // Add options if provided
                 if (dto.Options != null && dto.Options.Any())
                 {
-                    foreach (var option in dto.Options)
+                    foreach (var optionDto in dto.Options)
                     {
-                        var newOption = new VerificationTemplateQuestionOption
-                        {
-                            Id = Guid.NewGuid(),
-                            VerificationTemplateQuestionId = newQuestion.Id,
-                            OptionText = option.OptionText,
-                            DisplayOrder = option.DisplayOrder
-                        };
+                        var newOption =
+                            new VerificationTemplateQuestionOption
+                            {
+                                Id = Guid.NewGuid(),
+                                VerificationTemplateQuestionId =
+                                    newQuestion.Id,
+                                OptionText = optionDto.OptionText,
+                                DisplayOrder = optionDto.DisplayOrder
+                            };
 
                         _repository.VerificationTemplateQuestionOptionRepository
                             .Create(newOption);
@@ -88,53 +92,98 @@ namespace Buyer.Application.Features.Commands.Template
                 _repository.Save();
 
                 _logger.LogInfo(
-                    $"New verification template question created successfully. " +
+                    $"New question created successfully. " +
                     $"QuestionId: {newQuestion.Id}");
 
                 return newQuestion.Id;
             }
 
-        
-            // UPDATE EXISTING QUESTION
-         
-            var question = await _repository.VerificationTemplateQuestion
-                .FindByCondition(x =>
-                    x.Id == dto.Id.Value &&
-                    x.VerificationTemplateId == dto.VerificationTemplateId)
-                .FirstOrDefaultAsync(cancellationToken);
+            //  GET EXISTING QUESTION
+
+            var question =
+                await _repository.VerificationTemplateQuestion
+                    .FindByCondition(x =>
+                        x.Id == dto.Id.Value &&
+                        x.VerificationTemplateId == dto.VerificationTemplateId)
+                    .FirstOrDefaultAsync(cancellationToken);
 
             if (question == null)
             {
                 _logger.LogError(
                     $"Verification template question not found. " +
-                    $"QuestionId: {dto.Id}, TemplateId: {dto.VerificationTemplateId}");
+                    $"QuestionId: {dto.Id}, " +
+                    $"TemplateId: {dto.VerificationTemplateId}");
 
                 throw new KeyNotFoundException(
                     $"Verification template question not found: {dto.Id}");
             }
 
-            // Update question details
+
+            // DELETE QUESTION
+
+
+            if (dto.IsDeleted)
+            {
+                // Find options belonging to this question
+                var optionsToDelete =
+                    await _repository
+                        .VerificationTemplateQuestionOptionRepository
+                        .FindByCondition(x =>
+                            x.VerificationTemplateQuestionId == question.Id)
+                        .ToListAsync(cancellationToken);
+
+                // Delete options only when they exist
+                if (optionsToDelete.Any())
+                {
+                    foreach (var option in optionsToDelete)
+                    {
+                        _repository
+                            .VerificationTemplateQuestionOptionRepository
+                            .Delete(option);
+                    }
+                }
+
+
+                _repository.VerificationTemplateQuestion
+                    .Delete(question);
+
+                _repository.Save();
+
+                _logger.LogInfo(
+                    $"Verification template question deleted successfully. " +
+                    $"QuestionId: {question.Id}");
+
+                return question.Id;
+            }
+
+
+            // UPDATE QUESTION
+
             question.Question = dto.Question;
             question.QuestionType = dto.QuestionType;
             question.IsRequired = dto.IsRequired;
             question.DisplayOrder = dto.DisplayOrder;
 
-            _repository.VerificationTemplateQuestion.Update(question);
+            _repository.VerificationTemplateQuestion
+                .Update(question);
 
-          
-            //  UPDATE / ADD / DELETE OPTIONS
-          
-            var existingOptions = await _repository
-                .VerificationTemplateQuestionOptionRepository
-                .FindByCondition(x =>
-                    x.VerificationTemplateQuestionId == question.Id)
-                .ToListAsync(cancellationToken);
 
-            var requestOptions = dto.Options ?? new List<VerificationTemplateQuestionOptionDto>();
+            // GET EXISTING OPTIONS
+            var existingOptions =
+                await _repository
+                    .VerificationTemplateQuestionOptionRepository
+                    .FindByCondition(x =>
+                        x.VerificationTemplateQuestionId == question.Id)
+                    .ToListAsync(cancellationToken);
 
-          
-            // Delete options which are no longer present in request
-        
+            var requestOptions =
+                dto.Options ??
+                new List<VerificationTemplateQuestionOptionDto>();
+
+
+            //  DELETE OPTIONS NOT PRESENT IN REQUEST
+
+
             foreach (var existingOption in existingOptions)
             {
                 var optionExistsInRequest = requestOptions.Any(x =>
@@ -143,48 +192,74 @@ namespace Buyer.Application.Features.Commands.Template
 
                 if (!optionExistsInRequest)
                 {
-                    _repository.VerificationTemplateQuestionOptionRepository
+                    _logger.LogInfo(
+                        $"Deleting option. " +
+                        $"OptionId: {existingOption.Id}");
+
+                    _repository
+                        .VerificationTemplateQuestionOptionRepository
                         .Delete(existingOption);
                 }
             }
 
-        
-            // Add new options / Update existing options
-          
+
+            //  ADD NEW OPTIONS / UPDATE EXISTING OPTIONS
+
             foreach (var optionDto in requestOptions)
             {
-               
-                if (!optionDto.Id.HasValue || optionDto.Id == Guid.Empty)
-                {
-                    var newOption = new VerificationTemplateQuestionOption
-                    {
-                        Id = Guid.NewGuid(),
-                        VerificationTemplateQuestionId = question.Id,
-                        OptionText = optionDto.OptionText,
-                        DisplayOrder = optionDto.DisplayOrder
-                    };
 
-                    _repository.VerificationTemplateQuestionOptionRepository
+
+                if (!optionDto.Id.HasValue ||
+                    optionDto.Id == Guid.Empty)
+                {
+                    var newOption =
+                        new VerificationTemplateQuestionOption
+                        {
+                            Id = Guid.NewGuid(),
+                            VerificationTemplateQuestionId = question.Id,
+                            OptionText = optionDto.OptionText,
+                            DisplayOrder = optionDto.DisplayOrder
+                        };
+
+                    _repository
+                        .VerificationTemplateQuestionOptionRepository
                         .Create(newOption);
+
+                    _logger.LogInfo(
+                        $"New option added. " +
+                        $"QuestionId: {question.Id}");
 
                     continue;
                 }
 
-                // Existing option
-                var existingOption = existingOptions.FirstOrDefault(x =>
-                    x.Id == optionDto.Id.Value);
+
+                // UPDATE EXISTING OPTION
+
+
+                var existingOption =
+                    existingOptions.FirstOrDefault(x =>
+                        x.Id == optionDto.Id.Value);
 
                 if (existingOption != null)
                 {
-                    existingOption.OptionText = optionDto.OptionText;
-                    existingOption.DisplayOrder = optionDto.DisplayOrder;
+                    existingOption.OptionText =
+                        optionDto.OptionText;
 
-                    _repository.VerificationTemplateQuestionOptionRepository
+                    existingOption.DisplayOrder =
+                        optionDto.DisplayOrder;
+
+                    _repository
+                        .VerificationTemplateQuestionOptionRepository
                         .Update(existingOption);
+
+                    _logger.LogInfo(
+                        $"Option updated. " +
+                        $"OptionId: {existingOption.Id}");
                 }
             }
 
-         
+
+
             _repository.Save();
 
             _logger.LogInfo(

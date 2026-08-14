@@ -14,6 +14,7 @@ namespace Buyer.Domain.Dto
         public bool IsRequired { get; set; }
 
         public int DisplayOrder { get; set; }
+        public bool IsDeleted { get; set; }
 
         public List<VerificationTemplateQuestionOptionDto>? Options { get; set; }
     }
