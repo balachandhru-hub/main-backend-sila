@@ -206,5 +206,37 @@ namespace Buyer.API.Controllers
 
             return Ok(result);
         }
+        [HttpPut]
+        [Route("api/v1/buyer/update-verification-template-question")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_VERIFICATION_TEMPLATE_QUESTION")]
+        [SwaggerOperation("UpdateVerificationTemplateQuestion")]
+        [SwaggerResponse(200, type: typeof(Guid), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateVerificationTemplateQuestion(
+                [FromBody] UpdateVerificationTemplateQuestionCommand command)
+        {
+            var questionId = await _mediator.Send(command);
+
+            return Ok(questionId);
+        }
+        [HttpDelete]
+        [Route("api/v1/buyer/verification-template/{templateId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "DELETE_VERIFICATION_TEMPLATE")]
+        [SwaggerOperation("DeleteVerificationTemplate")]
+        [SwaggerResponse(200, type: typeof(bool), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> DeleteVerificationTemplate(Guid templateId)    
+        {
+            var result = await _mediator.Send(new DeleteVerificationTemplateCommand
+            {
+                TemplateId = templateId
+            });
+
+            return Ok(result);
+        }
     }
 }
