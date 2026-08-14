@@ -35,7 +35,7 @@ namespace Supplier.Domain.Dto
         public string? CatalogType { get; set; }
 
         public bool IsPunchOut { get; set; }
-    public AssetDto? Asset { get; set; }
+         public List<AssetDto> Asset { get; set; }= new();
 
         public string? PunchOutUrl { get; set; }
 

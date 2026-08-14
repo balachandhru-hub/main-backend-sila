@@ -112,55 +112,53 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
             {
                 if (!catalog.CatalogId.HasValue)
                 {
-                    _logger.LogInfo($"Catalog ID is null for supplier ID: {catalog.SupplierId}");
+                    _logger.LogInfo(
+                        $"Catalog ID is null for supplier ID: {catalog.SupplierId}");
+
                     throw new NotFoundCustomException(
                         "Catalog ID is null.",
                         $"Catalog ID is null for supplier ID: {catalog.SupplierId}");
                 }
 
-                var catalogAssetMapping = _repository.CatalogAssetMapping
-                    .FindFirstByCondition(x =>
+                var catalogAssetMappings = _repository.CatalogAssetMapping
+                    .FindByCondition(x =>
                         x.CatalogId == catalog.CatalogId.Value &&
-                        x.IsActive);
+                        x.IsActive)
+                    .ToList();
 
-                
-                if (catalogAssetMapping != null)
+                if (catalogAssetMappings.Any())
                 {
-                    _logger.LogInfo(
-                        $"Asset mapping found for Catalog ID: {catalog.CatalogId.Value}");
+                    var assetIds = catalogAssetMappings
+                        .Select(x => x.AssetId)
+                        .Distinct()
+                        .ToList();
 
-                    var asset =
-                        _repository.Asset
-                            .FindFirstByCondition(x =>
-                                x.Id == catalogAssetMapping.AssetId &&
-                                x.IsActive);
+                    var assets = _repository.Asset
+                        .FindByCondition(x =>
+                            assetIds.Contains(x.Id) &&
+                            x.IsActive)
+                        .ToList();
 
-                   
-                    if (asset != null)
-                    {
-                        _logger.LogInfo(
-                            $"Asset found for Asset ID: {asset.Id}");
-
-                        catalog.Asset = new AssetDto
+                    catalog.Asset = assets
+                        .Select(asset => new AssetDto
                         {
                             Id = asset.Id,
                             AssetType = asset.AssetType?.ToString(),
                             AssetName = asset.AssetName,
                             FileType = asset.FileType.ToString(),
                             FileName = asset.FileName
-                        };
-                    }
-                    else
-                    {
-                        _logger.LogInfo(
-                            $"No active asset found for Asset ID: {catalogAssetMapping.AssetId}");
-                    }
+                        })
+                        .ToList();
                 }
                 else
                 {
-                    _logger.LogInfo(
-                        $"No asset mapping found for Catalog ID: {catalog.CatalogId.Value}");
+                    catalog.Asset = new List<AssetDto>();
                 }
+
+
+
+
+
             }
 
 
@@ -315,57 +313,52 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                 {
                     if (!catalog.CatalogId.HasValue)
                     {
-                        _logger.LogInfo($"Catalog ID is null for supplier ID: {catalog.SupplierId}");
+                        _logger.LogInfo(
+                            $"Catalog ID is null for supplier ID: {catalog.SupplierId}");
+
                         throw new NotFoundCustomException(
                             "Catalog ID is null.",
                             $"Catalog ID is null for supplier ID: {catalog.SupplierId}");
                     }
-                    _logger.LogInfo($"Fetching asset mapping for catalog ID: {catalog.CatalogId.Value}");
-                    var catalogAssetMapping = _repository.CatalogAssetMapping
-                        .FindFirstByCondition(x =>
+
+                    var catalogAssetMappings = _repository.CatalogAssetMapping
+                        .FindByCondition(x =>
                             x.CatalogId == catalog.CatalogId.Value &&
-                            x.IsActive);
+                            x.IsActive)
+                        .ToList();
 
-                    if (catalogAssetMapping != null)
+                    if (catalogAssetMappings.Any())
                     {
-                        _logger.LogInfo(
-                            $"Asset mapping found for Catalog ID: {catalog.CatalogId.Value}");
+                        var assetIds = catalogAssetMappings
+                            .Select(x => x.AssetId)
+                            .Distinct()
+                            .ToList();
 
+                        var assets = _repository.Asset
+                            .FindByCondition(x =>
+                                assetIds.Contains(x.Id) &&
+                                x.IsActive)
+                            .ToList();
 
-                        var asset =
-                            _repository.Asset
-                                .FindFirstByCondition(x =>
-                                    x.Id == catalogAssetMapping.AssetId &&
-                                    x.IsActive);
-
-
-                        
-                        if (asset != null)
-                        {
-                            _logger.LogInfo(
-                                $"Asset found for Asset ID: {asset.Id}");
-
-
-                            catalog.Asset = new AssetDto
+                        catalog.Asset = assets
+                            .Select(asset => new AssetDto
                             {
                                 Id = asset.Id,
                                 AssetType = asset.AssetType?.ToString(),
                                 AssetName = asset.AssetName,
                                 FileType = asset.FileType.ToString(),
                                 FileName = asset.FileName
-                            };
-                        }
-                        else
-                        {
-                            _logger.LogInfo(
-                                $"No active asset found for Asset ID: {catalogAssetMapping.AssetId}");
-                        }
+                            })
+                            .ToList();
                     }
                     else
                     {
-                        _logger.LogInfo(
-                            $"No asset mapping found for Catalog ID: {catalog.CatalogId.Value}");
+                        catalog.Asset = new List<AssetDto>();
                     }
+
+
+
+
                 }
 
                 result.AddRange(additionalCatalogs);
