@@ -89,6 +89,9 @@ namespace Buyer.Infrastructure
                         context.DefaultVerificationTemplateQuestion.Add(entry);
                     }
                 }
+                     SaveEntities(context);
+                csvReader.Dispose();
+            
             }
         }
 

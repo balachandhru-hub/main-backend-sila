@@ -7,6 +7,9 @@ namespace Buyer.Application.Features.Queries.Template
         : IRequest<List<VerificationTemplateResponseDto>>
     {
         public Guid OrganizationId { get; set; }
+        public int Index { get; set; }
+
+        public int Limit { get; set; }
 
 
     }

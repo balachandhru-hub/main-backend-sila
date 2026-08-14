@@ -58,14 +58,17 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(200, type: typeof(List<VerificationTemplateResponseDto>), description: "Success")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetVerificationTemplates()
+        public async Task<IActionResult> GetVerificationTemplates([FromQuery] int index = 0,[FromQuery] int limit = 10)
         {
             Guid organizationId = GetOrganizationId();
            
 
             var result = await _mediator.Send(new GetVerificationTemplatesQuery
             {
-                OrganizationId = organizationId
+                OrganizationId = organizationId,
+                Index = index,
+                Limit = limit
+
             });
             return Ok(result);
         }
