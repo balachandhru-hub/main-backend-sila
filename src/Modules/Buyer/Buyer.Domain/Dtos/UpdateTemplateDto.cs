@@ -7,9 +7,9 @@ namespace Buyer.Domain.Dto
 
         public Guid VerificationTemplateId { get; set; }
 
-        public string Question { get; set; } 
+        public string? Question { get; set; } 
 
-        public string QuestionType { get; set; }
+        public string? QuestionType { get; set; }
 
         public bool IsRequired { get; set; }
 
