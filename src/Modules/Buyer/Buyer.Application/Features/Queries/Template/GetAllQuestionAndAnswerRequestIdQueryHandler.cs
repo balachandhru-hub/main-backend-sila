@@ -53,7 +53,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                     Status = x.Status,
                     Remarks = x.Remarks,
                     DueDate = x.DueDate,
-                   
+
                 })
                 .FirstOrDefaultAsync(cancellationToken);
             _logger.LogInfo($"Supplier Verification Request fetched successfully : {request.RequestId}");
@@ -69,7 +69,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
 
             if (request.RoleId == Common.BUYER_ROLE_ID)
             {
-                
+
 
                 var supplier = await _supplierService.GetSupplierById(
                     result.SupplierOrganizationId,
@@ -160,30 +160,38 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
 
             if (showAnswers)
             {
-                var supplierAnswers =
-                    await _supplierApiClient.GetQuestionsAnswersForSupplier(
-                        result.RequestId,
-                        cancellationToken);
-
-                if (supplierAnswers?.Questions != null)
+                try
                 {
-                    foreach (var question in result.Questions)
-                    {
-                        var answer = supplierAnswers.Questions.FirstOrDefault(x =>
-                            x.VerificationTemplateQuestionId ==
-                            question.VerificationTemplateQuestionId);
+                    var supplierAnswers =
+                        await _supplierApiClient.GetQuestionsAnswersForSupplier(
+                            result.RequestId,
+                            cancellationToken);
 
-                        if (answer != null)
+                    if (supplierAnswers?.Questions != null)
+                    {
+                        foreach (var question in result.Questions)
                         {
-                            question.Answer = answer.Answer;
-                            question.AssetId = answer.AssetId;
-                            question.VerificationTemplateQuestionOptionId =
-                                answer.VerificationTemplateQuestionOptionId;
+                            var answer = supplierAnswers.Questions.FirstOrDefault(x =>
+                                x.VerificationTemplateQuestionId ==
+                                question.VerificationTemplateQuestionId);
+
+                            if (answer != null)
+                            {
+                                question.Answer = answer.Answer;
+                                question.AssetId = answer.AssetId;
+                                question.VerificationTemplateQuestionOptionId =
+                                    answer.VerificationTemplateQuestionOptionId;
+                            }
                         }
                     }
                 }
-            }
+                catch (NotFoundCustomException)
+                {
 
+                    _logger.LogInfo(
+                        $"No supplier answers found for RequestId : {result.RequestId}");
+                }
+            }
             _logger.LogInfo($"Supplier Verification Request fetched successfully : {request.RequestId}");
 
             return result;
