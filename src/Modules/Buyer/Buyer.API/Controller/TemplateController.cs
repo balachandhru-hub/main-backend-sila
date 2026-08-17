@@ -33,14 +33,15 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(200, type: typeof(Guid), description: "Success")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> CreateVerificationTemplate(CreateVerificationTemplateDto dto)
+        public async Task<IActionResult> CreateVerificationTemplate(CreateVerificationTemplateDto dto,
+            [FromQuery] Guid? organizationId = null)
         {
-            Guid organizationId = GetOrganizationId();
+           Guid finalOrganizationId = organizationId ?? GetOrganizationId();
 
             var id = await _mediator.Send(new CreateVerificationTemplateCommand
             {
                 VerificationTemplateDto = dto,
-                OrganizationId = organizationId
+                OrganizationId = finalOrganizationId
             });
 
             return Ok(id);
@@ -58,14 +59,14 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(200, type: typeof(List<VerificationTemplateResponseDto>), description: "Success")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetVerificationTemplates([FromQuery] int index = 0,[FromQuery] int limit = 10)
+        public async Task<IActionResult> GetVerificationTemplates([FromQuery] int index = 0,[FromQuery] int limit = 10,
+            [FromQuery] Guid? organizationId = null)
         {
-            Guid organizationId = GetOrganizationId();
-           
+            Guid finalOrganizationId = organizationId ?? GetOrganizationId();
 
             var result = await _mediator.Send(new GetVerificationTemplatesQuery
             {
-                OrganizationId = organizationId,
+                OrganizationId = finalOrganizationId,
                 Index = index,
                 Limit = limit
 
