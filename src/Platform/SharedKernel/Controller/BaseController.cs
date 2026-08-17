@@ -49,9 +49,9 @@ namespace SharedKernel.Controllers
         }
         protected Guid GetRoleId()
         {
-            var claim = User.FindFirst("Role")?.Value;
+            var roleClaimValue = User.FindFirst(ClaimTypes.Role)?.Value;
 
-            if (!Guid.TryParse(claim, out Guid roleId))
+            if (!Guid.TryParse(roleClaimValue, out Guid roleId))
             {
                 throw new UnAuthorizedCustomException(
                     "Unauthorized",
