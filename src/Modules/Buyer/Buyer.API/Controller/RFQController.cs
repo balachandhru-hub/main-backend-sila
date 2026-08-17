@@ -135,7 +135,7 @@ namespace Buyer.API.Controllers
             [FromQuery] int index,
             [FromQuery] int limit)
         {
-            
+
             _logger.LogDebug($"Fetching Supplier Invitations for Index: {index}, Limit: {limit}");
             Guid organizationId = GetOrganizationId();
             var result = await _mediator.Send(
@@ -186,14 +186,14 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> UpdateSupplierVerificationStatus(
-            Guid requestId,
-            [FromBody] UpdateSupplierVerificationStatusCommand command)
+     [FromBody] UpdateSupplierVerificationStatusCommand command)
         {
+            _logger.LogDebug(
+                $"Updating Supplier Verification Status for RequestId: {command.RequestId}");
 
-          _logger.LogDebug($"Updating Supplier Verification Status for RequestId: {requestId}");
             var result = await _mediator.Send(command);
+
             return Ok(result);
         }
-
     }
 }
