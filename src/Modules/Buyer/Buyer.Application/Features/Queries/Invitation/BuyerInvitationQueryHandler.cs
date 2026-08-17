@@ -4,6 +4,7 @@ using Buyer.Application.Contracts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.LoggerServices;
+using DocumentFormat.OpenXml.Office2010.Excel;
 
 namespace Buyer.Application.Features.Queries.Invitation
 {
@@ -57,6 +58,7 @@ namespace Buyer.Application.Features.Queries.Invitation
                 .Include(x => x.RFQ)
                 .Select(x => new
                 {
+                    Id = x.Id,
                     RFQId = x.RFQ.Id,
                     RFQNumber = x.RFQ.RFQNumber,
                     Title = x.RFQ.Title,
@@ -107,6 +109,7 @@ namespace Buyer.Application.Features.Queries.Invitation
 
                     return new RFQListDto
                     {
+                        Id= x.Id,
                         RFQId = x.RFQId,
                         RFQNumber = x.RFQNumber,
                         Title = x.Title,

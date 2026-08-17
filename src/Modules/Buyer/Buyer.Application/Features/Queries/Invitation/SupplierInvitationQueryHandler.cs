@@ -53,6 +53,7 @@ namespace Buyer.Application.Features.Queries.Invitation
                 .Include(x => x.RFQ)
                 .Select(x => new
                 {
+                    Id= x.Id,
                     RFQId = x.RFQ.Id,
                     RFQNumber = x.RFQ.RFQNumber,
                     Title = x.RFQ.Title,
@@ -106,6 +107,7 @@ namespace Buyer.Application.Features.Queries.Invitation
 
                     return new RFQListDto
                     {
+                        Id= x.Id,
                         RFQId = x.RFQId,
                         RFQNumber = x.RFQNumber,
                         Title = x.Title,
