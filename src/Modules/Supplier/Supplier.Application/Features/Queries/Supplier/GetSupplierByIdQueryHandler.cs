@@ -60,7 +60,8 @@ namespace Supplier.Application.Features.Queries.Supplier
                     Website = supplier.Website,
                     Description = supplier.Description,
                     Status = supplier.Status,
-                    Comment = supplier.Comment
+                    Comment = supplier.Comment,
+                    SNID = supplier.SNID,
                 }
             };
 

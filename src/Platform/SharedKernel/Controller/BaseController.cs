@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel.ExceptionHandler;
+using System.Security.Claims;
 
 namespace SharedKernel.Controllers
 {
-  
+
     public abstract class BaseController : ControllerBase
     {
         protected Guid GetOrganizationId()
@@ -48,7 +49,7 @@ namespace SharedKernel.Controllers
         }
         protected Guid GetRoleId()
         {
-            var claim = User.FindFirst("RoleId")?.Value;
+            var claim = User.FindFirst("Role")?.Value;
 
             if (!Guid.TryParse(claim, out Guid roleId))
             {

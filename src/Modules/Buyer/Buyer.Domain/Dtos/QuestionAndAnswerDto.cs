@@ -19,6 +19,10 @@ namespace Buyer.Domain.Dto
         public string? Remarks { get; set; }
 
         public DateTime? DueDate { get; set; }
+        public string? OrganizationName { get; set; }
+        public string? SNID { get; set; }
+        public string? Description { get; set; }
+   
 
         public List<SupplierVerificationQuestionAndAnswerDto> Questions { get; set; } = new();
     }

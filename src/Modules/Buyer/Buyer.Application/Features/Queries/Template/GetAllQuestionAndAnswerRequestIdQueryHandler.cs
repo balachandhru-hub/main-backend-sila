@@ -18,17 +18,20 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
         private readonly ILoggerManager _logger;
         private readonly ISupplierApiClient _supplierApiClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ISupplierApiClient _supplierService;
 
         public GetSupplierVerificationRequestDetailbyRequestIdQueryHandler(
             IRepositoryWrapper repository,
             ILoggerManager logger,
             ISupplierApiClient supplierApiClient,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            ISupplierApiClient supplierService)
         {
             _repository = repository;
             _logger = logger;
             _supplierApiClient = supplierApiClient;
             _httpContextAccessor = httpContextAccessor;
+            _supplierService = supplierService;
         }
 
         public async Task<SupplierVerificationRequestDetailQuestinandAnswerDto> Handle(
@@ -49,10 +52,11 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                     TemplateId = x.RFQVerificationTemplateId,
                     Status = x.Status,
                     Remarks = x.Remarks,
-                    DueDate = x.DueDate
+                    DueDate = x.DueDate,
+                   
                 })
                 .FirstOrDefaultAsync(cancellationToken);
-                _logger.LogInfo($"Supplier Verification Request fetched successfully : {request.RequestId}");
+            _logger.LogInfo($"Supplier Verification Request fetched successfully : {request.RequestId}");
 
             if (result == null)
             {
@@ -62,10 +66,48 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                     "Invalid Request Id.");
             }
 
+
+            if (request.RoleId == Common.BUYER_ROLE_ID)
+            {
+                
+
+                var supplier = await _supplierService.GetSupplierById(
+                    result.SupplierOrganizationId,
+                    cancellationToken);
+
+                if (supplier != null)
+                {
+                    result.SNID = supplier.BusinessProfile.SNID;
+                    result.OrganizationName = supplier.BusinessProfile.OrganizationName;
+                    result.Description = supplier.BusinessProfile.Description;
+                }
+            }
+            else if (request.RoleId == Common.SUPPLIER_ROLE_ID)
+            {
+
+
+                var buyer = await _repository.BuyerBusinessProfile
+                    .FindByCondition(x =>
+                        x.OrganizationId == result.BuyerId)
+                    .Select(x => new
+                    {
+                        x.SNID,
+                        x.OrganizationName,
+                        x.Description
+                    })
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (buyer != null)
+                {
+                    result.SNID = buyer.SNID;
+                    result.OrganizationName = buyer.OrganizationName;
+                    result.Description = buyer.Description;
+                }
+            }
             var questions = await _repository.VerificationTemplateQuestion
-                .FindByCondition(x => x.VerificationTemplateId == result.TemplateId)
-                .OrderBy(x => x.DisplayOrder)
-                .ToListAsync(cancellationToken);
+                            .FindByCondition(x => x.VerificationTemplateId == result.TemplateId)
+                            .OrderBy(x => x.DisplayOrder)
+                            .ToListAsync(cancellationToken);
 
             result.Questions = new List<SupplierVerificationQuestionAndAnswerDto>();
 
@@ -96,7 +138,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
             }
 
 
-           
+
 
             bool showAnswers = false;
 
