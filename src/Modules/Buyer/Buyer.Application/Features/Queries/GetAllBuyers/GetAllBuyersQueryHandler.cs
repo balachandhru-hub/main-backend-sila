@@ -1,4 +1,4 @@
-    using Buyer.Application.Features.Queries.GetAllBuyers;
+using Buyer.Application.Features.Queries.GetAllBuyers;
 using Buyer.Domain.Dto;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
@@ -45,29 +45,25 @@ namespace Buyer.Application.Features.Queries.GetAllBuyers
             {
                 var dto = new GetAllBuyerDto
                 {
-                   
+
                     OrganizationId = organization.OrganizationId,
                     SNID = organization.SNID,
                     OrganizationName = organization.OrganizationName,
-                        Email = organization.Email,
-                        Phone = organization.Phone,
-                        Country = organization.Country,
-                      
-                        City = organization.City,
-                        State = organization.State,
-                      
-                        Industry = organization.Industry,
-                        BusinessType = organization.BusinessType,
-                      
-                        YearEstablished = organization.YearEstablished,
-                        Website = organization.Website,
-                        Description = organization.Description,
-                        
-                    
+                    Email = organization.Email,
+                    Phone = organization.Phone,
+                    Country = organization.Country,
+                    City = organization.City,
+                    State = organization.State,
+                    Industry = organization.Industry,
+                    BusinessType = organization.BusinessType,
+                    YearEstablished = organization.YearEstablished,
+                    Website = organization.Website,
+                    Description = organization.Description,
+                    BuyerId = organization.Id
                 };
 
-                
-               
+
+
 
                 result.Add(dto);
             }

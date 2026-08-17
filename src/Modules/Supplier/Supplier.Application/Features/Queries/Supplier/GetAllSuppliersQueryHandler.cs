@@ -51,26 +51,23 @@ namespace Supplier.Application.Features.Queries.Supplier
 
             foreach (var supplier in suppliers)
             {
-                var dto = new GetAllSupplierDto{
-                
+                var dto = new GetAllSupplierDto
+                {
+
                     OrganizationId = supplier.OrganizationId,
                     SNID = supplier.SNID,
-
-                    
-                    
-                        OrganizationName = supplier.OrganizationName,
-                        Email = supplier.Email,
-                        Phone = supplier.Phone,
-                        Country = supplier.Country,                    
-                        City = supplier.City,
-                        State = supplier.State,
-                        Industry = supplier.Industry,
-                        BusinessType = supplier.BusinessType,                       
-                        YearEstablished = supplier.YearEstablished,
-                        Website = supplier.Website,
-                        Description = supplier.Description,
-                       
-                    
+                    OrganizationName = supplier.OrganizationName,
+                    Email = supplier.Email,
+                    Phone = supplier.Phone,
+                    Country = supplier.Country,
+                    City = supplier.City,
+                    State = supplier.State,
+                    Industry = supplier.Industry,
+                    BusinessType = supplier.BusinessType,
+                    YearEstablished = supplier.YearEstablished,
+                    Website = supplier.Website,
+                    Description = supplier.Description,
+                    SupplierId = supplier.Id
                 };
 
 
