@@ -41,5 +41,7 @@ namespace Buyer.Domain.Common
                 public const string BUYER = "BUYER";
                 public const string RADIO_BUTTON = "Radio";
                 public const string CHECKBOX = "Checkbox";
+                public const string ACCEPT = "Accept";
+                public const string DECLINE = "Decline";
         }
 }

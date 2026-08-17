@@ -12,6 +12,7 @@ using Buyer.Application.Features.Queries.GetAllRFQ;
 using Buyer.Application.Features.Queries.GetRFQAttachments;
 using Buyer.Application.Features.Queries.GetRFQQuestions;
 using Buyer.Application.Features.Queries.Invitation;
+using Buyer.Application.Features.Commands.Invitation;
 
 namespace Buyer.API.Controllers
 {
@@ -174,6 +175,23 @@ namespace Buyer.API.Controllers
 
             _logger.LogDebug($"Fetched Buyer Invitations successfully for Index: {index}, Limit: {limit}");
 
+            return Ok(result);
+        }
+        [HttpPut]
+        [Route("api/v1/buyer/supplier-invitation-status")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_SUPPLIER_VERIFICATION_STATUS")]
+        [SwaggerOperation("UpdateSupplierVerificationStatus")]
+        [SwaggerResponse(200, type: typeof(bool), description: "Supplier verification status updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateSupplierVerificationStatus(
+            Guid requestId,
+            [FromBody] UpdateSupplierVerificationStatusCommand command)
+        {
+
+          _logger.LogDebug($"Updating Supplier Verification Status for RequestId: {requestId}");
+            var result = await _mediator.Send(command);
             return Ok(result);
         }
 
