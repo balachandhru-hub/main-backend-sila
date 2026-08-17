@@ -16,6 +16,7 @@ using Identity.Application.Features.Queries.GetOrganizationUser;
 using System.Security.Claims;
 using Identity.Application.Features.Queries.GetPersonDetail;
 using Identity.Application.Features.Commands.DeletePerson;
+using Identity.Application.Features.Commands.UpdatePersonDetail;
 
 
 
@@ -149,7 +150,7 @@ namespace Identity.API.Controllers
             _logger.LogDebug("Fetching organization users.");
             string? role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-            
+
             if (!organizationId.HasValue)
             {
                 organizationId = GetOrganizationId();
@@ -161,7 +162,7 @@ namespace Identity.API.Controllers
                     OrganizationId = organizationId,
                     LoggedInRole = role
                 });
-        _logger.LogDebug("Organization users fetched successfully.");
+            _logger.LogDebug("Organization users fetched successfully.");
             return Ok(result);
         }
         [HttpGet]
@@ -213,6 +214,44 @@ namespace Identity.API.Controllers
                 Message = "Person deleted successfully",
                 Description = "Person deleted successfully",
                 StatusCode = 200
+            });
+
+        }
+        [HttpPut]
+        [Route("api/v1/identity/person-detail")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_PERSON_DETAIL")]
+        [SwaggerOperation("UpdatePersonDetail")]
+        [SwaggerResponse(200, type: typeof(PersonDetailDto), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdatePersonDetail(
+
+    [FromBody] UpdatePersonDetailDto data)
+        {
+
+
+            var personId = GetPersonId();
+
+            _logger.LogDebug(
+                $"Updating person details for PersonId: {personId}");
+
+            await _mediator.Send(
+                new UpdatePersonDetailCommand
+                {
+                    PersonId = personId,
+                    Data = data
+                });
+
+            _logger.LogDebug(
+                $"Person details updated successfully for PersonId: {personId}");
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Person details updated successfully.",
+
             });
         }
     }
