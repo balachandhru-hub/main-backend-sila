@@ -309,7 +309,8 @@ $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQN
             BuyerId = buyer.Id,
             RFQVerificationTemplateId = request.RFQ.RFQVerificationTemplateId,
             SupplierInvites = unVerifiedSuppliers,
-            EndDate = request.RFQ.EndDate
+            EndDate = request.RFQ.EndDate,
+            TemplateId = request.RFQ.TemplateId
         }));
             }
 

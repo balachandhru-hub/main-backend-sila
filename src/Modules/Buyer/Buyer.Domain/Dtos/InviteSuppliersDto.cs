@@ -12,5 +12,6 @@ namespace Buyer.Domain.Dto
 
     public List<Guid> SupplierInvites { get; set; }
     public DateTime EndDate { get; set; }
+    public Guid TemplateId { get; set; }
 }
 }

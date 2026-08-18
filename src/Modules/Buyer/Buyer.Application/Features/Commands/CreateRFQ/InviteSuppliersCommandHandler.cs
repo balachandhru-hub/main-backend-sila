@@ -2,8 +2,7 @@ using Buyer.Domain.Common;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using SharedKernel.ExceptionHandler;
+
 using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Features.Commands.InviteSuppliers
@@ -33,7 +32,7 @@ namespace Buyer.Application.Features.Commands.InviteSuppliers
 
             var template = _repository.VerificationTemplate
                 .FindFirstByCondition(x =>
-                    x.Id == request.Invite.RFQVerificationTemplateId &&
+                    x.Id == request.Invite.TemplateId &&
                     x.IsActive);
 
             if (template != null &&
@@ -57,7 +56,8 @@ namespace Buyer.Application.Features.Commands.InviteSuppliers
                         SupplierOrganizationId = supplierId,
                         RFQVerificationTemplateId = request.Invite.RFQVerificationTemplateId,
                         Status = status,
-                        DueDate = request.Invite.EndDate
+                        DueDate = request.Invite.EndDate,
+                        TemplateId = request.Invite.TemplateId
                     });
             }
 

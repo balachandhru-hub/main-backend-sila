@@ -32,7 +32,7 @@ namespace Buyer.Domain.Dto
         /// <summary>
         /// Gets or sets the template ID.
         /// </summary>
-        //public Guid TemplateId { get; set; }
+        public Guid TemplateId { get; set; }
 
         // Attachments
 

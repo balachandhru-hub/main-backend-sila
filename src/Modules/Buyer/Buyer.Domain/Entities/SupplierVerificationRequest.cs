@@ -29,6 +29,7 @@ namespace Buyer.Domain.Entities
         public Guid? VerifiedBy { get; set; }
 
         public DateTime? VerifiedOn { get; set; }
+        public Guid TemplateId { get; set; }
         public SupplierVerificationRequest(){}
     }
 }
