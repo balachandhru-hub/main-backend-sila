@@ -2,6 +2,7 @@ namespace Supplier.Domain.Dto
 {
     public class SupplierBankAccountDto
     {
+        public Guid Id { get; set; }
         public string AccountHolderName { get; set; }
 
         public string BankName { get; set; }

@@ -33,7 +33,7 @@ namespace Supplier.Application.Features.Queries.Supplier
             if (organization == null)
             {
                 _logger.LogError($"Organization with ID {request.OrganizationId} not found.");
-                throw new  NoContentCustomException(
+                throw new NoContentCustomException(
                     "Organization Not Found",
                     $"Organization with ID {request.OrganizationId} not found.");
             }
@@ -44,10 +44,10 @@ namespace Supplier.Application.Features.Queries.Supplier
 
             if (supplier == null)
             {
-                    throw new NoContentCustomException(
-                        "No supplier profile data found.",
-                        "Supplier profile exists, but no related data is available.");
-                }
+                throw new NoContentCustomException(
+                    "No supplier profile data found.",
+                    "Supplier profile exists, but no related data is available.");
+            }
 
             var registrations = _repositoryWrapper.SupplierRegistration
                 .FindByCondition(x =>
@@ -66,32 +66,28 @@ namespace Supplier.Application.Features.Queries.Supplier
                     x.SupplierId == supplier.Id &&
                     x.IsActive)
                 .ToList();
-                var categories = _repositoryWrapper.SupplierCategory
-                .FindByCondition(x =>
-                    x.SupplierId == supplier.Id &&
-                    x.IsActive)
-                .ToList();
+            var categories = _repositoryWrapper.SupplierCategory
+            .FindByCondition(x =>
+                x.SupplierId == supplier.Id &&
+                x.IsActive)
+            .ToList();
 
             var result = new OrganizationDto
             {
                 Id = organization.Id,
                 OrganizationId = supplier.OrganizationId,
-               SNID=supplier.SNID,
-
+                SNID = supplier.SNID,
                 BusinessProfile = new SupplierBusinessProfileDto
                 {
                     OrganizationName = supplier.OrganizationName,
                     Email = supplier.Email,
                     Phone = supplier.Phone,
-                  
-
                     Country = supplier.Country,
                     AddressLine1 = supplier.AddressLine1,
                     AddressLine2 = supplier.AddressLine2,
                     City = supplier.City,
                     State = supplier.State,
                     PinCode = supplier.PinCode,
-
                     Industry = supplier.Industry,
                     BusinessType = supplier.BusinessType,
                     EmployeeCount = supplier.EmployeeCount,
@@ -100,8 +96,8 @@ namespace Supplier.Application.Features.Queries.Supplier
                     YearEstablished = supplier.YearEstablished,
                     Website = supplier.Website,
                     Description = supplier.Description,
-                    Status=supplier.Status,
-                    Comment=supplier.Comment
+                    Status = supplier.Status,
+                    Comment = supplier.Comment
                 },
 
                 Registrations = registrations.Select(x =>
@@ -139,6 +135,7 @@ namespace Supplier.Application.Features.Queries.Supplier
 
                 BankAccounts = bankAccounts.Select(x => new SupplierBankAccountDto
                 {
+                    Id = x.Id,
                     AccountHolderName = x.AccountHolderName,
                     BankName = x.BankName,
                     BranchName = x.BranchName,
@@ -152,6 +149,7 @@ namespace Supplier.Application.Features.Queries.Supplier
 
                 DispatchLocations = dispatchLocations.Select(x => new SupplierDispatchLocationDto
                 {
+                    Id = x.Id,
                     LocationName = x.LocationName,
                     AddressLine1 = x.AddressLine1,
                     AddressLine2 = x.AddressLine2,
