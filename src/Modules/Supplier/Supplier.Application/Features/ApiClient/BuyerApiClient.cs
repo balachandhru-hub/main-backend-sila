@@ -202,5 +202,44 @@ namespace Supplier.Infrastructure.ApiClients
 
             return result ?? new List<RFQQuestionResponseDto>();
         }
+        public async Task<CostCenterDto> GetCostCenterById(
+            Guid costCenterId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/cost-center/{costCenterId}");
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request.Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch cost center.",
+                    error);
+            }
+
+            var result = await response.Content
+                .ReadFromJsonAsync<CostCenterDto>(
+                    cancellationToken: cancellationToken);
+
+            return result ?? new CostCenterDto();
+        }
     }
 }
