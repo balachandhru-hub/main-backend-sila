@@ -14,14 +14,14 @@
     {
         public class GetRFQByIdQueryHandler : IRequestHandler<GetRFQByIdQuery, GetRFQByIdDto>
         {
-            private readonly IRepositoryWrapper _repository;
+            private readonly IRepositoryWrapper _repositorywrapper;
             private readonly IMetadataApiClient _metadataClient;
             private readonly ILoggerManager _logger;
             private readonly ISupplierApiClient _supplierApiClient;
 
             public GetRFQByIdQueryHandler(IRepositoryWrapper repository, IMetadataApiClient metadataApiClient, ILoggerManager logger, ISupplierApiClient supplierApiClient)
             {
-                _repository = repository;
+                _repositorywrapper = repository;
                 _metadataClient = metadataApiClient;
                 _logger = logger;
                 _supplierApiClient = supplierApiClient;
@@ -50,7 +50,7 @@
                 }
 
 
-                var rfq = await _repository.RFQ
+                var rfq = await _repositorywrapper.RFQ
                     .FindByCondition(x => x.Id == request.RFQId)
                     .FirstOrDefaultAsync(cancellationToken);
 
@@ -91,7 +91,7 @@
                     _logger.LogInfo($"No Supplier RFQ Answers found for BuyerRFQId: {request.RFQId}");
                     supplierAnswers = new SupplierRFQAnswerDto();
                 }
-                var questions = await _repository.RFQQuestion
+                var questions = await _repositorywrapper.RFQQuestion
                     .FindByCondition(x => x.RFQId == request.RFQId)
                     .OrderBy(x => x.DisplayOrder)
                     .Select(x => new RFQQuestionDto
@@ -109,7 +109,7 @@
                     .Select(x => x.Id)
                     .ToList();
 
-                var questionOptions = await _repository.RFQQuestionOption
+                var questionOptions = await _repositorywrapper.RFQQuestionOption
                     .FindByCondition(x =>
                         questionIds.Contains(x.RFQQuestionId) &&
                         x.IsActive)
@@ -193,7 +193,7 @@
     }
 }
 
-                var rfqItems = await _repository.RFQItem
+                var rfqItems = await _repositorywrapper.RFQItem
         .FindByCondition(x => x.RFQId == request.RFQId)
         .ToListAsync(cancellationToken);
 
@@ -202,11 +202,11 @@
                 foreach (var item in rfqItems)
                 {
                     var attachmentData = await (
-                    from mapping in _repository.RFQItemAttachmentMapping.FindByCondition(x =>
+                    from mapping in _repositorywrapper.RFQItemAttachmentMapping.FindByCondition(x =>
                         x.RFQItemId == item.Id &&
                         x.Type == Common.RFQ_ITEM_ATTACHMENT)
 
-                    join asset in _repository.Asset.FindByCondition(x => x.IsActive)
+                    join asset in _repositorywrapper.Asset.FindByCondition(x => x.IsActive)
                         on mapping.AssetId equals asset.Id
 
                     select asset
@@ -227,6 +227,18 @@
                         AssetName = asset.AssetName,
                         FileName = asset.FileName
                     }).ToList();
+                    string? costCenterName = null;
+
+                if (!string.IsNullOrWhiteSpace(item.CostCenter) &&
+                    Guid.TryParse(item.CostCenter, out Guid costCenterId))
+                {
+                    costCenterName = await _repositorywrapper.BuyerCostCenter
+                        .FindByCondition(x =>
+                            x.Id == costCenterId &&
+                            x.IsActive)
+                        .Select(x => x.CostCenter)
+                        .FirstOrDefaultAsync(cancellationToken);
+                }
 
                     items.Add(new GetRFQItemDto
                     {
@@ -235,7 +247,8 @@
                         UOM = item.UOM,
                         MaterialCode = item.MaterialCode,
                         MaterialGroup = item.MaterialGroup,
-                        CostCenter = item.CostCenter,
+                        
+                         CostCenter = costCenterName,
                         Attachments = attachments,
 
 
@@ -243,11 +256,11 @@
                 }
 
                 var technicalAssetData = await (
-                    from mapping in _repository.RFQAttachmentMapping.FindByCondition(x =>
+                    from mapping in _repositorywrapper.RFQAttachmentMapping.FindByCondition(x =>
                         x.RFQId == request.RFQId &&
                         x.Type == Common.TECHNICAL_SPECIFICATION)
 
-                    join asset in _repository.Asset.FindByCondition(x => x.IsActive)
+                    join asset in _repositorywrapper.Asset.FindByCondition(x => x.IsActive)
                         on mapping.AssetId equals asset.Id
 
                     select asset
@@ -266,11 +279,11 @@
                     FileName = asset.FileName
                 }).ToList();
 
-                var termsAssetData = await (from mapping in _repository.RFQAttachmentMapping.FindByCondition(x =>
+                var termsAssetData = await (from mapping in _repositorywrapper.RFQAttachmentMapping.FindByCondition(x =>
                     x.RFQId == request.RFQId &&
                     x.Type == Common.TERMS_CONDITION)
 
-                                            join asset in _repository.Asset.FindByCondition(x => x.IsActive)
+                                            join asset in _repositorywrapper.Asset.FindByCondition(x => x.IsActive)
                                                 on mapping.AssetId equals asset.Id
 
                                             select asset
@@ -288,11 +301,11 @@
                                     x.Id == asset.FileType)?.Key ?? string.Empty,
                     FileName = asset.FileName
                 }).ToList();
-                var supplierIds = await _repository.BuyerSupplierMapping
+                var supplierIds = await _repositorywrapper.BuyerSupplierMapping
                 .FindByCondition(x => x.BuyerId == buyerId)
                 .Select(x => x.SupplierId)
                 .ToListAsync(cancellationToken);
-                var verificationTemplateId = await _repository.VerificationTemplate
+                var verificationTemplateId = await _repositorywrapper.VerificationTemplate
         .FindByCondition(x => x.BuyerId == buyerId)
         .Select(x => x.Id)
         .FirstOrDefaultAsync(cancellationToken);

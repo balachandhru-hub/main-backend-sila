@@ -36,7 +36,8 @@ namespace Supplier.Domain.Dto
         public string MaterialCode { get; set; }
 
         public string MaterialGroup { get; set; }
-        public string CostCenter { get; set; }
+        public string? CostCenter { get; set; }
+         public string? CostCenterName { get; set; }
         public List<AssetDto>? Attachments { get; set; }
         public Guid? SupplierRFQId{get;set;}
         public Guid? SupplierRFQItemId{get;set;}

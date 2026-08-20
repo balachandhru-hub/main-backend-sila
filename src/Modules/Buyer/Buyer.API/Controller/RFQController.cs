@@ -13,6 +13,7 @@ using Buyer.Application.Features.Queries.GetRFQAttachments;
 using Buyer.Application.Features.Queries.GetRFQQuestions;
 using Buyer.Application.Features.Queries.Invitation;
 using Buyer.Application.Features.Commands.Invitation;
+using Buyer.Application.Features.Queries.GetCostCenterById;
 
 namespace Buyer.API.Controllers
 {
@@ -192,6 +193,32 @@ namespace Buyer.API.Controllers
                 $"Updating Supplier Verification Status for RequestId: {command.RequestId}");
 
             var result = await _mediator.Send(command);
+
+            return Ok(result);
+        }
+        [HttpGet]
+        [Route("api/v1/buyer/cost-center/{costCenterId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_COST_CENTER")]
+        [SwaggerOperation("GetCostCenterById")]
+        [SwaggerResponse(200, type: typeof(CostCenterDto), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Cost Center Not Found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetCostCenterById(
+    Guid costCenterId)
+        {
+            _logger.LogDebug(
+                $"Fetching Cost Center for CostCenterId: {costCenterId}");
+
+            var result = await _mediator.Send(
+                new GetCostCenterByIdQuery
+                {
+                    CostCenterId = costCenterId
+                });
+
+            _logger.LogDebug(
+                $"Cost Center fetched successfully for CostCenterId: {costCenterId}");
 
             return Ok(result);
         }

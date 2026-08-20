@@ -74,6 +74,7 @@ namespace Buyer.Domain.Dto
 
     public class BankAccountDto
     {
+        public Guid Id { get; set; }
         public string AccountHolderName { get; set; }
 
         public string BankName { get; set; }
@@ -95,6 +96,7 @@ namespace Buyer.Domain.Dto
 
     public class DeliveryLocationDto
     {
+        public Guid Id { get; set; }
         public string LocationName { get; set; }
 
         public string AddressLine1 { get; set; }

@@ -2,6 +2,7 @@ namespace Supplier.Domain.Dto
 {
     public class SupplierDispatchLocationDto
     {
+        public Guid Id { get; set; }
         public string LocationName { get; set; }
 
         public string AddressLine1 { get; set; }

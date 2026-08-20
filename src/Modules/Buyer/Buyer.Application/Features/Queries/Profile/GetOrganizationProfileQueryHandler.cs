@@ -24,7 +24,7 @@ public class GetOrganizationProfileQueryHandler
 
         if (organization == null)
         {
-            throw new  NoContentCustomException(
+            throw new NoContentCustomException(
                 "Organization Not Found",
                 $"Organization with ID {request.OrganizationId} not found.");
         }
@@ -53,8 +53,8 @@ public class GetOrganizationProfileQueryHandler
                 YearEstablished = organization.YearEstablished,
                 Website = organization.Website,
                 Description = organization.Description,
-                Status=organization.Status,
-                Comments=organization.Comment
+                Status = organization.Status,
+                Comments = organization.Comment
             }
         };
 
@@ -100,6 +100,7 @@ public class GetOrganizationProfileQueryHandler
             .FindByCondition(x => x.BuyerId == organization.Id && x.IsActive)
             .Select(x => new BankAccountDto
             {
+                Id = x.Id,
                 AccountHolderName = x.AccountHolderName,
                 BankName = x.BankName,
                 BranchName = x.BranchName,
@@ -117,6 +118,7 @@ public class GetOrganizationProfileQueryHandler
             .FindByCondition(x => x.BuyerId == organization.Id && x.IsActive)
             .Select(x => new DeliveryLocationDto
             {
+                Id = x.Id,
                 LocationName = x.LocationName,
                 AddressLine1 = x.AddressLine1,
                 AddressLine2 = x.AddressLine2,
@@ -134,7 +136,7 @@ public class GetOrganizationProfileQueryHandler
             .FindByCondition(x => x.BuyerId == organization.Id && x.IsActive)
             .Select(x => new CategoryDto
             {
-            
+
                 Segment = x.Segment,
                 SegmentTitle = x.SegmentTitle,
                 Family = x.Family,
@@ -145,6 +147,6 @@ public class GetOrganizationProfileQueryHandler
                 CommodityTitle = x.CommodityTitle
             })
             .ToList();
-                return response;
-            }
+        return response;
+    }
 }

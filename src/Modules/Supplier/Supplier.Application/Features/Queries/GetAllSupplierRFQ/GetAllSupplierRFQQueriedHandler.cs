@@ -13,14 +13,14 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
 {
     public class GetSupplierRFQByIdQueryHandler : IRequestHandler<GetSupplierRFQByIdQuery, GetRFQByIdDto>
     {
-        private readonly IRepositoryWrapper _repository;
+        private readonly IRepositoryWrapper _repositorywrapper;
         private readonly IMetadataApiClient _metadataClient;
         private readonly ILoggerManager _logger;
         private readonly IBuyerApiClient _buyerApiClient;
 
         public GetSupplierRFQByIdQueryHandler(IRepositoryWrapper repository, IMetadataApiClient metadataApiClient, ILoggerManager logger, IBuyerApiClient buyerApiClient)
         {
-            _repository = repository;
+            _repositorywrapper = repository;
             _metadataClient = metadataApiClient;
             _logger = logger;
             _buyerApiClient = buyerApiClient;
@@ -32,7 +32,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
         {
             _logger.LogInfo($"Fetching RFQ details for RFQId: {request.RFQId}");
 
-            var rfq = await _repository.SupplierRFQ
+            var rfq = await _repositorywrapper.SupplierRFQ
                 .FindByCondition(x => x.BuyerRFQId == request.RFQId)
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -55,7 +55,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 cancellationToken);
 
             _logger.LogInfo($"Fetching RFQ items for SupplierRFQId: {supplierRFQId}");
-            var rfqItems = await _repository.SupplierRFQItem
+            var rfqItems = await _repositorywrapper.SupplierRFQItem
                 .FindByCondition(x => x.SupplierRFQId == supplierRFQId)
                 .ToListAsync(cancellationToken);
 
@@ -67,6 +67,20 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 var itemAttachment = attachmentResponse.ItemAttachments
                     .FirstOrDefault(x => x.RFQItemId == item.BuyerRFQItemId);
 
+                   string? costCenterName = null;
+
+                    if (!string.IsNullOrWhiteSpace(item.CostCenter) &&
+                        Guid.TryParse(item.CostCenter, out var costCenterId))
+                    {
+                        _logger.LogInfo(
+                            $"Fetching Cost Center for CostCenterId: {costCenterId}");
+
+                        var costCenter = await _buyerApiClient.GetCostCenterById(
+                            costCenterId,
+                            cancellationToken);
+
+                        costCenterName = costCenter?.CostCenter;
+                    }
                 items.Add(new GetRFQItemDto
                 {
                     Description = item.Description,
@@ -75,6 +89,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     MaterialCode = item.MaterialCode,
                     MaterialGroup = item.MaterialGroup,
                     CostCenter = item.CostCenter,
+                    CostCenterName = costCenterName,
                     Attachments = itemAttachment?.Attachments ?? new List<AssetDto>(),
                     SupplierRFQItemId = item.Id,
                     SupplierRFQId = item.SupplierRFQId,
@@ -88,7 +103,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             var technicalDocuments = attachmentResponse.TechnicalSpecificationDocuments;
             var termsDocuments = attachmentResponse.TermsConditionDocuments;
             // Supplier Quotation Header
-            var quotation = await _repository.SupplierQuotation
+            var quotation = await _repositorywrapper.SupplierQuotation
                 .FindByCondition(x => x.SupplierRFQId == supplierRFQId)
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -97,7 +112,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
 
             if (quotation != null)
             {
-                quotationItems = await _repository.SupplierQuotationItem
+                quotationItems = await _repositorywrapper.SupplierQuotationItem
                     .FindByCondition(x => x.SupplierQuotationId == quotation.Id)
                     .Select(x => new SupplierQuotationItemDto
                     {
