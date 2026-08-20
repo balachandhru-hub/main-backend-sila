@@ -35,7 +35,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
             _logger.LogInfo(
                 $"Fetching Supplier Verification Request : {request.RequestId}");
 
-     
+
 
             var result = await _repository.SupplierVerificationRequest
                 .FindByCondition(x =>
@@ -66,7 +66,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                     "Invalid Request Id.");
             }
 
-   
+
 
             if (request.RoleId == Common.BUYER_ROLE_ID)
             {
@@ -115,35 +115,82 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
             result.Questions =
                 new List<SupplierVerificationQuestionAndAnswerDto>();
 
-            foreach (var question in questions)
+            if (questions.Any())
             {
-                var questionDto =
-                    new SupplierVerificationQuestionAndAnswerDto
-                    {
-                        VerificationTemplateQuestionId = question.Id,
-                        Question = question.Question,
-                        QuestionType = question.QuestionType,
-                        IsRequired = question.IsRequired,
-                        DisplayOrder = question.DisplayOrder
-                    };
+                // -----------------------------------------------------
+                // Custom Verification Template Questions
+                // -----------------------------------------------------
 
-       
+                foreach (var question in questions)
+                {
+                    var questionDto =
+                        new SupplierVerificationQuestionAndAnswerDto
+                        {
+                            VerificationTemplateQuestionId = question.Id,
+                            Question = question.Question,
+                            QuestionType = question.QuestionType,
+                            IsRequired = question.IsRequired,
+                            DisplayOrder = question.DisplayOrder
+                        };
 
-                questionDto.Options = await _repository
-                    .VerificationTemplateQuestionOptionRepository
-                    .FindByCondition(x =>
-                        x.VerificationTemplateQuestionId == question.Id)
-                    .OrderBy(x => x.DisplayOrder)
-                    .Select(x => new SupplierVerificationQuestionOptionDto
-                    {
-                        Id = x.Id,
-                        OptionText = x.OptionText,
-                        DisplayOrder = x.DisplayOrder
-                    })
-                    .ToListAsync(cancellationToken);
+                    questionDto.Options = await _repository
+                        .VerificationTemplateQuestionOptionRepository
+                        .FindByCondition(x =>
+                            x.VerificationTemplateQuestionId == question.Id)
+                        .OrderBy(x => x.DisplayOrder)
+                        .Select(x => new SupplierVerificationQuestionOptionDto
+                        {
+                            Id = x.Id,
+                            OptionText = x.OptionText,
+                            DisplayOrder = x.DisplayOrder
+                        })
+                        .ToListAsync(cancellationToken);
 
-                result.Questions.Add(questionDto);
+                    result.Questions.Add(questionDto);
+                }
             }
+            else
+            {
+
+
+                _logger.LogInfo(
+                    $"No custom template questions found for TemplateId : " +
+                    $"{result.TemplateId}. Checking default template questions.");
+
+                var defaultQuestions =
+                    await _repository.DefaultVerificationTemplateQuestionRepository
+                        .FindByCondition(x =>
+                            x.DefaultVerificationTemplateId == result.TemplateId &&
+                            x.IsActive)
+                        .OrderBy(x => x.DisplayOrder)
+                        .ToListAsync(cancellationToken);
+
+                foreach (var question in defaultQuestions)
+                {
+                    var questionDto =
+                        new SupplierVerificationQuestionAndAnswerDto
+                        {
+                            VerificationTemplateQuestionId = question.Id,
+                            Question = question.Question,
+                            QuestionType = question.QuestionType,
+                            IsRequired = false,
+                            DisplayOrder = question.DisplayOrder
+                        };
+
+
+                    questionDto.Options =
+                        new List<SupplierVerificationQuestionOptionDto>();
+
+                    result.Questions.Add(questionDto);
+                }
+
+                _logger.LogInfo(
+                    $"Default template questions fetched successfully. " +
+                    $"TemplateId : {result.TemplateId}, " +
+                    $"QuestionCount : {defaultQuestions.Count}");
+            }
+
+
 
 
 
@@ -176,7 +223,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                         StringComparison.OrdinalIgnoreCase);
             }
 
-            
+
 
             if (showAnswers)
             {
@@ -209,14 +256,14 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                 }
                 catch (BadRequestCustomException)
                 {
-                    
+
                     _logger.LogInfo(
                         $"No supplier answers available for RequestId : " +
                         $"{result.RequestId}. Returning questions only.");
                 }
             }
 
-         
+
 
             _logger.LogInfo(
                 $"Supplier Verification Request fetched successfully : " +
