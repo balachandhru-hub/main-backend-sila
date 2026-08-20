@@ -43,5 +43,7 @@ namespace Buyer.Domain.Common
                 public const string CHECKBOX = "Checkbox";
                 public const string ACCEPT = "Accept";
                 public const string DECLINE = "Decline";
+                public static Guid DEFAULT_VERIFICATION_TEMPLATE_ID = new Guid("DD5A50B8-F087-4F0A-A004-CE43E92CE2B9");
+
         }
 }

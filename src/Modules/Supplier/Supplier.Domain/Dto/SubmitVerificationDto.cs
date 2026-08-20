@@ -8,7 +8,7 @@ namespace Supplier.Domain.Dto
 
         public Guid SupplierId { get; set; }
 
-        public List<VerificationAnswerDto> Answers { get; set; } 
+        public List<VerificationAnswerDto>? Answers { get; set; } 
          public string Status { get; set; }
     }
 

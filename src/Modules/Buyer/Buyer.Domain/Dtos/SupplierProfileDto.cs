@@ -8,10 +8,11 @@ namespace Buyer.Domain.Dto
 
         public SupplierBusinessProfileDto BusinessProfile { get; set; }
 
-        public List<SupplierRegistrationResponseDto> Registrations { get; set; } = new();
+        public List<SupplierRegistrationResponseDto> Registrations { get; set; }
 
         public List<SupplierBankAccountDto> BankAccounts { get; set; } = new();
 
-        public List<SupplierDispatchLocationDto> DispatchLocations { get; set; } = new();
+        public List<SupplierDispatchLocationDto> DispatchLocations { get; set; } 
+        public List<SupplierVerificationQuestionAndAnswerDto>? Questions { get; set; }
     }
 }

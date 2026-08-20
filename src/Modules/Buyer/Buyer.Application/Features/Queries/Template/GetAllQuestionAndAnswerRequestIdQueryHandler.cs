@@ -205,6 +205,8 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                     ||
                     result.Status.Equals(
                         Common.DEFAULT,
+                        StringComparison.OrdinalIgnoreCase)||result.Status.Equals(
+                        Common.DRAFT,
                         StringComparison.OrdinalIgnoreCase);
             }
             else if (request.RoleId == Common.BUYER_ROLE_ID)
@@ -229,41 +231,77 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
             {
                 try
                 {
-                    var supplierAnswers =
-                        await _supplierApiClient.GetQuestionsAnswersForSupplier(
-                            result.RequestId,
-                            cancellationToken);
-
-                    if (supplierAnswers?.Questions != null)
+                    if (result.TemplateId == Common.DEFAULT_VERIFICATION_TEMPLATE_ID)
                     {
-                        foreach (var question in result.Questions)
+
+
+                        _logger.LogInfo(
+                            $"Default template detected. " +
+                            $"Fetching supplier profile using SupplierId : " +
+                            $"{result.SupplierOrganizationId}");
+
+                        var supplier =
+                            await _supplierApiClient.GetSupplierById(
+                                result.SupplierOrganizationId,
+                                cancellationToken);
+
+                        if (supplier?.Questions != null)
                         {
-                            var answer =
-                                supplierAnswers.Questions.FirstOrDefault(x =>
-                                    x.VerificationTemplateQuestionId ==
-                                    question.VerificationTemplateQuestionId);
-
-                            if (answer != null)
+                            foreach (var question in result.Questions)
                             {
-                                question.Answer = answer.Answer;
-                                question.AssetId = answer.AssetId;
+                                var answer =
+                                    supplier.Questions.FirstOrDefault(x =>
+                                        x.VerificationTemplateQuestionId ==
+                                        question.VerificationTemplateQuestionId);
 
-                                question.VerificationTemplateQuestionOptionId =
-                                    answer.VerificationTemplateQuestionOptionId;
+                                if (answer != null)
+                                {
+                                    question.Answer = answer.Answer;
+                                    question.AssetId = answer.AssetId;
+
+                                    question.VerificationTemplateQuestionOptionId =
+                                        answer.VerificationTemplateQuestionOptionId;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Normal / Custom template
+
+                        var supplierAnswers =
+                            await _supplierApiClient.GetQuestionsAnswersForSupplier(
+                                result.RequestId,
+                                cancellationToken);
+
+                        if (supplierAnswers?.Questions != null)
+                        {
+                            foreach (var question in result.Questions)
+                            {
+                                var answer =
+                                    supplierAnswers.Questions.FirstOrDefault(x =>
+                                        x.VerificationTemplateQuestionId ==
+                                        question.VerificationTemplateQuestionId);
+
+                                if (answer != null)
+                                {
+                                    question.Answer = answer.Answer;
+                                    question.AssetId = answer.AssetId;
+
+                                    question.VerificationTemplateQuestionOptionId =
+                                        answer.VerificationTemplateQuestionOptionId;
+                                }
                             }
                         }
                     }
                 }
                 catch (BadRequestCustomException)
                 {
-
                     _logger.LogInfo(
                         $"No supplier answers available for RequestId : " +
                         $"{result.RequestId}. Returning questions only.");
                 }
             }
-
-
 
             _logger.LogInfo(
                 $"Supplier Verification Request fetched successfully : " +

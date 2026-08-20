@@ -35,106 +35,163 @@ namespace Supplier.Application.Features.Commands.Verification
             SubmitVerificationCommand request,
             CancellationToken cancellationToken)
         {
-            _logger.LogInfo($"Supplier Verification Started. RequestId : {request.Verification.VerificationRequestId}");
+            var verificationRequestId =
+                request.Verification.VerificationRequestId;
 
+            _logger.LogInfo(
+                $"Supplier Verification Started. RequestId : {verificationRequestId}");
+
+            // 1. Get verification request from Buyer
             var verificationRequest =
                 await _buyerApiClient.GetSupplierVerificationRequestDetail(
-                    request.Verification.VerificationRequestId,
+                    verificationRequestId,
                     cancellationToken);
-                    _logger.LogInfo($"Supplier Verification Request fetched successfully. RequestId : {request.Verification.VerificationRequestId}");
+
+            _logger.LogInfo(
+                $"Supplier Verification Request fetched successfully. " +
+                $"RequestId : {verificationRequestId}");
 
             if (verificationRequest == null)
             {
-                _logger.LogError($"Supplier Verification Request not found. RequestId : {request.Verification.VerificationRequestId}");
+                _logger.LogError(
+                    $"Supplier Verification Request not found. " +
+                    $"RequestId : {verificationRequestId}");
+
                 throw new NotFoundCustomException(
                     "Supplier Verification Request not found.",
                     "Invalid Supplier Verification Request.");
             }
 
-            if (verificationRequest.Status.Equals(Common.SUBMITTED, StringComparison.OrdinalIgnoreCase))
+            // 2. Check already submitted
+            if (verificationRequest.Status.Equals(
+                    Common.SUBMITTED,
+                    StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogError($"Verification already submitted. RequestId : {request.Verification.VerificationRequestId}");
+                _logger.LogError(
+                    $"Verification already submitted. " +
+                    $"RequestId : {verificationRequestId}");
+
                 throw new BadRequestCustomException(
                     "Verification already submitted.",
                     "You cannot modify submitted verification.");
             }
 
-            foreach (var answer in request.Verification.Answers)
+            // 3. Save answers only if answers are provided
+            if (request.Verification.Answers != null &&
+                request.Verification.Answers.Any())
             {
-                Guid? assetId = null;
-
-                if (answer.Attachment != null)
+                foreach (var answer in request.Verification.Answers)
                 {
-                    assetId = await _mediator.Send(
-                        new UploadAssetCommand(answer.Attachment),
-                        cancellationToken);
-                }
-                _logger.LogInfo($"Asset uploaded successfully for QuestionId : {answer.VerificationTemplateQuestionId} and RequestId : {request.Verification.VerificationRequestId}. AssetId : {assetId}");
+                    Guid? assetId = null;
 
-                var existingAnswer = await _repository.SupplierVerificationAnswer
-                    .FindByCondition(x =>
-                        x.SupplierVerificationRequestId == request.Verification.VerificationRequestId &&
-                        x.VerificationTemplateQuestionId == answer.VerificationTemplateQuestionId)
-                    .FirstOrDefaultAsync(cancellationToken);
-                    _logger.LogInfo($"Existing answer fetched successfully for QuestionId : {answer.VerificationTemplateQuestionId} and RequestId : {request.Verification.VerificationRequestId}");
-
-                if (existingAnswer == null)
-                {
-                    existingAnswer = new SupplierVerificationAnswer
+                    // Upload attachment if provided
+                    if (answer.Attachment != null)
                     {
-                        Id = Guid.NewGuid(),
-                        SupplierVerificationRequestId = request.Verification.VerificationRequestId,
-                        SupplierId = request.Verification.SupplierId,
-                        TemplateId = answer.TemplateId,
-                        VerificationTemplateQuestionId = answer.VerificationTemplateQuestionId,
-                        VerificationTemplateQuestionOptionId = answer.VerificationTemplateQuestionOptionId,
-                        Answer = answer.Answer,
-                        AssetId = assetId,
-                        AnsweredOn = DateTime.UtcNow
-                    };
+                        assetId = await _mediator.Send(
+                            new UploadAssetCommand(answer.Attachment),
+                            cancellationToken);
 
-                    await _repository.SupplierVerificationAnswer.CreateAsync(existingAnswer);
-                }
-                else
-                {
-                    existingAnswer.Answer = answer.Answer;
-                    existingAnswer.TemplateId = answer.TemplateId;
-                    existingAnswer.VerificationTemplateQuestionOptionId =
-                        answer.VerificationTemplateQuestionOptionId;
-
-                    if (assetId != null)
-                    {
-                        existingAnswer.AssetId = assetId;
+                        _logger.LogInfo(
+                            $"Asset uploaded successfully. " +
+                            $"QuestionId : {answer.VerificationTemplateQuestionId}, " +
+                            $"RequestId : {verificationRequestId}, " +
+                            $"AssetId : {assetId}");
                     }
 
-                    existingAnswer.AnsweredOn = DateTime.UtcNow;
+                    // Check existing answer
+                    var existingAnswer =
+                        await _repository.SupplierVerificationAnswer
+                            .FindByCondition(x =>
+                                x.SupplierVerificationRequestId ==
+                                    verificationRequestId &&
+                                x.VerificationTemplateQuestionId ==
+                                    answer.VerificationTemplateQuestionId)
+                            .FirstOrDefaultAsync(cancellationToken);
 
-                    _repository.SupplierVerificationAnswer.Update(existingAnswer);
+                    if (existingAnswer == null)
+                    {
+                        // Create new answer
+                        existingAnswer = new SupplierVerificationAnswer
+                        {
+                            Id = Guid.NewGuid(),
+                            SupplierVerificationRequestId =
+                                verificationRequestId,
+                            SupplierId = request.Verification.SupplierId,
+                            TemplateId = answer.TemplateId,
+                            VerificationTemplateQuestionId =
+                                answer.VerificationTemplateQuestionId,
+                            VerificationTemplateQuestionOptionId =
+                                answer.VerificationTemplateQuestionOptionId,
+                            Answer = answer.Answer,
+                            AssetId = assetId,
+                            AnsweredOn = DateTime.UtcNow
+                        };
+
+                        await _repository.SupplierVerificationAnswer
+                            .CreateAsync(existingAnswer);
+                    }
+                    else
+                    {
+                        // Update existing answer
+                        existingAnswer.Answer = answer.Answer;
+
+                        existingAnswer.TemplateId =
+                            answer.TemplateId;
+
+                        existingAnswer.VerificationTemplateQuestionOptionId =
+                            answer.VerificationTemplateQuestionOptionId;
+
+                        if (assetId != null)
+                        {
+                            existingAnswer.AssetId = assetId;
+                        }
+
+                        existingAnswer.AnsweredOn = DateTime.UtcNow;
+
+                        _repository.SupplierVerificationAnswer
+                            .Update(existingAnswer);
+                    }
                 }
+
+                await _repository.SaveAsync();
+
+                _logger.LogInfo(
+                    $"Verification answers saved successfully. " +
+                    $"RequestId : {verificationRequestId}");
+            }
+            else
+            {
+                // Default template / no questions
+                _logger.LogInfo(
+                    $"No verification answers provided. " +
+                    $"Submitting verification without answers. " +
+                    $"RequestId : {verificationRequestId}");
             }
 
-            await _repository.SaveAsync();
-
-            _logger.LogInfo("Verification answers saved successfully.");
-
-           
-            if (request.Verification.Status.Equals(Common.DRAFT, StringComparison.OrdinalIgnoreCase))
+            // 4. Update verification request status
+            if (request.Verification.Status.Equals(
+                    Common.DRAFT,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 await _buyerApiClient.UpdateVerificationRequestStatus(
-                    request.Verification.VerificationRequestId,
+                    verificationRequestId,
                     Common.DRAFT,
                     cancellationToken);
 
-                _logger.LogInfo("Verification saved as Draft.");
+                _logger.LogInfo(
+                    $"Verification saved as Draft. " +
+                    $"RequestId : {verificationRequestId}");
             }
             else
             {
                 await _buyerApiClient.UpdateVerificationRequestStatus(
-                    request.Verification.VerificationRequestId,
+                    verificationRequestId,
                     Common.SUBMITTED,
                     cancellationToken);
 
-                _logger.LogInfo("Verification submitted successfully.");
+                _logger.LogInfo(
+                    $"Verification submitted successfully. " +
+                    $"RequestId : {verificationRequestId}");
             }
 
             return true;
