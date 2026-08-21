@@ -76,9 +76,12 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
 
                 if (supplier != null)
                 {
-                    result.SNID = supplier.BusinessProfile?.SNID;
+                    result.SNID =
+                        supplier.BusinessProfile?.SNID;
+
                     result.OrganizationName =
                         supplier.BusinessProfile?.OrganizationName;
+
                     result.Description =
                         supplier.BusinessProfile?.Description;
                 }
@@ -105,6 +108,8 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
             }
 
 
+            // =========================================================
+
             var questions = await _repository.VerificationTemplateQuestion
                 .FindByCondition(x =>
                     x.VerificationTemplateId == result.TemplateId &&
@@ -115,12 +120,10 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
             result.Questions =
                 new List<SupplierVerificationQuestionAndAnswerDto>();
 
+
+
             if (questions.Any())
             {
-                // -----------------------------------------------------
-                // Custom Verification Template Questions
-                // -----------------------------------------------------
-
                 foreach (var question in questions)
                 {
                     var questionDto =
@@ -130,7 +133,11 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                             Question = question.Question,
                             QuestionType = question.QuestionType,
                             IsRequired = question.IsRequired,
-                            DisplayOrder = question.DisplayOrder
+                            DisplayOrder = question.DisplayOrder,
+
+                            Answer = null,
+                            AssetId = null,
+                            VerificationTemplateQuestionOptionId = null
                         };
 
                     questionDto.Options = await _repository
@@ -138,12 +145,13 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                         .FindByCondition(x =>
                             x.VerificationTemplateQuestionId == question.Id)
                         .OrderBy(x => x.DisplayOrder)
-                        .Select(x => new SupplierVerificationQuestionOptionDto
-                        {
-                            Id = x.Id,
-                            OptionText = x.OptionText,
-                            DisplayOrder = x.DisplayOrder
-                        })
+                        .Select(x =>
+                            new SupplierVerificationQuestionOptionDto
+                            {
+                                Id = x.Id,
+                                OptionText = x.OptionText,
+                                DisplayOrder = x.DisplayOrder
+                            })
                         .ToListAsync(cancellationToken);
 
                     result.Questions.Add(questionDto);
@@ -155,10 +163,11 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
 
                 _logger.LogInfo(
                     $"No custom template questions found for TemplateId : " +
-                    $"{result.TemplateId}. Checking default template questions.");
+                    $"{result.TemplateId}. Checking default questions.");
 
                 var defaultQuestions =
-                    await _repository.DefaultVerificationTemplateQuestionRepository
+                    await _repository
+                        .DefaultVerificationTemplateQuestionRepository
                         .FindByCondition(x =>
                             x.DefaultVerificationTemplateId == result.TemplateId &&
                             x.IsActive)
@@ -174,12 +183,15 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                             Question = question.Question,
                             QuestionType = question.QuestionType,
                             IsRequired = false,
-                            DisplayOrder = question.DisplayOrder
+                            DisplayOrder = question.DisplayOrder,
+
+                            Answer = null,
+                            AssetId = null,
+                            VerificationTemplateQuestionOptionId = null,
+
+                            Options =
+                                new List<SupplierVerificationQuestionOptionDto>()
                         };
-
-
-                    questionDto.Options =
-                        new List<SupplierVerificationQuestionOptionDto>();
 
                     result.Questions.Add(questionDto);
                 }
@@ -189,9 +201,6 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                     $"TemplateId : {result.TemplateId}, " +
                     $"QuestionCount : {defaultQuestions.Count}");
             }
-
-
-
 
 
             bool showAnswers = false;
@@ -205,7 +214,9 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                     ||
                     result.Status.Equals(
                         Common.DEFAULT,
-                        StringComparison.OrdinalIgnoreCase)||result.Status.Equals(
+                        StringComparison.OrdinalIgnoreCase)
+                    ||
+                    result.Status.Equals(
                         Common.DRAFT,
                         StringComparison.OrdinalIgnoreCase);
             }
@@ -231,62 +242,68 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
             {
                 try
                 {
-                    if (result.TemplateId == Common.DEFAULT_VERIFICATION_TEMPLATE_ID)
+
+
+                    if (result.TemplateId ==
+                        Common.DEFAULT_VERIFICATION_TEMPLATE_ID)
                     {
-
-
                         _logger.LogInfo(
                             $"Default template detected. " +
                             $"Fetching supplier profile using SupplierId : " +
                             $"{result.SupplierOrganizationId}");
 
-                        var supplier =
+                        SupplierProfileDto? supplier =
                             await _supplierApiClient.GetSupplierById(
                                 result.SupplierOrganizationId,
                                 cancellationToken);
 
-                        if (supplier?.Questions != null)
+                        if (supplier != null)
                         {
                             foreach (var question in result.Questions)
                             {
-                                var answer =
-                                    supplier.Questions.FirstOrDefault(x =>
-                                        x.VerificationTemplateQuestionId ==
-                                        question.VerificationTemplateQuestionId);
-
-                                if (answer != null)
-                                {
-                                    question.Answer = answer.Answer;
-                                    question.AssetId = answer.AssetId;
-
-                                    question.VerificationTemplateQuestionOptionId =
-                                        answer.VerificationTemplateQuestionOptionId;
-                                }
+                                SetDefaultQuestionAnswer(
+                                    question,
+                                    supplier);
                             }
                         }
+                        else
+                        {
+                            _logger.LogInfo(
+                                $"Supplier not found. " +
+                                $"SupplierId : {result.SupplierOrganizationId}");
+                        }
                     }
+
                     else
                     {
-                        // Normal / Custom template
+                        _logger.LogInfo(
+                            $"Custom template detected. " +
+                            $"Fetching supplier answers for RequestId : " +
+                            $"{result.RequestId}");
 
                         var supplierAnswers =
-                            await _supplierApiClient.GetQuestionsAnswersForSupplier(
-                                result.RequestId,
-                                cancellationToken);
+                            await _supplierApiClient
+                                .GetQuestionsAnswersForSupplier(
+                                    result.RequestId,
+                                    cancellationToken);
 
                         if (supplierAnswers?.Questions != null)
                         {
                             foreach (var question in result.Questions)
                             {
                                 var answer =
-                                    supplierAnswers.Questions.FirstOrDefault(x =>
-                                        x.VerificationTemplateQuestionId ==
-                                        question.VerificationTemplateQuestionId);
+                                    supplierAnswers.Questions
+                                        .FirstOrDefault(x =>
+                                            x.VerificationTemplateQuestionId ==
+                                            question.VerificationTemplateQuestionId);
 
                                 if (answer != null)
                                 {
-                                    question.Answer = answer.Answer;
-                                    question.AssetId = answer.AssetId;
+                                    question.Answer =
+                                        answer.Answer;
+
+                                    question.AssetId =
+                                        answer.AssetId;
 
                                     question.VerificationTemplateQuestionOptionId =
                                         answer.VerificationTemplateQuestionOptionId;
@@ -303,11 +320,343 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                 }
             }
 
+
             _logger.LogInfo(
                 $"Supplier Verification Request fetched successfully : " +
                 $"{request.RequestId}");
 
             return result;
+        }
+
+
+        private static void SetDefaultQuestionAnswer(
+            SupplierVerificationQuestionAndAnswerDto question,
+            SupplierProfileDto supplier)
+        {
+            if (question == null || supplier == null)
+                return;
+
+            var questionName =
+                question.Question?.Trim();
+
+            if (string.IsNullOrWhiteSpace(questionName))
+                return;
+
+            var businessProfile =
+                supplier.BusinessProfile;
+
+
+            var bankAccount =
+                supplier.BankAccounts?
+                    .FirstOrDefault(x => x.IsPrimary)
+                ??
+                supplier.BankAccounts?.FirstOrDefault();
+
+
+
+            var gstRegistration =
+                supplier.Registrations?
+                    .FirstOrDefault(x =>
+                        !string.IsNullOrWhiteSpace(x.RegistrationType) &&
+                        (
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "GST",
+                                    StringComparison.OrdinalIgnoreCase)
+                            ||
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "GSTIN",
+                                    StringComparison.OrdinalIgnoreCase)
+                            ||
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "GST Number",
+                                    StringComparison.OrdinalIgnoreCase)
+                        ));
+
+            var panRegistration =
+                supplier.Registrations?
+                    .FirstOrDefault(x =>
+                        !string.IsNullOrWhiteSpace(x.RegistrationType) &&
+                        (
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "PAN",
+                                    StringComparison.OrdinalIgnoreCase)
+                            ||
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "PAN Number",
+                                    StringComparison.OrdinalIgnoreCase)
+                        ));
+
+            var companyRegistration =
+                supplier.Registrations?
+                    .FirstOrDefault(x =>
+                        !string.IsNullOrWhiteSpace(x.RegistrationType) &&
+                        (
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "CIN",
+                                    StringComparison.OrdinalIgnoreCase)
+                            ||
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "Company Registration",
+                                    StringComparison.OrdinalIgnoreCase)
+                            ||
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "Company Registration Number",
+                                    StringComparison.OrdinalIgnoreCase)
+                        ));
+
+            var msmeRegistration =
+                supplier.Registrations?
+                    .FirstOrDefault(x =>
+                        !string.IsNullOrWhiteSpace(x.RegistrationType) &&
+                        (
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "MSME",
+                                    StringComparison.OrdinalIgnoreCase)
+                            ||
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "MSME Certificate",
+                                    StringComparison.OrdinalIgnoreCase)
+                        ));
+
+            var isoRegistration =
+                supplier.Registrations?
+                    .FirstOrDefault(x =>
+                        !string.IsNullOrWhiteSpace(x.RegistrationType) &&
+                        (
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "ISO",
+                                    StringComparison.OrdinalIgnoreCase)
+                            ||
+                            x.RegistrationType.Trim()
+                                .Equals(
+                                    "ISO Certificate",
+                                    StringComparison.OrdinalIgnoreCase)
+                        ));
+
+
+
+            switch (questionName.ToLowerInvariant())
+            {
+
+
+                case "company name":
+
+                    question.Answer =
+                        businessProfile?.OrganizationName;
+
+                    break;
+
+                case "company registration number":
+
+                    question.Answer =
+                        companyRegistration?.RegistrationNumber;
+
+                    if (companyRegistration?.Asset != null)
+                    {
+                        question.AssetId =
+                            companyRegistration.Asset.Id;
+                    }
+
+                    break;
+
+
+
+                case "gst number":
+
+                    question.Answer =
+                        gstRegistration?.RegistrationNumber;
+
+                    if (gstRegistration?.Asset != null)
+                    {
+                        question.AssetId =
+                            gstRegistration.Asset.Id;
+                    }
+
+                    break;
+
+                case "pan number":
+
+                    question.Answer =
+                        panRegistration?.RegistrationNumber;
+
+                    if (panRegistration?.Asset != null)
+                    {
+                        question.AssetId =
+                            panRegistration.Asset.Id;
+                    }
+
+                    break;
+
+
+
+                case "bank name":
+
+                    question.Answer =
+                        bankAccount?.BankName;
+
+                    break;
+
+                case "account number":
+
+                    question.Answer =
+                        bankAccount?.AccountNumber;
+
+                    break;
+
+                case "ifsc code":
+
+                    question.Answer =
+                        bankAccount?.IFSCCode;
+
+                    break;
+
+                case "bank branch":
+
+                    question.Answer =
+                        bankAccount?.BranchName;
+
+                    break;
+
+
+
+                case "email":
+
+                    question.Answer =
+                        businessProfile?.Email;
+
+                    break;
+
+                case "phone number":
+
+                    question.Answer =
+                        businessProfile?.Phone;
+
+                    break;
+
+
+                case "country":
+
+                    question.Answer =
+                        businessProfile?.Country;
+
+                    break;
+
+                case "state":
+
+                    question.Answer =
+                        businessProfile?.State;
+
+                    break;
+
+                case "city":
+
+                    question.Answer =
+                        businessProfile?.City;
+
+                    break;
+
+                case "address":
+
+                    question.Answer =
+                        BuildAddress(businessProfile);
+
+                    break;
+
+
+
+                case "msme certificate":
+
+                    if (msmeRegistration?.Asset != null)
+                    {
+                        question.AssetId =
+                            msmeRegistration.Asset.Id;
+                    }
+
+                    break;
+
+                case "iso certificate":
+
+                    if (isoRegistration?.Asset != null)
+                    {
+                        question.AssetId =
+                            isoRegistration.Asset.Id;
+                    }
+
+                    break;
+
+                default:
+
+                    break;
+            }
+        }
+
+
+
+        private static string? BuildAddress(
+            SupplierBusinessProfileDto? businessProfile)
+        {
+            if (businessProfile == null)
+                return null;
+
+            var addressParts =
+                new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(
+                businessProfile.AddressLine1))
+            {
+                addressParts.Add(
+                    businessProfile.AddressLine1.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                businessProfile.AddressLine2))
+            {
+                addressParts.Add(
+                    businessProfile.AddressLine2.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                businessProfile.City))
+            {
+                addressParts.Add(
+                    businessProfile.City.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                businessProfile.State))
+            {
+                addressParts.Add(
+                    businessProfile.State.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                businessProfile.Country))
+            {
+                addressParts.Add(
+                    businessProfile.Country.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                businessProfile.PinCode))
+            {
+                addressParts.Add(
+                    businessProfile.PinCode.Trim());
+            }
+
+            return addressParts.Count > 0
+                ? string.Join(", ", addressParts)
+                : null;
         }
     }
 }
