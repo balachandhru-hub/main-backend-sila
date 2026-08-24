@@ -4,6 +4,7 @@ using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 using Supplier.Infrastructure.Contracts.IRepository;
 using Supplier.Domain.Common;
+using System.Net.Mail;
 
 namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
 {
@@ -76,7 +77,7 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                         "Quotation items are required.",
                         "Please provide quotation items for item-wise quotation.");
                 }
-                    
+
 
                 foreach (var item in request.Quotation.Items)
                 {
@@ -97,14 +98,14 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                             $"Quotation Item with ID {item.SupplierRFQItemId} was not found.");
                     }
 
-                   
+
                     decimal basePrice = quotationItem.QuotedPrice > 0
                         ? quotationItem.QuotedPrice
                         : item.QuotedPrice;
 
                     decimal finalQuotedPrice = basePrice;
 
-               
+
                     if (quotation.Discount.HasValue)
                     {
                         _logger.LogInfo(
@@ -149,6 +150,24 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
 
             decimal total = subTotal;
 
+                //delivery charge
+            if (quotation.Discount.HasValue)
+            {
+                _logger.LogInfo(
+                    $"Applying discount for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
+
+                if (string.Equals(
+                    quotation.DiscountType,
+                    Common.PERCENTAGE,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    total -= total * quotation.Discount.Value / 100;
+                }
+                else
+                {
+                    total -= quotation.Discount.Value;
+                }
+            }
             // Tax (Per Quotation)
             if (quotation.Tax.HasValue)
             {
@@ -176,7 +195,7 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                     $"Applying delivery charge for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
                 if (string.Equals(
                     quotation.DeliveryType,
-                    "Percentage",
+                    Common.PERCENTAGE,
                     StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.LogInfo(
@@ -194,10 +213,10 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
             quotation.TotalPrice = total;
             quotation.Status = Common.SUBMITTED_STATUS;
 
-       
+
 
             _repository.SupplierQuotation.Update(quotation);
-            
+
 
             await _repository.SaveAsync();
 
