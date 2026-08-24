@@ -198,7 +198,7 @@ namespace Supplier.API.Controllers
             return Ok(result);
         }
         [HttpGet]
-        [Route("api/v1/supplier/supplier-catalog/{catalogId}")]
+        [Route("api/v1/supplier/catalog/{catalogId}")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_SUPPLIER_CATALOG_BY_ID")]
         [SwaggerOperation("GetSupplierCatalogById")]
