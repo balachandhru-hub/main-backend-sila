@@ -1,7 +1,7 @@
 using SharedKernel.Dto;
 namespace Supplier.Domain.Dto
 {
-    public class BuyerCatalogDto
+    public class BuyerCatalogByIdDto
     {
         public Guid SupplierId { get; set; }
 
@@ -19,9 +19,14 @@ namespace Supplier.Domain.Dto
         public string? UnitOfMeasure { get; set; }
 
         public long? Segment { get; set; }
+        public string? SegmentTitle { get; set; }
          public long? Family { get; set; }
+         public string? FamilyTitle { get; set; }
         public long? Commodity { get; set; }
+        public string? CommodityTitle { get; set; }
         public long? Class { get; set; }
+        public string? ClassTitle { get; set; }
+        public string? CatalogType { get; set; }
        public List<AssetDto> Asset { get; set; }= new();
 
    

@@ -171,5 +171,55 @@ namespace Supplier.API.Controllers
             _logger.LogDebug("Buyer catalog fetched successfully.");
             return Ok(result);
         }
+
+
+        [HttpGet]
+        [Route("api/v1/supplier/buyer-catalog/{catalogId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_BUYER_CATALOG_BY_ID")]
+        [SwaggerOperation("GetBuyerCatalogById")]
+        [SwaggerResponse(200, type: typeof(List<BuyerCatalogByIdDto>), description: "Buyer catalog fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Buyer catalog not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetBuyerCatalogById(
+            [FromRoute] Guid catalogId)
+        {
+            _logger.LogDebug($"Fetching buyer catalog for CatalogId: {catalogId}");
+
+            var query = new GetBuyerCatalogByIdQuery
+            {
+                CatalogId = catalogId
+            };
+
+            var result = await _mediator.Send(query);
+
+             _logger.LogDebug($"Buyer catalog fetched successfully for CatalogId: {catalogId}");
+            return Ok(result);
+        }
+        [HttpGet]
+        [Route("api/v1/supplier/supplier-catalog/{catalogId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_CATALOG_BY_ID")]
+        [SwaggerOperation("GetSupplierCatalogById")]
+        [SwaggerResponse(200, type: typeof(List<SupplierCatalogByIdDto>), description: "Supplier catalog fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier catalog not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetSupplierCatalogById(
+            [FromRoute] Guid catalogId)
+        {
+            _logger.LogDebug($"Fetching supplier catalog for CatalogId: {catalogId}");
+
+            var query = new GetSupplierCatalogByIdQuery
+            {
+                CatalogId = catalogId
+            };
+
+            var result = await _mediator.Send(query);
+
+             _logger.LogDebug($"Supplier catalog fetched successfully for CatalogId: {catalogId}");
+            return Ok(result);
+        }
     }
 }

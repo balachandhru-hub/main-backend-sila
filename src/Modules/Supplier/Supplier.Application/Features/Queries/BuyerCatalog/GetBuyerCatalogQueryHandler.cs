@@ -41,28 +41,12 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                     CatalogId = catalog.Id,
 
                     SupplierName = supplier.OrganizationName,
-
-                    CatalogName = catalog.CatalogName,
                     Description = catalog.Description,
                     Price = catalog.Price,
                     Currency = catalog.Currency,
                     UnitOfMeasure = catalog.UnitOfMeasure,
 
-                    Segment = catalog.Segment,
-                    SegmentTitle = catalog.SegmentTitle,
-
-                    Family = catalog.Family,
-                    FamilyTitle = catalog.FamilyTitle,
-
-                    Class = catalog.Class,
-                    ClassTitle = catalog.ClassTitle,
-
-                    Commodity = catalog.Commodity,
-                    CommodityTitle = catalog.CommodityTitle,
-
-                    CatalogType = catalog.CatalogType,
-                    IsPunchOut = catalog.IsPunchOut,
-                    PunchOutUrl = catalog.PunchOutUrl,
+                
 
 
                 };
@@ -234,29 +218,16 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                         CatalogId = catalog.Id,
 
                         SupplierName = supplier.OrganizationName,
-
                         CatalogName = catalog.CatalogName,
                         Description = catalog.Description,
                         Price = catalog.Price,
                         UnitOfMeasure = catalog.UnitOfMeasure,
-
                         Segment = catalog.Segment,
-                        SegmentTitle = catalog.SegmentTitle,
-
                         Family = catalog.Family,
-                        FamilyTitle = catalog.FamilyTitle,
-
                         Class = catalog.Class,
-                        ClassTitle = catalog.ClassTitle,
-
                         Commodity = catalog.Commodity,
-                        CommodityTitle = catalog.CommodityTitle,
+                       
 
-                        CatalogType = catalog.CatalogType,
-
-                        IsPunchOut = catalog.IsPunchOut,
-
-                        PunchOutUrl = catalog.PunchOutUrl,
 
 
                     };
