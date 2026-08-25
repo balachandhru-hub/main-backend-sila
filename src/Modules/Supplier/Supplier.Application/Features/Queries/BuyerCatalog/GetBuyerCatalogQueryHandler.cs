@@ -39,7 +39,7 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                 {
                     SupplierId = supplier.Id,
                     CatalogId = catalog.Id,
-
+                    CatalogName = catalog.CatalogName,
                     SupplierName = supplier.OrganizationName,
                     Description = catalog.Description,
                     Price = catalog.Price,
