@@ -4,15 +4,18 @@ using Buyer.Application.Features.Queries.GetOrganizationProfile;
 using Buyer.Infrastructure.Contracts.IRepository;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.Dto;
+using Buyer.Application.Contracts;
 
 public class GetOrganizationProfileQueryHandler
     : IRequestHandler<GetOrganizationProfileQuery, OrganizationDto>
 {
     private readonly IRepositoryWrapper _repositoryWrapper;
+    private readonly IIdentityApiClient _identityApiClient;
 
-    public GetOrganizationProfileQueryHandler(IRepositoryWrapper repositoryWrapper)
+    public GetOrganizationProfileQueryHandler(IRepositoryWrapper repositoryWrapper, IIdentityApiClient identityApiClient)
     {
         _repositoryWrapper = repositoryWrapper;
+        _identityApiClient = identityApiClient;
     }
 
     public async Task<OrganizationDto> Handle(
@@ -57,6 +60,11 @@ public class GetOrganizationProfileQueryHandler
                 Comments = organization.Comment
             }
         };
+        var models = await _identityApiClient.GetOrganizationModels(
+            request.OrganizationId,
+            cancellationToken);
+
+        response.Models = models;
 
         // Registrations
         var registrations = _repositoryWrapper.BuyerRegistration

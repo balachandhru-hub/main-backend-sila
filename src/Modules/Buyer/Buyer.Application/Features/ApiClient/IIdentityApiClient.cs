@@ -8,5 +8,8 @@ namespace Buyer.Application.Contracts
             UpdateBuyerBusinessProfileDto organization,
             string accessToken,
             CancellationToken cancellationToken = default);
+        Task<List<ModelDto>> GetOrganizationModels(
+Guid? organizationId = null,
+CancellationToken cancellationToken = default);
     }
 }

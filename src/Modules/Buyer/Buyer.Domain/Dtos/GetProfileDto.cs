@@ -18,6 +18,7 @@ namespace Buyer.Domain.Dto
 
         public List<DeliveryLocationDto> DispatchLocations { get; set; } = new();
         public List<CategoryDto> Categories { get; set; } = new();
+        public List<ModelDto>? Models { get; set; } = new();
     }
 
     public class BusinessProfileDto

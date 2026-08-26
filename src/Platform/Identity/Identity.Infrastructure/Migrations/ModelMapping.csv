@@ -1,5 +1,2 @@
 Id,Key,ModelName
-ede3bfd4-8820-41bc-a802-0136e1fb3261,INVOICE,Invoice
-6ea460e9-f56b-49ee-a9c0-14e27e555820,PO,Purchase Order
-1f207bd6-2566-4b56-bba6-dcb39424b4f3,PR,Purchase Requisition
-71511a67-7d15-4324-a101-a8d95faee043,RFQ,Request For Qutotation
+ede3bfd4-8820-41bc-a802-0136e1fb3261,SILA_HORECA_RECIPE_MANAGEMENT,Sila horeca recipe management
