@@ -33,8 +33,8 @@ namespace Buyer.Application.Features.Commands.DeleteDeliveryLocation
 
             _logger.LogInfo($"Delivery Location found. Marking as inactive. Id: {request.Id}");
 
-            location.IsActive = false;
-            _repository.BuyerDeliveryLocation.Update(location);
+           
+            _repository.BuyerDeliveryLocation.Delete(location);
             _logger.LogInfo($"Saving soft delete for Delivery Location Id: {request.Id}");
             await _repository.SaveAsync();
 

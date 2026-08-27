@@ -127,10 +127,36 @@ namespace Buyer.Application.Features.Commands.UpdateDeliveryLocation
                 location.ContactPhone = data.ContactPhone;
             }
 
-            if (data.IsDefault.HasValue)
+          if (data.IsDefault.HasValue)
             {
                 _logger.LogInfo(
                     $"Updating IsDefault for Delivery Location Id: {request.Id}");
+
+            
+                if (data.IsDefault.Value)
+                {
+                    var existingDefaultLocations = _repository.BuyerDeliveryLocation
+                        .FindByCondition(x =>
+                            x.BuyerId == data.BuyerId &&
+                            x.Id != request.Id &&
+                            x.IsDefault &&
+                            x.IsActive)
+                        .ToList();
+
+                    foreach (var existingLocation in existingDefaultLocations)
+                    {
+                        existingLocation.IsDefault = false;
+
+                       
+
+                        _logger.LogInfo(
+                            $"Existing Default Delivery Location Id: {existingLocation.Id} " +
+                            $"changed to IsDefault = false.");
+                    }
+                      _repository.BuyerDeliveryLocation.UpdateRange(existingDefaultLocations);
+                }
+
+                
                 location.IsDefault = data.IsDefault.Value;
             }
 

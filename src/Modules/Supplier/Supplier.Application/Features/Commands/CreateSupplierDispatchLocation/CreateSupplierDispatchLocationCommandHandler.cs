@@ -28,6 +28,33 @@ namespace Supplier.Application.Features.Commands.CreateSupplierDispatchLocation
             }
 
             _logger.LogInfo($"SupplierId validated. Proceeding to create dispatch location: {request.Data.LocationName}");
+    
+
+            if (request.Data.IsDefault)
+            {
+                _logger.LogInfo(
+                    $"New delivery location is marked as Default. " +
+                    $"Checking existing default location for SupplierId: {request.SupplierId}");
+
+                var existingDefaultLocations = _repository.SupplierDispatchLocation
+                    .FindByCondition(x =>
+                        x.SupplierId == request.SupplierId &&
+                        x.IsDefault &&
+                        x.IsActive)
+                    .ToList();
+
+                foreach (var existingLocation in existingDefaultLocations)
+                {
+                    existingLocation.IsDefault = false;
+
+                   
+
+                    _logger.LogInfo(
+                        $"Existing Default Delivery Location Id: {existingLocation.Id} " +
+                        $"changed to IsDefault = false.");
+                }
+                  _repository.SupplierDispatchLocation.UpdateRange(existingDefaultLocations);
+            }
 
             var location = new SupplierDispatchLocation
             {

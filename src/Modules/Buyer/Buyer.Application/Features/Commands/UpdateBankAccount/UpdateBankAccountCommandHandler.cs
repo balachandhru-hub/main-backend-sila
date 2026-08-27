@@ -114,10 +114,35 @@ namespace Buyer.Application.Features.Commands.UpdateBankAccount
                 bankAccount.Currency = data.Currency;
             }
 
-            if (data.IsPrimary.HasValue)
+                    if (data.IsPrimary.HasValue)
             {
                 _logger.LogInfo(
                     $"Updating IsPrimary for Bank Account Id: {request.Id}");
+
+            
+                if (data.IsPrimary.Value)
+                {
+                    var existingPrimaryAccounts = _repository.BuyerBankAccount
+                        .FindByCondition(x =>
+                            x.BuyerId == data.BuyerId &&
+                            x.Id != request.Id &&
+                            x.IsPrimary &&
+                            x.IsActive)
+                        .ToList();
+
+                    foreach (var account in existingPrimaryAccounts)
+                    {
+                        account.IsPrimary = false;
+
+                      
+
+                        _logger.LogInfo(
+                            $"Bank Account Id: {account.Id} changed to IsPrimary = false.");
+                    }
+                      _repository.BuyerBankAccount.UpdateRange(existingPrimaryAccounts);
+                }
+
+            
                 bankAccount.IsPrimary = data.IsPrimary.Value;
             }
 

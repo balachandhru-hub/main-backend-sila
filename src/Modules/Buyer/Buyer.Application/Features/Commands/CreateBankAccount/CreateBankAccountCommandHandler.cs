@@ -44,6 +44,32 @@ namespace Buyer.Application.Features.Commands.CreateBankAccount
 
             _logger.LogInfo($"No duplicate found. Proceeding to create bank account for BuyerId: {request.BuyerId}");
 
+
+
+            if (request.Data.IsPrimary)
+            {
+                _logger.LogInfo(
+                    $"New bank account is marked as Primary. Checking existing primary account for BuyerId: {request.BuyerId}");
+
+                var existingPrimaryAccounts = _repository.BuyerBankAccount
+                    .FindByCondition(x =>
+                        x.BuyerId == request.BuyerId &&
+                        x.IsPrimary &&
+                        x.IsActive)
+                    .ToList();
+
+                foreach (var account in existingPrimaryAccounts)
+                {
+                    account.IsPrimary = false;
+
+            
+
+                    _logger.LogInfo(
+                        $"Existing Primary Bank Account Id: {account.Id} " +
+                        $"changed to IsPrimary = false.");
+                }
+                  _repository.BuyerBankAccount.UpdateRange(existingPrimaryAccounts);
+            }
             var bankAccount = new BuyerBankAccount
             {
                 Id = Guid.NewGuid(),

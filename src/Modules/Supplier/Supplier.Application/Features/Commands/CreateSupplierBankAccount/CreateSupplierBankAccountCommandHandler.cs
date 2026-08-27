@@ -44,6 +44,28 @@ namespace Supplier.Application.Features.Commands.CreateSupplierBankAccount
 
             _logger.LogInfo($"No duplicate found. Proceeding to create bank account for SupplierId: {request.SupplierId}");
 
+            if (request.Data.IsPrimary)
+            {
+                _logger.LogInfo(
+                    $"New bank account is marked as Primary. Checking existing primary account for SupplierId: {request.SupplierId}");
+
+                var existingPrimaryAccounts = _repository.SupplierBankAccount
+                    .FindByCondition(x =>
+                        x.SupplierId == request.SupplierId &&
+                        x.IsPrimary &&
+                        x.IsActive)
+                    .ToList();
+
+                foreach (var account in existingPrimaryAccounts)
+                {
+                    account.IsPrimary = false;
+
+                    _logger.LogInfo(
+                        $"Existing Primary Bank Account Id: {account.Id} " +
+                        $"changed to IsPrimary = false.");
+                }
+                _repository.SupplierBankAccount.UpdateRange(existingPrimaryAccounts);
+            }
             var bankAccount = new SupplierBankAccount
             {
                 Id = Guid.NewGuid(),

@@ -29,6 +29,33 @@ namespace Buyer.Application.Features.Commands.CreateDeliveryLocation
 
             _logger.LogInfo($"BuyerId validated. Proceeding to create delivery location: {request.Data.LocationName}");
 
+
+            if (request.Data.IsDefault)
+            {
+                _logger.LogInfo(
+                    $"New delivery location is marked as Default. " +
+                    $"Checking existing default location for BuyerId: {request.BuyerId}");
+
+                var existingDefaultLocations = _repository.BuyerDeliveryLocation
+                    .FindByCondition(x =>
+                        x.BuyerId == request.BuyerId &&
+                        x.IsDefault &&
+                        x.IsActive)
+                    .ToList();
+
+                foreach (var existingLocation in existingDefaultLocations)
+                {
+                    existingLocation.IsDefault = false;
+
+                    
+
+                    _logger.LogInfo(
+                        $"Existing Default Delivery Location Id: {existingLocation.Id} " +
+                        $"changed to IsDefault = false.");
+                }
+                  _repository.BuyerDeliveryLocation.UpdateRange(existingDefaultLocations);
+            }
+
             var location = new BuyerDeliveryLocation
             {
                 Id = Guid.NewGuid(),

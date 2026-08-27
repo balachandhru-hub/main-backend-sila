@@ -22,7 +22,10 @@ using Supplier.Application.Features.Commands.SubmitVerification;
 using Supplier.Application.Features.Queries;
 using Supplier.Application.Features.Commands.CreateSupplierBankAccount;
 using Supplier.Application.Features.Commands.CreateSupplierDispatchLocation;
-
+using Supplier.Application.Features.Commands.UpdateSupplierBankAccount;
+using Supplier.Application.Features.Commands.UpdateSupplierDispatchLocation;
+using Supplier.Application.Features.Commands.DeleteBankAccount;
+using Supplier.Application.Features.Commands.DeleteDispatchLocation;
 
 
 
@@ -380,9 +383,125 @@ namespace Supplier.API.Controllers
 
             return Ok(result);
         }
+        [HttpPut]
+        [Route("api/v1/supplier/bank-account/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_SUPPLIER_BANK_ACCOUNT")]
+        [SwaggerOperation("UpdateSupplierBankAccount")]
+        [SwaggerResponse(200,type: typeof(SuccessResponseDto),description: "Bank account updated successfully")]
+        [SwaggerResponse(400,type: typeof(ErrorResponseDto),description: "Bad request")]
+        [SwaggerResponse(404,type: typeof(ErrorResponseDto),description: "Bank account not found")]
+        [SwaggerResponse( 500,type: typeof(ErrorResponseDto),description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateBankAccount(
+            Guid id,
+            [FromBody] SupplierBankAccountUpdateDto request)
+        {
+            Guid supplierId =
+                await _mediator.Send(
+                    new GetSupplierIdQuery(GetOrganizationId()));
 
+            _logger.LogDebug(
+                $"Updating bank account. " +
+                $"SupplierId: {supplierId}, AccountId: {id}");
 
+            var updatedId = await _mediator.Send(
+                new UpdateSupplierBankAccountCommand
+                {
+                    Id = id,
+                    SupplierId = supplierId,
+                    Data = request
+                });
 
+            _logger.LogDebug(
+                $"Bank account updated successfully. Id: {updatedId}");
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Bank account updated successfully.",
+                Id = updatedId.ToString()
+            });
+        }
+        [HttpPut]
+        [Route("api/v1/supplier/dispatch-location/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_SUPPLIER_DISPATCH_LOCATION")]
+        [SwaggerOperation("UpdateSupplierDispatchLocation")]
+        [SwaggerResponse(200,type: typeof(SuccessResponseDto),description: "Dispatch location updated successfully")]
+        [SwaggerResponse( 400,type: typeof(ErrorResponseDto),description: "Bad request")]
+        [SwaggerResponse(500,type: typeof(ErrorResponseDto),description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateDispatchLocation(
+            Guid id,
+            [FromBody] SupplierDispatchLocationUpdateDto request)
+        {
+            var updatedId = await _mediator.Send(
+                new UpdateSupplierDispatchLocationCommand
+                {
+                    Id = id,
+                    Data = request
+                });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Dispatch location updated successfully.",
+                Id = updatedId.ToString()
+            });
+        }
+        [HttpDelete]
+        [Route("api/v1/supplier/bank-account/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "DELETE_SUPPLIER_BANK_ACCOUNT")]
+        [SwaggerOperation("DeleteSupplierBankAccount")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Bank account deleted successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> DeleteBankAccount(Guid id)
+        {
+            Guid supplierId = await _mediator.Send(new GetSupplierIdQuery(GetOrganizationId()));
+            var deletedId = await _mediator.Send(
+                new DeleteBankAccountCommand
+                {
+                    Id = id,
+                    SupplierId = supplierId
+                });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Bank account deleted successfully.",
+                Id = deletedId.ToString()
+            });
+        }
+         [HttpDelete]
+        [Route("api/v1/buyer/dispatch-location/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "DELETE_BUYER_DISPATCH_LOCATION")]
+        [SwaggerOperation("DeleteBuyerDispatchLocation")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Dispatch location deleted successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> DeleteDispatchLocation(Guid id)
+        {
+            Guid supplierId = await _mediator.Send(new GetSupplierIdQuery(GetOrganizationId()));
+            var deletedId = await _mediator.Send(
+                new DeleteDispatchLocationCommand
+                {
+                    Id = id,
+                    SupplierId = supplierId
+                });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Dispatch location deleted successfully.",
+                Id = deletedId.ToString()
+            });
+        }
         
     }
 }
