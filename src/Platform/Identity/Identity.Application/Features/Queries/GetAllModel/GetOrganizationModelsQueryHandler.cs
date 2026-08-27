@@ -31,14 +31,11 @@ namespace Identity.Application.Features.Queries.GetAllModel
             CancellationToken cancellationToken)
         {
             _logger.LogInfo("Fetching organization model for OrganizationId: " + request.OrganizationId);
-            var role = _httpContextAccessor.HttpContext?
-                .User?
-                .FindFirst(ClaimTypes.Role)?
-                .Value;
+            var role = Guid.Parse(_httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Role)?.Value);
 
             Guid organizationId;
 
-            if (role == Common.PLATFORM_ADMINISTRATOR)
+            if (role == Common.PLATFORM_ADMINISTRATOR_ID)
             {
                 _logger.LogInfo("User has PLATFORM_ADMINISTRATOR role. Using provided OrganizationId: " + request.OrganizationId);
                 if (!request.OrganizationId.HasValue)
