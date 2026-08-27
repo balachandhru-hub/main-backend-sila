@@ -62,7 +62,7 @@ namespace Buyer.Infrastructure.ApiClients
         {
             var identityUrl = _configuration[Common.IDENTITY_SERVICE_BASE_URL];
 
-            var url = $"{identityUrl}/api/v1/identity/get-organization-model";
+            var url = $"{identityUrl}/api/v1/identity/organization-model";
 
             if (organizationId.HasValue)
             {
