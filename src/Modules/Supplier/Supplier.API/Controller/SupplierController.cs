@@ -26,6 +26,7 @@ using Supplier.Application.Features.Commands.UpdateSupplierBankAccount;
 using Supplier.Application.Features.Commands.UpdateSupplierDispatchLocation;
 using Supplier.Application.Features.Commands.DeleteBankAccount;
 using Supplier.Application.Features.Commands.DeleteDispatchLocation;
+using Supplier.Application.Features.Queries.GetSupplierQuotationHistoryComparison;
 
 
 
@@ -254,14 +255,23 @@ namespace Supplier.API.Controllers
                 Id = result.QuotationId.ToString()
             });
         }
+            [HttpGet]
+            [Route("api/v1/supplier/quotation/history-comparison/{supplierQuotationId}")]
+            [ApiAuthorization(Name = "GET_SUPPLIER_QUOTATION_HISTORY_COMPARISON")]
+            [ValidateModelState]
+            [SwaggerOperation("GetSupplierQuotationHistoryComparison")]
+            [SwaggerResponse(200, type: typeof(SupplierQuotationHistoryComparisonDto), description: "Supplier quotation history comparison fetched successfully")]
+            [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+            [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+            public async Task<IActionResult> GetQuotationHistoryComparison(
+                Guid supplierQuotationId)
+            {
+                var result = await _mediator.Send(
+                    new GetSupplierQuotationHistoryComparisonQuery(
+                        supplierQuotationId));
 
-
-        
-
-        
-
-
-
+                return Ok(result);
+            }
 
 
         [HttpGet]

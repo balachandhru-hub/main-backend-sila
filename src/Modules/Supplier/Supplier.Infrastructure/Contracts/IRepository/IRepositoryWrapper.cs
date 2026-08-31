@@ -28,6 +28,8 @@ public interface IRepositoryWrapper
     IRFQQuestionAnswerRepository RFQQuestionAnswer { get; }
     IRFQQuestionAnswerOptionRepository RFQQuestionAnswerOption { get; }
     ISupplierCategoryRepository SupplierCategory { get; }
+    ISupplierQuotationHistoryRepository SupplierQuotationHistory { get; }
+    ISupplierQuotationItemHistoryRepository SupplierQuotationItemHistory { get; }
 
     bool Save();
     Task<bool> SaveAsync();

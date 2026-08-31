@@ -38,6 +38,8 @@ namespace Supplier.Infrastructure.Repository
         private ISupplierVerificationAnswerRepository _supplierVerificationAnswer;
         private ISupplierVerificationAnswerOptionRepository _supplierVerificationAnswerOption;
         private ISupplierCategoryRepository _supplierCategory;
+        private ISupplierQuotationHistoryRepository _supplierQuotationHistory;
+        private ISupplierQuotationItemHistoryRepository _supplierQuotationItemHistory;
 
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
@@ -247,6 +249,28 @@ namespace Supplier.Infrastructure.Repository
                 }
 
                 return _supplierVerificationAnswerOption;
+            }
+        }
+        public ISupplierQuotationHistoryRepository SupplierQuotationHistory
+        {
+            get
+            {
+                if (_supplierQuotationHistory == null)
+                {
+                    _supplierQuotationHistory = new SupplierQuotationHistoryRepository(_context);
+                }
+                return _supplierQuotationHistory;
+            }
+        }
+        public ISupplierQuotationItemHistoryRepository SupplierQuotationItemHistory
+        {
+            get
+            {
+                if (_supplierQuotationItemHistory == null)
+                {
+                    _supplierQuotationItemHistory = new SupplierQuotationItemHistoryRepository(_context);
+                }
+                return _supplierQuotationItemHistory;
             }
         }
 

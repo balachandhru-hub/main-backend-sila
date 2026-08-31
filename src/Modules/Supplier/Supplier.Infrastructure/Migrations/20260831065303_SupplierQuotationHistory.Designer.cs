@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Supplier.Infrastructure.DbContext;
 
@@ -11,9 +12,11 @@ using Supplier.Infrastructure.DbContext;
 namespace Supplier.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260831065303_SupplierQuotationHistory")]
+    partial class SupplierQuotationHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -877,6 +880,9 @@ namespace Supplier.Infrastructure.Migrations
                     b.HasIndex("SupplierQuotationId")
                         .HasDatabaseName("ix_supplier_quotation_history_supplier_quotation_id");
 
+                    b.HasIndex("SupplierRFQId")
+                        .HasDatabaseName("ix_supplier_quotation_history_supplier_rfqid");
+
                     b.ToTable("supplier_quotation_history", "supplier");
                 });
 
@@ -1032,6 +1038,12 @@ namespace Supplier.Infrastructure.Migrations
 
                     b.HasIndex("SupplierQuotationId")
                         .HasDatabaseName("ix_supplier_quotation_item_history_supplier_quotation_id");
+
+                    b.HasIndex("SupplierQuotationItemId")
+                        .HasDatabaseName("ix_supplier_quotation_item_history_supplier_quotation_item_id");
+
+                    b.HasIndex("SupplierRFQItemId")
+                        .HasDatabaseName("ix_supplier_quotation_item_history_supplier_rfqitem_id");
 
                     b.ToTable("supplier_quotation_item_history", "supplier");
                 });
@@ -1551,11 +1563,20 @@ namespace Supplier.Infrastructure.Migrations
                     b.HasOne("Supplier.Domain.Entities.SupplierQuotation", "SupplierQuotation")
                         .WithMany()
                         .HasForeignKey("SupplierQuotationId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
                         .HasConstraintName("fk_supplier_quotation_history_supplier_quotation_supplier_quotation_id");
 
+                    b.HasOne("Supplier.Domain.Entities.SupplierRFQ", "SupplierRFQ")
+                        .WithMany()
+                        .HasForeignKey("SupplierRFQId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("fk_supplier_quotation_history_supplier_rfq_supplier_rfqid");
+
                     b.Navigation("SupplierQuotation");
+
+                    b.Navigation("SupplierRFQ");
                 });
 
             modelBuilder.Entity("Supplier.Domain.Entities.SupplierQuotationItem", b =>
@@ -1584,11 +1605,29 @@ namespace Supplier.Infrastructure.Migrations
                     b.HasOne("Supplier.Domain.Entities.SupplierQuotation", "SupplierQuotation")
                         .WithMany()
                         .HasForeignKey("SupplierQuotationId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
                         .HasConstraintName("fk_supplier_quotation_item_history_supplier_quotation_supplier_quotation_id");
 
+                    b.HasOne("Supplier.Domain.Entities.SupplierQuotationItem", "SupplierQuotationItem")
+                        .WithMany()
+                        .HasForeignKey("SupplierQuotationItemId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("fk_supplier_quotation_item_history_supplier_quotation_item_supplier_quotation_item_id");
+
+                    b.HasOne("Supplier.Domain.Entities.SupplierRFQItem", "SupplierRFQItem")
+                        .WithMany()
+                        .HasForeignKey("SupplierRFQItemId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("fk_supplier_quotation_item_history_supplier_rfqitem_supplier_rfqitem_id");
+
                     b.Navigation("SupplierQuotation");
+
+                    b.Navigation("SupplierQuotationItem");
+
+                    b.Navigation("SupplierRFQItem");
                 });
 
             modelBuilder.Entity("Supplier.Domain.Entities.SupplierRFQItem", b =>

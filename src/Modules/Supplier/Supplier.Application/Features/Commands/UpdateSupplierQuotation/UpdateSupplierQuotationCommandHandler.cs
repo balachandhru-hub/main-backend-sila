@@ -4,7 +4,8 @@ using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 using Supplier.Infrastructure.Contracts.IRepository;
 using Supplier.Domain.Common;
-using System.Net.Mail;
+using Supplier.Domain.Entities;
+
 
 using Supplier.Domain.Dto;
 using Supplier.Application.Contracts;
@@ -54,6 +55,7 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                 .FindByCondition(x => x.Id == quotation.SupplierRFQId)
                 .FirstOrDefaultAsync(cancellationToken);
 
+
             if (supplierRFQ == null)
             {
                 _logger.LogError(
@@ -62,6 +64,31 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                     "Supplier RFQ not found.",
                     $"Supplier RFQ with ID {quotation.SupplierRFQId} was not found.");
             }
+
+            var existingVersions = await _repository.SupplierQuotationHistory
+                .FindByCondition(x => x.SupplierQuotationId == quotation.Id)
+                .Select(x => x.Version)
+                .ToListAsync(cancellationToken);
+
+            int latestVersion = 0;
+
+            foreach (var version in existingVersions)
+            {
+                if (string.IsNullOrWhiteSpace(version))
+                    continue;
+
+                if (int.TryParse(
+                    version.TrimStart('V', 'v'),
+                    out int versionNumber))
+                {
+                    latestVersion = Math.Max(latestVersion, versionNumber);
+                }
+            }
+
+            string newVersion = $"V{latestVersion + 1}";
+
+            _logger.LogInfo(
+                $"New Supplier Quotation Version: {newVersion}");
 
             quotation.DeliveryCharge = request.Quotation.DeliveryCharge;
             quotation.DeliveryType = request.Quotation.DeliveryType;
@@ -73,6 +100,9 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
             quotation.TaxType = request.Quotation.TaxType;
 
             decimal subTotal = 0;
+
+            var quotationItemsForHistory =
+                new List<SupplierQuotationItem>();
 
             if (!supplierRFQ.AddLotOption)
             {
@@ -108,36 +138,14 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                     }
 
 
-                    decimal basePrice = quotationItem.QuotedPrice > 0
-                        ? quotationItem.QuotedPrice
-                        : item.QuotedPrice;
-
-                    decimal finalQuotedPrice = basePrice;
-
-
-                    if (quotation.Discount.HasValue)
-                    {
-                        _logger.LogInfo(
-                            $"Applying discount for Quotation Item : {item.SupplierRFQItemId}");
-                        if (string.Equals(
-                            quotation.DiscountType,
-                            Common.PERCENTAGE,
-                            StringComparison.OrdinalIgnoreCase))
-                        {
-                            finalQuotedPrice -=
-                                basePrice * quotation.Discount.Value / 100;
-                        }
-                        else
-                        {
-                            finalQuotedPrice -= quotation.Discount.Value;
-                        }
-                    }
-
-                    quotationItem.QuotedPrice = finalQuotedPrice;
+                    quotationItem.QuotedPrice = item.QuotedPrice;
 
                     _repository.SupplierQuotationItem.Update(quotationItem);
 
-                    subTotal += finalQuotedPrice;
+                    subTotal += quotationItem.QuotedPrice;
+
+
+                    quotationItemsForHistory.Add(quotationItem);
                 }
             }
             else
@@ -159,7 +167,7 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
 
             decimal total = subTotal;
 
-                //delivery charge
+            //delivery charge
             if (quotation.Discount.HasValue)
             {
                 _logger.LogInfo(
@@ -226,7 +234,83 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
 
             _repository.SupplierQuotation.Update(quotation);
 
+            var quotationHistory = new SupplierQuotationHistory
+            {
+                Id = Guid.NewGuid(),
 
+                SupplierQuotationId = quotation.Id,
+
+                SupplierRFQId = quotation.SupplierRFQId,
+
+                BuyerRFQId = quotation.BuyerRFQId,
+
+                RFQNumber = quotation.RFQNumber,
+
+                BuyerId = quotation.BuyerId,
+
+                SupplierId = quotation.SupplierId,
+
+                Version = newVersion,
+
+                TotalPrice = quotation.TotalPrice,
+
+                DeliveryCharge = quotation.DeliveryCharge,
+
+                DeliveryType = quotation.DeliveryType,
+
+                Discount = quotation.Discount,
+
+                DiscountType = quotation.DiscountType,
+
+                Tax = quotation.Tax,
+
+                TaxType = quotation.TaxType,
+
+                Status = quotation.Status
+            };
+
+            await _repository.SupplierQuotationHistory
+                .CreateAsync(quotationHistory);
+
+            foreach (var quotationItem in quotationItemsForHistory)
+            {
+                var itemHistory = new SupplierQuotationItemHistory
+                {
+                    Id = Guid.NewGuid(),
+
+                    SupplierQuotationItemId =
+                        quotationItem.Id,
+
+                    SupplierQuotationId =
+                        quotationItem.SupplierQuotationId,
+
+                    SupplierRFQItemId =
+                        quotationItem.SupplierRFQItemId,
+
+                    BuyerRFQItemId =
+                        quotationItem.BuyerRFQItemId,
+
+                    BuyerRFQId =
+                        quotationItem.BuyerRFQId,
+
+                    RFQNumber =
+                        quotationItem.RFQNumber,
+
+                    BuyerId =
+                        quotationItem.BuyerId,
+
+                    SupplierId =
+                        quotationItem.SupplierId,
+
+                    Version = newVersion,
+
+                    QuotedPrice =
+                        quotationItem.QuotedPrice
+                };
+
+                await _repository.SupplierQuotationItemHistory
+                    .CreateAsync(itemHistory);
+            }
             await _repository.SaveAsync();
 
             _logger.LogInfo(

@@ -37,6 +37,8 @@ namespace Supplier.Infrastructure.DbContext
 
         public DbSet<SupplierVerificationAnswer> SupplierVerificationAnswer { get; set; }
         public DbSet<SupplierVerificationAnswerOption> SupplierVerificationAnswerOption { get; set; }
+        public DbSet<SupplierQuotationHistory> SupplierQuotationHistory { get; set; }
+        public DbSet<SupplierQuotationItemHistory> SupplierQuotationItemHistory { get; set; }
       
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
@@ -58,6 +60,8 @@ namespace Supplier.Infrastructure.DbContext
             _=  modelBuilder.Entity<SupplierRFQQuestionAnswer>().HasIndex(a=> a.IsActive);
             _=  modelBuilder.Entity<SupplierRFQAnswerOption>().HasIndex(a=> a.IsActive);
             _=  modelBuilder.Entity<SupplierCategory>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<SupplierQuotationHistory>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<SupplierQuotationItemHistory>().HasIndex(a => a.IsActive);
 
                 modelBuilder.Entity<SupplierQuotationItem>()
                     .HasOne(x => x.SupplierRFQItem)
@@ -65,6 +69,7 @@ namespace Supplier.Infrastructure.DbContext
                     .HasForeignKey(x => x.SupplierRFQItemId)
                     .OnDelete(DeleteBehavior.NoAction);
              base.OnModelCreating(modelBuilder);
+           
 
             foreach (Microsoft.EntityFrameworkCore.Metadata.IMutableEntityType entity in modelBuilder.Model.GetEntityTypes())
             {
