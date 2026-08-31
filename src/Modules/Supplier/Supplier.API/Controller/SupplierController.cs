@@ -477,10 +477,10 @@ namespace Supplier.API.Controllers
             });
         }
          [HttpDelete]
-        [Route("api/v1/buyer/dispatch-location/{id}")]
+        [Route("api/v1/supplier/dispatch-location/{id}")]
         [ValidateModelState]
-        [ApiAuthorization(Name = "DELETE_BUYER_DISPATCH_LOCATION")]
-        [SwaggerOperation("DeleteBuyerDispatchLocation")]
+        [ApiAuthorization(Name = "DELETE_SUPPLIER_DISPATCH_LOCATION")]
+        [SwaggerOperation("DeleteSupplierDispatchLocation")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Dispatch location deleted successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
