@@ -15,6 +15,7 @@ using Supplier.Infrastructure.ApiClients;
 using Supplier.Application.Contracts;
 
 
+
 namespace Supplier.API.Extensions
 
 {
@@ -57,6 +58,7 @@ namespace Supplier.API.Extensions
             _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
             _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
             _ =services.AddScoped<IBuyerApiClient, BuyerApiClient>();
+           
             _ = services.AddControllers();
         }
         public static void ConfigureDBContext(

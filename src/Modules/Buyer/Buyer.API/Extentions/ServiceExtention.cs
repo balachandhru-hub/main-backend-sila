@@ -2,7 +2,6 @@ using SharedKernel.ExceptionHandler;
 using Microsoft.EntityFrameworkCore;
 using Services;
 using Buyer.Domain.Common;
-using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Buyer.Infrastructure.Contracts.IServices;
 using Buyer.Infrastructure.DbContext;
@@ -15,8 +14,9 @@ using Buyer.Application.Contracts;
 using Buyer.Infrastructure.ApiClients;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using HashingSystem;
+
 
 
 
@@ -145,6 +145,8 @@ namespace Buyer.API.Extensions
             _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
             _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
             _ = services.AddScoped<ISupplierApiClient, SupplierApiClient>();
+       
+            _ = services.AddScoped<IAesEncryption, AesEncryption>();
             _ = services.AddControllers();
 
         }

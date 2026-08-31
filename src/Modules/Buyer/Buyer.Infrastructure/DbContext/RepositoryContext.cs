@@ -45,6 +45,7 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<DefaultVerificationTemplate> DefaultVerificationTemplate {get;set;}
         public DbSet<DefaultVerificationTemplateQuestion> DefaultVerificationTemplateQuestion {get;set;}
         public DbSet<RFQQuestionAttachmentMapping> RFQQuestionAttachmentMapping {get;set;}
+        public DbSet<RFQBlockchainRecord> RFQBlockchainRecord {get;set;}
 
 
 
@@ -80,6 +81,7 @@ namespace Buyer.Infrastructure.DbContext
             _ = modelBuilder.Entity<DefaultVerificationTemplateQuestion>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<DefaultVerificationTemplate>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQQuestionAttachmentMapping>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<RFQBlockchainRecord>().HasIndex(a=>a.IsActive);
 
 
 

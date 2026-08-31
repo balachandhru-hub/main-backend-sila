@@ -241,5 +241,55 @@ namespace Supplier.Infrastructure.ApiClients
 
             return result ?? new CostCenterDto();
         }
+          public async Task StoreQuotationAuditAsync(
+            QuotationAuditDto audit,
+            CancellationToken cancellationToken)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            if (string.IsNullOrWhiteSpace(buyerUrl))
+            {
+                throw new Exception("BuyerUrl is not configured.");
+            }
+
+            var url =
+                $"{buyerUrl.TrimEnd('/')}/api/v1/buyer/quotation-audit";
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                url);
+
+            var accessToken =
+                _httpContextAccessor.HttpContext?
+                    .Request.Cookies["access_token"];
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+            {
+                throw new Exception(
+                    "Access token not found in Supplier request.");
+            }
+
+            request.Headers.Add(
+                "Cookie",
+                $"access_token={accessToken}");
+
+            request.Content = JsonContent.Create(audit);
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseContent =
+                    await response.Content.ReadAsStringAsync(
+                        cancellationToken);
+
+                throw new Exception(
+                    $"Failed to store quotation audit in Buyer service. " +
+                    $"StatusCode: {response.StatusCode}, " +
+                    $"Response: {responseContent}");
+            }
+        }
     }
 }

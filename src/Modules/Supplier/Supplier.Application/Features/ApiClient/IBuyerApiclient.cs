@@ -25,6 +25,10 @@ namespace Supplier.Application.Contracts
         Task<CostCenterDto> GetCostCenterById(
         Guid costCenterId,
         CancellationToken cancellationToken = default);
+        Task StoreQuotationAuditAsync(
+            QuotationAuditDto audit,
+            CancellationToken cancellationToken);
+        
     }
 
 }

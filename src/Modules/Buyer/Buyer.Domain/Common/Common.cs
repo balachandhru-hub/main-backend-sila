@@ -44,6 +44,10 @@ namespace Buyer.Domain.Common
                 public const string ACCEPT = "Accept";
                 public const string DECLINE = "Decline";
                 public static Guid DEFAULT_VERIFICATION_TEMPLATE_ID = new Guid("DD5A50B8-F087-4F0A-A004-CE43E92CE2B9");
+                public const string SUPPLIER_QUOTATION="UPPLIER_QUOTATION";
+                public const string QUOTATION_SUBMITTED="QUOTATION_SUBMITTED";
+                public const string HYPERLEDGER_FABRIC="HYPERLEDGER_FABRIC";
+                public const string BLOCKCHAIN_KEY="Encryption:AesKey";
 
         }
 }

@@ -6,6 +6,9 @@ using Supplier.Infrastructure.Contracts.IRepository;
 using Supplier.Domain.Common;
 using System.Net.Mail;
 
+using Supplier.Domain.Dto;
+using Supplier.Application.Contracts;
+
 namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
 {
     public class UpdateSupplierQuotationCommandHandler
@@ -13,13 +16,19 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
+        private readonly IBuyerApiClient _buyerApiClient;
+
 
         public UpdateSupplierQuotationCommandHandler(
             IRepositoryWrapper repository,
-            ILoggerManager logger)
+            ILoggerManager logger,
+            IBuyerApiClient buyerApiClient
+          )
         {
             _repository = repository;
             _logger = logger;
+            _buyerApiClient=buyerApiClient;
+            
         }
 
         public async Task<UpdateSupplierQuotationResultDto> Handle(
@@ -221,8 +230,53 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
             await _repository.SaveAsync();
 
             _logger.LogInfo(
-                $"Supplier quotation updated successfully : {quotation.Id}");
+     $"Supplier quotation updated successfully : {quotation.Id}");
 
+            // Get quotation items
+            var quotationItems = await _repository.SupplierQuotationItem
+                .FindByCondition(x => x.SupplierQuotationId == quotation.Id)
+                .ToListAsync(cancellationToken);
+
+            // Create audit object
+            var audit = new QuotationAuditDto
+            {
+                BuyerRFQId = quotation.BuyerRFQId,
+
+                SupplierQuotationId = quotation.Id,
+
+                TotalPrice = quotation.TotalPrice,
+
+                DeliveryCharge = quotation.DeliveryCharge,
+
+                DeliveryType = quotation.DeliveryType,
+
+                Discount = quotation.Discount,
+
+                DiscountType = quotation.DiscountType,
+
+                Tax = quotation.Tax,
+
+                TaxType = quotation.TaxType,
+
+                Items = quotationItems.Select(item => new QuotationAuditItemDto
+                {
+                    SupplierQuotationItemId = item.Id,
+
+                    SupplierRfqItemId = item.SupplierRFQItemId,
+
+                    BuyerRfqItemId = item.BuyerRFQItemId,
+
+                    QuotedPrice = item.QuotedPrice
+
+                }).ToList()
+            };
+
+
+
+            // Send to Buyer
+            await _buyerApiClient.StoreQuotationAuditAsync(
+                audit,
+                cancellationToken);
             return new UpdateSupplierQuotationResultDto
             {
                 QuotationId = quotation.Id,

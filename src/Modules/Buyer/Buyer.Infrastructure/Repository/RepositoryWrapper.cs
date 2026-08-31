@@ -42,6 +42,7 @@ namespace Buyer.Infrastructure.Repository
         private IDefaultVerificationTemplateRepository _defaultVerificationTemplateRepository;
 
         private IRFQQuestionAttachmentMappingRepository _rfqQuestionAttachmentMappingRepository;
+        private IRFQBlockchainRecordRepository _rfqBlockchainRecordRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -353,6 +354,18 @@ namespace Buyer.Infrastructure.Repository
                 }
 
                 return _rfqQuestionAttachmentMappingRepository;
+            }
+        }
+        public IRFQBlockchainRecordRepository RFQBlockchainRecord
+        {
+            get
+            {
+                if (_rfqBlockchainRecordRepository == null)
+                {
+                    _rfqBlockchainRecordRepository = new RFQBlockchainRecordRepository(_context);
+                }
+
+                return _rfqBlockchainRecordRepository;
             }
         }
         public bool Save()

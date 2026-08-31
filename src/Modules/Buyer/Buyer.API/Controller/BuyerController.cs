@@ -26,6 +26,8 @@ using Buyer.Application.Features.Commands.CreateBankAccount;
 using Buyer.Application.Features.Commands.DeleteBankAccount;
 using Buyer.Application.Features.Commands.CreateDeliveryLocation;
 using Buyer.Application.Features.Commands.DeleteDeliveryLocation;
+using Buyer.Application.Features.Commands.StoreQuotationAudit;
+
 
 
 namespace Buyer.API.Controllers
@@ -35,11 +37,14 @@ namespace Buyer.API.Controllers
     {
         private readonly IMediator _mediator;
         private readonly ILoggerManager _logger;
+      
+
 
         public BuyerController(IMediator mediator, ILoggerManager logger)
         {
             _mediator = mediator;
             _logger = logger;
+        
         }
         /// <summary>
         /// Get buyer Profile
@@ -591,6 +596,26 @@ namespace Buyer.API.Controllers
                 Id = updatedId.ToString()
             });
         }
+        [HttpPost]
+        [Route("api/v1/buyer/quotation-audit")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "CREATE_QUOTATION_AUDIT")]
+        [SwaggerOperation("CreateQuotationAudit")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Quotation audit stored successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+       public async Task<IActionResult> StoreQuotationAudit(
+    [FromBody] QuotationAuditRequestDto dto)
+{
+    await _mediator.Send(
+            new StoreQuotationAuditCommand(dto));
+
+    return Ok(new
+    {
+        success = true,
+        message = "Quotation audit stored successfully."
+    });
+}
 
 
 
