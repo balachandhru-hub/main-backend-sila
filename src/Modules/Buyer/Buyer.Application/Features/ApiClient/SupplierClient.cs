@@ -248,24 +248,23 @@ namespace Buyer.Infrastructure.ApiClients
                     error);
             }
             _logger.LogInfo($"Supplier RFQ Answers fetched successfully. BuyerRFQId: {buyerRFQId}");
-            var supplierAnswer =
-       await response.Content.ReadFromJsonAsync<SupplierRFQAnswerResponseDto>(
-           cancellationToken: cancellationToken);
+            var supplierAnswers =
+      await response.Content.ReadFromJsonAsync<SupplierRFQAnswerDto>(
+          cancellationToken: cancellationToken);
 
-            if (supplierAnswer == null)
+            if (supplierAnswers == null)
             {
-                _logger.LogInfo($"No Supplier RFQ Answers found for BuyerRFQId: {buyerRFQId}");
+                _logger.LogInfo(
+                    $"No Supplier RFQ Answers found for BuyerRFQId: {buyerRFQId}");
+
                 return new SupplierRFQAnswerDto();
             }
-            _logger.LogInfo($"Supplier RFQ Answers found for BuyerRFQId: {buyerRFQId}, SupplierRFQId: {supplierAnswer.SupplierRFQId}");
-            var result = new SupplierRFQAnswerDto();
-
-            result.SupplierAnswers.Add(supplierAnswer);
 
             _logger.LogInfo(
-                $"Supplier RFQ Answers fetched successfully. BuyerRFQId: {buyerRFQId}");
+                $"Supplier RFQ Answers found for BuyerRFQId: {buyerRFQId}. " +
+                $"Total suppliers: {supplierAnswers.Suppliers.Count}");
 
-            return result;
+            return supplierAnswers;
         }
 
         public async Task<Guid> GetSupplierId(

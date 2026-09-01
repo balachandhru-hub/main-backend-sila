@@ -2,13 +2,12 @@ using SharedKernel.Dto;
 
 namespace Buyer.Domain.Dto
 {
-
     public class SupplierRFQAnswerDto
-{
-    public List<SupplierRFQAnswerResponseDto> SupplierAnswers { get; set; } = new();
-   
-}
-    public class SupplierRFQAnswerResponseDto
+    {
+        public List<SupplierAnswerGroupDto> Suppliers { get; set; } = new();
+    }
+
+    public class SupplierAnswerGroupDto
     {
         public Guid SupplierRFQId { get; set; }
         public Guid SupplierId { get; set; }
@@ -22,13 +21,10 @@ namespace Buyer.Domain.Dto
 
         public string? Answer { get; set; }
 
-        
         public Guid? QuestionOptionId { get; set; }
 
-        
         public List<Guid> QuestionOptionIds { get; set; } = new();
 
-     
         public AssetDto? Attachment { get; set; }
     }
 }
