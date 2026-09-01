@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Supplier.Application.Features.Queries.SupplierAnswers;
 using Supplier.Domain.Dto;
 using Supplier.Infrastructure.Contracts.IRepository;
@@ -26,81 +27,123 @@ namespace Supplier.Application.Features.Queries.SupplierAnswers
             GetSupplierRFQAnswerQuery request,
             CancellationToken cancellationToken)
         {
-            _logger.LogInfo($"Fetching supplier answers for BuyerRFQId : {request.BuyerRFQId}");
+            _logger.LogInfo($"Fetching Supplier RFQ(s) for BuyerRFQId : {request.BuyerRFQId}");
 
-            var supplierRFQ = _repository.SupplierRFQ
-            .FindFirstByCondition(x =>
-                x.BuyerRFQId == request.BuyerRFQId &&
-                x.IsActive);
+            var supplierRFQs = await _repository.SupplierRFQ
+                .FindByCondition(x =>
+                    x.BuyerRFQId == request.BuyerRFQId &&
+                    x.IsActive)
+                .ToListAsync(cancellationToken);
 
-            if (supplierRFQ == null)
+            if (!supplierRFQs.Any())
             {
-                _logger.LogError($"Supplier RFQ not found for BuyerRFQId: {request.BuyerRFQId}");
-                
+                _logger.LogError($"No Supplier RFQ found for BuyerRFQId: {request.BuyerRFQId}");
+
                 throw new NotFoundCustomException(
                     "Supplier RFQ not found.",
                     $"Supplier RFQ with BuyerRFQId {request.BuyerRFQId} does not exist.");
             }
-            _logger.LogInfo($"Fetching answers for SupplierRFQId: {supplierRFQ.Id}");
-            var answers = _repository.RFQQuestionAnswer
+
+            var supplierRFQIds = supplierRFQs.Select(x => x.Id).ToList();
+
+
+            var allAnswers = await _repository.RFQQuestionAnswer
                 .FindByCondition(x =>
-                    x.SupplierRFQId == supplierRFQ.Id &&
+                    supplierRFQIds.Contains(x.SupplierRFQId) &&
                     x.IsActive)
-                .ToList();
+                .ToListAsync(cancellationToken);
 
-            var response = new SupplierRFQAnswerResponseDto
+            if (!allAnswers.Any())
             {
-                
-                SupplierRFQId = supplierRFQ.Id,
-                SupplierId = supplierRFQ.SupplierId
-                
-            };
-
-            foreach (var answer in answers)
-            {
-                _logger.LogInfo($"Processing answer for RFQQuestionId: {answer.RFQQuestionId}");
-                var dto = new SupplierQuestionAnswerDto
-                {
-                    RFQQuestionId = answer.RFQQuestionId,
-                    Answer = answer.Answer,
-                    QuestionOptionId = answer.QuestionOptionId
-                };
-
-                
-                dto.QuestionOptionIds = _repository.RFQQuestionAnswerOption
-                    .FindByCondition(x =>
-                        x.SupplierRFQQuestionAnswerId == answer.Id &&
-                        x.IsActive)
-                    .Select(x => x.RFQQuestionOptionId)
-                    .ToList();
-
-                
-                if (answer.AssetId.HasValue)
-                {
-                    _logger.LogInfo($"Fetching asset for AssetId: {answer.AssetId.Value}");
-                    var asset = _repository.Asset
-                        .FindFirstByCondition(x =>
-                            x.Id == answer.AssetId.Value &&
-                            x.IsActive);
-
-                    if (asset != null)
-                    {
-                        _logger.LogInfo($"Asset found for AssetId: {answer.AssetId.Value}, preparing AssetDto");
-                        dto.Attachment = new AssetDto
-                        {
-                            Id = asset.Id,
-                            AssetType = asset.AssetType?.ToString(),
-                            AssetName = asset.AssetName,
-                            FileType = asset.FileType.ToString(),
-                            FileName = asset.FileName
-                        };
-                    }
-                }
-
-                response.Answers.Add(dto);
+                _logger.LogInfo($"No answers found for BuyerRFQId: {request.BuyerRFQId}");
+                throw new NotFoundCustomException(
+                    "Supplier RFQ answers not found.",
+                    $"No answers found for Supplier RFQs with BuyerRFQId {request.BuyerRFQId}.");
             }
 
-            return await Task.FromResult(response);
+            var response = new SupplierRFQAnswerResponseDto();
+
+          
+            var answersBySupplier = allAnswers.GroupBy(x => x.SupplierId);
+
+            foreach (var supplierGroup in answersBySupplier)
+            {
+                var supplierId = supplierGroup.Key;
+                var supplierRFQId = supplierGroup.First().SupplierRFQId;
+
+                _logger.LogInfo($"Building answer group for SupplierId: {supplierId}");
+
+                var supplierProfile = await _repository.SupplierBusinessProfile
+                    .FindByCondition(x =>
+                        x.Id == supplierId &&
+                        x.IsActive)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                var group = new SupplierAnswerGroupDto
+                {
+                    SupplierRFQId = supplierRFQId,
+                    SupplierId = supplierId,
+                    SupplierName = supplierProfile?.OrganizationName
+                };
+
+                foreach (var answer in supplierGroup)
+                {
+                    _logger.LogInfo($"Processing answer for RFQQuestionId: {answer.RFQQuestionId} from SupplierId: {supplierId}");
+                    var dto = new SupplierQuestionAnswerDto
+                    {
+                        RFQQuestionId = answer.RFQQuestionId,
+                        Answer = answer.Answer,
+                        QuestionOptionId = answer.QuestionOptionId
+                    };
+
+                  
+                    if (!answer.QuestionOptionId.HasValue)
+                    {
+                        _logger.LogInfo($"Fetching multiple option answers for RFQQuestionId: {answer.RFQQuestionId} from SupplierId: {supplierId}");
+                        dto.QuestionOptionIds = await _repository.RFQQuestionAnswerOption
+                            .FindByCondition(x =>
+                                x.SupplierRFQQuestionAnswerId == answer.Id &&
+                                x.IsActive)
+                            .Select(x => x.RFQQuestionOptionId)
+                            .Distinct()
+                            .ToListAsync(cancellationToken);
+                    }
+                    else
+                    {
+                        _logger.LogInfo($"Single option answer found for RFQQuestionId: {answer.RFQQuestionId} from SupplierId: {supplierId}");
+                        dto.QuestionOptionIds = new List<Guid>();
+                    }
+
+                    if (answer.AssetId.HasValue)
+                    {
+                        _logger.LogInfo($"Fetching attachment for RFQQuestionId: {answer.RFQQuestionId} from SupplierId: {supplierId}");
+                        var asset = await _repository.Asset
+                            .FindByCondition(x =>
+                                x.Id == answer.AssetId.Value &&
+                                x.IsActive)
+                            .FirstOrDefaultAsync(cancellationToken);
+
+                        if (asset != null)
+                        {
+                            _logger.LogInfo($"Attachment found for RFQQuestionId: {answer.RFQQuestionId} from SupplierId: {supplierId}, AssetId: {asset.Id}");
+                            dto.Attachment = new AssetDto
+                            {
+                                Id = asset.Id,
+                                AssetType = asset.AssetType?.ToString(),
+                                AssetName = asset.AssetName,
+                                FileType = asset.FileType.ToString(),
+                                FileName = asset.FileName
+                            };
+                        }
+                    }
+
+                    group.Answers.Add(dto);
+                }
+
+                response.Suppliers.Add(group);
+            }
+            _logger.LogInfo($"Completed fetching answers for BuyerRFQId: {request.BuyerRFQId}. Total suppliers with answers: {response.Suppliers.Count}");
+            return response;
         }
     }
 }

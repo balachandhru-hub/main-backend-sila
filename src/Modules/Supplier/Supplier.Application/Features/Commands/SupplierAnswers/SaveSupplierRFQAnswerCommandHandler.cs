@@ -36,6 +36,7 @@ namespace Supplier.Application.Features.Commands.SupplierAnswers
              var supplierRFQ = _repository.SupplierRFQ
         .FindFirstByCondition(x =>
             x.Id == request.Answer.SupplierRFQId &&
+            
             x.IsActive);
 
             if (supplierRFQ == null)
@@ -45,7 +46,7 @@ namespace Supplier.Application.Features.Commands.SupplierAnswers
                     "Supplier RFQ not found.",
                     $"Supplier RFQ with Id {request.Answer.SupplierRFQId} does not exist.");
             }
-                
+               
 
             foreach (var answer in request.Answer.Answers)
             {
@@ -53,7 +54,9 @@ namespace Supplier.Application.Features.Commands.SupplierAnswers
                 var existingAnswer = _repository.RFQQuestionAnswer
                     .FindFirstByCondition(x =>
                         x.SupplierRFQId == supplierRFQ.Id &&
-                        x.RFQQuestionId == answer.RFQQuestionId &&
+                        x.SupplierId == request.Answer.SupplierId &&
+
+                        x.RFQQuestionId == answer.RFQQuestionId &&                
                         x.IsActive);
 
                 if (existingAnswer == null)
@@ -66,7 +69,7 @@ namespace Supplier.Application.Features.Commands.SupplierAnswers
                         BuyerRFQId = supplierRFQ.BuyerRFQId,
                         RFQQuestionId = answer.RFQQuestionId,
                         RFQNumber = supplierRFQ.RFQNumber,
-                        SupplierId = supplierRFQ.SupplierId
+                       SupplierId = request.Answer.SupplierId
                     };
 
                     await _repository.RFQQuestionAnswer.CreateAsync(existingAnswer);

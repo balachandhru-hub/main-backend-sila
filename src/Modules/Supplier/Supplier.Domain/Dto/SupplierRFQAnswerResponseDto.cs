@@ -2,10 +2,17 @@ using SharedKernel.Dto;
 
 namespace Supplier.Domain.Dto
 {
+    
     public class SupplierRFQAnswerResponseDto
+    {
+        public List<SupplierAnswerGroupDto> Suppliers { get; set; } = new();
+    }
+
+    public class SupplierAnswerGroupDto
     {
         public Guid SupplierRFQId { get; set; }
         public Guid SupplierId { get; set; }
+        public string? SupplierName { get; set; }   
 
         public List<SupplierQuestionAnswerDto> Answers { get; set; } = new();
     }
