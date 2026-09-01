@@ -30,6 +30,11 @@ namespace Supplier.Domain.Common
         public const string CATALOG = "CATALOG";
         public const string NON_CATALOG = "NONCATALOG";
         public const string SUBMITTED_STATUS = "SUBMITTED";
+        public static readonly string EMAIL_VERIFICATION = "OTP_VERIFICATION";
+        public static readonly string EMAIL_OTP = "OTP";
+        public static readonly string EMAIL_OTP_VALIDITY = "OTP_VALIDITY";
+        public static readonly string DOMAIN_COOKIE_NAME = "Domain:DomainName";
+        public static readonly string VERIFICATION_TOKEN_COOKIE_NAME = "VerificationToken";
 
     }
 

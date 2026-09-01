@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Supplier.Infrastructure.DbContext;
 
@@ -11,9 +12,11 @@ using Supplier.Infrastructure.DbContext;
 namespace Supplier.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260831124743_SupplierEmailOtpVerification")]
+    partial class SupplierEmailOtpVerification
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -852,108 +855,6 @@ namespace Supplier.Infrastructure.Migrations
                     b.ToTable("supplier_quotation", "supplier");
                 });
 
-            modelBuilder.Entity("Supplier.Domain.Entities.SupplierQuotationHistory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("BuyerId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("buyer_id");
-
-                    b.Property<Guid>("BuyerRFQId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("buyer_rfqid");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_created");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_updated");
-
-                    b.Property<decimal?>("DeliveryCharge")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("delivery_charge");
-
-                    b.Property<string>("DeliveryType")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("delivery_type");
-
-                    b.Property<decimal?>("Discount")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("discount");
-
-                    b.Property<string>("DiscountType")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("discount_type");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("RFQNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("rfqnumber");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("status");
-
-                    b.Property<Guid>("SupplierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_id");
-
-                    b.Property<Guid>("SupplierQuotationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_quotation_id");
-
-                    b.Property<Guid>("SupplierRFQId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_rfqid");
-
-                    b.Property<decimal?>("Tax")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("tax");
-
-                    b.Property<string>("TaxType")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("tax_type");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("total_price");
-
-                    b.Property<Guid>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("updated_by");
-
-                    b.Property<string>("Version")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("version");
-
-                    b.HasKey("Id")
-                        .HasName("pk_supplier_quotation_history");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_supplier_quotation_history_is_active");
-
-                    b.HasIndex("SupplierQuotationId")
-                        .HasDatabaseName("ix_supplier_quotation_history_supplier_quotation_id");
-
-                    b.ToTable("supplier_quotation_history", "supplier");
-                });
-
             modelBuilder.Entity("Supplier.Domain.Entities.SupplierQuotationItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1027,87 +928,6 @@ namespace Supplier.Infrastructure.Migrations
                         .HasDatabaseName("ix_supplier_quotation_item_supplier_rfqitem_id");
 
                     b.ToTable("supplier_quotation_item", "supplier");
-                });
-
-            modelBuilder.Entity("Supplier.Domain.Entities.SupplierQuotationItemHistory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("BuyerId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("buyer_id");
-
-                    b.Property<Guid>("BuyerRFQId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("buyer_rfqid");
-
-                    b.Property<Guid>("BuyerRFQItemId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("buyer_rfqitem_id");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_created");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_updated");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<decimal>("QuotedPrice")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("quoted_price");
-
-                    b.Property<string>("RFQNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("rfqnumber");
-
-                    b.Property<Guid>("SupplierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_id");
-
-                    b.Property<Guid>("SupplierQuotationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_quotation_id");
-
-                    b.Property<Guid>("SupplierQuotationItemId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_quotation_item_id");
-
-                    b.Property<Guid>("SupplierRFQItemId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_rfqitem_id");
-
-                    b.Property<Guid>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("updated_by");
-
-                    b.Property<string>("Version")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("version");
-
-                    b.HasKey("Id")
-                        .HasName("pk_supplier_quotation_item_history");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_supplier_quotation_item_history_is_active");
-
-                    b.HasIndex("SupplierQuotationId")
-                        .HasDatabaseName("ix_supplier_quotation_item_history_supplier_quotation_id");
-
-                    b.ToTable("supplier_quotation_item_history", "supplier");
                 });
 
             modelBuilder.Entity("Supplier.Domain.Entities.SupplierRFQ", b =>
@@ -1620,18 +1440,6 @@ namespace Supplier.Infrastructure.Migrations
                     b.Navigation("SupplierRFQ");
                 });
 
-            modelBuilder.Entity("Supplier.Domain.Entities.SupplierQuotationHistory", b =>
-                {
-                    b.HasOne("Supplier.Domain.Entities.SupplierQuotation", "SupplierQuotation")
-                        .WithMany()
-                        .HasForeignKey("SupplierQuotationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_supplier_quotation_history_supplier_quotation_supplier_quotation_id");
-
-                    b.Navigation("SupplierQuotation");
-                });
-
             modelBuilder.Entity("Supplier.Domain.Entities.SupplierQuotationItem", b =>
                 {
                     b.HasOne("Supplier.Domain.Entities.SupplierQuotation", "SupplierQuotation")
@@ -1651,18 +1459,6 @@ namespace Supplier.Infrastructure.Migrations
                     b.Navigation("SupplierQuotation");
 
                     b.Navigation("SupplierRFQItem");
-                });
-
-            modelBuilder.Entity("Supplier.Domain.Entities.SupplierQuotationItemHistory", b =>
-                {
-                    b.HasOne("Supplier.Domain.Entities.SupplierQuotation", "SupplierQuotation")
-                        .WithMany()
-                        .HasForeignKey("SupplierQuotationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_supplier_quotation_item_history_supplier_quotation_supplier_quotation_id");
-
-                    b.Navigation("SupplierQuotation");
                 });
 
             modelBuilder.Entity("Supplier.Domain.Entities.SupplierRFQItem", b =>

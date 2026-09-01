@@ -13,6 +13,9 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Supplier.Infrastructure.ApiClients;
 using Supplier.Application.Contracts;
+using HashingSystem;
+
+
 
 
 
@@ -58,6 +61,7 @@ namespace Supplier.API.Extensions
             _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
             _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
             _ =services.AddScoped<IBuyerApiClient, BuyerApiClient>();
+            _ =services.AddScoped<IBcryptHashing,BcryptHashing>();
            
             _ = services.AddControllers();
         }

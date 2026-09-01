@@ -22,6 +22,10 @@ using Supplier.Application.Features.Commands.SubmitVerification;
 using Supplier.Application.Features.Queries;
 using Supplier.Application.Features.Commands.CreateSupplierBankAccount;
 using Supplier.Application.Features.Commands.CreateSupplierDispatchLocation;
+using Supplier.Application.Features.Auth.Commands.SendEmailVerification;
+using Supplier.Application.Features.Auth.Commands.VerifyOtp;
+using Supplier.Domain.Common;
+
 using Supplier.Application.Features.Commands.UpdateSupplierBankAccount;
 using Supplier.Application.Features.Commands.UpdateSupplierDispatchLocation;
 using Supplier.Application.Features.Commands.DeleteBankAccount;
@@ -39,15 +43,18 @@ namespace Supplier.API.Controllers
     {
         private readonly IMediator _mediator;
         private readonly ILoggerManager _logger;
+        private readonly IConfiguration _configuration;
         private readonly IHubContext<NotificationHub> _hubContext;
         public SupplierController(
             IMediator mediator,
             ILoggerManager logger,
-             IHubContext<NotificationHub> hubContext)
+             IHubContext<NotificationHub> hubContext
+             , IConfiguration configuration)
         {
             _mediator = mediator;
             _logger = logger;
             _hubContext = hubContext;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -66,7 +73,7 @@ namespace Supplier.API.Controllers
         {
             _logger.LogDebug("Creating supplier profile.");
             supplierProfileDto.OrganizationId = GetOrganizationId();
-            supplierProfileDto.SNID=GetSNID();
+            supplierProfileDto.SNID = GetSNID();
 
             var supplierId = await _mediator.Send(new CreateSupplierProfileCommand(supplierProfileDto));
 
@@ -85,7 +92,7 @@ namespace Supplier.API.Controllers
         /// </summary>
         [HttpGet]
         [Route("api/v1/supplier/profile")]
-        
+
         [ApiAuthorization(Name = "GET_SUPPLIER_PROFILE")]
         [ValidateModelState]
         [SwaggerOperation("GetSupplierProfile")]
@@ -94,8 +101,8 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetSupplierProfile([FromQuery] Guid? organizationId)
         {
-            Guid orgId = organizationId??GetOrganizationId();
-            string snid=GetSNID();
+            Guid orgId = organizationId ?? GetOrganizationId();
+            string snid = GetSNID();
 
             var result = await _mediator.Send(new GetSupplierProfileQuery(orgId));
 
@@ -222,7 +229,7 @@ namespace Supplier.API.Controllers
         }
 
 
-        
+
         [HttpPut]
         [Route("/api/v1/supplier/quotation")]
         [ApiAuthorization(Name = "UPDATE_SUPPLIER_QUOTATION")]
@@ -235,7 +242,7 @@ namespace Supplier.API.Controllers
             [FromBody] UpdateSupplierQuotationDto dto)
         {
             var result = await _mediator.Send(
-     new UpdateSupplierQuotationCommand(dto));
+     new UpdateSupplierQuotationCommand(dto, dto.TemporaryVerificationToken));
 
             await _hubContext.Clients.All.SendAsync(
           "QuotationSubmitted",
@@ -269,6 +276,13 @@ namespace Supplier.API.Controllers
                 var result = await _mediator.Send(
                     new GetSupplierQuotationHistoryComparisonQuery(
                         supplierQuotationId));
+
+
+
+
+
+
+
 
                 return Ok(result);
             }
@@ -393,6 +407,72 @@ namespace Supplier.API.Controllers
 
             return Ok(result);
         }
+        [HttpPost]
+        [Route("api/v1/supplier/send-otp")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "SEND-OTP")]
+        [SwaggerOperation("SendOtp")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "OTP generated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> SendOtp()
+        {
+            Guid organizationId = GetOrganizationId();
+
+            _logger.LogDebug(
+                $"Generating OTP for supplier organization: {organizationId}");
+
+            var command = new SendEmailVerificationCommand(organizationId);
+
+            var result = await _mediator.Send(command);
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "OTP generated successfully.",
+                Description = "OTP generated successfully."
+            });
+        }
+
+        /// <summary>
+        /// Verifies the OTP for email verification.
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
+
+        [HttpPost]
+        [Route("api/v1/supplier/verify-otp")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "VERIFY-OTP")]
+        [SwaggerOperation("VerifyOtp")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "OTP verified successfully.")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Invalid OTP or OTP expired.")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error.")]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpCommand command)
+        {
+            _logger.LogDebug($"Verifying OTP for {command.Email}");
+
+            var result = await _mediator.Send(command);
+
+            Response.Cookies.Append(Common.VERIFICATION_TOKEN_COOKIE_NAME, result.TemporaryVerificationToken!,
+            new CookieOptions
+            {
+                Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                Path = "/",
+                HttpOnly = true,
+                Secure = true,          // Use true in HTTPS
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(30),
+                IsEssential = true
+            });
+
+            return Ok(new SuccessResponseDto
+            {
+                Message = result.Message,
+                Description = "OTP verified successfully.",
+                StatusCode = 200
+            });
+        }
+
         [HttpPut]
         [Route("api/v1/supplier/bank-account/{id}")]
         [ValidateModelState]

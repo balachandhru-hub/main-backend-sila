@@ -16,5 +16,6 @@ namespace Supplier.Domain.Dto
         public string? TaxType { get; set; }
 
         public List<CreateSupplierQuotationItemDto>? Items { get; set; }
+        public string? TemporaryVerificationToken { get; set; }
     }
 }

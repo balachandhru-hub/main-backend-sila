@@ -37,6 +37,7 @@ namespace Supplier.Infrastructure.DbContext
 
         public DbSet<SupplierVerificationAnswer> SupplierVerificationAnswer { get; set; }
         public DbSet<SupplierVerificationAnswerOption> SupplierVerificationAnswerOption { get; set; }
+        public DbSet<SupplierEmailVerification> SupplierEmailVerification{get;set;}
         public DbSet<SupplierQuotationHistory> SupplierQuotationHistory { get; set; }
         public DbSet<SupplierQuotationItemHistory> SupplierQuotationItemHistory { get; set; }
       
@@ -60,6 +61,7 @@ namespace Supplier.Infrastructure.DbContext
             _=  modelBuilder.Entity<SupplierRFQQuestionAnswer>().HasIndex(a=> a.IsActive);
             _=  modelBuilder.Entity<SupplierRFQAnswerOption>().HasIndex(a=> a.IsActive);
             _=  modelBuilder.Entity<SupplierCategory>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<SupplierEmailVerification>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<SupplierQuotationHistory>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<SupplierQuotationItemHistory>().HasIndex(a => a.IsActive);
 

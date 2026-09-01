@@ -48,6 +48,7 @@ namespace Buyer.Domain.Common
                 public const string QUOTATION_SUBMITTED="QUOTATION_SUBMITTED";
                 public const string HYPERLEDGER_FABRIC="HYPERLEDGER_FABRIC";
                 public const string BLOCKCHAIN_KEY="Encryption:AesKey";
+                
 
         }
 }

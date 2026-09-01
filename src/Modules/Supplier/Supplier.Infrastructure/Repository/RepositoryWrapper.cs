@@ -38,6 +38,7 @@ namespace Supplier.Infrastructure.Repository
         private ISupplierVerificationAnswerRepository _supplierVerificationAnswer;
         private ISupplierVerificationAnswerOptionRepository _supplierVerificationAnswerOption;
         private ISupplierCategoryRepository _supplierCategory;
+        private ISupplierEmailVerificationRepository _supplierEmailVerification;
         private ISupplierQuotationHistoryRepository _supplierQuotationHistory;
         private ISupplierQuotationItemHistoryRepository _supplierQuotationItemHistory;
 
@@ -251,6 +252,16 @@ namespace Supplier.Infrastructure.Repository
                 return _supplierVerificationAnswerOption;
             }
         }
+          public ISupplierEmailVerificationRepository SupplierEmailVerification
+        {
+            get
+            {
+                if (_supplierEmailVerification == null)
+                {
+                    _supplierEmailVerification = new SupplierEmailVerificationRepository(_context);
+                }
+
+                return _supplierEmailVerification;
         public ISupplierQuotationHistoryRepository SupplierQuotationHistory
         {
             get

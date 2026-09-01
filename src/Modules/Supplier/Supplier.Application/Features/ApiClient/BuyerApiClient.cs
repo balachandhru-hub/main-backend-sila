@@ -92,8 +92,8 @@ namespace Supplier.Infrastructure.ApiClients
             var result = await response.Content.ReadFromJsonAsync<GetRFQAttachmentsDto>(
                 cancellationToken: cancellationToken);
 
-                    return result ?? new GetRFQAttachmentsDto();
-                }
+            return result ?? new GetRFQAttachmentsDto();
+        }
 
         public async Task<SupplierVerificationRequestDetailDto> GetSupplierVerificationRequestDetail(
             Guid requestId,
@@ -241,15 +241,17 @@ namespace Supplier.Infrastructure.ApiClients
 
             return result ?? new CostCenterDto();
         }
-          public async Task StoreQuotationAuditAsync(
-            QuotationAuditDto audit,
-            CancellationToken cancellationToken)
+        public async Task StoreQuotationAuditAsync(
+  QuotationAuditDto audit,
+  CancellationToken cancellationToken)
         {
             var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
 
             if (string.IsNullOrWhiteSpace(buyerUrl))
             {
-                throw new Exception("BuyerUrl is not configured.");
+                throw new BadRequestCustomException(
+                    "Buyer service URL is not configured.",
+                    "Please configure the Buyer service base URL.");
             }
 
             var url =
@@ -259,19 +261,15 @@ namespace Supplier.Infrastructure.ApiClients
                 HttpMethod.Post,
                 url);
 
-            var accessToken =
-                _httpContextAccessor.HttpContext?
-                    .Request.Cookies["access_token"];
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request.Cookies[Common.ACCESS_TOKEN];
 
-            if (string.IsNullOrWhiteSpace(accessToken))
+            if (!string.IsNullOrWhiteSpace(accessToken))
             {
-                throw new Exception(
-                    "Access token not found in Supplier request.");
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
             }
-
-            request.Headers.Add(
-                "Cookie",
-                $"access_token={accessToken}");
 
             request.Content = JsonContent.Create(audit);
 
@@ -285,10 +283,9 @@ namespace Supplier.Infrastructure.ApiClients
                     await response.Content.ReadAsStringAsync(
                         cancellationToken);
 
-                throw new Exception(
-                    $"Failed to store quotation audit in Buyer service. " +
-                    $"StatusCode: {response.StatusCode}, " +
-                    $"Response: {responseContent}");
+                throw new BadRequestCustomException(
+                    "Failed to store quotation audit in Buyer service.",
+                    $"StatusCode: {response.StatusCode}, Response: {responseContent}");
             }
         }
     }

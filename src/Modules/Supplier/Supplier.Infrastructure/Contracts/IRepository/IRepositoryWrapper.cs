@@ -28,6 +28,7 @@ public interface IRepositoryWrapper
     IRFQQuestionAnswerRepository RFQQuestionAnswer { get; }
     IRFQQuestionAnswerOptionRepository RFQQuestionAnswerOption { get; }
     ISupplierCategoryRepository SupplierCategory { get; }
+    ISupplierEmailVerificationRepository SupplierEmailVerification {get;}
     ISupplierQuotationHistoryRepository SupplierQuotationHistory { get; }
     ISupplierQuotationItemHistoryRepository SupplierQuotationItemHistory { get; }
 

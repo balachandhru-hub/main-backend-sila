@@ -10,6 +10,12 @@ using Supplier.Domain.Entities;
 using Supplier.Domain.Dto;
 using Supplier.Application.Contracts;
 
+using Supplier.Domain.Dto;
+using Supplier.Application.Contracts;
+
+using Supplier.Domain.Dto;
+using Supplier.Application.Contracts;
+
 namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
 {
     public class UpdateSupplierQuotationCommandHandler
@@ -38,6 +44,38 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
         {
             _logger.LogInfo(
                 $"Updating Supplier Quotation : {request.Quotation.SupplierQuotationId}");
+            if (string.IsNullOrWhiteSpace(request.TemporaryVerificationToken))
+            {
+                throw new BadRequestCustomException(
+                    "Verification token is required.",
+                    "Please verify the OTP before submitting the quotation.");
+            }
+
+            var verification = await _repository.SupplierEmailVerification
+                .FindByCondition(x =>
+                    x.TemporaryVerificationToken ==
+                        request.TemporaryVerificationToken &&
+                    x.IsVerified)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (verification == null)
+            {
+                throw new BadRequestCustomException(
+                    "Invalid verification token.",
+                    "Please verify the OTP before submitting the quotation.");
+            }
+
+            // Check verification token expiry
+            if (verification.TemporaryVerificationTokenExpiresOn == null ||
+                verification.TemporaryVerificationTokenExpiresOn <= DateTime.UtcNow)
+            {
+                throw new BadRequestCustomException(
+                    "Verification token expired.",
+                    "Please verify the OTP again before submitting the quotation.");
+            }
+
+            _logger.LogInfo(
+                $"OTP verification successful for quotation : {request.Quotation.SupplierQuotationId}");
 
             var quotation = await _repository.SupplierQuotation
                 .GetByIdAsync(request.Quotation.SupplierQuotationId);
