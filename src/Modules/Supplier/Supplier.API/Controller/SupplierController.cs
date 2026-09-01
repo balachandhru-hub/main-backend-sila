@@ -262,20 +262,20 @@ namespace Supplier.API.Controllers
                 Id = result.QuotationId.ToString()
             });
         }
-            [HttpGet]
-            [Route("api/v1/supplier/quotation/history-comparison/{supplierQuotationId}")]
-            [ApiAuthorization(Name = "GET_SUPPLIER_QUOTATION_HISTORY_COMPARISON")]
-            [ValidateModelState]
-            [SwaggerOperation("GetSupplierQuotationHistoryComparison")]
-            [SwaggerResponse(200, type: typeof(SupplierQuotationHistoryComparisonDto), description: "Supplier quotation history comparison fetched successfully")]
-            [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
-            [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-            public async Task<IActionResult> GetQuotationHistoryComparison(
-                Guid supplierQuotationId)
-            {
-                var result = await _mediator.Send(
-                    new GetSupplierQuotationHistoryComparisonQuery(
-                        supplierQuotationId));
+        [HttpGet]
+        [Route("api/v1/supplier/quotation/history-comparison/{supplierQuotationId}")]
+        [ApiAuthorization(Name = "GET_SUPPLIER_QUOTATION_HISTORY_COMPARISON")]
+        [ValidateModelState]
+        [SwaggerOperation("GetSupplierQuotationHistoryComparison")]
+        [SwaggerResponse(200, type: typeof(SupplierQuotationHistoryComparisonDto), description: "Supplier quotation history comparison fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetQuotationHistoryComparison(
+            Guid supplierQuotationId)
+        {
+            var result = await _mediator.Send(
+                new GetSupplierQuotationHistoryComparisonQuery(
+                    supplierQuotationId));
 
 
 
@@ -284,8 +284,8 @@ namespace Supplier.API.Controllers
 
 
 
-                return Ok(result);
-            }
+            return Ok(result);
+        }
 
 
         [HttpGet]
@@ -465,11 +465,13 @@ namespace Supplier.API.Controllers
                 IsEssential = true
             });
 
-            return Ok(new SuccessResponseDto
+            return Ok(new
             {
-                Message = result.Message,
-                Description = "OTP verified successfully.",
-                StatusCode = 200
+                success = true,
+                message = result.Message,
+                description = "OTP verified successfully.",
+                statusCode = 200,
+                token = result.TemporaryVerificationToken
             });
         }
 
@@ -478,10 +480,10 @@ namespace Supplier.API.Controllers
         [ValidateModelState]
         [ApiAuthorization(Name = "UPDATE_SUPPLIER_BANK_ACCOUNT")]
         [SwaggerOperation("UpdateSupplierBankAccount")]
-        [SwaggerResponse(200,type: typeof(SuccessResponseDto),description: "Bank account updated successfully")]
-        [SwaggerResponse(400,type: typeof(ErrorResponseDto),description: "Bad request")]
-        [SwaggerResponse(404,type: typeof(ErrorResponseDto),description: "Bank account not found")]
-        [SwaggerResponse( 500,type: typeof(ErrorResponseDto),description: "Internal Server Error")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Bank account updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Bank account not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> UpdateBankAccount(
             Guid id,
             [FromBody] SupplierBankAccountUpdateDto request)
@@ -518,9 +520,9 @@ namespace Supplier.API.Controllers
         [ValidateModelState]
         [ApiAuthorization(Name = "UPDATE_SUPPLIER_DISPATCH_LOCATION")]
         [SwaggerOperation("UpdateSupplierDispatchLocation")]
-        [SwaggerResponse(200,type: typeof(SuccessResponseDto),description: "Dispatch location updated successfully")]
-        [SwaggerResponse( 400,type: typeof(ErrorResponseDto),description: "Bad request")]
-        [SwaggerResponse(500,type: typeof(ErrorResponseDto),description: "Internal Server Error")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Dispatch location updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> UpdateDispatchLocation(
             Guid id,
             [FromBody] SupplierDispatchLocationUpdateDto request)
@@ -566,7 +568,7 @@ namespace Supplier.API.Controllers
                 Id = deletedId.ToString()
             });
         }
-         [HttpDelete]
+        [HttpDelete]
         [Route("api/v1/supplier/dispatch-location/{id}")]
         [ValidateModelState]
         [ApiAuthorization(Name = "DELETE_SUPPLIER_DISPATCH_LOCATION")]
@@ -592,7 +594,7 @@ namespace Supplier.API.Controllers
                 Id = deletedId.ToString()
             });
         }
-        
+
     }
 }
 
