@@ -12,7 +12,7 @@ namespace Buyer.Domain.Dto
     {
         public Guid SupplierRFQId { get; set; }
         public Guid SupplierId { get; set; }
-
+        public string? SupplierName { get; set; }
         public List<SupplierQuestionAnswerDto> Answers { get; set; } = new();
     }
 
