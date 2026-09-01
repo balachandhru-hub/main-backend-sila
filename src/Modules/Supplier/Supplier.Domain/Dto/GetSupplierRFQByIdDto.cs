@@ -85,7 +85,7 @@ namespace Supplier.Domain.Dto
 
         public string? Status { get; set; }
         public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } 
-        public Guid? QutationId {get;set;}
+        public Guid? QuotationId {get;set;}
 
        
     }

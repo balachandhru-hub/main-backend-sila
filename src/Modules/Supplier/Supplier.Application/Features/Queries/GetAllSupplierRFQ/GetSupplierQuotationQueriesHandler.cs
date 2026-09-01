@@ -51,6 +51,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
 
             return new GetAllSupplierQuotationDto
             {
+                QuotationId = quotation?.Id,
                 TotalPrice = quotation?.TotalPrice,
                 DeliveryCharge = quotation?.DeliveryCharge,
                 Tax = quotation?.Tax,
