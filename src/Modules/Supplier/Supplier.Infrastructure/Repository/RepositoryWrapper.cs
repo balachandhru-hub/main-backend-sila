@@ -262,6 +262,8 @@ namespace Supplier.Infrastructure.Repository
                 }
 
                 return _supplierEmailVerification;
+            }
+        }
         public ISupplierQuotationHistoryRepository SupplierQuotationHistory
         {
             get
