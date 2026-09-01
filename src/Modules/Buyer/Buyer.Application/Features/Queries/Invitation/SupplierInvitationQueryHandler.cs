@@ -31,7 +31,6 @@ namespace Buyer.Application.Features.Queries.Invitation
             _logger.LogInfo(
                 "Get All RFQ Master Data for Supplier");
 
-           
             var supplierId = await _supplierService.GetSupplierId(
                 cancellationToken);
 
@@ -46,14 +45,34 @@ namespace Buyer.Application.Features.Queries.Invitation
             _logger.LogInfo(
                 $"Getting RFQ invitations for SupplierId: {supplierId}");
 
-          
-            var invitationData = await _repository.SupplierVerificationRequest
+            var invitationQuery = _repository.SupplierVerificationRequest
                 .FindByCondition(x =>
-                    x.SupplierOrganizationId == supplierId)
-                .Include(x => x.RFQ)
+                    x.SupplierOrganizationId == supplierId);
+
+            // Search filter
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var search = request.Search.Trim();
+
+                invitationQuery = invitationQuery.Where(x =>
+                    x.RFQ.RFQNumber.Contains(search) ||
+                    x.RFQ.Title.Contains(search) ||
+                    x.RFQ.Description.Contains(search));
+            }
+
+            // Status filter
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                var status = request.Status.Trim();
+
+                invitationQuery = invitationQuery.Where(x =>
+                    x.Status == status);
+            }
+
+            var invitationData = await invitationQuery
                 .Select(x => new
                 {
-                    Id= x.Id,
+                    Id = x.Id,
                     RFQId = x.RFQ.Id,
                     RFQNumber = x.RFQ.RFQNumber,
                     Title = x.RFQ.Title,
@@ -65,25 +84,22 @@ namespace Buyer.Application.Features.Queries.Invitation
 
                     Status = x.Status
                 })
-                
                 .ToListAsync(cancellationToken);
 
-                if (!invitationData.Any())
-                {
-                    _logger.LogError(
-                        "No RFQ invitations found for this supplier.");
+            if (!invitationData.Any())
+            {
+                _logger.LogError(
+                    "No RFQ invitations found for this supplier.");
 
-                    throw new KeyNotFoundException(
-                        "No RFQ invitations found for this supplier.");
-                }
+                throw new KeyNotFoundException(
+                    "No RFQ invitations found for this supplier.");
+            }
 
-         
             var buyerOrganizationIds = invitationData
                 .Select(x => x.BuyerOrganizationId)
                 .Distinct()
                 .ToList();
 
-          
             var buyerOrganizations = await _repository.BuyerBusinessProfile
                 .FindByCondition(x =>
                     buyerOrganizationIds.Contains(x.Id))
@@ -107,7 +123,7 @@ namespace Buyer.Application.Features.Queries.Invitation
 
                     return new RFQListDto
                     {
-                        Id= x.Id,
+                        Id = x.Id,
                         RFQId = x.RFQId,
                         RFQNumber = x.RFQNumber,
                         Title = x.Title,

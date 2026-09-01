@@ -134,7 +134,9 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetSupplierInvitations(
             [FromQuery] int index,
-            [FromQuery] int limit)
+            [FromQuery] int limit,  
+            [FromQuery] string? search,
+            [FromQuery] string? status)
         {
 
             _logger.LogDebug($"Fetching Supplier Invitations for Index: {index}, Limit: {limit}");
@@ -144,7 +146,9 @@ namespace Buyer.API.Controllers
                 {
                     OrganizationId = organizationId,
                     Index = index,
-                    Limit = limit
+                    Limit = limit,  
+                    Search = search,
+                    Status = status
                 });
 
             _logger.LogDebug($"Fetched Supplier Invitations successfully for Index: {index}, Limit: {limit}");
@@ -162,7 +166,10 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetBuyerInvitations(
             [FromQuery] int index,
-            [FromQuery] int limit)
+            [FromQuery] int limit,
+            [FromQuery] string? search,
+            [FromQuery] string? status
+            )
         {
             _logger.LogDebug($"Fetching Buyer Invitations for Index: {index}, Limit: {limit}");
             Guid organizationId = GetOrganizationId();
@@ -171,7 +178,9 @@ namespace Buyer.API.Controllers
                 {
                     OrganizationId = organizationId,
                     Index = index,
-                    Limit = limit
+                    Limit = limit,
+                    Search = search,
+                    Status = status
                 });
 
             _logger.LogDebug($"Fetched Buyer Invitations successfully for Index: {index}, Limit: {limit}");

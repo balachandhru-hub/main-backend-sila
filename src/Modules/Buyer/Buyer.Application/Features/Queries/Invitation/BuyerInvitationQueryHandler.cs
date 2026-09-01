@@ -5,7 +5,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.LoggerServices;
 
-
 namespace Buyer.Application.Features.Queries.Invitation
 {
     public class BuyerInvitationQueryHandler
@@ -51,10 +50,32 @@ namespace Buyer.Application.Features.Queries.Invitation
             _logger.LogInfo(
                 $"BuyerId found: {buyerId}");
 
-            // Get invitation data using BuyerOrganizationId
-            var invitationData = await _repository.SupplierVerificationRequest
+            // Get invitation query using BuyerOrganizationId
+            var invitationQuery = _repository.SupplierVerificationRequest
                 .FindByCondition(x =>
-                    x.BuyerOrganizationId ==buyerId)
+                    x.BuyerOrganizationId == buyerId);
+
+            // Search filter
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var search = request.Search.Trim();
+
+                invitationQuery = invitationQuery.Where(x =>
+                    x.RFQ.RFQNumber.Contains(search) ||
+                    x.RFQ.Title.Contains(search) ||
+                    x.RFQ.Description.Contains(search));
+            }
+
+            // Status filter
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                var status = request.Status.Trim();
+
+                invitationQuery = invitationQuery.Where(x =>
+                    x.Status == status);
+            }
+
+            var invitationData = await invitationQuery
                 .Include(x => x.RFQ)
                 .Select(x => new
                 {
@@ -68,7 +89,7 @@ namespace Buyer.Application.Features.Queries.Invitation
                     SupplierOrganizationId = x.SupplierOrganizationId,
                     Status = x.Status
                 })
-            .ToListAsync(cancellationToken);
+                .ToListAsync(cancellationToken);
 
             if (!invitationData.Any())
             {
@@ -78,13 +99,13 @@ namespace Buyer.Application.Features.Queries.Invitation
                 throw new KeyNotFoundException(
                     "No RFQ invitations found for this buyer.");
             }
+
             // Get unique supplier IDs
             var supplierIds = invitationData
                 .Select(x => x.SupplierOrganizationId)
                 .Distinct()
                 .ToList();
 
-       
             var suppliers = new Dictionary<Guid, SupplierProfileDto>();
 
             foreach (var supplierId in supplierIds)
@@ -99,7 +120,6 @@ namespace Buyer.Application.Features.Queries.Invitation
                 }
             }
 
-          
             var result = invitationData
                 .Select(x =>
                 {
@@ -109,14 +129,15 @@ namespace Buyer.Application.Features.Queries.Invitation
 
                     return new RFQListDto
                     {
-                        Id= x.Id,
+                        Id = x.Id,
                         RFQId = x.RFQId,
                         RFQNumber = x.RFQNumber,
                         Title = x.Title,
                         Description = x.Description,
                         EndDate = x.EndDate,
                         DeliveryLocation = x.DeliveryLocation,
-                        OrganizationName =supplier?.BusinessProfile?.OrganizationName,
+                        OrganizationName =
+                            supplier?.BusinessProfile?.OrganizationName,
                         Status = x.Status
                     };
                 })
