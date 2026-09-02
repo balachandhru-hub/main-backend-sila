@@ -1,4 +1,5 @@
 using Buyer.Domain.Common;
+using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ namespace Buyer.Application.Features.Commands.Invitation
         : IRequestHandler<UpdateSupplierVerificationStatusCommand, bool>
     {
         private readonly IRepositoryWrapper _repository;
-         private readonly ILoggerManager _logger;
+        private readonly ILoggerManager _logger;
 
         public UpdateSupplierVerificationStatusCommandHandler(
             IRepositoryWrapper repository,
@@ -58,6 +59,26 @@ namespace Buyer.Application.Features.Commands.Invitation
             verificationRequest.Remarks = request.Remarks;
 
             _repository.SupplierVerificationRequest.Update(verificationRequest);
+            if (request.Status.Equals(Common.ACCEPT, StringComparison.OrdinalIgnoreCase))
+            {
+                var existingMapping = await _repository.BuyerSupplierMapping
+                    .FindByCondition(x =>
+                        x.BuyerId == verificationRequest.BuyerOrganizationId &&
+                        x.SupplierId == verificationRequest.SupplierOrganizationId)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (existingMapping == null)
+                {
+                    await _repository.BuyerSupplierMapping.CreateAsync(
+                        new BuyerSupplierMapping
+                        {
+                            Id = Guid.NewGuid(),
+                            BuyerId = verificationRequest.BuyerOrganizationId,
+                            SupplierId = verificationRequest.SupplierOrganizationId
+
+                        });
+                }
+            }
 
             await _repository.SaveAsync();
 
