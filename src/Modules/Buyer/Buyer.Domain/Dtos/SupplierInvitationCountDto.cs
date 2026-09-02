@@ -4,7 +4,7 @@ namespace Buyer.Domain.Dto
     {
         public int All { get; set; }
 
-        public int Draft { get; set; }
+        public int Submitted { get; set; }
 
         public int Pending { get; set; }
 

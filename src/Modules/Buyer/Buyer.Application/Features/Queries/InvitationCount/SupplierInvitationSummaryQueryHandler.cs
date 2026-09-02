@@ -96,8 +96,8 @@ namespace Buyer.Application.Features.Queries.Invitation
             {
                 All = await query.CountAsync(cancellationToken),
 
-                Draft = await query.CountAsync(
-                    x => x.Status == Common.DRAFT,
+                Submitted = await query.CountAsync(
+                    x => x.Status == Common.SUBMITTED,
                     cancellationToken),
 
                 Pending = await query.CountAsync(

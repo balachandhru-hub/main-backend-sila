@@ -86,13 +86,14 @@ namespace Buyer.Application.Features.Queries.Invitation
                 })
                 .ToListAsync(cancellationToken);
 
+            // No matching records should return an empty list
             if (!invitationData.Any())
             {
-                _logger.LogError(
-                    "No RFQ invitations found for this supplier.");
+                _logger.LogInfo(
+                    $"No RFQ invitations found for SupplierId: {supplierId}, " +
+                    $"Search: {request.Search}, Status: {request.Status}");
 
-                throw new KeyNotFoundException(
-                    "No RFQ invitations found for this supplier.");
+                return new List<RFQListDto>();
             }
 
             var buyerOrganizationIds = invitationData
