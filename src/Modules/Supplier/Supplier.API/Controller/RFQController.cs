@@ -21,6 +21,7 @@ using Supplier.Application.Features.Queries.GetAllSupplierRFQ;
 using Supplier.Application.Features.Queries.GetSupplierAllRFQ;
 using Supplier.Application.Features.Queries.GetSupplierQuotation;
 using Supplier.Application.Features.Queries.SupplierAnswers;
+using Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId;
 
 using Supplier.Domain.Dto;
 
@@ -133,7 +134,7 @@ namespace Supplier.API.Controllers
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_SUPPLIER_QUOTATION_RFQ_BY_ID")]
         [SwaggerOperation("GetSupplierQuotationRFQById")]
-        [SwaggerResponse(200, type: typeof(GetRFQByIdDto), description: "Success")]
+        [SwaggerResponse(200, type: typeof(GetAllSupplierQuotationDto), description: "Success")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetQuotationRFQById([FromQuery] Guid rfqId)
@@ -142,6 +143,28 @@ namespace Supplier.API.Controllers
             {
                 RFQId = rfqId
             });
+
+            return Ok(result);
+        }
+         [HttpGet]
+        [Route("api/v1/supplier/quotation/by-supplier-id")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_QUOTATION_BY_SUPPLIER_ID")]
+        [SwaggerOperation("GetSupplierQuotationBySupplierId")]
+        [SwaggerResponse(200, type: typeof(GetAllSupplierQuotationBySupplierIdDto), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetQuotationBySupplierId([FromQuery] Guid rfqId)
+        {
+             var organizationId = GetOrganizationId();
+
+            _logger.LogInfo(
+                $"Fetching Supplier Quotation for RFQId: {rfqId} and OrganizationId: {organizationId}");
+
+            var result = await _mediator.Send(
+                new GetSupplierQuotationBySupplierIdQuery(
+                    rfqId,
+                    organizationId));
 
             return Ok(result);
         }

@@ -330,26 +330,11 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 Items = items,
                 SupplierIds = supplierIds,
                 RFQVerificationTemplateId = verificationTemplateId,
-                SupplierQuotation = supplierQuotation == null
-        ? new List<GetAllSupplierQuotationDto>()
-        : new List<GetAllSupplierQuotationDto>
-        {
-                new GetAllSupplierQuotationDto
-                {
-                    TotalPrice = supplierQuotation.TotalPrice,
-                    DeliveryCharge = supplierQuotation.DeliveryCharge,
-                    Tax = supplierQuotation.Tax,
-                    Discount = supplierQuotation.Discount,
-                    DeliveryType = supplierQuotation.DeliveryType,
-                    Status = supplierQuotation.Status,
-                    QuotationId=supplierQuotation.QuotationId
-                }
-        },
+             SupplierQuotation = supplierQuotation?.Suppliers
+    ?? new List<SupplierQuotationBySupplierDto>(),
 
-                SupplierQuotationItems = supplierQuotation?.SupplierQuotationItems
-        ?? new List<SupplierQuotationItemDto>(),
-                SupplierAnswers = supplierAnswers
-            };
-        }
+    SupplierAnswers = supplierAnswers
+        };
     }
+}
 }

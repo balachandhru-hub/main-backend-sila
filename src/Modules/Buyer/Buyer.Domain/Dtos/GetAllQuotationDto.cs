@@ -1,9 +1,18 @@
-  
-  namespace Buyer.Domain.Dto
+namespace Buyer.Domain.Dto
 {
     public class GetAllSupplierQuotationDto
     {
-        
+        public List<SupplierQuotationBySupplierDto> Suppliers { get; set; } = new();
+    }
+
+    public class SupplierQuotationBySupplierDto
+    {
+        public Guid SupplierRFQId { get; set; }
+
+        public Guid SupplierId { get; set; }
+
+        public string? SupplierName { get; set; }
+
         public decimal? TotalPrice { get; set; }
 
         public decimal? DeliveryCharge { get; set; }
@@ -15,14 +24,16 @@
         public string? DeliveryType { get; set; }
 
         public string? Status { get; set; }
-        public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } 
-        public Guid? QuotationId {get;set;}
 
-       
+        public Guid? QuotationId { get; set; }
+
+        public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } = new();
     }
-        public class SupplierQuotationItemDto
+
+    public class SupplierQuotationItemDto
     {
-     public decimal QuotedPrice { get; set; }
-      public Guid? ItemQuotationId {get;set;}
+        public decimal QuotedPrice { get; set; }
+
+        public Guid? ItemQuotationId { get; set; }
     }
 }

@@ -70,23 +70,63 @@ namespace Supplier.Domain.Dto
 
     }
 
-     public class GetAllSupplierQuotationDto
-    {
-        
-        public decimal? TotalPrice { get; set; }
+    public class GetAllSupplierQuotationDto
+{
+    public List<SupplierQuotationBySupplierDto> Suppliers { get; set; } = new();
+}
 
-        public decimal? DeliveryCharge { get; set; }
+public class SupplierQuotationBySupplierDto
+{
+    public Guid SupplierRFQId { get; set; }
 
-        public decimal? Tax { get; set; }
+    public Guid SupplierId { get; set; }
 
-        public decimal? Discount { get; set; }
+    public string? SupplierName { get; set; }
 
-        public string? DeliveryType { get; set; }
+    public decimal? TotalPrice { get; set; }
 
-        public string? Status { get; set; }
-        public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } 
-        public Guid? QuotationId {get;set;}
+    public decimal? DeliveryCharge { get; set; }
 
+    public decimal? Tax { get; set; }
+
+    public decimal? Discount { get; set; }
+
+    public string? DeliveryType { get; set; }
+
+    public string? Status { get; set; }
+
+    public Guid? QuotationId { get; set; }
+
+    public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } = new();
+}
+ public class GetAllSupplierQuotationBySupplierIdDto
+{
+    public List<SupplierQuotationBySupplierIdDto> Suppliers { get; set; } = new();
+}
+
+public class SupplierQuotationBySupplierIdDto
+{
+    public Guid SupplierRFQId { get; set; }
+
+    public Guid SupplierId { get; set; }
+
+    public string? SupplierName { get; set; }
+
+    public decimal? TotalPrice { get; set; }
+
+    public decimal? DeliveryCharge { get; set; }
+
+    public decimal? Tax { get; set; }
+
+    public decimal? Discount { get; set; }
+
+    public string? DeliveryType { get; set; }
+
+    public string? Status { get; set; }
+
+    public Guid? QuotationId { get; set; }
+
+    public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } = new();
+}
        
     }
-}
