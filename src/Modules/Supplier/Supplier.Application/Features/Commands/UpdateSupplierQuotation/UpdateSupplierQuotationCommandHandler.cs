@@ -171,14 +171,19 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                     {
                          quotationItem = new SupplierQuotationItem
                             {
-                                Id = Guid.NewGuid(),
+                                 Id = Guid.NewGuid(),
+
                                 SupplierQuotationId = quotation.Id,
                                 SupplierRFQItemId = item.SupplierRFQItemId,
+
                                 BuyerRFQItemId = item.BuyerRFQItemId,
                                 BuyerRFQId = quotation.BuyerRFQId,
+
+                                RFQNumber = quotation.RFQNumber,
+                                BuyerId = quotation.BuyerId,
                                 SupplierId = quotation.SupplierId,
+
                                 QuotedPrice = item.QuotedPrice,
-                                IsActive = true
                             };
                             _repository.SupplierQuotationItem.Create(quotationItem);
                     }
