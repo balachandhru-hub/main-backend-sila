@@ -26,6 +26,7 @@ namespace Buyer.Domain.Dto
         public string? Status { get; set; }
 
         public Guid? QuotationId { get; set; }
+        public bool IsLead { get; set; }
 
         public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } = new();
     }

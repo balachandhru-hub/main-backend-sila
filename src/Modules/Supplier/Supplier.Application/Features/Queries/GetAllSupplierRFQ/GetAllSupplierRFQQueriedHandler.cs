@@ -107,6 +107,13 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 .FindByCondition(x => x.SupplierRFQId == supplierRFQId)
                 .FirstOrDefaultAsync(cancellationToken);
 
+            var lowestQuotation = await _repositorywrapper.SupplierQuotation
+                .FindByCondition(x =>
+                    x.BuyerRFQId == request.RFQId &&
+                    x.IsActive)
+                .OrderBy(x => x.TotalPrice)
+                .FirstOrDefaultAsync(cancellationToken);
+
             // Supplier Quotation Items
             var quotationItems = new List<SupplierQuotationItemDto>();
 
@@ -150,7 +157,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 Discount = quotation.Discount,
                 DeliveryType = quotation.DeliveryType,
                 Status = quotation.Status,
-                QutationId=quotation.Id
+                QutationId=quotation.Id,
+                 IsLead = quotation.Id == lowestQuotation?.Id
             }
         },
 

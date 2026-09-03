@@ -26,7 +26,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
             CancellationToken cancellationToken)
         {
             _logger.LogInfo($"Fetching Supplier Quotation for BuyerRFQId: {request.RFQId}");
-
+           
             var supplierRFQs = await _repository.SupplierRFQ
                 .FindByCondition(x =>
                     x.BuyerRFQId == request.RFQId &&
@@ -110,6 +110,13 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
                 throw new NotFoundCustomException(
                     "Supplier Quotation not found.",
                     $"No active SupplierQuotation found for BuyerRFQId: {request.RFQId}");
+            }
+            var lowestTotalPrice = result.Suppliers.Min(x => x.TotalPrice);
+
+
+            foreach (var supplier in result.Suppliers)
+            {
+                supplier.IsLead = supplier.TotalPrice == lowestTotalPrice;
             }
             _logger.LogInfo($"Total Supplier Quotations found for BuyerRFQId: {request.RFQId} is {result.Suppliers.Count}");
             return result;

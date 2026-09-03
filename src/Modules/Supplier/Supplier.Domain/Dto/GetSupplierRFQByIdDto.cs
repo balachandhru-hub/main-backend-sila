@@ -59,6 +59,7 @@ namespace Supplier.Domain.Dto
 
         public string? Status { get; set; }
         public Guid? QutationId {get;set;}
+        public bool IsLead { get; set; }
 
        
     }
@@ -96,6 +97,7 @@ public class SupplierQuotationBySupplierDto
     public string? Status { get; set; }
 
     public Guid? QuotationId { get; set; }
+    public bool IsLead { get; set; }
 
     public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } = new();
 }
