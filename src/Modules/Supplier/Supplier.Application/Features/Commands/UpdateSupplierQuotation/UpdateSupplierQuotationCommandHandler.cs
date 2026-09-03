@@ -163,22 +163,33 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                     var quotationItem = await _repository.SupplierQuotationItem
                         .FindByCondition(x =>
                             x.SupplierQuotationId == quotation.Id &&
-                            x.SupplierRFQItemId == item.SupplierRFQItemId)
+                            x.SupplierRFQItemId == item.SupplierRFQItemId&&
+                              x.SupplierId == quotation.SupplierId )
                         .FirstOrDefaultAsync(cancellationToken);
 
                     if (quotationItem == null)
                     {
-                        _logger.LogError(
-                            $"Quotation Item not found : {item.SupplierRFQItemId}");
-                        throw new BadRequestCustomException(
-                            "Quotation Item not found.",
-                            $"Quotation Item with ID {item.SupplierRFQItemId} was not found.");
+                         quotationItem = new SupplierQuotationItem
+                            {
+                                Id = Guid.NewGuid(),
+                                SupplierQuotationId = quotation.Id,
+                                SupplierRFQItemId = item.SupplierRFQItemId,
+                                BuyerRFQItemId = item.BuyerRFQItemId,
+                                BuyerRFQId = quotation.BuyerRFQId,
+                                SupplierId = quotation.SupplierId,
+                                QuotedPrice = item.QuotedPrice,
+                                IsActive = true
+                            };
+                            _repository.SupplierQuotationItem.Create(quotationItem);
                     }
+                    else
+                    {
+                               quotationItem.QuotedPrice = item.QuotedPrice;
 
+                        _repository.SupplierQuotationItem.Update(quotationItem);
+                        }
 
-                    quotationItem.QuotedPrice = item.QuotedPrice;
-
-                    _repository.SupplierQuotationItem.Update(quotationItem);
+             
 
                     subTotal += quotationItem.QuotedPrice;
 
