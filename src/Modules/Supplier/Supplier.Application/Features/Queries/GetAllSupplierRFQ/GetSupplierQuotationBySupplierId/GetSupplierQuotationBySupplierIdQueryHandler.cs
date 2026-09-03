@@ -49,6 +49,12 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                     x.SupplierId == supplierId &&
                     x.IsActive)
                 .ToListAsync(cancellationToken);
+                var lowestQuotation = await _repository.SupplierQuotation
+                .FindByCondition(x =>
+                    x.BuyerRFQId == request.RFQId &&
+                    x.IsActive)
+                .OrderBy(x => x.TotalPrice)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (quotations == null || quotations.Count == 0)
             {
@@ -88,7 +94,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                     Discount = quotation.Discount,
                     DeliveryType = quotation.DeliveryType,
                     Status = quotation.Status,
-                    SupplierQuotationItems = quotationItems
+                    SupplierQuotationItems = quotationItems,
+                    IsLead = quotation.Id == lowestQuotation?.Id,
                 };
 
                 response.Suppliers.Add(supplierDto);
