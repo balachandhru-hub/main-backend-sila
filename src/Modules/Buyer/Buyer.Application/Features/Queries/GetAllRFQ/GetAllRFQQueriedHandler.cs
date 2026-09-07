@@ -324,7 +324,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 DeliveryTargetDate = rfq.DeliveryTargetDate,
                 Budget = rfq.Budget,
                 AddLotOption = rfq.AddLotOption,
-
+                Status=rfq.Status,
                 TechnicalSpecificationDocuments = technicalDocuments,
                 TermsConditionDocuments = termsDocuments,
                 Questions = questions,
