@@ -43,6 +43,8 @@ namespace Buyer.Infrastructure.Repository
 
         private IRFQQuestionAttachmentMappingRepository _rfqQuestionAttachmentMappingRepository;
         private IRFQBlockchainRecordRepository _rfqBlockchainRecordRepository;
+        private IExternalSupplierRepository _externalSupplierRepository;
+        private IRFQExternalSupplierRepository _rfqExternalSupplierRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -366,6 +368,30 @@ namespace Buyer.Infrastructure.Repository
                 }
 
                 return _rfqBlockchainRecordRepository;
+            }
+        }
+        public IExternalSupplierRepository ExternalSupplier
+        {
+            get
+            {
+                if (_externalSupplierRepository == null)
+                {
+                    _externalSupplierRepository = new ExternalSupplierRepository(_context);
+                }
+
+                return _externalSupplierRepository;
+            }
+        }
+        public IRFQExternalSupplierRepository RFQExternalSupplier
+        {
+            get
+            {
+                if (_rfqExternalSupplierRepository == null)
+                {
+                    _rfqExternalSupplierRepository = new RFQExternalSupplierRepository(_context);
+                }
+
+                return _rfqExternalSupplierRepository;
             }
         }
         public bool Save()

@@ -36,6 +36,8 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IDefaultVerificationTemplateRepository DefaultVerificationTemplateRepository {get;}
         IRFQQuestionAttachmentMappingRepository RFQQuestionAttachmentMapping {get;}
         IRFQBlockchainRecordRepository RFQBlockchainRecord {get;}
+        IExternalSupplierRepository ExternalSupplier {get;}
+        IRFQExternalSupplierRepository RFQExternalSupplier {get;}
         bool Save();
         Task<bool> SaveAsync();
     }

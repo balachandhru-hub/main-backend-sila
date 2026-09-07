@@ -48,7 +48,11 @@ namespace Buyer.Domain.Common
                 public const string QUOTATION_SUBMITTED="QUOTATION_SUBMITTED";
                 public const string HYPERLEDGER_FABRIC="HYPERLEDGER_FABRIC";
                 public const string BLOCKCHAIN_KEY="Encryption:AesKey";
-                
+                public const string EXTERNAL_SUPPLIER_INVITED_STATUS = "INVITED";
+                public const string EXTERNAL_SUPPLIER_EMAIL_KEY = "EXTERNAL_SUPPLIER_QUOTATION_SUBMITTED";
+                public const string EXTERNAL_SUPPLIER_ENTITY_TYPE = "RFQ";
+                public static readonly string REGISTRATION_LINK = "https://vosox.chervicaon.com/";
+
 
         }
 }

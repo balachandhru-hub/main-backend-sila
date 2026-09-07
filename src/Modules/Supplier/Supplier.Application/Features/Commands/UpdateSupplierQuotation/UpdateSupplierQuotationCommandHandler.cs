@@ -462,6 +462,12 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
 
                 SupplierQuotationId = quotation.Id,
 
+                SupplierId = quotation.SupplierId,
+
+                BuyerId = quotation.BuyerId,
+
+                RFQNumber = quotation.RFQNumber,
+
                 TotalPrice = quotation.TotalPrice,
 
                 DeliveryCharge = quotation.DeliveryCharge,

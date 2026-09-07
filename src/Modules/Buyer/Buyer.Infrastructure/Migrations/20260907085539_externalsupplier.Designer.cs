@@ -4,6 +4,7 @@ using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Buyer.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260907085539_externalsupplier")]
+    partial class externalsupplier
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -807,7 +810,7 @@ namespace Buyer.Infrastructure.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("email");
 
                     b.Property<bool>("IsActive")
@@ -830,11 +833,6 @@ namespace Buyer.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_external_supplier");
-
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("ix_external_supplier_email")
-                        .HasFilter("[is_active] = 1");
 
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_external_supplier_is_active");
@@ -922,11 +920,6 @@ namespace Buyer.Infrastructure.Migrations
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("currency");
 
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("datetime2")
@@ -1225,10 +1218,8 @@ namespace Buyer.Infrastructure.Migrations
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_rfqexternal_supplier_is_active");
 
-                    b.HasIndex("RFQId", "ExternalSupplierId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_rfqexternal_supplier_rfqid_external_supplier_id")
-                        .HasFilter("[is_active] = 1");
+                    b.HasIndex("RFQId")
+                        .HasDatabaseName("ix_rfqexternal_supplier_rfqid");
 
                     b.ToTable("rfqexternal_supplier", "buyersystem");
                 });

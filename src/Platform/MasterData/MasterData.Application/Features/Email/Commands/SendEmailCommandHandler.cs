@@ -172,7 +172,15 @@ public class SendEmailCommandHandler :
             .Replace(Common.COMPANY_NAME_PLACEHOLDER,
                 _configuration["EmailSettings:CompanyName"] ?? "")
             .Replace(Common.SUPPORT_EMAIL_PLACEHOLDER,
-                _configuration["EmailSettings:SupportEmail"] ?? "");
+                _configuration["EmailSettings:SupportEmail"] ?? "")
+            .Replace(Common.SUPPLIER_NAME_PLACEHOLDER,
+                request.Parameters?.GetValueOrDefault("SUPPLIER_NAME") ?? "")
+            .Replace(Common.RFQ_NUMBER_PLACEHOLDER,
+                request.Parameters?.GetValueOrDefault("RFQ_NUMBER") ?? "")
+            .Replace(Common.RFQ_TITLE_PLACEHOLDER,
+                request.Parameters?.GetValueOrDefault("RFQ_TITLE") ?? "")
+            .Replace(Common.REGISTRATION_LINK_PLACEHOLDER,
+                request.Parameters?.GetValueOrDefault("REGISTRATION_LINK") ?? "");
 
         _logger.LogInfo("Replaced email placeholders");
 

@@ -51,6 +51,8 @@ namespace Buyer.Domain.Dto
 
         public List<Guid> SupplierIds { get; set; } = new();
 
+        public List<ExternalSupplierDto> ExternalSuppliers { get; set; } = new();
+
         public Guid RFQVerificationTemplateId { get; set; }
 
     }

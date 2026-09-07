@@ -1,10 +1,10 @@
 using System.Text.Json;
 using MediatR;
 using Buyer.Domain.Entities;
-using Buyer.Domain.Dto;
 using Buyer.Infrastructure.Contracts.IRepository;
 using HashingSystem;
 using Buyer.Domain.Common;
+using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Features.Commands.StoreQuotationAudit
 {
@@ -13,13 +13,16 @@ namespace Buyer.Application.Features.Commands.StoreQuotationAudit
     {
         private readonly IRepositoryWrapper _repository;
         private readonly IAesEncryption _aesEncryption;
+        private readonly ILoggerManager _logger;
 
         public StoreQuotationAuditCommandHandler(
             IRepositoryWrapper repository,
-            IAesEncryption aesEncryption)
+            IAesEncryption aesEncryption,
+            ILoggerManager logger)
         {
             _repository = repository;
             _aesEncryption = aesEncryption;
+            _logger = logger;
         }
 
         public async Task Handle(

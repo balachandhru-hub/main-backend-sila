@@ -46,6 +46,8 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<DefaultVerificationTemplateQuestion> DefaultVerificationTemplateQuestion {get;set;}
         public DbSet<RFQQuestionAttachmentMapping> RFQQuestionAttachmentMapping {get;set;}
         public DbSet<RFQBlockchainRecord> RFQBlockchainRecord {get;set;}
+        public DbSet<ExternalSupplier> ExternalSupplier {get;set;}
+        public DbSet<RFQExternalSupplier> RFQExternalSupplier {get;set;}
 
 
 
@@ -82,6 +84,22 @@ namespace Buyer.Infrastructure.DbContext
             _ = modelBuilder.Entity<DefaultVerificationTemplate>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQQuestionAttachmentMapping>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQBlockchainRecord>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<ExternalSupplier>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<RFQExternalSupplier>().HasIndex(a=>a.IsActive);
+
+            // Prevent duplicate external supplier records for the same
+            // email, and duplicate RFQ/ExternalSupplier mappings, even
+            // under concurrent requests. Scoped to active rows so a
+            // soft-deleted (inactive) record does not block a new one.
+            _ = modelBuilder.Entity<ExternalSupplier>()
+                .HasIndex(a => a.Email)
+                .IsUnique()
+                .HasFilter("[is_active] = 1");
+
+            _ = modelBuilder.Entity<RFQExternalSupplier>()
+                .HasIndex(a => new { a.RFQId, a.ExternalSupplierId })
+                .IsUnique()
+                .HasFilter("[is_active] = 1");
 
 
 

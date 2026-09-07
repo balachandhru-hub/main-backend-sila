@@ -6,6 +6,12 @@ namespace Supplier.Domain.Dto
 
        public Guid SupplierQuotationId { get; set; }
 
+        public Guid SupplierId { get; set; }
+
+        public Guid BuyerId { get; set; }
+
+        public string RFQNumber { get; set; }
+
         public decimal TotalPrice { get; set; }
 
         public decimal? DeliveryCharge { get; set; }

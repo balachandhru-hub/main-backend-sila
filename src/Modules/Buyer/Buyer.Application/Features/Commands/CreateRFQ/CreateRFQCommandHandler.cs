@@ -1,6 +1,7 @@
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 using System.Security.Claims;
@@ -8,6 +9,7 @@ using SharedKernel.Dto;
 using Buyer.Application.Features.Assets.Commands;
 using Buyer.Domain.Common;
 using Buyer.Application.Features.Commands.InviteSuppliers;
+using Buyer.Application.Features.Commands.NotifyExternalSupplier;
 using Buyer.Domain.Dto;
 using Buyer.Application.Contracts;
 
@@ -258,10 +260,91 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                         BuyerId = buyer.Id,
                         SupplierId = supplierId
                     });
-                _logger.LogInfo($"Supplier mapping completed successfully. Total Suppliers: {request.RFQ.SupplierIds.Count}");
             }
+            _logger.LogInfo($"Supplier mapping completed successfully. Total Suppliers: {request.RFQ.SupplierIds.Count}");
 
 
+
+            // ======================================================
+            // Save all external (unregistered) suppliers - reuse an
+            // existing ExternalSupplier by email instead of always
+            // creating a new one, and never duplicate the RFQ mapping.
+            // ======================================================
+
+            var createdExternalSuppliers = new List<ExternalSupplier>();
+
+            if (request.RFQ.ExternalSuppliers.Any())
+            {
+                var normalizedEmails = request.RFQ.ExternalSuppliers
+                    .Select(x => x.Email.Trim().ToLower())
+                    .Distinct()
+                    .ToList();
+
+                var existingExternalSuppliers = await _repository.ExternalSupplier
+                    .FindByCondition(x =>
+                        x.IsActive &&
+                        normalizedEmails.Contains(x.Email.ToLower()))
+                    .ToListAsync(cancellationToken);
+
+                var externalSupplierByEmail = existingExternalSuppliers
+                    .GroupBy(x => x.Email.Trim().ToLower())
+                    .ToDictionary(g => g.Key, g => g.First());
+
+                foreach (var externalSupplierDto in request.RFQ.ExternalSuppliers)
+                {
+                    var normalizedEmail = externalSupplierDto.Email.Trim();
+                    var normalizedEmailKey = normalizedEmail.ToLower();
+
+                    if (!externalSupplierByEmail.TryGetValue(normalizedEmailKey, out var externalSupplier))
+                    {
+                        externalSupplier = new ExternalSupplier
+                        {
+                            Id = Guid.NewGuid(),
+                            SupplierName = externalSupplierDto.SupplierName,
+                            Email = normalizedEmail,
+                            PhoneNumber = externalSupplierDto.PhoneNumber,
+                            Address = externalSupplierDto.Address
+                        };
+
+                        await _repository.ExternalSupplier.CreateAsync(externalSupplier);
+                        externalSupplierByEmail[normalizedEmailKey] = externalSupplier;
+
+                        _logger.LogInfo(
+                            $"Created new external supplier. ExternalSupplierId: {externalSupplier.Id}, Email: {normalizedEmail}");
+                    }
+                    else
+                    {
+                        _logger.LogInfo(
+                            $"Reusing existing external supplier. ExternalSupplierId: {externalSupplier.Id}, Email: {normalizedEmail}");
+                    }
+
+                    if (!createdExternalSuppliers.Any(x => x.Id == externalSupplier.Id))
+                    {
+                        createdExternalSuppliers.Add(externalSupplier);
+                    }
+
+                    var existingMapping = await _repository.RFQExternalSupplier
+                        .FindByCondition(x =>
+                            x.RFQId == rfq.Id &&
+                            x.ExternalSupplierId == externalSupplier.Id &&
+                            x.IsActive)
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    if (existingMapping == null)
+                    {
+                        await _repository.RFQExternalSupplier.CreateAsync(
+                            new RFQExternalSupplier
+                            {
+                                Id = Guid.NewGuid(),
+                                RFQId = rfq.Id,
+                                ExternalSupplierId = externalSupplier.Id,
+                                Status = Common.EXTERNAL_SUPPLIER_INVITED_STATUS
+                            });
+                    }
+                }
+
+                _logger.LogInfo($"External supplier mapping completed successfully. Total External Suppliers: {createdExternalSuppliers.Count}");
+            }
 
             // ======================================================
             // Get verified suppliers
@@ -351,6 +434,71 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                         $"Failed to create Supplier RFQ for Supplier {supplierId}. Error: {ex.Message}");
                 }
 
+            }
+
+            // ======================================================
+            // Create Supplier RFQ (Supplier microservice) for each
+            // external supplier, keyed by ExternalSupplierId so the
+            // existing bidding infrastructure picks it up.
+            // ======================================================
+
+            foreach (var externalSupplier in createdExternalSuppliers)
+            {
+                var supplierRequest = new CreateSupplierRFQRequestDto
+                {
+                    BuyerRFQId = rfq.Id,
+                    RFQNumber = rfq.RFQNumber,
+                    BuyerId = buyer.Id,
+                    SupplierId = externalSupplier.Id,
+                    BuyerName = buyer.OrganizationName,
+                    Title = rfq.Title,
+                    Description = rfq.Description,
+                    StartDate = rfq.StartDate,
+                    EndDate = rfq.EndDate,
+                    DeliveryLocation = rfq.DeliveryLocation,
+                    AddLotOption = rfq.AddLotOption,
+                    Status = rfq.Status,
+                    Items = createdItems.Select(x =>
+                        new CreateSupplierRFQItemRequestDto
+                        {
+                            BuyerRFQItemId = x.Id,
+                            Description = x.Description,
+                            Quantity = x.Quantity,
+                            UOM = x.UOM,
+                            MaterialCode = x.MaterialCode,
+                            MaterialGroup = x.MaterialGroup,
+                            CostCenter = x.CostCenter,
+                            LineNumber = x.LineNumber
+                        }).ToList()
+                };
+
+                try
+                {
+                    await _supplierApiClient.CreateSupplierRFQ(
+                        supplierRequest,
+                        cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        $"Failed to create Supplier RFQ for External Supplier {externalSupplier.Id}. Error: {ex.Message}");
+                    throw new BadRequestCustomException(
+                        "Unable to create Supplier RFQ.",
+                        $"Failed to create Supplier RFQ for External Supplier {externalSupplier.Id}. Error: {ex.Message}");
+                }
+            }
+
+            // ======================================================
+            // Notify external suppliers by email, only after the RFQ
+            // and their Supplier RFQ records have been created
+            // successfully.
+            // ======================================================
+
+            foreach (var externalSupplier in createdExternalSuppliers)
+            {
+                await _mediator.Send(
+                    new NotifyExternalSupplierCommand(rfq.Id, externalSupplier.Id),
+                    cancellationToken);
             }
 
             _logger.LogInfo($"RFQ created successfully. RFQ Id : {rfq.Id}");

@@ -12,6 +12,11 @@ namespace MasterData.Domain.Common
         public static readonly string OTP_VALIDITY_PLACEHOLDER = "{OTP_VALIDITY}";
         public static readonly string COMPANY_NAME_PLACEHOLDER = "{COMPANY_NAME}";
         public static readonly string SUPPORT_EMAIL_PLACEHOLDER = "{SUPPORT_EMAIL}";
+        public static readonly string SUPPLIER_NAME_PLACEHOLDER = "{SUPPLIER_NAME}";
+        public static readonly string RFQ_NUMBER_PLACEHOLDER = "{RFQ_NUMBER}";
+        public static readonly string RFQ_TITLE_PLACEHOLDER = "{RFQ_TITLE}";
+        public static readonly string REGISTRATION_LINK_PLACEHOLDER = "{REGISTRATION_LINK}";
+        public static readonly string REGISTRATION_LINK = "https://vosox.chervicaon.com/";
 
     }
 }
