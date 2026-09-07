@@ -37,6 +37,7 @@ namespace Buyer.Domain.Dto
         public decimal QuotedPrice { get; set; }
 
         public Guid? ItemQuotationId { get; set; }
+        public Guid SupplierRFQItemId { get; set; }
           public decimal? DeliveryCharge { get; set; }
             public string? DeliveryType { get; set; }
 

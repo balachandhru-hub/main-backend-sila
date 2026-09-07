@@ -4,6 +4,7 @@ using SharedKernel.ExceptionHandler;
 using Supplier.Domain.Dto;
 using Supplier.Infrastructure.Contracts.IRepository;
 using SharedKernel.LoggerServices;
+using  Supplier.Domain.Common;
 
 namespace Supplier.Application.Features.Queries.GetSupplierQuotation
 {
@@ -51,7 +52,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
                     .FindByCondition(x =>
                         x.SupplierRFQId == supplierRFQ.Id &&
                         x.BuyerRFQId == request.RFQId &&
-                        x.IsActive)
+                        x.IsActive&&
+                        x.Status == Common.SUBMITTED)
                     .ToListAsync(cancellationToken);
 
 
@@ -75,7 +77,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
                         .Select(x => new SupplierQuotationItemDto
                         {
                             QuotedPrice = x.QuotedPrice,
-                            ItemQutationId = x.Id,
+                            ItemQuotationId = x.Id,
+                            SupplierRFQItemId = x.SupplierRFQItemId,
                             
                             DeliveryCharge = x.DeliveryCharge,
                             DeliveryType = x.DeliveryType,

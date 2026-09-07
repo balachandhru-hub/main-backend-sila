@@ -123,7 +123,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     .FindByCondition(x => x.SupplierQuotationId == quotation.Id)
                     .Select(x => new SupplierQuotationItemDto
                     {
-                        ItemQutationId = x.Id,
+                        ItemQuotationId = x.Id,
                         QuotedPrice = x.QuotedPrice
                     })
                     .ToListAsync(cancellationToken);

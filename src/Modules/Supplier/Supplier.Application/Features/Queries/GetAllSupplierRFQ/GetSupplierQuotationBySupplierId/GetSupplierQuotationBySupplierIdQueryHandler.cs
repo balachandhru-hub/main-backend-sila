@@ -83,8 +83,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                     .Select(x => new SupplierQuotationItemDto
                     {
                         QuotedPrice = x.QuotedPrice,
-                        ItemQutationId = x.Id,
-                        
+                        ItemQuotationId = x.Id,
+                         SupplierRFQItemId = x.SupplierRFQItemId,
 
                         DeliveryCharge = x.DeliveryCharge,
                         DeliveryType = x.DeliveryType,
