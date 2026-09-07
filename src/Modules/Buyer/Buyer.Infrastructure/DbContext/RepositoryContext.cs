@@ -88,20 +88,9 @@ namespace Buyer.Infrastructure.DbContext
             _ =  modelBuilder.Entity<RFQOrganizationUserMapping>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<ExternalSupplier>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQExternalSupplier>().HasIndex(a=>a.IsActive);
+          
 
-            // Prevent duplicate external supplier records for the same
-            // email, and duplicate RFQ/ExternalSupplier mappings, even
-            // under concurrent requests. Scoped to active rows so a
-            // soft-deleted (inactive) record does not block a new one.
-            _ = modelBuilder.Entity<ExternalSupplier>()
-                .HasIndex(a => a.Email)
-                .IsUnique()
-                .HasFilter("[is_active] = 1");
 
-            _ = modelBuilder.Entity<RFQExternalSupplier>()
-                .HasIndex(a => new { a.RFQId, a.ExternalSupplierId })
-                .IsUnique()
-                .HasFilter("[is_active] = 1");
 
 
 
