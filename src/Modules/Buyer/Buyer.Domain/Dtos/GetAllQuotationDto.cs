@@ -27,6 +27,7 @@ namespace Buyer.Domain.Dto
 
         public Guid? QuotationId { get; set; }
         public bool IsLead { get; set; }
+        public string  Currency { get; set; }
 
         public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } = new();
     }
@@ -36,5 +37,17 @@ namespace Buyer.Domain.Dto
         public decimal QuotedPrice { get; set; }
 
         public Guid? ItemQuotationId { get; set; }
+          public decimal? DeliveryCharge { get; set; }
+            public string? DeliveryType { get; set; }
+
+            public decimal? Discount { get; set; }
+            public string? DiscountType { get; set; }
+
+            public decimal? Tax { get; set; }
+            public string? TaxType { get; set; }
+
+            public decimal QuotedAmount { get; set; }
+            public decimal SubTotal { get; set; }
+            public int LineNumber { get; set; }
     }
 }

@@ -50,6 +50,7 @@
                     EndDate = request.RFQ.EndDate,
 
                     AddLotOption = request.RFQ.AddLotOption,
+                    Currency = request.RFQ.Currency,
                     Status = request.RFQ.Status,
                     DeliveryLocation=request.RFQ.DeliveryLocation
                 };

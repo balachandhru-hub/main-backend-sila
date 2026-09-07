@@ -26,6 +26,7 @@ namespace Buyer.Domain.Dto
         public decimal Budget { get; set; }
 
         public bool AddLotOption { get; set; }
+        
 
         // Hardcoded template for now
 

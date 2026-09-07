@@ -75,7 +75,20 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
                         .Select(x => new SupplierQuotationItemDto
                         {
                             QuotedPrice = x.QuotedPrice,
-                            ItemQutationId = x.Id
+                            ItemQutationId = x.Id,
+                            
+                            DeliveryCharge = x.DeliveryCharge,
+                            DeliveryType = x.DeliveryType,
+
+                            Discount = x.Discount,
+                            DiscountType = x.DiscountType,
+
+                            Tax = x.Tax,
+                            TaxType = x.TaxType,
+
+                            QuotedAmount = x.QuotedAmount,
+                            SubTotal = x.SubTotal,
+                             LineNumber = x.SupplierRFQItem.LineNumber
                         })
                         .ToListAsync(cancellationToken);
 
@@ -96,6 +109,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
                             DeliveryCharge = quotation.DeliveryCharge,
                             Tax = quotation.Tax,
                             Discount = quotation.Discount,
+                              Currency = supplierRFQ.Currency,
                             DeliveryType = quotation.DeliveryType,
                             Status = quotation.Status,
 
@@ -111,6 +125,9 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
                     "Supplier Quotation not found.",
                     $"No active SupplierQuotation found for BuyerRFQId: {request.RFQId}");
             }
+            result.Suppliers = result.Suppliers
+                .OrderBy(x => x.TotalPrice)
+                .ToList();
             var lowestTotalPrice = result.Suppliers.Min(x => x.TotalPrice);
 
 

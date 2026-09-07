@@ -79,6 +79,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                 DeliveryTargetDate = request.RFQ.DeliveryTargetDate,
                 Budget = request.RFQ.Budget,
                 AddLotOption = request.RFQ.AddLotOption,
+                Currency = request.RFQ.Currency,
                 Status = Common.RFQ_OPEN_STATUS,
 
 

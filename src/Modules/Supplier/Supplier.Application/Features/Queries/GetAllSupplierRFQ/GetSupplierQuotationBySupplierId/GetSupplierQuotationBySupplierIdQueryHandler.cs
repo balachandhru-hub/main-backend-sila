@@ -67,10 +67,15 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
 
             var response = new GetAllSupplierQuotationBySupplierIdDto();
 
-
+           
             foreach (var quotation in quotations)
             {
                 _logger.LogInfo($"Processing QuotationId: {quotation.Id} for SupplierId: {supplierId}");
+                 var supplierRFQ = await _repository.SupplierRFQ
+                    .FindByCondition(x =>
+                        x.Id == quotation.SupplierRFQId &&
+                        x.IsActive)
+                    .FirstOrDefaultAsync(cancellationToken);
                 var quotationItems = await _repository.SupplierQuotationItem
                     .FindByCondition(x =>
                         x.SupplierQuotationId == quotation.Id &&
@@ -78,7 +83,21 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                     .Select(x => new SupplierQuotationItemDto
                     {
                         QuotedPrice = x.QuotedPrice,
-                        ItemQutationId = x.Id
+                        ItemQutationId = x.Id,
+                        
+
+                        DeliveryCharge = x.DeliveryCharge,
+                        DeliveryType = x.DeliveryType,
+
+                        Discount = x.Discount,
+                        DiscountType = x.DiscountType,
+
+                        Tax = x.Tax,
+                        TaxType = x.TaxType,
+
+                        QuotedAmount = x.QuotedAmount,
+                        SubTotal = x.SubTotal,
+                       LineNumber = x.SupplierRFQItem.LineNumber 
                     })
                     .ToListAsync(cancellationToken);
 
@@ -92,6 +111,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                     DeliveryCharge = quotation.DeliveryCharge,
                     Tax = quotation.Tax,
                     Discount = quotation.Discount,
+                    Currency = supplierRFQ?.Currency,
+                    
                     DeliveryType = quotation.DeliveryType,
                     Status = quotation.Status,
                     SupplierQuotationItems = quotationItems,
@@ -100,6 +121,9 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
 
                 response.Suppliers.Add(supplierDto);
             }
+            response.Suppliers = response.Suppliers
+            .OrderBy(x => x.TotalPrice)
+            .ToList();
             _logger.LogInfo($"Successfully fetched {response.Suppliers.Count} Supplier Quotations for BuyerRFQId: {request.RFQId} and SupplierId: {supplierId}");
             return response;
         }

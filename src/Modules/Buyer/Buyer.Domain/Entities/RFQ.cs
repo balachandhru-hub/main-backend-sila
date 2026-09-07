@@ -46,6 +46,7 @@ namespace Buyer.Domain.Entities
         public decimal? TaxCharge { get; set; }
 
         public decimal? DeliveryCharge { get; set; }
+        public string Currency { get; set; }
         public RFQ() { }
 
     }

@@ -160,6 +160,20 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                 {
                     _logger.LogInfo(
                         $"Updating Quotation Item : {item.SupplierRFQItemId} for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
+
+                    var supplierRFQItem = await _repository.SupplierRFQItem
+                        .FindByCondition(x => x.Id == item.SupplierRFQItemId)
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    if (supplierRFQItem == null)
+                    {
+                        _logger.LogError(
+                            $"Supplier RFQ Item not found : {item.SupplierRFQItemId}");
+                        throw new NotFoundCustomException(
+                            "Supplier RFQ Item not found.",
+                            $"Supplier RFQ Item with ID {item.SupplierRFQItemId} was not found.");
+                    }
+
                     var quotationItem = await _repository.SupplierQuotationItem
                         .FindByCondition(x =>
                             x.SupplierQuotationId == quotation.Id &&
@@ -179,22 +193,69 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                                 RFQNumber = quotation.RFQNumber,
                                 BuyerId = quotation.BuyerId,
                                 SupplierId = quotation.SupplierId,
-                                QuotedPrice = item.QuotedPrice,
-                                
+
                             };
                             _repository.SupplierQuotationItem.Create(quotationItem);
                     }
                     else
                     {
-                               quotationItem.QuotedPrice = item.QuotedPrice;
-
                         _repository.SupplierQuotationItem.Update(quotationItem);
-                        }
+                    }
 
-             
+                    quotationItem.QuotedPrice = item.QuotedPrice;
+                    quotationItem.Discount = item.Discount;
+                    quotationItem.DiscountType = item.DiscountType;
+                    quotationItem.Tax = item.Tax;
+                    quotationItem.TaxType = item.TaxType;
+                    quotationItem.DeliveryCharge = item.DeliveryCharge;
+                    quotationItem.DeliveryType = item.DeliveryType;
 
-                    subTotal += quotationItem.QuotedPrice;
+                    // Step 1: QuotedAmount = Quantity * QuotedPrice
+                    quotationItem.QuotedAmount =
+                        supplierRFQItem.Quantity * quotationItem.QuotedPrice;
 
+                    // Step 2: Apply Discount
+                    decimal itemDiscountAmount = 0;
+                    if (quotationItem.Discount.HasValue)
+                    {
+                        itemDiscountAmount = string.Equals(
+                            quotationItem.DiscountType,
+                            Common.PERCENTAGE,
+                            StringComparison.OrdinalIgnoreCase)
+                            ? quotationItem.QuotedAmount * quotationItem.Discount.Value / 100
+                            : quotationItem.Discount.Value;
+                    }
+                    decimal itemAmountAfterDiscount =
+                        quotationItem.QuotedAmount - itemDiscountAmount;
+
+                    // Step 3: Apply Tax
+                    decimal itemTaxAmount = 0;
+                    if (quotationItem.Tax.HasValue)
+                    {
+                        itemTaxAmount = string.Equals(
+                            quotationItem.TaxType,
+                            Common.PERCENTAGE,
+                            StringComparison.OrdinalIgnoreCase)
+                            ? itemAmountAfterDiscount * quotationItem.Tax.Value / 100
+                            : quotationItem.Tax.Value;
+                    }
+                    decimal itemAmountAfterTax =
+                        itemAmountAfterDiscount + itemTaxAmount;
+
+                    // Step 4: Apply Delivery Charge
+                    decimal itemDeliveryAmount = 0;
+                    if (quotationItem.DeliveryCharge.HasValue)
+                    {
+                        itemDeliveryAmount = string.Equals(
+                            quotationItem.DeliveryType,
+                            Common.PERCENTAGE,
+                            StringComparison.OrdinalIgnoreCase)
+                            ? itemAmountAfterTax * quotationItem.DeliveryCharge.Value / 100
+                            : quotationItem.DeliveryCharge.Value;
+                    }
+                    quotationItem.SubTotal = itemAmountAfterTax + itemDeliveryAmount;
+
+                    subTotal += quotationItem.SubTotal;
 
                     quotationItemsForHistory.Add(quotationItem);
                 }
@@ -218,63 +279,69 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
 
             decimal total = subTotal;
 
-            //delivery charge
-            if (quotation.Discount.HasValue)
+            // Quotation-level Discount -> Tax -> Delivery apply only to lot-wise
+            // quotations. Item-wise quotations already have discount/tax/delivery
+            // applied per line item, and TotalPrice is the sum of item SubTotals.
+            if (supplierRFQ.AddLotOption)
             {
-                _logger.LogInfo(
-                    $"Applying discount for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
-
-                if (string.Equals(
-                    quotation.DiscountType,
-                    Common.PERCENTAGE,
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    total -= total * quotation.Discount.Value / 100;
-                }
-                else
-                {
-                    total -= quotation.Discount.Value;
-                }
-            }
-            // Tax (Per Quotation)
-            if (quotation.Tax.HasValue)
-            {
-                if (string.Equals(
-                    quotation.TaxType,
-                    Common.PERCENTAGE,
-                    StringComparison.OrdinalIgnoreCase))
+                //delivery charge
+                if (quotation.Discount.HasValue)
                 {
                     _logger.LogInfo(
-                        $"Applying tax for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
-                    total += total * quotation.Tax.Value / 100;
-                }
-                else
-                {
-                    _logger.LogInfo(
-                        $"Applying tax for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
-                    total += quotation.Tax.Value;
-                }
-            }
+                        $"Applying discount for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
 
-            // Delivery (Per Quotation)
-            if (quotation.DeliveryCharge.HasValue)
-            {
-                _logger.LogInfo(
-                    $"Applying delivery charge for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
-                if (string.Equals(
-                    quotation.DeliveryType,
-                    Common.PERCENTAGE,
-                    StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(
+                        quotation.DiscountType,
+                        Common.PERCENTAGE,
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        total -= total * quotation.Discount.Value / 100;
+                    }
+                    else
+                    {
+                        total -= quotation.Discount.Value;
+                    }
+                }
+                // Tax (Per Quotation)
+                if (quotation.Tax.HasValue)
+                {
+                    if (string.Equals(
+                        quotation.TaxType,
+                        Common.PERCENTAGE,
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogInfo(
+                            $"Applying tax for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
+                        total += total * quotation.Tax.Value / 100;
+                    }
+                    else
+                    {
+                        _logger.LogInfo(
+                            $"Applying tax for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
+                        total += quotation.Tax.Value;
+                    }
+                }
+
+                // Delivery (Per Quotation)
+                if (quotation.DeliveryCharge.HasValue)
                 {
                     _logger.LogInfo(
                         $"Applying delivery charge for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
-                    total += total * quotation.DeliveryCharge.Value / 100;
-                }
-                else
-                {
-                    _logger.LogInfo(
-                        $"Applying delivery charge for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
-                    total += quotation.DeliveryCharge.Value;
+                    if (string.Equals(
+                        quotation.DeliveryType,
+                        Common.PERCENTAGE,
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogInfo(
+                            $"Applying delivery charge for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
+                        total += total * quotation.DeliveryCharge.Value / 100;
+                    }
+                    else
+                    {
+                        _logger.LogInfo(
+                            $"Applying delivery charge for Supplier Quotation : {request.Quotation.SupplierQuotationId}");
+                        total += quotation.DeliveryCharge.Value;
+                    }
                 }
             }
 
@@ -356,7 +423,23 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                     Version = newVersion,
 
                     QuotedPrice =
-                        quotationItem.QuotedPrice
+                        quotationItem.QuotedPrice,
+
+                    Discount = quotationItem.Discount,
+
+                    DiscountType = quotationItem.DiscountType,
+
+                    Tax = quotationItem.Tax,
+
+                    TaxType = quotationItem.TaxType,
+
+                    DeliveryCharge = quotationItem.DeliveryCharge,
+
+                    DeliveryType = quotationItem.DeliveryType,
+
+                    QuotedAmount = quotationItem.QuotedAmount,
+
+                    SubTotal = quotationItem.SubTotal
                 };
 
                 await _repository.SupplierQuotationItemHistory

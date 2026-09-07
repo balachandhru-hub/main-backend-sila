@@ -21,6 +21,7 @@ namespace Buyer.Domain.Dto
         public DateTime EndDate { get; set; }
 
         public bool AddLotOption { get; set; }
+        public string Currency { get; set; }
 
         public string Status { get; set; }
         public string DeliveryLocation { get; set; }
