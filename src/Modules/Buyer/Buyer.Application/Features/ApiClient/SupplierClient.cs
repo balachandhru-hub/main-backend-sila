@@ -362,5 +362,53 @@ namespace Buyer.Infrastructure.ApiClients
                 $"Supplier RFQ status updated successfully. " +
                 $"RFQId: {rfqId}, Status: {status}");
         }
+
+        public async Task<BidCompareResponseDto> GetBidCompare(
+            Guid rfqId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo($"Fetching Bid Compare. RFQId: {rfqId}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/bid-compare?rfqId={rfqId}");
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                _logger.LogInfo("Adding access token to request headers.");
+
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to fetch Bid Compare. RFQId: {rfqId}, " +
+                    $"Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch Bid Compare.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<BidCompareResponseDto>(
+                cancellationToken: cancellationToken);
+
+            _logger.LogInfo($"Bid Compare fetched successfully. RFQId: {rfqId}");
+
+            return result ?? new BidCompareResponseDto();
+        }
     }
 }

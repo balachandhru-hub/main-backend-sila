@@ -31,6 +31,7 @@ using Supplier.Application.Features.Commands.UpdateSupplierDispatchLocation;
 using Supplier.Application.Features.Commands.DeleteBankAccount;
 using Supplier.Application.Features.Commands.DeleteDispatchLocation;
 using Supplier.Application.Features.Queries.GetSupplierQuotationHistoryComparison;
+using Supplier.Application.Features.Queries.GetBidCompare;
 
 
 
@@ -283,6 +284,21 @@ namespace Supplier.API.Controllers
 
 
 
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("api/v1/supplier/bid-compare")]
+        [ApiAuthorization(Name = "GET_SUPPLIER_BID_COMPARE")]
+        [ValidateModelState]
+        [SwaggerOperation("GetSupplierBidCompare")]
+        [SwaggerResponse(200, type: typeof(BidCompareResponseDto), description: "Bid compare fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetBidCompare([FromQuery] Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetBidCompareQuery(rfqId));
 
             return Ok(result);
         }

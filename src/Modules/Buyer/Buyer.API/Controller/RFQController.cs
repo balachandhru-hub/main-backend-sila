@@ -15,6 +15,7 @@ using Buyer.Application.Features.Queries.Invitation;
 using Buyer.Application.Features.Commands.Invitation;
 using Buyer.Application.Features.Queries.GetCostCenterById;
 using Buyer.Application.Features.Commands.UpdateRFQ;
+using Buyer.Application.Features.Queries.GetBidCompare;
 using Buyer.Domain.Common;
 
 
@@ -95,6 +96,25 @@ namespace Buyer.API.Controllers
                 OrganizationId = GetOrganizationId(),
                 UserId = GetUserId(),
                 RoleId = GetRoleId()
+            });
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("api/v1/buyer/bid-compare")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_BID_COMPARE")]
+        [SwaggerOperation("GetBidCompare")]
+        [SwaggerResponse(200, type: typeof(BidCompareResponseDto), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetBidCompare([FromQuery] Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetBidCompareQuery
+            {
+                RFQId = rfqId,
+               
             });
 
             return Ok(result);
