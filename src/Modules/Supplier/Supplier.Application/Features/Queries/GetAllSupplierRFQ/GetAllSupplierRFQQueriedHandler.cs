@@ -143,7 +143,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 AddLotOption = rfq.AddLotOption,
                 TechnicalSpecificationDocuments = technicalDocuments,
                 TermsConditionDocuments = termsDocuments,
-
+                Status=rfq.Status,
                 Items = items,
                 Questions = questions,
                 SupplierQuotation = quotation == null
