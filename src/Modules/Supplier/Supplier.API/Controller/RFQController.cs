@@ -24,6 +24,7 @@ using Supplier.Application.Features.Queries.SupplierAnswers;
 using Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId;
 
 using Supplier.Domain.Dto;
+using Supplier.Application.Features.Commands.RFQ;
 
 namespace Supplier.API.Controllers
 {
@@ -146,7 +147,7 @@ namespace Supplier.API.Controllers
 
             return Ok(result);
         }
-         [HttpGet]
+        [HttpGet]
         [Route("api/v1/supplier/quotation/by-supplier-id")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_SUPPLIER_QUOTATION_BY_SUPPLIER_ID")]
@@ -156,7 +157,7 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetQuotationBySupplierId([FromQuery] Guid rfqId)
         {
-             var organizationId = GetOrganizationId();
+            var organizationId = GetOrganizationId();
 
             _logger.LogInfo(
                 $"Fetching Supplier Quotation for RFQId: {rfqId} and OrganizationId: {organizationId}");
@@ -208,6 +209,28 @@ namespace Supplier.API.Controllers
             _logger.LogDebug($"Supplier answers fetched successfully for SupplierRFQ : {buyerRFQId}");
 
             return Ok(result);
+        }
+
+
+        [HttpPut]
+        [Route("api/v1/supplier/rfq-status")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE-RFQ-STATUS")]
+        [SwaggerOperation("UpdateRFQStatus")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "RFQ status updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateSupplierRFQStatus([FromBody] UpdateSupplierRFQStatusDto dto)
+        {
+            var result = await _mediator.Send(
+                new UpdateSupplierRFQStatusCommand(dto));
+
+            return Ok(new
+            {
+                success = true,
+                message = "Supplier RFQ status updated successfully."
+            });
         }
 
     }

@@ -307,5 +307,60 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result;
         }
+        public async Task UpdateSupplierRFQStatus(Guid rfqId,string status,CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo(
+                $"Updating Supplier RFQ status. BuyerRFQId: {rfqId}, Status: {status}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Put,
+                $"{supplierUrl}/api/v1/supplier/rfq-status");
+
+            var requestDto = new
+            {
+                RFQId = rfqId,
+                Status = status
+            };
+
+            request.Content = JsonContent.Create(requestDto);
+
+            // Get access token from current request cookie
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                _logger.LogInfo("Adding access token to request headers.");
+
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to update Supplier RFQ status. " +
+                    $"RFQId: {rfqId}, Status: {status}, " +
+                    $"Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to update Supplier RFQ status.",
+                    error);
+            }
+
+            _logger.LogInfo(
+                $"Supplier RFQ status updated successfully. " +
+                $"RFQId: {rfqId}, Status: {status}");
+        }
     }
 }

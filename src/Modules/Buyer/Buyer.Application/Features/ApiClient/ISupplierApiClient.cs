@@ -22,5 +22,6 @@ CancellationToken cancellationToken = default);
          CancellationToken cancellationToken);
         Task<Guid> GetSupplierId(
     CancellationToken cancellationToken = default);
+    Task UpdateSupplierRFQStatus(Guid rfqId,string status,CancellationToken cancellationToken = default);
     }
 }

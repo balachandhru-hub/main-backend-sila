@@ -14,6 +14,8 @@ using Buyer.Application.Features.Queries.GetRFQQuestions;
 using Buyer.Application.Features.Queries.Invitation;
 using Buyer.Application.Features.Commands.Invitation;
 using Buyer.Application.Features.Queries.GetCostCenterById;
+using Buyer.Application.Features.Commands.UpdateRFQ;
+
 
 namespace Buyer.API.Controllers
 {
@@ -134,7 +136,7 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetSupplierInvitations(
             [FromQuery] int index,
-            [FromQuery] int limit,  
+            [FromQuery] int limit,
             [FromQuery] string? search,
             [FromQuery] string? status)
         {
@@ -146,7 +148,7 @@ namespace Buyer.API.Controllers
                 {
                     OrganizationId = organizationId,
                     Index = index,
-                    Limit = limit,  
+                    Limit = limit,
                     Search = search,
                     Status = status
                 });
@@ -231,5 +233,55 @@ namespace Buyer.API.Controllers
 
             return Ok(result);
         }
+        [HttpPut]
+        [Route("api/v1/buyer/rfq/{rfqId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE-RFQ")]
+        [SwaggerOperation("UpdateRFQ")]
+        [SwaggerResponse(200, type: typeof(Guid))]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ Not Found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateRFQ(
+    Guid rfqId,
+    [FromBody] UpdateRFQDto dto)
+        {
+            var organizationId = GetOrganizationId();
+
+            var result = await _mediator.Send(
+                new UpdateRFQCommand(
+                    rfqId,
+                    organizationId,
+                    dto));
+
+            return Ok(new
+            {
+                success = true,
+                message = "RFQ updated successfully.",
+                rfqId = result
+            });
+        }
+        [HttpPut]
+        [Route("api/v1/buyer/rfq-status")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE-BUYER_RFQ-STATUS")]
+        [SwaggerOperation("UpdateBuyerRFQStatus")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "RFQ status updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateRFQStatus(
+   [FromBody] UpdateRFQStatusDto dto)
+        {
+            var result = await _mediator.Send(
+                new UpdateRFQStatusCommand(dto));
+
+            return Ok(new
+            {
+                success = true,
+                message = "Supplier RFQ status updated successfully."
+            });
+        }
+
     }
 }
