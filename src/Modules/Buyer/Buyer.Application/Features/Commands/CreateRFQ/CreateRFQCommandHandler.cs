@@ -318,6 +318,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     EndDate = rfq.EndDate,
                     DeliveryLocation = rfq.DeliveryLocation,
                     AddLotOption = rfq.AddLotOption,
+                    Currency = rfq.Currency,
                     Status = rfq.Status,
                     Items = createdItems.Select(x =>
                         new CreateSupplierRFQItemRequestDto
