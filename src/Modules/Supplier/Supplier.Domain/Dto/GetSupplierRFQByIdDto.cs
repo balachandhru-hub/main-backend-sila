@@ -27,6 +27,7 @@ namespace Supplier.Domain.Dto
     }
      public class GetRFQItemDto
     {
+        public Guid Id { get; set; }
         public string Description { get; set; }
 
         public decimal Quantity { get; set; }

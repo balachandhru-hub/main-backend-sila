@@ -83,6 +83,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     }
                 items.Add(new GetRFQItemDto
                 {
+                    Id = item.Id,
                     Description = item.Description,
                     Quantity = item.Quantity,
                     UOM = item.UOM,
