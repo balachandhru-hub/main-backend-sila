@@ -69,11 +69,11 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                     x.OrganizationId == request.OrganizationId &&
                     x.IsActive);
 
-            if (buyer == null || rfq.BuyerId != buyer.Id)
+            if (buyer == null)
             {
-                throw new ForBiddenCustomException(
-                    "Access denied.",
-                    "This RFQ does not belong to your organization.");
+                throw new PreConditionFailedCustomException(
+                    "Buyer Not Found",
+                    $"Buyer Not Found for the given organization : {request.OrganizationId}");
             }
 
             if (request.RoleId != Common.BUYER_ADMIN_ROLE_ID && rfq.CreatedBy != request.UserId)
