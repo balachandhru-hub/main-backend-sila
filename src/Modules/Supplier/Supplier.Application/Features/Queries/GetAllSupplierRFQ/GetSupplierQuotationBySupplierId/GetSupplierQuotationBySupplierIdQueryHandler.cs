@@ -85,7 +85,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                         QuotedPrice = x.QuotedPrice,
                         ItemQuotationId = x.Id,
                          SupplierRFQItemId = x.SupplierRFQItemId,
-
+                        BuyerRFQItemId = x.BuyerRFQItemId,
                         DeliveryCharge = x.DeliveryCharge,
                         DeliveryType = x.DeliveryType,
 
