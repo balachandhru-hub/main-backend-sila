@@ -105,7 +105,8 @@ namespace Supplier.Application.Features.Queries.GetSupplier
          SupplierName = supplier.OrganizationName,
          Email = supplier.Email,
          IsVerified = verifiedSupplierIds.Contains(supplier.Id),
-         SNID = supplier.SNID
+         SNID = supplier.SNID,
+         OrganizationId = supplier.OrganizationId
      })
      .Distinct()
      .OrderBy(x => x.SupplierName)
