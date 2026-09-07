@@ -51,11 +51,11 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     x.OrganizationId == request.OrganizationId &&
                     x.IsActive);
 
-            if (supplier == null || rfq.SupplierId != supplier.Id)
+            if (supplier == null)
             {
-                throw new ForBiddenCustomException(
-                    "Access denied.",
-                    "This RFQ is not invited to your organization.");
+                throw new PreConditionFailedCustomException(
+                    "Supplier not found.",
+                    $"Supplier not found for the given organization : {request.OrganizationId}");
             }
 
             if (!request.RoleId.Equals(Common.SUPPLIER_ADMIN_ROLE_ID))
