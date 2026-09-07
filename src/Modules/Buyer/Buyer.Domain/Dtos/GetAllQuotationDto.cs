@@ -40,7 +40,7 @@ namespace Buyer.Domain.Dto
         public Guid SupplierRFQItemId { get; set; }
           public decimal? DeliveryCharge { get; set; }
             public string? DeliveryType { get; set; }
-
+        public Guid BuyerRFQItemId { get; set; }
             public decimal? Discount { get; set; }
             public string? DiscountType { get; set; }
 
