@@ -24,6 +24,8 @@ namespace Supplier.Domain.Dto
         public List<GetSupplierQuotationDto> SupplierQuotation {get;set;}
          public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } 
         public List<RFQQuestionResponseDto> Questions { get; set; }
+        public List<InvitedUserDto>? InvitedUsers { get; set; }
+
         public string Status{get;set;}
       
     }

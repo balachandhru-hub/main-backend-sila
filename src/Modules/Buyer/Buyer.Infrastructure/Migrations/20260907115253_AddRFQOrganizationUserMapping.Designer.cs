@@ -4,6 +4,7 @@ using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Buyer.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260907115253_AddRFQOrganizationUserMapping")]
+    partial class AddRFQOrganizationUserMapping
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -781,67 +784,6 @@ namespace Buyer.Infrastructure.Migrations
                     b.ToTable("default_verification_template_question", "buyersystem");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.ExternalSupplier", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("address");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_created");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_updated");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("email");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("phone_number");
-
-                    b.Property<string>("SupplierName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("supplier_name");
-
-                    b.Property<Guid>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_external_supplier");
-
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("ix_external_supplier_email")
-                        .HasFilter("[is_active] = 1");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_external_supplier_is_active");
-
-                    b.ToTable("external_supplier", "buyersystem");
-                });
-
             modelBuilder.Entity("Buyer.Domain.Entities.ItemBuyerMaster", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1174,63 +1116,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasDatabaseName("ix_rfqblockchain_record_is_active");
 
                     b.ToTable("rfqblockchain_record", "buyersystem");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.RFQExternalSupplier", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_created");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_updated");
-
-                    b.Property<Guid>("ExternalSupplierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("external_supplier_id");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<Guid>("RFQId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("rfqid");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("status");
-
-                    b.Property<Guid>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_rfqexternal_supplier");
-
-                    b.HasIndex("ExternalSupplierId")
-                        .HasDatabaseName("ix_rfqexternal_supplier_external_supplier_id");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_rfqexternal_supplier_is_active");
-
-                    b.HasIndex("RFQId", "ExternalSupplierId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_rfqexternal_supplier_rfqid_external_supplier_id")
-                        .HasFilter("[is_active] = 1");
-
-                    b.ToTable("rfqexternal_supplier", "buyersystem");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.RFQItem", b =>
@@ -2142,27 +2027,6 @@ namespace Buyer.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_rfqattachment_mapping_rfq_rfqid");
-
-                    b.Navigation("RFQ");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.RFQExternalSupplier", b =>
-                {
-                    b.HasOne("Buyer.Domain.Entities.ExternalSupplier", "ExternalSupplier")
-                        .WithMany()
-                        .HasForeignKey("ExternalSupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_rfqexternal_supplier_external_supplier_external_supplier_id");
-
-                    b.HasOne("Buyer.Domain.Entities.RFQ", "RFQ")
-                        .WithMany()
-                        .HasForeignKey("RFQId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_rfqexternal_supplier_rfq_rfqid");
-
-                    b.Navigation("ExternalSupplier");
 
                     b.Navigation("RFQ");
                 });

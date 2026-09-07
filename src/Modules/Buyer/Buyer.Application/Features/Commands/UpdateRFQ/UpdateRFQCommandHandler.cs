@@ -1,6 +1,7 @@
 using Buyer.Domain.Entities;
 using Buyer.Domain.Dto;
 using Buyer.Infrastructure.Contracts.IRepository;
+using Buyer.Application.Contracts;
 using MediatR;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
@@ -12,13 +13,19 @@ namespace Buyer.Application.Features.Commands.UpdateRFQ
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
+        private readonly ISupplierApiClient _supplierApiClient;
+        private readonly IIdentityApiClient _identityApiClient;
 
         public UpdateRFQCommandHandler(
             IRepositoryWrapper repository,
-            ILoggerManager logger)
+            ILoggerManager logger,
+            ISupplierApiClient supplierApiClient,
+            IIdentityApiClient identityApiClient)
         {
             _repository = repository;
             _logger = logger;
+            _supplierApiClient = supplierApiClient;
+            _identityApiClient = identityApiClient;
         }
 
         public async Task<Guid> Handle(
@@ -378,7 +385,9 @@ namespace Buyer.Application.Features.Commands.UpdateRFQ
                     .ToList();
 
             var requestedSupplierIds =
-                request.RFQ.SupplierIds.ToHashSet();
+                request.RFQ.SupplierInvites
+                    .Select(x => x.SupplierId)
+                    .ToHashSet();
 
             // ------------------------------------------------------------
             // DELETE REMOVED SUPPLIERS
@@ -420,6 +429,90 @@ namespace Buyer.Application.Features.Commands.UpdateRFQ
 
             _logger.LogInfo(
                 $"RFQ supplier mappings updated. RFQId: {rfq.Id}");
+
+            // ============================================================
+            // 7b. UPDATE USER-LEVEL INVITATIONS
+            // ============================================================
+
+            var existingUserMappings = _repository.RFQOrganizationUserMapping
+                .FindByCondition(x => x.RFQId == rfq.Id)
+                .ToList();
+
+            var requestedUserMappings = new HashSet<(Guid SupplierId, Guid UserId)>();
+            var supplierOrganizationIds = new Dictionary<Guid, Guid>();
+
+            foreach (var invite in request.RFQ.SupplierInvites)
+            {
+                if (invite.UserIds == null || !invite.UserIds.Any())
+                {
+                    continue;
+                }
+
+                var supplierProfile = await _supplierApiClient.GetSupplierById(
+                    invite.SupplierId,
+                    cancellationToken);
+
+                supplierOrganizationIds[invite.SupplierId] = supplierProfile.OrganizationId;
+
+                var organizationUsers = await _identityApiClient.GetOrganizationUsers(
+                    supplierProfile.OrganizationId);
+
+                var validUserIds = organizationUsers
+                    .Select(x => x.UserId)
+                    .ToHashSet();
+
+                var invalidUserIds = invite.UserIds
+                    .Where(x => !validUserIds.Contains(x))
+                    .ToList();
+
+                if (invalidUserIds.Any())
+                {
+                    _logger.LogError(
+                        $"Invalid supplier user(s) for SupplierId {invite.SupplierId}: {string.Join(",", invalidUserIds)}");
+                    throw new BadRequestCustomException(
+                        "Invalid supplier user.",
+                        $"The following users do not belong to supplier organization {supplierProfile.OrganizationId}: {string.Join(",", invalidUserIds)}");
+                }
+
+                foreach (var userId in invite.UserIds)
+                {
+                    requestedUserMappings.Add((invite.SupplierId, userId));
+                }
+            }
+
+            var userMappingsToRemove = existingUserMappings
+                .Where(x => !requestedUserMappings.Contains((x.SupplierId, x.UserId)))
+                .ToList();
+
+            foreach (var mapping in userMappingsToRemove)
+            {
+                _repository.RFQOrganizationUserMapping.Delete(mapping);
+            }
+
+            var existingUserMappingKeys = existingUserMappings
+                .Select(x => (x.SupplierId, x.UserId))
+                .ToHashSet();
+
+            foreach (var (supplierId, userId) in requestedUserMappings)
+            {
+                if (!existingUserMappingKeys.Contains((supplierId, userId)))
+                {
+                    await _repository.RFQOrganizationUserMapping.CreateAsync(
+                        new RFQOrganizationUserMapping
+                        {
+                            Id = Guid.NewGuid(),
+                            RFQId = rfq.Id,
+                            RFQNumber = rfq.RFQNumber,
+                            BuyerId = buyer.Id,
+                            SupplierId = supplierId,
+                            OrganizationId = supplierOrganizationIds.TryGetValue(supplierId, out var orgId) ? orgId : Guid.Empty,
+                            UserId = userId
+                        });
+                }
+            }
+
+            _logger.LogInfo(
+                $"RFQ user-level invitation mappings updated. RFQId: {rfq.Id}");
 
             // ============================================================
             // 8. SAVE CHANGES

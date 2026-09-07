@@ -18,6 +18,7 @@ public interface IRepositoryWrapper
     ISupplierRFQItemRepository SupplierRFQItem { get; }
 
     IRFQSupplierMappingRepository RFQSupplierMapping { get; }
+    IRFQOrganizationUserMappingRepository RFQOrganizationUserMapping { get; }
     ISupplierQuotationRepository SupplierQuotation { get; }
     ISupplierQuotationItemRepository SupplierQuotationItem { get; }
     ISupplierCatalogRepository SupplierCatalog{get;}

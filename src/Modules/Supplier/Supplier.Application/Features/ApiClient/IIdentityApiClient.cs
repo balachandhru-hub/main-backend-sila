@@ -8,5 +8,8 @@ namespace Supplier.Application.Contracts
             UpdateOrganizationRequestDto organization,
             string accessToken,
             CancellationToken cancellationToken = default);
+        Task<List<IdentityUserDto>> GetUsersByIds(
+            List<Guid> userIds,
+            CancellationToken cancellationToken = default);
     }
 }

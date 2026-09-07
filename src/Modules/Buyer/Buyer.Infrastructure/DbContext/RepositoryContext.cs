@@ -46,6 +46,7 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<DefaultVerificationTemplateQuestion> DefaultVerificationTemplateQuestion {get;set;}
         public DbSet<RFQQuestionAttachmentMapping> RFQQuestionAttachmentMapping {get;set;}
         public DbSet<RFQBlockchainRecord> RFQBlockchainRecord {get;set;}
+        public DbSet<RFQOrganizationUserMapping> RFQOrganizationUserMapping {get;set;}
         public DbSet<ExternalSupplier> ExternalSupplier {get;set;}
         public DbSet<RFQExternalSupplier> RFQExternalSupplier {get;set;}
 
@@ -84,6 +85,7 @@ namespace Buyer.Infrastructure.DbContext
             _ = modelBuilder.Entity<DefaultVerificationTemplate>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQQuestionAttachmentMapping>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQBlockchainRecord>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<RFQOrganizationUserMapping>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<ExternalSupplier>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQExternalSupplier>().HasIndex(a=>a.IsActive);
 

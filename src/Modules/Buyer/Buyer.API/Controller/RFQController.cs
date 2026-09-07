@@ -15,6 +15,7 @@ using Buyer.Application.Features.Queries.Invitation;
 using Buyer.Application.Features.Commands.Invitation;
 using Buyer.Application.Features.Queries.GetCostCenterById;
 using Buyer.Application.Features.Commands.UpdateRFQ;
+using Buyer.Domain.Common;
 
 
 namespace Buyer.API.Controllers
@@ -69,6 +70,10 @@ namespace Buyer.API.Controllers
         public async Task<IActionResult> GetRFQList(
      [FromBody] GetRFQListQuery query)
         {
+            query.OrganizationId = GetOrganizationId();
+            query.UserId = GetUserId();
+            query.RoleId = GetRoleId();
+
             var result = await _mediator.Send(query);
 
             return Ok(result);
@@ -86,7 +91,10 @@ namespace Buyer.API.Controllers
         {
             var result = await _mediator.Send(new GetRFQByIdQuery
             {
-                RFQId = rfqId
+                RFQId = rfqId,
+                OrganizationId = GetOrganizationId(),
+                UserId = GetUserId(),
+                RoleId = GetRoleId()
             });
 
             return Ok(result);

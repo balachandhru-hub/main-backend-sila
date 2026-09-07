@@ -23,6 +23,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
 
         private readonly IMediator _mediator;
         private readonly ISupplierApiClient _supplierApiClient;
+        private readonly IIdentityApiClient _identityApiClient;
 
 
         public CreateRFQCommandHandler(
@@ -30,7 +31,8 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             ILoggerManager logger,
 
             IMediator mediator,
-            ISupplierApiClient supplierApiClient
+            ISupplierApiClient supplierApiClient,
+            IIdentityApiClient identityApiClient
           )
         {
             _repository = repository;
@@ -38,6 +40,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
 
             _mediator = mediator;
             _supplierApiClient = supplierApiClient;
+            _identityApiClient = identityApiClient;
 
         }
 
@@ -246,11 +249,50 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             }
 
             // ======================================================
-            // Save all invited suppliers
+            // Validate invited suppliers & their invited users, then
+            // save org-level and user-level invitation mappings
             // ======================================================
 
-            foreach (var supplierId in request.RFQ.SupplierIds)
+            var supplierIds = request.RFQ.SupplierInvites
+                .Select(x => x.SupplierId)
+                .ToList();
+
+            var supplierOrganizationIds = new Dictionary<Guid, Guid>();
+
+            foreach (var invite in request.RFQ.SupplierInvites)
             {
+                Guid supplierOrganizationId = Guid.Empty;
+
+                if (invite.UserIds != null && invite.UserIds.Any())
+                {
+                    var supplierProfile = await _supplierApiClient.GetSupplierById(
+                        invite.SupplierId,
+                        cancellationToken);
+
+                    supplierOrganizationId = supplierProfile.OrganizationId;
+                    supplierOrganizationIds[invite.SupplierId] = supplierOrganizationId;
+
+                    var organizationUsers = await _identityApiClient.GetOrganizationUserRFQ(
+                        supplierOrganizationId);
+
+                    var validUserIds = organizationUsers
+                        .Select(x => x.UserId)
+                        .ToHashSet();
+
+                    var invalidUserIds = invite.UserIds
+                        .Where(x => !validUserIds.Contains(x))
+                        .ToList();
+
+                    if (invalidUserIds.Any())
+                    {
+                        _logger.LogError(
+                            $"Invalid supplier user(s) for SupplierId {invite.SupplierId}: {string.Join(",", invalidUserIds)}");
+                        throw new BadRequestCustomException(
+                            "Invalid supplier user.",
+                            $"The following users do not belong to supplier organization {supplierOrganizationId}: {string.Join(",", invalidUserIds)}");
+                    }
+                }
+
                 await _repository.RFQSupplierMapping.CreateAsync(
                     new RFQSupplierMapping
                     {
@@ -258,11 +300,30 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                         RFQId = rfq.Id,
                         RFQNumber = rfq.RFQNumber,
                         BuyerId = buyer.Id,
-                        SupplierId = supplierId
+                        SupplierId = invite.SupplierId
                     });
-            }
-            _logger.LogInfo($"Supplier mapping completed successfully. Total Suppliers: {request.RFQ.SupplierIds.Count}");
 
+                if (invite.UserIds != null)
+                {
+                    foreach (var userId in invite.UserIds)
+                    {
+                        await _repository.RFQOrganizationUserMapping.CreateAsync(
+                            new RFQOrganizationUserMapping
+                            {
+                                Id = Guid.NewGuid(),
+                                RFQId = rfq.Id,
+                                RFQNumber = rfq.RFQNumber,
+                                BuyerId = buyer.Id,
+                                SupplierId = invite.SupplierId,
+                                OrganizationId = supplierOrganizationId,
+                                UserId = userId
+                            });
+                    }
+                }
+
+                _logger.LogInfo(
+                    $"Supplier mapping completed successfully for SupplierId {invite.SupplierId}. Invited users: {invite.UserIds?.Count ?? 0}");
+            }
 
 
             // ======================================================
@@ -361,7 +422,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             // Find unverified suppliers
             // ======================================================
 
-            var unVerifiedSuppliers = request.RFQ.SupplierIds
+            var unVerifiedSuppliers = supplierIds
                 .Where(x => !verifiedSupplierIds.Contains(x))
                 .ToList();
 
@@ -386,14 +447,18 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             }
 
             await _repository.SaveAsync();
-            foreach (var supplierId in request.RFQ.SupplierIds)
+            foreach (var invite in request.RFQ.SupplierInvites)
             {
+                var supplierId = invite.SupplierId;
+
                 var supplierRequest = new CreateSupplierRFQRequestDto
                 {
                     BuyerRFQId = rfq.Id,
                     RFQNumber = rfq.RFQNumber,
                     BuyerId = buyer.Id,
                     SupplierId = supplierId,
+                    OrganizationId = supplierOrganizationIds.TryGetValue(supplierId, out var orgId) ? orgId : Guid.Empty,
+                    InvitedUserIds = invite.UserIds ?? new List<Guid>(),
                     BuyerName = buyer.OrganizationName,
                     Title = rfq.Title,
                     Description = rfq.Description,

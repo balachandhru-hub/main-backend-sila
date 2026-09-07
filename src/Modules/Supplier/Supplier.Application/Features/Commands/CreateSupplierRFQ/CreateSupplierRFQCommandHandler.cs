@@ -102,6 +102,29 @@
 
                 await _repository.RFQSupplierMapping.CreateAsync(mapping);
 
+                if (request.RFQ.InvitedUserIds != null)
+                {
+                    foreach (var userId in request.RFQ.InvitedUserIds)
+                    {
+                        await _repository.RFQOrganizationUserMapping.CreateAsync(
+                            new RFQOrganizationUserMapping
+                            {
+                                Id = Guid.NewGuid(),
+
+                                BuyerRFQId = supplierRFQ.BuyerRFQId,
+                                RFQNumber = supplierRFQ.RFQNumber,
+
+                                BuyerId = supplierRFQ.BuyerId,
+                                SupplierId = supplierRFQ.SupplierId,
+
+                                SupplierRFQId = supplierRFQ.Id,
+
+                                OrganizationId = request.RFQ.OrganizationId,
+                                UserId = userId
+                            });
+                    }
+                }
+
                 // Create Empty Quotation
                 var quotation = new SupplierQuotation
                 {

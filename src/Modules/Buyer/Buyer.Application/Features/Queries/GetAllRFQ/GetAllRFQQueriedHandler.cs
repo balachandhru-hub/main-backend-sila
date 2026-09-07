@@ -18,13 +18,15 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
         private readonly IMetadataApiClient _metadataClient;
         private readonly ILoggerManager _logger;
         private readonly ISupplierApiClient _supplierApiClient;
+        private readonly IIdentityApiClient _identityApiClient;
 
-        public GetRFQByIdQueryHandler(IRepositoryWrapper repository, IMetadataApiClient metadataApiClient, ILoggerManager logger, ISupplierApiClient supplierApiClient)
+        public GetRFQByIdQueryHandler(IRepositoryWrapper repository, IMetadataApiClient metadataApiClient, ILoggerManager logger, ISupplierApiClient supplierApiClient, IIdentityApiClient identityApiClient)
         {
             _repositorywrapper = repository;
             _metadataClient = metadataApiClient;
             _logger = logger;
             _supplierApiClient = supplierApiClient;
+            _identityApiClient = identityApiClient;
         }
 
         public async Task<GetRFQByIdDto> Handle(
@@ -61,6 +63,25 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                     $"No RFQ exists with RFQId: {request.RFQId}."
                 );
             }
+
+            var buyer = _repositorywrapper.BuyerBusinessProfile
+                .FindFirstByCondition(x =>
+                    x.OrganizationId == request.OrganizationId &&
+                    x.IsActive);
+
+            if (buyer == null || rfq.BuyerId != buyer.Id)
+            {
+                throw new ForBiddenCustomException(
+                    "Access denied.",
+                    "This RFQ does not belong to your organization.");
+            }
+
+            if (request.RoleId != Common.BUYER_ADMIN_ROLE_ID && rfq.CreatedBy != request.UserId)
+            {
+                _logger.LogError($"User with UserId: {request.UserId} attempted to access RFQ with RFQId: {request.RFQId} without proper permissions.");
+                throw new ForBiddenCustomException("Access denied.", "You are not the creator of this RFQ.");
+            }
+
             var buyerId = rfq.BuyerId;
 
             GetAllSupplierQuotationDto? supplierQuotation = null;
@@ -311,6 +332,42 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
     .Select(x => x.Id)
     .FirstOrDefaultAsync(cancellationToken);
 
+            List<InvitedUserDto>? invitedUsers = null;
+
+            if (request.RoleId == Common.BUYER_ADMIN_ROLE_ID)
+            {
+                var invitedUserMappings = await _repositorywrapper.RFQOrganizationUserMapping
+                    .FindByCondition(x => x.RFQId == request.RFQId && x.IsActive)
+                    .ToListAsync(cancellationToken);
+
+                if (invitedUserMappings.Any())
+                {
+                    var userIds = invitedUserMappings
+                        .Select(x => x.UserId)
+                        .Distinct()
+                        .ToList();
+
+                    var identityUsers = await _identityApiClient.GetUsersByIds(userIds, cancellationToken);
+
+                    invitedUsers = invitedUserMappings
+                        .Select(x =>
+                        {
+                            var identity = identityUsers.FirstOrDefault(u => u.UserId == x.UserId);
+                            return new InvitedUserDto
+                            {
+                                RFQId = x.RFQId,
+                                SupplierId = x.SupplierId,
+                                OrganizationId = x.OrganizationId,
+                                UserId = x.UserId,
+                                Name = identity?.Name,
+                                Email = identity?.Email,
+                                UserName = identity?.UserName
+                            };
+                        })
+                        .ToList();
+                }
+            }
+
             return new GetRFQByIdDto
             {
                 Title = rfq.Title,
@@ -331,11 +388,12 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 Items = items,
                 SupplierIds = supplierIds,
                 RFQVerificationTemplateId = verificationTemplateId,
-             SupplierQuotation = supplierQuotation?.Suppliers
+                SupplierQuotation = supplierQuotation?.Suppliers
     ?? new List<SupplierQuotationBySupplierDto>(),
 
-    SupplierAnswers = supplierAnswers
-        };
+                SupplierAnswers = supplierAnswers,
+                InvitedUsers = invitedUsers
+            };
+        }
     }
-}
 }

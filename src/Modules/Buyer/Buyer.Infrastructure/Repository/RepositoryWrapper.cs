@@ -33,6 +33,7 @@ namespace Buyer.Infrastructure.Repository
 
         private IRFQItemAttachmentMappingRepository _rfqItemAttachmentMappingRepository;
         private IRFQSupplierMappingRepository _rfqSupplierMapping;
+        private IRFQOrganizationUserMappingRepository _rfqOrganizationUserMapping;
 
         private ISupplierVerificationRequestRepository _supplierVerificationRequest;
         private IVerificationTemplateRepository _verificationTemplateRepository;
@@ -240,6 +241,18 @@ namespace Buyer.Infrastructure.Repository
                     new RFQSupplierMappingRepository(_context);
                 }
                 return  _rfqSupplierMapping;
+            }
+        }
+        public IRFQOrganizationUserMappingRepository RFQOrganizationUserMapping
+        {
+            get
+            {
+                if (_rfqOrganizationUserMapping == null)
+                {
+                    _rfqOrganizationUserMapping =
+                    new RFQOrganizationUserMappingRepository(_context);
+                }
+                return _rfqOrganizationUserMapping;
             }
         }
          public ISupplierVerificationRequestRepository SupplierVerificationRequest

@@ -9,7 +9,16 @@ namespace Buyer.Application.Contracts
             string accessToken,
             CancellationToken cancellationToken = default);
         Task<List<ModelDto>> GetOrganizationModels(
-Guid? organizationId = null,
-CancellationToken cancellationToken = default);
+            Guid? organizationId = null,
+            CancellationToken cancellationToken = default);
+        Task<List<IdentityUserDto>> GetOrganizationUsers(
+            Guid organizationId,
+            CancellationToken cancellationToken = default);
+        Task<List<IdentityUserDto>> GetUsersByIds(
+            List<Guid> userIds,
+            CancellationToken cancellationToken = default);
+        Task<List<IdentityUserDto>> GetOrganizationUserRFQ(
+            Guid organizationId,
+            CancellationToken cancellationToken = default);
     }
 }

@@ -13,10 +13,12 @@ using Identity.Application.Features.Commands.CreatePerson;
 using Identity.Application.Features.Queries.GetAllModel;
 using Identity.Application.Features.Commands.SaveOrganizationModelMapping;
 using Identity.Application.Features.Queries.GetOrganizationUser;
+using Identity.Application.Features.Queries.GetUsersByIds;
 using System.Security.Claims;
 using Identity.Application.Features.Queries.GetPersonDetail;
 using Identity.Application.Features.Commands.DeletePerson;
 using Identity.Application.Features.Commands.UpdatePersonDetail;
+using Identity.Application.Features.Queries.GetOrganizationUserRFQ;
 
 
 
@@ -165,6 +167,28 @@ namespace Identity.API.Controllers
             _logger.LogDebug("Organization users fetched successfully.");
             return Ok(result);
         }
+        [HttpPost]
+        [Route("api/v1/identity/users-by-ids")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_USERS_BY_IDS")]
+        [SwaggerOperation("GetUsersByIds")]
+        [SwaggerResponse(200, type: typeof(List<UserListDto>), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetUsersByIds(
+            [FromBody] List<Guid> userIds)
+        {
+            _logger.LogDebug($"Fetching {userIds?.Count ?? 0} user(s) by id.");
+
+            var result = await _mediator.Send(
+                new GetUsersByIdsQuery
+                {
+                    UserIds = userIds ?? new List<Guid>()
+                });
+
+            _logger.LogDebug("Users fetched successfully.");
+            return Ok(result);
+        }
         [HttpGet]
         [Route("api/v1/identity/person-detail")]
         [ValidateModelState]
@@ -253,6 +277,33 @@ namespace Identity.API.Controllers
                 Description = "Person details updated successfully.",
 
             });
+        }
+
+        [HttpGet]
+        [Route("api/v1/identity/organization-user-rfq")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_ORGANIZATION_USER_RFQ")]
+        [SwaggerOperation("GetOrganizationUserForRFQ")]
+        [SwaggerResponse(200, type: typeof(List<UserListDto>), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetOrganizationUserForRFQ([FromQuery] Guid? organizationId)
+        {
+            _logger.LogDebug("Fetching organization users.");
+
+
+            if (!organizationId.HasValue)
+            {
+                organizationId = GetOrganizationId();
+            }
+
+            var result = await _mediator.Send(
+                new GetOrganizationUserRFQQuery
+                {
+                    OrganizationId = organizationId
+                });
+            _logger.LogDebug("Organization users fetched successfully.");
+            return Ok(result);
         }
     }
 }

@@ -17,13 +17,15 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
         private readonly IMetadataApiClient _metadataClient;
         private readonly ILoggerManager _logger;
         private readonly IBuyerApiClient _buyerApiClient;
+        private readonly IIdentityApiClient _identityApiClient;
 
-        public GetSupplierRFQByIdQueryHandler(IRepositoryWrapper repository, IMetadataApiClient metadataApiClient, ILoggerManager logger, IBuyerApiClient buyerApiClient)
+        public GetSupplierRFQByIdQueryHandler(IRepositoryWrapper repository, IMetadataApiClient metadataApiClient, ILoggerManager logger, IBuyerApiClient buyerApiClient, IIdentityApiClient identityApiClient)
         {
             _repositorywrapper = repository;
             _metadataClient = metadataApiClient;
             _logger = logger;
             _buyerApiClient = buyerApiClient;
+            _identityApiClient = identityApiClient;
         }
 
         public async Task<GetRFQByIdDto> Handle(
@@ -42,6 +44,35 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 throw new NotFoundCustomException(
                     "RFQ not found.",
                     $"No RFQ exists with BuyerRFQId: {request.RFQId}.");
+            }
+
+            var supplier = _repositorywrapper.SupplierBusinessProfile
+                .FindFirstByCondition(x =>
+                    x.OrganizationId == request.OrganizationId &&
+                    x.IsActive);
+
+            if (supplier == null || rfq.SupplierId != supplier.Id)
+            {
+                throw new ForBiddenCustomException(
+                    "Access denied.",
+                    "This RFQ is not invited to your organization.");
+            }
+
+            if (!request.RoleId.Equals(Common.SUPPLIER_ADMIN_ROLE_ID))
+            {
+                var isInvited = await _repositorywrapper.RFQOrganizationUserMapping
+                    .FindByCondition(x =>
+                        x.SupplierRFQId == rfq.Id &&
+                        x.UserId == request.UserId &&
+                        x.IsActive)
+                    .AnyAsync(cancellationToken);
+
+                if (!isInvited)
+                {
+                    throw new ForBiddenCustomException(
+                        "Access denied.",
+                        "You have not been invited to this RFQ.");
+                }
             }
 
             var buyerId = rfq.BuyerId;
@@ -130,7 +161,41 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     .ToListAsync(cancellationToken);
             }
 
+            List<InvitedUserDto>? invitedUsers = null;
 
+            if (request.RoleId.Equals(Common.SUPPLIER_ADMIN_ROLE_ID))
+            {
+                var invitedUserMappings = await _repositorywrapper.RFQOrganizationUserMapping
+                    .FindByCondition(x => x.SupplierRFQId == supplierRFQId && x.IsActive)
+                    .ToListAsync(cancellationToken);
+
+                if (invitedUserMappings.Any())
+                {
+                    var userIds = invitedUserMappings
+                        .Select(x => x.UserId)
+                        .Distinct()
+                        .ToList();
+
+                    var identityUsers = await _identityApiClient.GetUsersByIds(userIds, cancellationToken);
+
+                    invitedUsers = invitedUserMappings
+                        .Select(x =>
+                        {
+                            var identity = identityUsers.FirstOrDefault(u => u.UserId == x.UserId);
+                            return new InvitedUserDto
+                            {
+                                RFQId = x.BuyerRFQId,
+                                SupplierId = x.SupplierId,
+                                OrganizationId = x.OrganizationId,
+                                UserId = x.UserId,
+                                Name = identity?.Name,
+                                Email = identity?.Email,
+                                UserName = identity?.UserName
+                            };
+                        })
+                        .ToList();
+                }
+            }
 
 
             return new GetRFQByIdDto
@@ -164,7 +229,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
         },
 
                 SupplierQuotationItems = quotationItems,
-
+                InvitedUsers = invitedUsers,
 
             };
         }

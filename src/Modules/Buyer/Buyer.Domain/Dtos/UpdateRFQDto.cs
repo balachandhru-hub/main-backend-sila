@@ -20,7 +20,7 @@ namespace Buyer.Domain.Dto
 
         public List<UpdateRFQQuestionDto> Questions { get; set; } = new();
 
-        public List<Guid> SupplierIds { get; set; } = new();
+        public List<RFQSupplierInviteDto> SupplierInvites { get; set; } = new();
     }
 
 

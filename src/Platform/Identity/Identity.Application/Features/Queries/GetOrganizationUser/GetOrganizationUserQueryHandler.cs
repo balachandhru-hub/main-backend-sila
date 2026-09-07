@@ -32,7 +32,7 @@ namespace Identity.Application.Features.Queries.GetOrganizationUser
             }
             _logger.LogInfo($"Fetching users for OrganizationId: {request.OrganizationId.Value} with LoggedInRoleId: {request.LoggedInRole}");
             Guid organizationId = request.OrganizationId.Value;
-_logger.LogInfo($"OrganizationId: {organizationId}, LoggedInRoleId: {request.LoggedInRole}");
+            _logger.LogInfo($"OrganizationId: {organizationId}, LoggedInRoleId: {request.LoggedInRole}");
             var loggedInRole = (
                 from role in _repository.Role.FindByConditionAsync(x => x.IsActive)
                 where role.Id == Guid.Parse(request.LoggedInRole)
@@ -44,7 +44,7 @@ _logger.LogInfo($"OrganizationId: {organizationId}, LoggedInRoleId: {request.Log
                 _logger.LogError($"LoggedInRoleId {request.LoggedInRole} is invalid.");
                 throw new BadRequestCustomException("Invalid LoggedInRoleId.", "The provided LoggedInRoleId does not correspond to any active role.");
             }
-            
+
             IQueryable<string> allowedRoles;
 
             if (loggedInRole == Common.PLATFORM_ADMINISTRATOR)

@@ -68,7 +68,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
 
 
 
-            if (request.RoleId == Common.BUYER_ROLE_ID)
+            if (request.RoleId == Common.BUYER_ADMIN_ROLE_ID)
             {
                 var supplier = await _supplierApiClient.GetSupplierById(
                     result.SupplierOrganizationId,
@@ -86,7 +86,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                         supplier.BusinessProfile?.Description;
                 }
             }
-            else if (request.RoleId == Common.SUPPLIER_ROLE_ID)
+            else if (request.RoleId == Common.SUPPLIER_ADMIN_ROLE_ID)
             {
                 var buyer = await _repository.BuyerBusinessProfile
                     .FindByCondition(x =>
@@ -205,7 +205,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
 
             bool showAnswers = false;
 
-            if (request.RoleId == Common.SUPPLIER_ROLE_ID)
+            if (request.RoleId == Common.SUPPLIER_ADMIN_ROLE_ID)
             {
                 showAnswers =
                     result.Status.Equals(
@@ -220,7 +220,7 @@ namespace Buyer.Application.Features.Queries.SupplierVerificationRequest
                         Common.DRAFT,
                         StringComparison.OrdinalIgnoreCase);
             }
-            else if (request.RoleId == Common.BUYER_ROLE_ID)
+            else if (request.RoleId == Common.BUYER_ADMIN_ROLE_ID)
             {
                 showAnswers =
                     !result.Status.Equals(

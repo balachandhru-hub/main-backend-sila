@@ -49,7 +49,7 @@ namespace Buyer.Domain.Dto
 
         public List<RFQItemDto> Items { get; set; }
 
-        public List<Guid> SupplierIds { get; set; } = new();
+        public List<RFQSupplierInviteDto> SupplierInvites { get; set; } = new();
 
         public List<ExternalSupplierDto> ExternalSuppliers { get; set; } = new();
 

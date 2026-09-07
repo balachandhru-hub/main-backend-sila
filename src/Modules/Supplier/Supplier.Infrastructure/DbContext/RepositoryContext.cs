@@ -40,6 +40,7 @@ namespace Supplier.Infrastructure.DbContext
         public DbSet<SupplierEmailVerification> SupplierEmailVerification{get;set;}
         public DbSet<SupplierQuotationHistory> SupplierQuotationHistory { get; set; }
         public DbSet<SupplierQuotationItemHistory> SupplierQuotationItemHistory { get; set; }
+        public DbSet<RFQOrganizationUserMapping> RFQOrganizationUserMapping { get; set; }
       
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
@@ -64,6 +65,7 @@ namespace Supplier.Infrastructure.DbContext
             _ = modelBuilder.Entity<SupplierEmailVerification>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<SupplierQuotationHistory>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<SupplierQuotationItemHistory>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<RFQOrganizationUserMapping>().HasIndex(a => a.IsActive);
 
                 modelBuilder.Entity<SupplierQuotationItem>()
                     .HasOne(x => x.SupplierRFQItem)

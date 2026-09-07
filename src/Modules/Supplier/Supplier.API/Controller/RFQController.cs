@@ -25,6 +25,7 @@ using Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId;
 
 using Supplier.Domain.Dto;
 using Supplier.Application.Features.Commands.RFQ;
+using Supplier.Domain.Common;
 
 namespace Supplier.API.Controllers
 {
@@ -108,6 +109,10 @@ namespace Supplier.API.Controllers
         public async Task<IActionResult> GetRFQList(
      [FromBody] GetSupplierRFQListQuery query)
         {
+            query.OrganizationId = GetOrganizationId();
+            query.UserId = GetUserId();
+            query.RoleId = GetRoleId();
+
             var result = await _mediator.Send(query);
 
             return Ok(result);
@@ -124,7 +129,10 @@ namespace Supplier.API.Controllers
         {
             var result = await _mediator.Send(new GetSupplierRFQByIdQuery
             {
-                RFQId = rfqId
+                RFQId = rfqId,
+                OrganizationId = GetOrganizationId(),
+                UserId = GetUserId(),
+                RoleId = GetRoleId()
             });
 
             return Ok(result);

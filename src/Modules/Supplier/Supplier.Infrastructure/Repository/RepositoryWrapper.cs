@@ -29,6 +29,7 @@ namespace Supplier.Infrastructure.Repository
         private ISupplierRFQItemRepository _supplierRFQItem;
 
         private IRFQSupplierMappingRepository _rfqSupplierMapping;
+        private IRFQOrganizationUserMappingRepository _rfqOrganizationUserMapping;
         private ISupplierQuotationRepository _supplierQuotation;
         private ISupplierQuotationItemRepository _supplierQuotationItem;
         private ISupplierCatalogRepository _supplierCatalog;
@@ -134,6 +135,17 @@ namespace Supplier.Infrastructure.Repository
                     _rfqSupplierMapping = new RFQSupplierMappingRepository(_context);
                 }
                 return _rfqSupplierMapping;
+            }
+        }
+        public IRFQOrganizationUserMappingRepository RFQOrganizationUserMapping
+        {
+            get
+            {
+                if (_rfqOrganizationUserMapping == null)
+                {
+                    _rfqOrganizationUserMapping = new RFQOrganizationUserMappingRepository(_context);
+                }
+                return _rfqOrganizationUserMapping;
             }
         }
         public ISupplierQuotationRepository SupplierQuotation

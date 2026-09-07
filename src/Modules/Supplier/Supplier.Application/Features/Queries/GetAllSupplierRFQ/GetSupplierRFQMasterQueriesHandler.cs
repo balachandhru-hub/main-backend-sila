@@ -1,8 +1,10 @@
+using Supplier.Domain.Common;
 using Supplier.Domain.Dto;
 using Supplier.Infrastructure.Contracts.IRepository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.LoggerServices;
+using SharedKernel.ExceptionHandler;
 
 namespace Supplier.Application.Features.Queries.GetAllSupplierRFQ
 {
@@ -12,7 +14,9 @@ namespace Supplier.Application.Features.Queries.GetAllSupplierRFQ
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
 
-        public GetRFQListQueryHandler(IRepositoryWrapper repository, ILoggerManager logger)
+        public GetRFQListQueryHandler(
+            IRepositoryWrapper repository,
+            ILoggerManager logger)
         {
             _repository = repository;
             _logger=logger;
@@ -22,36 +26,76 @@ namespace Supplier.Application.Features.Queries.GetAllSupplierRFQ
      GetSupplierRFQListQuery request,
      CancellationToken cancellationToken)
         {
-            _logger.LogInfo("Get All RFQ Masetr Data");
+            _logger.LogInfo("Get All RFQ Master Data");
 
-            var rfqs = await _repository.SupplierRFQ
-                .FindByCondition(x => x.SupplierId == request.SupplierId)
-                .ToListAsync(cancellationToken);
-            var buyers = await _repository.SupplierBusinessProfile
-                .FindByCondition(x => x.Id == request.SupplierId)
-                .ToListAsync(cancellationToken);
-            var result = await (
-                from rfq in _repository.SupplierRFQ.FindByCondition(x => x.SupplierId == request.SupplierId)
-                join buyer in _repository.SupplierBusinessProfile.FindByCondition(x => x.Id == request.SupplierId)
-                    on rfq.SupplierId equals buyer.Id
-                orderby rfq.DateCreated descending
-                select new SupplierRFQListDto
+            var supplier = _repository.SupplierBusinessProfile
+                .FindFirstByCondition(x =>
+                    x.OrganizationId == request.OrganizationId &&
+                    x.IsActive);
+
+            if (supplier == null)
+            {
+                throw new NotFoundCustomException(
+                    "Supplier not found.",
+                    "Supplier does not exist.");
+            }
+
+            var query = _repository.SupplierRFQ
+                .FindByCondition(x => x.SupplierId == supplier.Id);
+
+            if (!request.RoleId.Equals(Common.SUPPLIER_ADMIN_ROLE_ID))
+            {
+                var invitedSupplierRFQIds = _repository.RFQOrganizationUserMapping
+                    .FindByCondition(x =>
+                        x.SupplierId == supplier.Id &&
+                        x.UserId == request.UserId &&
+                        x.IsActive)
+                    .Select(x => x.SupplierRFQId);
+
+                query = query.Where(x => invitedSupplierRFQIds.Contains(x.Id));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var search = request.Search.Trim();
+                query = query.Where(x =>
+                    x.RFQNumber.Contains(search) ||
+                    x.Title.Contains(search));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                var status = request.Status.Trim();
+
+                if (status.Equals(Common.RFQ_LIVE_STATUS, StringComparison.OrdinalIgnoreCase))
+                {
+                    var now = DateTime.UtcNow;
+                    query = query.Where(x => x.StartDate <= now && x.EndDate >= now);
+                }
+                else
+                {
+                    query = query.Where(x => x.Status == status);
+                }
+            }
+
+            var result = await query
+                .OrderByDescending(x => x.DateCreated)
+                .Skip(request.Index)
+                .Take(request.Limit)
+                .Select(rfq => new SupplierRFQListDto
                 {
                     RFQNumber = rfq.RFQNumber,
                     Title = rfq.Title,
                     EndDate = rfq.EndDate,
-                    OrganizationName = buyer.OrganizationName,
-                    DeliveryLocation=rfq.DeliveryLocation,
-                    RFQId=rfq.BuyerRFQId
+                    OrganizationName = supplier.OrganizationName,
+                    DeliveryLocation = rfq.DeliveryLocation,
+                    RFQId = rfq.BuyerRFQId,
+                    SupplierRFQId = rfq.Id,
+                    Status = rfq.Status
                 })
-                .Skip(request.Index)
-                .Take(request.Limit)
                 .ToListAsync(cancellationToken);
 
-
-
             return result;
-
         }
     }
 }

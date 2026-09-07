@@ -9,6 +9,8 @@ namespace Supplier.Domain.Dto
 
         public Guid BuyerId { get; set; }
         public Guid SupplierId { get; set; }
+        public Guid OrganizationId { get; set; }
+        public List<Guid> InvitedUserIds { get; set; } = new();
         public string BuyerName { get; set; }
 
         public string Title { get; set; }

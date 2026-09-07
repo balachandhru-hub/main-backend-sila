@@ -27,6 +27,7 @@ namespace Buyer.Domain.Common
                 public static readonly string ACCESS_TOKEN = "access_token";
                 public static readonly string METADATA_DOCUMENT_TYPE = "DOCUMENT_TYPE";
                 public static readonly string RFQ_OPEN_STATUS = "Open";
+                public static readonly string RFQ_LIVE_STATUS = "LIVE";
                 public static readonly string TERMS_CONDITION = "TERMS_CONDITION";
                 public static readonly string TECHNICAL_SPECIFICATION = "TECHNICAL_SPECIFICATION";
                 public static int DISPLAY_ORDER = 1;
@@ -35,8 +36,8 @@ namespace Buyer.Domain.Common
                 public const string DEFAULT = "DEFAULT";
                 public const string SUBMITTED = "SUBMITTED";
                 public const string DRAFT = "DRAFT";
-                public static Guid SUPPLIER_ROLE_ID = new Guid("735bb267-fec0-489f-8249-d3d65b3857ea");
-                public static Guid BUYER_ROLE_ID = new Guid("c95f5a1b-4aec-4647-9328-895a58193ec4");
+                public static Guid SUPPLIER_ADMIN_ROLE_ID = new Guid("735bb267-fec0-489f-8249-d3d65b3857ea");
+                public static Guid BUYER_ADMIN_ROLE_ID = new Guid("c95f5a1b-4aec-4647-9328-895a58193ec4");
                 public const string DEFAULT_TEMPLATE = "DEFAULT_TEMPLATE";
                 public const string BUYER = "BUYER";
                 public const string RADIO_BUTTON = "Radio";

@@ -11,5 +11,7 @@ namespace Supplier.Domain.Dto
         public string DeliveryLocation { get; set; }
         public string OrganizationName { get; set; }
         public Guid RFQId {get;set;}
+        public Guid SupplierRFQId { get; set; }
+        public string? Status { get; set; }
     }
 }
