@@ -30,6 +30,7 @@ namespace Supplier.Domain.Entities
         public string? MaterialGroup { get; set; }
 
         public string? CostCenter { get; set; }
+        public int LineNumber { get; set; }
 
         public SupplierRFQItem()
         {

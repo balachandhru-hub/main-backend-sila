@@ -22,6 +22,7 @@ namespace Buyer.Domain.Entities
         public string MaterialCode{get;set;}
         public string MaterialGroup{get;set;}
         public string CostCenter { get; set; }
+        public int LineNumber { get; set; }
         public RFQItem(){}
 
     }

@@ -76,7 +76,8 @@
 
                             MaterialCode = item.MaterialCode,
                             MaterialGroup = item.MaterialGroup,
-                            CostCenter = item.CostCenter
+                            CostCenter = item.CostCenter,
+                            LineNumber = item.LineNumber
                         };
 
                         supplierItems.Add(supplierItem);
@@ -149,7 +150,9 @@
                             BuyerId = quotation.BuyerId,
                             SupplierId = quotation.SupplierId,
 
-                            QuotedPrice = 0
+                            QuotedPrice = 0,
+                            QuotedAmount = 0,
+                            SubTotal = 0,
                         };
 
                         await _repository.SupplierQuotationItem.CreateAsync(quotationItem);

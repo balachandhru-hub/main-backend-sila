@@ -1,10 +1,17 @@
 namespace Supplier.Domain.Dto
-{public class CreateSupplierQuotationItemDto
 {
-    public Guid SupplierRFQItemId { get; set; }
+    public class CreateSupplierQuotationItemDto
+    {
+        public Guid SupplierRFQItemId { get; set; }
+        public Guid BuyerRFQItemId { get; set; }
+        public decimal QuotedPrice { get; set; }
+        public decimal? DeliveryCharge { get; set; }
+        public string? DeliveryType { get; set; }
 
-    public Guid BuyerRFQItemId { get; set; }
+        public decimal? Discount { get; set; }
+        public string? DiscountType { get; set; }
 
-    public decimal QuotedPrice { get; set; }
-}
+        public decimal? Tax { get; set; }
+        public string? TaxType { get; set; }
+    }
 }

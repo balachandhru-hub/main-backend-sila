@@ -15,5 +15,6 @@ public class SupplierRFQItemDto
     public string? MaterialGroup { get; set; }
 
     public string? CostCenter { get; set; }
+    public int LineNumber { get; set; }
 }
 }

@@ -68,25 +68,17 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
 
                 Id = Guid.NewGuid(),
                 RFQNumber = rfqNumber,
-
                 BuyerId = buyer.Id,
-
                 Title = request.RFQ.Title,
                 Description = request.RFQ.Description,
-
                 Department = request.RFQ.Department,
-
-
                 Region = request.RFQ.Region,
                 DeliveryLocation = request.RFQ.DeliveryLocation,
-
                 StartDate = request.RFQ.StartDate,
                 EndDate = request.RFQ.EndDate,
                 DeliveryTargetDate = request.RFQ.DeliveryTargetDate,
-
                 Budget = request.RFQ.Budget,
                 AddLotOption = request.RFQ.AddLotOption,
-
                 Status = Common.RFQ_OPEN_STATUS,
 
 
@@ -119,8 +111,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     });
 
                 }
-                _logger.LogInfo(
-   "Technical specification documents uploaded successfully.");
+                _logger.LogInfo("Technical specification documents uploaded successfully.");
             }
 
             // Terms & Conditions Documents
@@ -150,16 +141,14 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             {
 
                 await _repository.RFQAttachmentMapping.CreateRangeAsync(attachments);
-                _logger.LogInfo(
-    $"RFQ attachment mappings created successfully. Total Attachments: {attachments.Count}");
+                _logger.LogInfo($"RFQ attachment mappings created successfully. Total Attachments: {attachments.Count}");
             }
 
 
 
             foreach (var question in request.RFQ.Questions)
             {
-                _logger.LogInfo(
-    $"Creating {request.RFQ.Questions.Count} RFQ question(s).");
+                _logger.LogInfo($"Creating {request.RFQ.Questions.Count} RFQ question(s).");
                 var rfqQuestion = new RFQQuestion
                 {
                     Id = Guid.NewGuid(),
@@ -211,8 +200,8 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             var createdItems = new List<RFQItem>();
             if (request.RFQ.Items != null)
             {
-                _logger.LogInfo(
-        $"Creating {request.RFQ.Items.Count} RFQ item(s).");
+                _logger.LogInfo($"Creating {request.RFQ.Items.Count} RFQ item(s).");
+                int lineNumber = 1;
                 foreach (var item in request.RFQ.Items)
                 {
                     var rfqItem = new RFQItem
@@ -224,7 +213,8 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                         UOM = item.UOM,
                         MaterialCode = item.MaterialCode,
                         MaterialGroup = item.MaterialGroup,
-                        CostCenter = item.CostCenter
+                        CostCenter = item.CostCenter,
+                        LineNumber = lineNumber++
                     };
 
                     await _repository.RFQItem.CreateAsync(rfqItem);
@@ -267,8 +257,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                         BuyerId = buyer.Id,
                         SupplierId = supplierId
                     });
-                _logger.LogInfo(
-$"Supplier mapping completed successfully. Total Suppliers: {request.RFQ.SupplierIds.Count}");
+                _logger.LogInfo($"Supplier mapping completed successfully. Total Suppliers: {request.RFQ.SupplierIds.Count}");
             }
 
 
@@ -298,20 +287,18 @@ $"Supplier mapping completed successfully. Total Suppliers: {request.RFQ.Supplie
 
             if (unVerifiedSuppliers.Any())
             {
-                _logger.LogInfo(
-$"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQNumber}");
-                await _mediator.Send(
-    new InviteSuppliersCommand(
-        new InviteSuppliersDto
-        {
-            RFQId = rfq.Id,
-            RFQNumber = rfq.RFQNumber,
-            BuyerId = buyer.Id,
-            RFQVerificationTemplateId = request.RFQ.RFQVerificationTemplateId,
-            SupplierInvites = unVerifiedSuppliers,
-            EndDate = request.RFQ.EndDate,
-            TemplateId = request.RFQ.TemplateId
-        }));
+                _logger.LogInfo($"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQNumber}");
+                await _mediator.Send(new InviteSuppliersCommand(
+                new InviteSuppliersDto
+                {
+                    RFQId = rfq.Id,
+                    RFQNumber = rfq.RFQNumber,
+                    BuyerId = buyer.Id,
+                    RFQVerificationTemplateId = request.RFQ.RFQVerificationTemplateId,
+                    SupplierInvites = unVerifiedSuppliers,
+                    EndDate = request.RFQ.EndDate,
+                    TemplateId = request.RFQ.TemplateId
+                }));
             }
 
             await _repository.SaveAsync();
@@ -321,21 +308,16 @@ $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQN
                 {
                     BuyerRFQId = rfq.Id,
                     RFQNumber = rfq.RFQNumber,
-
                     BuyerId = buyer.Id,
                     SupplierId = supplierId,
-
                     BuyerName = buyer.OrganizationName,
-
                     Title = rfq.Title,
                     Description = rfq.Description,
-
                     StartDate = rfq.StartDate,
                     EndDate = rfq.EndDate,
                     DeliveryLocation = rfq.DeliveryLocation,
                     AddLotOption = rfq.AddLotOption,
                     Status = rfq.Status,
-
                     Items = createdItems.Select(x =>
                         new CreateSupplierRFQItemRequestDto
                         {
@@ -345,7 +327,8 @@ $"Inviting {unVerifiedSuppliers.Count} unverified supplier(s) for RFQ: {rfq.RFQN
                             UOM = x.UOM,
                             MaterialCode = x.MaterialCode,
                             MaterialGroup = x.MaterialGroup,
-                            CostCenter = x.CostCenter
+                            CostCenter = x.CostCenter,
+                            LineNumber = x.LineNumber
                         }).ToList()
                 };
 

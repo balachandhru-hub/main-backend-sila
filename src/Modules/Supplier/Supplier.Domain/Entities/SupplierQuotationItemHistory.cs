@@ -42,6 +42,14 @@ namespace Supplier.Domain.Entities
         public string Version { get; set; }
 
         public decimal QuotedPrice { get; set; }
+        public decimal? DeliveryCharge { get; set; }
+        public decimal? Tax { get; set; }
+        public decimal? Discount { get; set; }
+        public string? DeliveryType { get; set; }
+        public string? DiscountType { get; set; }
+        public string? TaxType { get; set; }
+        public decimal QuotedAmount { get; set; }
+        public decimal SubTotal { get; set; } 
 
         public SupplierQuotationItemHistory()
         {
