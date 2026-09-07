@@ -242,6 +242,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
 
                 items.Add(new GetRFQItemDto
                 {
+                    Id = item.Id,
                     Description = item.Description,
                     Quantity = item.Quantity,
                     UOM = item.UOM,
