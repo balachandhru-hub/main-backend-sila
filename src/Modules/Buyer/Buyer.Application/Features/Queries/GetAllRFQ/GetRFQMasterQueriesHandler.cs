@@ -83,7 +83,6 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                     OrganizationName = buyer.OrganizationName,
                     RFQId = rfq.Id,
                     Description = rfq.Description,
-                    Status = rfq.Status,
                     Id = rfq.Id
                 })
                 .ToListAsync(cancellationToken);

@@ -90,8 +90,8 @@ namespace Supplier.Application.Features.Queries.GetAllSupplierRFQ
                     OrganizationName = supplier.OrganizationName,
                     DeliveryLocation = rfq.DeliveryLocation,
                     RFQId = rfq.BuyerRFQId,
-                    SupplierRFQId = rfq.Id,
-                    Status = rfq.Status
+                    SupplierRFQId = rfq.Id
+              
                 })
                 .ToListAsync(cancellationToken);
 
