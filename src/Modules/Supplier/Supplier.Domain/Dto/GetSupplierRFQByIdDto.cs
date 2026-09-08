@@ -47,6 +47,7 @@ namespace Supplier.Domain.Dto
         public Guid? SupplierRFQId{get;set;}
         public Guid? SupplierRFQItemId{get;set;}
         public Guid? BuyerRFQItemId {get;set;}
+        public int LineNumber { get; set; }
        
     }
      public class GetSupplierQuotationDto

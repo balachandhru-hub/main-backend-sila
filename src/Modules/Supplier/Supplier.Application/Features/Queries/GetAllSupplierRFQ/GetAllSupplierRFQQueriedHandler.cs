@@ -125,7 +125,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     Attachments = itemAttachment?.Attachments ?? new List<AssetDto>(),
                     SupplierRFQItemId = item.Id,
                     SupplierRFQId = item.SupplierRFQId,
-                    BuyerRFQItemId = item.BuyerRFQItemId
+                    BuyerRFQItemId = item.BuyerRFQItemId,
+                    LineNumber = item.LineNumber
 
 
                 });
