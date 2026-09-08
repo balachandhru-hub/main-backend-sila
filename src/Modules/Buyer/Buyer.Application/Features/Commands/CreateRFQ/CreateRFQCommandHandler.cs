@@ -529,7 +529,6 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     DeliveryLocation = rfq.DeliveryLocation,
                     AddLotOption = rfq.AddLotOption,
                     Status = rfq.Status,
-                    Currency = rfq.Currency,
                     SessionToken = sessionToken,
                     Items = createdItems.Select(x =>
                         new CreateSupplierRFQItemRequestDto
