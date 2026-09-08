@@ -417,56 +417,6 @@ namespace Supplier.Application.Features.Commands.UpdateExternalSupplierQuotation
             _logger.LogInfo(
                 $"External supplier quotation updated successfully : {quotation.Id}");
 
-            // Get quotation items
-            var quotationItems = await _repository.SupplierQuotationItem
-                .FindByCondition(x => x.SupplierQuotationId == quotation.Id)
-                .ToListAsync(cancellationToken);
-
-            // Create audit object
-            var audit = new QuotationAuditDto
-            {
-                BuyerRFQId = quotation.BuyerRFQId,
-
-                SupplierQuotationId = quotation.Id,
-
-                SupplierId = quotation.SupplierId,
-
-                BuyerId = quotation.BuyerId,
-
-                RFQNumber = quotation.RFQNumber,
-
-                TotalPrice = quotation.TotalPrice,
-
-                DeliveryCharge = quotation.DeliveryCharge,
-
-                DeliveryType = quotation.DeliveryType,
-
-                Discount = quotation.Discount,
-
-                DiscountType = quotation.DiscountType,
-
-                Tax = quotation.Tax,
-
-                TaxType = quotation.TaxType,
-
-                Items = quotationItems.Select(item => new QuotationAuditItemDto
-                {
-                    SupplierQuotationItemId = item.Id,
-
-                    SupplierRfqItemId = item.SupplierRFQItemId,
-
-                    BuyerRfqItemId = item.BuyerRFQItemId,
-
-                    QuotedPrice = item.QuotedPrice
-
-                }).ToList()
-            };
-
-            // Send to Buyer
-            await _buyerApiClient.StoreQuotationAuditAsync(
-                audit,
-                cancellationToken);
-
             // Bidding is complete - invite the external supplier to
             // register their business profile on the portal. A mail
             // hiccup here must not fail an already-successful quotation
