@@ -35,8 +35,15 @@ namespace SharedKernel.Attributes
                     "Session token is required.");
             }
 
-            if (!context.RouteData.Values.TryGetValue(RouteRFQIdKey, out var rfqIdValue) ||
-                !Guid.TryParse(rfqIdValue?.ToString(), out Guid rfqId))
+            var rfqIdValue = context.RouteData.Values[RouteRFQIdKey]?.ToString();
+
+            if (string.IsNullOrWhiteSpace(rfqIdValue))
+            {
+                rfqIdValue = context.HttpContext.Request.Query["rfqId"]
+                    .FirstOrDefault();
+            }
+
+            if (!Guid.TryParse(rfqIdValue, out Guid rfqId))
             {
                 throw new UnAuthorizedCustomException(
                     "Unauthorized",
