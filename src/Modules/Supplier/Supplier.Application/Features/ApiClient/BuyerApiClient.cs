@@ -380,13 +380,14 @@ namespace Supplier.Infrastructure.ApiClients
         }
         public async Task<CostCenterDto> GetExternalCostCenterById(
     Guid costCenterId,
+    Guid rfqId,
     CancellationToken cancellationToken = default)
         {
             var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
 
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"{buyerUrl}/api/v1/buyer/external-cost-center/{costCenterId}");
+                $"{buyerUrl}/api/v1/buyer/external-cost-center/{costCenterId}?rfqId={rfqId}");
 
             var sessionToken = _httpContextAccessor.HttpContext?
                 .Request.Headers["X-Session-Token"]

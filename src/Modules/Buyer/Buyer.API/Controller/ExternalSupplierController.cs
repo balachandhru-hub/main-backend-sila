@@ -73,7 +73,8 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Cost Center Not Found")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> GetCostCenterById(
-    Guid costCenterId)
+    Guid costCenterId,
+    [FromQuery] Guid rfqId)
         {
             _logger.LogDebug(
                 $"Fetching Cost Center for CostCenterId: {costCenterId}");

@@ -80,6 +80,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 {
                     var costCenter = await _buyerApiClient.GetExternalCostCenterById(
                         costCenterId,
+                        request.RFQId,
                         cancellationToken);
 
                     costCenterName = costCenter?.CostCenter;

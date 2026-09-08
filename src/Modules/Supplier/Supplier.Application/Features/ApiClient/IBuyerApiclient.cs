@@ -39,6 +39,7 @@ namespace Supplier.Application.Contracts
             CancellationToken cancellationToken = default);
         Task<CostCenterDto> GetExternalCostCenterById(
 Guid costCenterId,
+Guid rfqId,
 CancellationToken cancellationToken = default);
         Task<List<RFQQuestionResponseDto>> GetExternalRFQQuestions(
         Guid rfqId,
