@@ -46,11 +46,10 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     $"Supplier not found for the given organization : {request.OrganizationId}");
             }
 
-            // Scoped by SupplierId as well as BuyerRFQId: multiple suppliers
-            // share the same BuyerRFQId (one SupplierRFQ row per invited
-            // supplier), so filtering by BuyerRFQId alone previously returned
-            // whichever supplier's row happened to be first, handing the
-            // caller another supplier's SupplierRFQItem/SupplierQuotation IDs.
+            // One BuyerRFQ fans out to one SupplierRFQ per invited supplier,
+            // so the lookup MUST be scoped to the calling supplier. Filtering
+            // by BuyerRFQId alone returns an arbitrary supplier's RFQ (and
+            // therefore that supplier's SupplierRFQItem / quotation IDs).
             var rfq = await _repositorywrapper.SupplierRFQ
                 .FindByCondition(x =>
                     x.BuyerRFQId == request.RFQId &&
@@ -59,10 +58,11 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
 
             if (rfq == null)
             {
-                _logger.LogError($"RFQ not found for BuyerRFQId: {request.RFQId}, SupplierId: {supplier.Id}");
+                _logger.LogError(
+                    $"RFQ not found for BuyerRFQId: {request.RFQId} and SupplierId: {supplier.Id}");
                 throw new NotFoundCustomException(
                     "RFQ not found.",
-                    $"No RFQ exists with BuyerRFQId: {request.RFQId}.");
+                    $"No RFQ exists with BuyerRFQId: {request.RFQId} for this supplier.");
             }
 
             if (!request.RoleId.Equals(Common.SUPPLIER_ADMIN_ROLE_ID))

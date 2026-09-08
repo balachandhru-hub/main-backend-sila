@@ -174,6 +174,20 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                             $"Supplier RFQ Item with ID {item.SupplierRFQItemId} was not found.");
                     }
 
+                    // Guard against item IDs that belong to another supplier's
+                    // copy of this RFQ. Without this check a stray ID from the
+                    // client creates an extra SupplierQuotationItem row on this
+                    // quotation, which shows up as "duplicate" line items.
+                    if (supplierRFQItem.SupplierRFQId != quotation.SupplierRFQId)
+                    {
+                        _logger.LogError(
+                            $"Supplier RFQ Item {item.SupplierRFQItemId} belongs to SupplierRFQ {supplierRFQItem.SupplierRFQId}, " +
+                            $"but quotation {quotation.Id} belongs to SupplierRFQ {quotation.SupplierRFQId}");
+                        throw new BadRequestCustomException(
+                            "Invalid quotation item.",
+                            $"Supplier RFQ Item with ID {item.SupplierRFQItemId} does not belong to this RFQ.");
+                    }
+
                     var quotationItem = await _repository.SupplierQuotationItem
                         .FindByCondition(x =>
                             x.SupplierQuotationId == quotation.Id &&
@@ -188,7 +202,7 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                                  Id = Guid.NewGuid(),
                                 SupplierQuotationId = quotation.Id,
                                 SupplierRFQItemId = item.SupplierRFQItemId,
-                                BuyerRFQItemId = item.BuyerRFQItemId,
+                                BuyerRFQItemId = supplierRFQItem.BuyerRFQItemId,
                                 BuyerRFQId = quotation.BuyerRFQId,
                                 RFQNumber = quotation.RFQNumber,
                                 BuyerId = quotation.BuyerId,
