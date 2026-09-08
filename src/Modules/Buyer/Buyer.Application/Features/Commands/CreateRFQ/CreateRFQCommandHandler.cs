@@ -507,8 +507,13 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             // existing bidding infrastructure picks it up.
             // ======================================================
 
+            var sessionTokensByExternalSupplierId = new Dictionary<Guid, string>();
+
             foreach (var externalSupplier in createdExternalSuppliers)
             {
+                var sessionToken = Guid.NewGuid().ToString();
+                sessionTokensByExternalSupplierId[externalSupplier.Id] = sessionToken;
+
                 var supplierRequest = new CreateSupplierRFQRequestDto
                 {
                     BuyerRFQId = rfq.Id,
@@ -524,6 +529,8 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     DeliveryLocation = rfq.DeliveryLocation,
                     AddLotOption = rfq.AddLotOption,
                     Status = rfq.Status,
+                    Currency = rfq.Currency,
+                    SessionToken = sessionToken,
                     Items = createdItems.Select(x =>
                         new CreateSupplierRFQItemRequestDto
                         {
@@ -563,7 +570,10 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
             foreach (var externalSupplier in createdExternalSuppliers)
             {
                 await _mediator.Send(
-                    new NotifyExternalSupplierCommand(rfq.Id, externalSupplier.Id),
+                    new NotifyExternalSupplierCommand(
+                        rfq.Id,
+                        externalSupplier.Id,
+                        sessionTokensByExternalSupplierId[externalSupplier.Id]),
                     cancellationToken);
             }
 

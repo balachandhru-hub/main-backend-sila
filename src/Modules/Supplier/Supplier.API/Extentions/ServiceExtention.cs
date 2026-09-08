@@ -14,6 +14,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Supplier.Infrastructure.ApiClients;
 using Supplier.Application.Contracts;
 using HashingSystem;
+using SharedKernel.Contracts;
 
 
 
@@ -58,6 +59,7 @@ namespace Supplier.API.Extensions
         {
             services.AddScoped<IUserIdentityService, UserIdentityService>();
             services.AddScoped<IUserContext, UserContext>();
+            services.AddScoped<ISessionTokenValidator, SupplierSessionTokenValidator>();
             _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
             _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
             _ =services.AddScoped<IBuyerApiClient, BuyerApiClient>();

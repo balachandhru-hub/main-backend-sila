@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Supplier.Application.Features.Commands.Asset;
 using SharedKernel.ExceptionHandler;
 using Supplier.Domain.Dto;
+using Supplier.Application.Contracts;
 
 namespace Supplier.Application.Features.Commands.Supplier
 {
@@ -19,18 +20,21 @@ namespace Supplier.Application.Features.Commands.Supplier
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
         private readonly IMediator _mediator;
+        private readonly IBuyerApiClient _buyerApiClient;
         public CreateSupplierProfileCommandHandler(
             IRepositoryWrapper repository,
             ILoggerManager logger,
             HttpClient httpClient,
             IConfiguration configuration,
-            IMediator mediator)
+            IMediator mediator,
+            IBuyerApiClient buyerApiClient)
         {
             _repository = repository;
             _logger = logger;
             _httpClient = httpClient;
             _configuration = configuration;
             _mediator = mediator;
+            _buyerApiClient = buyerApiClient;
         }
 
         public async Task<Guid> Handle(
@@ -53,9 +57,29 @@ namespace Supplier.Application.Features.Commands.Supplier
 
     _logger.LogInfo("Creating Supplier Business Profile.");
 
+    // If this email was already invited to bid as an external (unregistered)
+    // supplier, reuse that ExternalSupplierId as the SupplierBusinessProfile
+    // id instead of minting a new one, so every SupplierRFQ/SupplierQuotation
+    // record already keyed on it (SupplierId) keeps pointing at this profile.
+    Guid? externalSupplierId = null;
+
+    try
+    {
+        externalSupplierId = await _buyerApiClient.GetExternalSupplierIdByEmailAsync(
+            request.SupplierProfileDto.BusinessProfile.Email,
+            cancellationToken);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(
+            $"Unable to look up external supplier by email '{request.SupplierProfileDto.BusinessProfile.Email}'. Proceeding with a new supplier id. Error: {ex.Message}");
+    }
+
+    Guid supplierProfileId = externalSupplierId ?? Guid.NewGuid();
+
     SupplierBusinessProfile supplierProfile = new SupplierBusinessProfile
     {
-        Id = Guid.NewGuid(),
+        Id = supplierProfileId,
         OrganizationId = request.SupplierProfileDto.OrganizationId,
         SNID = request.SupplierProfileDto.SNID,
 

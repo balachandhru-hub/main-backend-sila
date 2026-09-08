@@ -37,6 +37,9 @@ namespace Supplier.Domain.Entities
         public string Status { get; set; }
         public string DeliveryLocation {get;set;}
         public string Currency { get; set; }
+
+        public string? SessionToken { get; set; }
+
         public SupplierRFQ()
         {
         }

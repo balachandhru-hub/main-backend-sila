@@ -27,6 +27,8 @@ using Buyer.Application.Features.Commands.DeleteBankAccount;
 using Buyer.Application.Features.Commands.CreateDeliveryLocation;
 using Buyer.Application.Features.Commands.DeleteDeliveryLocation;
 using Buyer.Application.Features.Commands.StoreQuotationAudit;
+using Buyer.Application.Features.Commands.NotifySupplierRegistration;
+using Buyer.Application.Features.Queries.GetExternalSupplierByEmail;
 
 
 
@@ -617,7 +619,48 @@ namespace Buyer.API.Controllers
     });
 }
 
+        /// <summary>
+        /// Notifies an external supplier to register their business
+        /// profile on the portal, once their bidding on an RFQ is complete.
+        /// </summary>
+        [HttpPost]
+        [Route("api/v1/buyer/notify-supplier-registration")]
+        [ValidateModelState]
+        [SwaggerOperation("NotifySupplierRegistration")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier registration notification processed successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> NotifySupplierRegistration(
+            [FromBody] NotifySupplierRegistrationRequestDto dto)
+        {
+            await _mediator.Send(
+                new NotifySupplierRegistrationCommand(dto.ExternalSupplierId, dto.RFQId));
 
+            return Ok(new
+            {
+                success = true,
+                message = "Supplier registration notification processed successfully."
+            });
+        }
+
+        /// <summary>
+        /// Resolves the ExternalSupplierId (if any) for an email address,
+        /// so a registering supplier can reuse it as their
+        /// SupplierBusinessProfile.Id instead of generating a new one.
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/buyer/external-supplier/by-email")]
+        [ValidateModelState]
+        [SwaggerOperation("GetExternalSupplierByEmail")]
+        [SwaggerResponse(200, type: typeof(Guid?), description: "External supplier id fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetExternalSupplierByEmail([FromQuery] string email)
+        {
+            var result = await _mediator.Send(new GetExternalSupplierByEmailQuery(email));
+
+            return Ok(result);
+        }
 
     }
 }

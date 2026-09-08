@@ -52,7 +52,8 @@
                     AddLotOption = request.RFQ.AddLotOption,
                     Currency = request.RFQ.Currency,
                     Status = request.RFQ.Status,
-                    DeliveryLocation=request.RFQ.DeliveryLocation
+                    DeliveryLocation=request.RFQ.DeliveryLocation,
+                    SessionToken = request.RFQ.SessionToken
                 };
 
                 _repository.SupplierRFQ.Create(supplierRFQ);

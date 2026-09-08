@@ -29,6 +29,7 @@ namespace Buyer.Domain.Dto
 
         public string Status { get; set; }
         public string DeliveryLocation { get; set; }
+        public string? SessionToken { get; set; }
         public List<CreateSupplierRFQItemRequestDto>? Items { get; set; }
     }
 }

@@ -15,6 +15,7 @@ using Supplier.Application.Features.Commands.Supplier.UpdateSupplierStatusOrgani
 using Supplier.Application.Features.Profile.Queries.GetSupplierId;
 
 using Supplier.Application.Features.Commands.UpdateSupplierQuotation;
+using Supplier.Application.Features.Commands.UpdateExternalSupplierQuotation;
 using Microsoft.AspNetCore.SignalR;
 using Supplier.API.Hubs;
 
@@ -263,6 +264,46 @@ namespace Supplier.API.Controllers
                 Id = result.QuotationId.ToString()
             });
         }
+        [HttpPut]
+        [Route("api/v1/supplier/external-rfq/{rfqId}/quotation")]
+        [ApiSessionAuthorization]
+        [ValidateModelState]
+        [SwaggerOperation("UpdateExternalSupplierQuotation")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier quotation updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateExternalSupplierQuotation(
+            Guid rfqId,
+            [FromBody] UpdateSupplierQuotationDto dto)
+        {
+            var supplierId = base.GetSupplierId();
+
+            var result = await _mediator.Send(
+                new UpdateExternalSupplierQuotationCommand(
+                    dto,
+                    rfqId,
+                    supplierId));
+
+            await _hubContext.Clients.All.SendAsync(
+          "QuotationSubmitted",
+          new
+          {
+              BuyerId = result.BuyerId,
+              SupplierId = result.SupplierId,
+              QuotationId = result.QuotationId,
+              Message = "Supplier has submitted the quotation."
+          });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Supplier quotation updated successfully.",
+                Id = result.QuotationId.ToString()
+            });
+        }
+
         [HttpGet]
         [Route("api/v1/supplier/quotation/history-comparison/{supplierQuotationId}")]
         [ApiAuthorization(Name = "GET_SUPPLIER_QUOTATION_HISTORY_COMPARISON")]

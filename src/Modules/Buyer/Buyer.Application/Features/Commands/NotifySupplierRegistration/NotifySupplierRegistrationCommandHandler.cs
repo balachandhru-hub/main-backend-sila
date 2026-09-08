@@ -7,17 +7,17 @@ using HashingSystem;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
-namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
+namespace Buyer.Application.Features.Commands.NotifySupplierRegistration
 {
-    public class NotifyExternalSupplierCommandHandler
-        : IRequestHandler<NotifyExternalSupplierCommand, bool>
+    public class NotifySupplierRegistrationCommandHandler
+        : IRequestHandler<NotifySupplierRegistrationCommand, bool>
     {
         private readonly IRepositoryWrapper _repository;
         private readonly IAesEncryption _aesEncryption;
         private readonly ILoggerManager _logger;
         private readonly IMetadataApiClient _metadataApiClient;
 
-        public NotifyExternalSupplierCommandHandler(
+        public NotifySupplierRegistrationCommandHandler(
             IRepositoryWrapper repository,
             IAesEncryption aesEncryption,
             ILoggerManager logger,
@@ -30,7 +30,7 @@ namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
         }
 
         public async Task<bool> Handle(
-            NotifyExternalSupplierCommand request,
+            NotifySupplierRegistrationCommand request,
             CancellationToken cancellationToken)
         {
             var externalSupplier = await _repository.ExternalSupplier
@@ -41,22 +41,6 @@ namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
             if (externalSupplier == null)
             {
                 return false;
-            }
-
-            var mapping = await _repository.RFQExternalSupplier
-                .FindByCondition(x =>
-                    x.RFQId == request.BuyerRFQId &&
-                    x.ExternalSupplierId == externalSupplier.Id &&
-                    x.IsActive)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (mapping == null)
-            {
-                _logger.LogError(
-                    $"RFQ/ExternalSupplier mapping not found. RFQId: {request.BuyerRFQId}, ExternalSupplierId: {externalSupplier.Id}");
-                throw new NotFoundCustomException(
-                    "RFQ/ExternalSupplier mapping not found.",
-                    $"No mapping found for RFQId: {request.BuyerRFQId} and ExternalSupplierId: {externalSupplier.Id}");
             }
 
             var rfq = await _repository.RFQ
@@ -74,15 +58,13 @@ namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
             try
             {
                 var registrationLink = BuildRegistrationLink(externalSupplier.Id, rfq.Id);
-                var bidLink = BuildBidLink(rfq.Id, request.SessionToken);
 
                 var parameters = new Dictionary<string, string>
                 {
                     { "SUPPLIER_NAME", externalSupplier.SupplierName ?? string.Empty },
                     { "RFQ_NUMBER", rfq.RFQNumber ?? string.Empty },
                     { "RFQ_TITLE", rfq.Title ?? string.Empty },
-                    { "REGISTRATION_LINK", registrationLink },
-                    { "EXTERNAL_SUPPLIER_BID_LINK", bidLink }
+                    { "REGISTRATION_LINK", registrationLink }
                 };
 
                 await _metadataApiClient.SendEmailAsync(
@@ -94,14 +76,14 @@ namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
                     cancellationToken);
 
                 _logger.LogInfo(
-                    $"External supplier quotation invite email sent. ExternalSupplierId: {externalSupplier.Id}, RFQId: {rfq.Id}");
+                    $"External supplier registration email sent. ExternalSupplierId: {externalSupplier.Id}, RFQId: {rfq.Id}");
             }
             catch (Exception ex)
             {
                 // A mail-server hiccup must not fail an already-successful
-                // RFQ creation - log and continue.
+                // quotation submission - log and continue.
                 _logger.LogError(
-                    $"Failed to send external supplier quotation invite email. ExternalSupplierId: {externalSupplier.Id}, RFQId: {rfq.Id}. Error: {ex.Message}");
+                    $"Failed to send external supplier registration email. ExternalSupplierId: {externalSupplier.Id}, RFQId: {rfq.Id}. Error: {ex.Message}");
             }
 
             return true;
@@ -121,13 +103,6 @@ namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
             var origin = Common.REGISTRATION_LINK;
 
             return $"{origin.TrimEnd('/')}/supplier/register?token={encodedToken}";
-        }
-
-        private string BuildBidLink(Guid rfqId, string sessionToken)
-        {
-            var origin = Common.REGISTRATION_LINK;
-
-            return $"{origin.TrimEnd('/')}/external-supplier/bid/{rfqId}/{Uri.EscapeDataString(sessionToken)}";
         }
     }
 }

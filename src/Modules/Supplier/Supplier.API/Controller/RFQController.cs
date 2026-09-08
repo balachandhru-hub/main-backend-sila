@@ -139,6 +139,24 @@ namespace Supplier.API.Controllers
         }
 
         [HttpGet]
+        [Route("api/v1/supplier/external-rfq/{rfqId}")]
+        [ApiSessionAuthorization]
+        [SwaggerOperation("GetExternalSupplierRFQById")]
+        [SwaggerResponse(200, type: typeof(GetRFQByIdDto), description: "Success")]
+        [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+        [SwaggerResponse(403, type: typeof(ErrorResponseDto), description: "Session token expired")]
+        public async Task<IActionResult> GetExternalRFQById(Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetExternalSupplierRFQByIdQuery
+            {
+                RFQId = rfqId,
+                SupplierId = GetSupplierId()
+            });
+
+            return Ok(result);
+        }
+
+        [HttpGet]
         [Route("api/v1/supplier/quotation-rfq-by-id")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_SUPPLIER_QUOTATION_RFQ_BY_ID")]

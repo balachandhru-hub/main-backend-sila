@@ -28,7 +28,16 @@ namespace Supplier.Application.Contracts
         Task StoreQuotationAuditAsync(
             QuotationAuditDto audit,
             CancellationToken cancellationToken);
-        
+
+        Task NotifySupplierRegistrationAsync(
+            Guid externalSupplierId,
+            Guid rfqId,
+            CancellationToken cancellationToken = default);
+
+        Task<Guid?> GetExternalSupplierIdByEmailAsync(
+            string email,
+            CancellationToken cancellationToken = default);
+
     }
 
 }

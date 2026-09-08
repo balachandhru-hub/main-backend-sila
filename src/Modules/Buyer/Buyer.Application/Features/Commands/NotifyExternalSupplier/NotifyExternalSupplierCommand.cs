@@ -8,10 +8,13 @@ namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
 
         public Guid ExternalSupplierId { get; }
 
-        public NotifyExternalSupplierCommand(Guid buyerRFQId, Guid externalSupplierId)
+        public string SessionToken { get; }
+
+        public NotifyExternalSupplierCommand(Guid buyerRFQId, Guid externalSupplierId, string sessionToken)
         {
             BuyerRFQId = buyerRFQId;
             ExternalSupplierId = externalSupplierId;
+            SessionToken = sessionToken;
         }
     }
 }

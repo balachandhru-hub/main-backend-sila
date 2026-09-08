@@ -288,5 +288,95 @@ namespace Supplier.Infrastructure.ApiClients
                     $"StatusCode: {response.StatusCode}, Response: {responseContent}");
             }
         }
+
+        public async Task NotifySupplierRegistrationAsync(
+            Guid externalSupplierId,
+            Guid rfqId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            if (string.IsNullOrWhiteSpace(buyerUrl))
+            {
+                throw new BadRequestCustomException(
+                    "Buyer service URL is not configured.",
+                    "Please configure the Buyer service base URL.");
+            }
+
+            var url =
+                $"{buyerUrl.TrimEnd('/')}/api/v1/buyer/notify-supplier-registration";
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                url);
+
+            request.Content = JsonContent.Create(new
+            {
+                ExternalSupplierId = externalSupplierId,
+                RFQId = rfqId
+            });
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseContent =
+                    await response.Content.ReadAsStringAsync(
+                        cancellationToken);
+
+                throw new BadRequestCustomException(
+                    "Failed to notify supplier registration in Buyer service.",
+                    $"StatusCode: {response.StatusCode}, Response: {responseContent}");
+            }
+        }
+
+        public async Task<Guid?> GetExternalSupplierIdByEmailAsync(
+            string email,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            if (string.IsNullOrWhiteSpace(buyerUrl))
+            {
+                throw new BadRequestCustomException(
+                    "Buyer service URL is not configured.",
+                    "Please configure the Buyer service base URL.");
+            }
+
+            var url =
+                $"{buyerUrl.TrimEnd('/')}/api/v1/buyer/external-supplier/by-email?email={Uri.EscapeDataString(email)}";
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                url);
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request.Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                throw new BadRequestCustomException(
+                    "Unable to look up external supplier by email.",
+                    error);
+            }
+
+            return await response.Content
+                .ReadFromJsonAsync<Guid?>(cancellationToken: cancellationToken);
+        }
     }
 }
