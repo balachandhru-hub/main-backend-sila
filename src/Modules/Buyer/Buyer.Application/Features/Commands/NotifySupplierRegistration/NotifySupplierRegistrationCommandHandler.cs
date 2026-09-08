@@ -1,6 +1,7 @@
 using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Buyer.Domain.Common;
 using Buyer.Infrastructure.Contracts.IRepository;
 using HashingSystem;
@@ -16,17 +17,20 @@ namespace Buyer.Application.Features.Commands.NotifySupplierRegistration
         private readonly IAesEncryption _aesEncryption;
         private readonly ILoggerManager _logger;
         private readonly IMetadataApiClient _metadataApiClient;
+        private readonly IConfiguration _configuration;
 
         public NotifySupplierRegistrationCommandHandler(
             IRepositoryWrapper repository,
             IAesEncryption aesEncryption,
             ILoggerManager logger,
-            IMetadataApiClient metadataApiClient)
+            IMetadataApiClient metadataApiClient,
+            IConfiguration configuration)
         {
             _repository = repository;
             _aesEncryption = aesEncryption;
             _logger = logger;
             _metadataApiClient = metadataApiClient;
+            _configuration = configuration;
         }
 
         public async Task<bool> Handle(
@@ -100,7 +104,7 @@ namespace Buyer.Application.Features.Commands.NotifySupplierRegistration
             var token = _aesEncryption.Encrypt(payload);
             var encodedToken = Uri.EscapeDataString(token);
 
-            var origin = Common.REGISTRATION_LINK;
+            var origin = _configuration[Common.EXTERNAL_SUPPLIER_REGISTRATION_LINK]!;
 
             return $"{origin.TrimEnd('/')}/supplier/register?token={encodedToken}";
         }

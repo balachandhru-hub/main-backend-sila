@@ -1,9 +1,8 @@
-using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Buyer.Domain.Common;
 using Buyer.Infrastructure.Contracts.IRepository;
-using HashingSystem;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
@@ -13,20 +12,20 @@ namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
         : IRequestHandler<NotifyExternalSupplierCommand, bool>
     {
         private readonly IRepositoryWrapper _repository;
-        private readonly IAesEncryption _aesEncryption;
         private readonly ILoggerManager _logger;
         private readonly IMetadataApiClient _metadataApiClient;
+        private readonly IConfiguration _configuration;
 
         public NotifyExternalSupplierCommandHandler(
             IRepositoryWrapper repository,
-            IAesEncryption aesEncryption,
             ILoggerManager logger,
-            IMetadataApiClient metadataApiClient)
+            IMetadataApiClient metadataApiClient,
+            IConfiguration configuration)
         {
             _repository = repository;
-            _aesEncryption = aesEncryption;
             _logger = logger;
             _metadataApiClient = metadataApiClient;
+            _configuration = configuration;
         }
 
         public async Task<bool> Handle(
@@ -73,7 +72,6 @@ namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
 
             try
             {
-                var registrationLink = BuildRegistrationLink(externalSupplier.Id, rfq.Id);
                 var bidLink = BuildBidLink(rfq.Id, request.SessionToken);
 
                 var parameters = new Dictionary<string, string>
@@ -81,8 +79,10 @@ namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
                     { "SUPPLIER_NAME", externalSupplier.SupplierName ?? string.Empty },
                     { "RFQ_NUMBER", rfq.RFQNumber ?? string.Empty },
                     { "RFQ_TITLE", rfq.Title ?? string.Empty },
-                    { "REGISTRATION_LINK", registrationLink },
-                    { "EXTERNAL_SUPPLIER_BID_LINK", bidLink }
+                    // The invite email's "Submit Your Quotation" button uses the
+                    // REGISTRATION_LINK placeholder; for this pre-bid invite it must
+                    // point at the bid page, not supplier registration.
+                    { "REGISTRATION_LINK", bidLink }
                 };
 
                 await _metadataApiClient.SendEmailAsync(
@@ -107,25 +107,9 @@ namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
             return true;
         }
 
-        private string BuildRegistrationLink(Guid externalSupplierId, Guid rfqId)
-        {
-            var payload = JsonSerializer.Serialize(new
-            {
-                ExternalSupplierId = externalSupplierId,
-                RFQId = rfqId
-            });
-
-            var token = _aesEncryption.Encrypt(payload);
-            var encodedToken = Uri.EscapeDataString(token);
-
-            var origin = Common.REGISTRATION_LINK;
-
-            return $"{origin.TrimEnd('/')}/supplier/register?token={encodedToken}";
-        }
-
         private string BuildBidLink(Guid rfqId, string sessionToken)
         {
-            var origin = Common.REGISTRATION_LINK;
+            var origin = _configuration[Common.EXTERNAL_SUPPLIER_BID_LINK]!;
 
             return $"{origin.TrimEnd('/')}/external-supplier/bid/{rfqId}/{Uri.EscapeDataString(sessionToken)}";
         }

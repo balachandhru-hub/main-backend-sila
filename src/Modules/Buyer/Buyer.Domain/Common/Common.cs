@@ -52,7 +52,8 @@ namespace Buyer.Domain.Common
                 public const string EXTERNAL_SUPPLIER_INVITED_STATUS = "INVITED";
                 public const string EXTERNAL_SUPPLIER_EMAIL_KEY = "EXTERNAL_SUPPLIER_QUOTATION_SUBMITTED";
                 public const string EXTERNAL_SUPPLIER_ENTITY_TYPE = "RFQ";
-                public static readonly string REGISTRATION_LINK = "https://vosox.chervicaon.com/";
+                public static readonly string EXTERNAL_SUPPLIER_REGISTRATION_LINK = "ExternalSupplier:RegistrationLink";
+                public static readonly string EXTERNAL_SUPPLIER_BID_LINK = "ExternalSupplier:BidLink";
 
 
         }
