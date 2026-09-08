@@ -62,7 +62,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             {
                 var isInvited = await _repositorywrapper.RFQOrganizationUserMapping
                     .FindByCondition(x =>
-                        x.SupplierRFQId == rfq.BuyerRFQId &&
+                        x.BuyerRFQId == rfq.BuyerRFQId &&
                         x.UserId == request.UserId &&
                         x.IsActive)
                     .AnyAsync(cancellationToken);
