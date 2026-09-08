@@ -66,7 +66,9 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                         x.UserId == request.UserId &&
                         x.IsActive)
                     .AnyAsync(cancellationToken);
-                
+
+                _logger.LogInfo($"RFQ access check: " + $"RequestRFQId={request.RFQId}, " + $"BuyerRFQId={rfq.BuyerRFQId}, " + $"UserId={request.UserId}, " + $"RoleId={request.RoleId}");
+
                 _logger.LogInfo($"User invitation check for UserId: {request.UserId} and RFQId: {request.RFQId} - IsInvited: {isInvited}");
                 if (!isInvited)
                 {
@@ -99,20 +101,20 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 var itemAttachment = attachmentResponse.ItemAttachments
                     .FirstOrDefault(x => x.RFQItemId == item.BuyerRFQItemId);
 
-                   string? costCenterName = null;
+                string? costCenterName = null;
 
-                    if (!string.IsNullOrWhiteSpace(item.CostCenter) &&
-                        Guid.TryParse(item.CostCenter, out var costCenterId))
-                    {
-                        _logger.LogInfo(
-                            $"Fetching Cost Center for CostCenterId: {costCenterId}");
+                if (!string.IsNullOrWhiteSpace(item.CostCenter) &&
+                    Guid.TryParse(item.CostCenter, out var costCenterId))
+                {
+                    _logger.LogInfo(
+                        $"Fetching Cost Center for CostCenterId: {costCenterId}");
 
-                        var costCenter = await _buyerApiClient.GetCostCenterById(
-                            costCenterId,
-                            cancellationToken);
+                    var costCenter = await _buyerApiClient.GetCostCenterById(
+                        costCenterId,
+                        cancellationToken);
 
-                        costCenterName = costCenter?.CostCenter;
-                    }
+                    costCenterName = costCenter?.CostCenter;
+                }
                 items.Add(new GetRFQItemDto
                 {
                     Id = item.Id,
@@ -209,7 +211,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 AddLotOption = rfq.AddLotOption,
                 TechnicalSpecificationDocuments = technicalDocuments,
                 TermsConditionDocuments = termsDocuments,
-                Status=rfq.Status,
+                Status = rfq.Status,
                 Items = items,
                 Questions = questions,
                 SupplierQuotation = quotation == null
