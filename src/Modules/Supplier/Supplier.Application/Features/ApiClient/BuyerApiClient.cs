@@ -426,7 +426,7 @@ namespace Supplier.Infrastructure.ApiClients
 
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"{buyerUrl}/api/v1/buyer/external-rfq-questions?rfqId={rfqId}");
+                $"{buyerUrl}/api/v1/buyer/external-internal-rfq-questions?rfqId={rfqId}");
 
             var sessionToken = _httpContextAccessor.HttpContext?
                 .Request.Headers["X-Session-Token"]
