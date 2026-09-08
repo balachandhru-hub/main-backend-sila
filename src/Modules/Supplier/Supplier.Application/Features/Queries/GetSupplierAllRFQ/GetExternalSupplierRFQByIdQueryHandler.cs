@@ -55,10 +55,10 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
 
             var supplierRFQId = rfq.Id;
 
-            var attachmentResponse = await _buyerApiClient.GetRFQAttachments(
+            var attachmentResponse = await _buyerApiClient.GetExternalRFQAttachments(
                 request.RFQId,
                 cancellationToken);
-            var questions = await _buyerApiClient.GetRFQQuestions(
+            var questions = await _buyerApiClient.GetExternalRFQQuestions(
                 request.RFQId,
                 cancellationToken);
 
@@ -78,7 +78,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 if (!string.IsNullOrWhiteSpace(item.CostCenter) &&
                     Guid.TryParse(item.CostCenter, out var costCenterId))
                 {
-                    var costCenter = await _buyerApiClient.GetCostCenterById(
+                    var costCenter = await _buyerApiClient.GetExternalCostCenterById(
                         costCenterId,
                         cancellationToken);
 

@@ -378,5 +378,125 @@ namespace Supplier.Infrastructure.ApiClients
             return await response.Content
                 .ReadFromJsonAsync<Guid?>(cancellationToken: cancellationToken);
         }
+        public async Task<CostCenterDto> GetExternalCostCenterById(
+    Guid costCenterId,
+    CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/external-cost-center/{costCenterId}");
+
+            var sessionToken = _httpContextAccessor.HttpContext?
+                .Request.Headers["X-Session-Token"]
+                .FirstOrDefault();
+
+            if (!string.IsNullOrWhiteSpace(sessionToken))
+            {
+                request.Headers.Add(
+                    "X-Session-Token",
+                    sessionToken);
+            }
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch cost center.",
+                    error);
+            }
+
+            var result = await response.Content
+                .ReadFromJsonAsync<CostCenterDto>(
+                    cancellationToken: cancellationToken);
+
+            return result ?? new CostCenterDto();
+        }
+        public async Task<List<RFQQuestionResponseDto>> GetExternalRFQQuestions(
+            Guid rfqId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/external-rfq-questions?rfqId={rfqId}");
+
+            var sessionToken = _httpContextAccessor.HttpContext?
+                .Request.Headers["X-Session-Token"]
+                .FirstOrDefault();
+
+            if (!string.IsNullOrWhiteSpace(sessionToken))
+            {
+                request.Headers.Add(
+                    "X-Session-Token",
+                    sessionToken);
+            }
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch RFQ questions.",
+                    error);
+            }
+
+            var result = await response.Content
+                .ReadFromJsonAsync<List<RFQQuestionResponseDto>>(
+                    cancellationToken: cancellationToken);
+
+            return result ?? new List<RFQQuestionResponseDto>();
+        }
+        public async Task<GetRFQAttachmentsDto> GetExternalRFQAttachments(
+            Guid rfqId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/external-rfq-attachments?rfqId={rfqId}");
+
+            var sessionToken = _httpContextAccessor.HttpContext?
+                .Request.Headers["X-Session-Token"]
+                .FirstOrDefault();
+
+            if (!string.IsNullOrWhiteSpace(sessionToken))
+            {
+                request.Headers.Add(
+                    "X-Session-Token",
+                    sessionToken);
+            }
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch RFQ attachments.",
+                    error);
+            }
+
+            var result = await response.Content
+                .ReadFromJsonAsync<GetRFQAttachmentsDto>(
+                    cancellationToken: cancellationToken);
+
+            return result ?? new GetRFQAttachmentsDto();
+        }
     }
 }

@@ -37,6 +37,15 @@ namespace Supplier.Application.Contracts
         Task<Guid?> GetExternalSupplierIdByEmailAsync(
             string email,
             CancellationToken cancellationToken = default);
+        Task<CostCenterDto> GetExternalCostCenterById(
+Guid costCenterId,
+CancellationToken cancellationToken = default);
+        Task<List<RFQQuestionResponseDto>> GetExternalRFQQuestions(
+        Guid rfqId,
+        CancellationToken cancellationToken = default);
+        Task<GetRFQAttachmentsDto> GetExternalRFQAttachments(
+        Guid rfqId,
+        CancellationToken cancellationToken = default);
 
     }
 
