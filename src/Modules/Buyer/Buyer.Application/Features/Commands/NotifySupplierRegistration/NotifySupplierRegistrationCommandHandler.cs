@@ -73,7 +73,7 @@ namespace Buyer.Application.Features.Commands.NotifySupplierRegistration
 
                 await _metadataApiClient.SendEmailAsync(
                     externalSupplier.Email,
-                    Common.EXTERNAL_SUPPLIER_EMAIL_KEY,
+                    Common.EXTERNAL_SUPPLIER_REGISTRATION_EMAIL_KEY,
                     rfq.Id,
                     Common.EXTERNAL_SUPPLIER_ENTITY_TYPE,
                     parameters,
