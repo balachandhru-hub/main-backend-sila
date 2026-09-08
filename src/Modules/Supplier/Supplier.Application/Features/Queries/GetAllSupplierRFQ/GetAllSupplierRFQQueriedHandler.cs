@@ -123,7 +123,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     CostCenter = item.CostCenter,
                     CostCenterName = costCenterName,
                     Attachments = itemAttachment?.Attachments ?? new List<AssetDto>(),
-                    SupplierRFQItemId = item.BuyerRFQItemId,
+                    SupplierRFQItemId = item.Id,
                     SupplierRFQId = item.SupplierRFQId,
                     BuyerRFQItemId = item.BuyerRFQItemId
 
