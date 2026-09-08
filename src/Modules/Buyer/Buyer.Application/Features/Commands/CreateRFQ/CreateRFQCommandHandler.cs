@@ -514,6 +514,7 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                     BuyerRFQId = rfq.Id,
                     RFQNumber = rfq.RFQNumber,
                     BuyerId = buyer.Id,
+                    Currency = rfq.Currency,
                     SupplierId = externalSupplier.Id,
                     BuyerName = buyer.OrganizationName,
                     Title = rfq.Title,
