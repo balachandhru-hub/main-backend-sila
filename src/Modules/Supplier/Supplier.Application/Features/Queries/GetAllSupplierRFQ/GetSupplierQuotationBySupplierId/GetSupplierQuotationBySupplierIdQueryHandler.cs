@@ -80,6 +80,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                     .FindByCondition(x =>
                         x.SupplierQuotationId == quotation.Id &&
                         x.IsActive)
+                    .OrderBy(x => x.SupplierRFQItem.LineNumber)
                     .Select(x => new SupplierQuotationItemDto
                     {
                         QuotedPrice = x.QuotedPrice,

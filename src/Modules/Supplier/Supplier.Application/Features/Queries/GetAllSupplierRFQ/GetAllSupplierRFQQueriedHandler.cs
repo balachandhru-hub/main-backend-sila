@@ -88,6 +88,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             _logger.LogInfo($"Fetching RFQ items for SupplierRFQId: {supplierRFQId}");
             var rfqItems = await _repositorywrapper.SupplierRFQItem
                 .FindByCondition(x => x.SupplierRFQId == supplierRFQId)
+                   .OrderBy(x => x.LineNumber)
                 .ToListAsync(cancellationToken);
 
             var items = new List<GetRFQItemDto>();
