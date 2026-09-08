@@ -67,9 +67,6 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                         x.IsActive)
                     .AnyAsync(cancellationToken);
 
-                _logger.LogInfo($"RFQ access check: " + $"RequestRFQId={request.RFQId}, " + $"BuyerRFQId={rfq.BuyerRFQId}, " + $"UserId={request.UserId}, " + $"RoleId={request.RoleId}");
-
-                _logger.LogInfo($"User invitation check for UserId: {request.UserId} and RFQId: {request.RFQId} - IsInvited: {isInvited}");
                 if (!isInvited)
                 {
                     throw new ForBiddenCustomException(
