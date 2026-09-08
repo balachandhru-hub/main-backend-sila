@@ -4,6 +4,10 @@ namespace Buyer.Application.Contracts
 {
     public interface ISupplierApiClient
     {
+        Task<bool> ValidateExternalSessionToken(
+            string sessionToken,
+            Guid rfqId,
+            CancellationToken cancellationToken = default);
         Task CreateSupplierRFQ(
             CreateSupplierRFQRequestDto rfq,
 

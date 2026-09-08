@@ -28,6 +28,23 @@ namespace Buyer.Infrastructure.ApiClients
             _httpContextAccessor = httpContextAccessor;
         }
 
+        public async Task<bool> ValidateExternalSessionToken(
+            string sessionToken,
+            Guid rfqId,
+            CancellationToken cancellationToken = default)
+        {
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/internal-session-token/validate" +
+                $"?sessionToken={Uri.EscapeDataString(sessionToken)}&rfqId={rfqId}");
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            return response.IsSuccessStatusCode;
+        }
+
         public async Task CreateSupplierRFQ(
      CreateSupplierRFQRequestDto rfq,
      CancellationToken cancellationToken = default)

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 
 using SharedKernel.Attributes;
+using SharedKernel.Contracts;
 using SharedKernel.Controllers;
 using SharedKernel.Dto;
 using SharedKernel.ExceptionHandler;
@@ -35,15 +36,18 @@ namespace Supplier.API.Controllers
         private readonly IMediator _mediator;
         private readonly ILoggerManager _logger;
         private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly ISessionTokenValidator _sessionTokenValidator;
 
         public RFQController(
             IMediator mediator,
             ILoggerManager logger,
-            IHubContext<NotificationHub> hubContext)
+            IHubContext<NotificationHub> hubContext,
+            ISessionTokenValidator sessionTokenValidator)
         {
             _mediator = mediator;
             _logger = logger;
             _hubContext = hubContext;
+            _sessionTokenValidator = sessionTokenValidator;
         }
         [HttpPost]
         [Route("/api/v1/supplier/internal-rfq")]
@@ -154,6 +158,26 @@ namespace Supplier.API.Controllers
             });
 
             return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("api/v1/supplier/internal-session-token/validate")]
+        [ValidateModelState]
+        [SwaggerOperation("ValidateExternalSessionToken")]
+        [SwaggerResponse(200, description: "Session token is valid")]
+        [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+        [SwaggerResponse(403, type: typeof(ErrorResponseDto), description: "Session token expired")]
+        public async Task<IActionResult> ValidateExternalSessionToken(
+            [FromQuery] string sessionToken,
+            [FromQuery] Guid rfqId,
+            CancellationToken cancellationToken)
+        {
+            await _sessionTokenValidator.ValidateAsync(
+                sessionToken,
+                rfqId,
+                cancellationToken);
+
+            return Ok();
         }
 
         [HttpGet]

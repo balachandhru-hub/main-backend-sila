@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using SharedKernel.LoggerServices;
 using SharedKernel.Attributes;
+using Buyer.API.Attributes;
 using Buyer.Domain.Dto;
 using SharedKernel.Controllers;
 using Buyer.Application.Features.Queries.GetRFQAttachments;
@@ -30,7 +31,7 @@ namespace Buyer.API.Controllers
  [HttpGet]
         [Route("api/v1/buyer/external-rfq-attachments")]
         [ValidateModelState]
-        [ApiSessionAuthorization]
+        [ExternalSessionAuthorization]
         [SwaggerOperation("GetRFQAttachments")]
         [SwaggerResponse(200, type: typeof(GetRFQAttachmentsDto), description: "Success")]
         public async Task<IActionResult> GetRFQAttachments([FromQuery] Guid rfqId)
@@ -45,7 +46,7 @@ namespace Buyer.API.Controllers
         [HttpGet]
         [Route("api/v1/buyer/external-internal-rfq-questions")]
         [ValidateModelState]
-       [ApiSessionAuthorization]
+       [ExternalSessionAuthorization]
         [SwaggerOperation("GetRFQQuestions")]
         [SwaggerResponse(200, type: typeof(List<RFQQuestionResponseDto>), description: "Fetched RFQ Questions successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
@@ -65,7 +66,7 @@ namespace Buyer.API.Controllers
           [HttpGet]
         [Route("api/v1/buyer/external-cost-center/{costCenterId}")]
         [ValidateModelState]
-      [ApiSessionAuthorization]
+      [ExternalSessionAuthorization]
         [SwaggerOperation("GetCostCenterById")]
         [SwaggerResponse(200, type: typeof(CostCenterDto), description: "Success")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
