@@ -34,18 +34,6 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
         {
             _logger.LogInfo($"Fetching RFQ details for RFQId: {request.RFQId}");
 
-            var rfq = await _repositorywrapper.SupplierRFQ
-                .FindByCondition(x => x.BuyerRFQId == request.RFQId)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (rfq == null)
-            {
-                _logger.LogError($"RFQ not found for BuyerRFQId: {request.RFQId}");
-                throw new NotFoundCustomException(
-                    "RFQ not found.",
-                    $"No RFQ exists with BuyerRFQId: {request.RFQId}.");
-            }
-
             var supplier = _repositorywrapper.SupplierBusinessProfile
                 .FindFirstByCondition(x =>
                     x.OrganizationId == request.OrganizationId &&
@@ -56,6 +44,25 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 throw new PreConditionFailedCustomException(
                     "Supplier not found.",
                     $"Supplier not found for the given organization : {request.OrganizationId}");
+            }
+
+            // Scoped by SupplierId as well as BuyerRFQId: multiple suppliers
+            // share the same BuyerRFQId (one SupplierRFQ row per invited
+            // supplier), so filtering by BuyerRFQId alone previously returned
+            // whichever supplier's row happened to be first, handing the
+            // caller another supplier's SupplierRFQItem/SupplierQuotation IDs.
+            var rfq = await _repositorywrapper.SupplierRFQ
+                .FindByCondition(x =>
+                    x.BuyerRFQId == request.RFQId &&
+                    x.SupplierId == supplier.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (rfq == null)
+            {
+                _logger.LogError($"RFQ not found for BuyerRFQId: {request.RFQId}, SupplierId: {supplier.Id}");
+                throw new NotFoundCustomException(
+                    "RFQ not found.",
+                    $"No RFQ exists with BuyerRFQId: {request.RFQId}.");
             }
 
             if (!request.RoleId.Equals(Common.SUPPLIER_ADMIN_ROLE_ID))
