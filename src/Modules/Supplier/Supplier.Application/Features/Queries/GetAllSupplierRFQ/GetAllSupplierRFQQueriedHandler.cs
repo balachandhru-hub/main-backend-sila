@@ -62,7 +62,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             {
                 var isInvited = await _repositorywrapper.RFQOrganizationUserMapping
                     .FindByCondition(x =>
-                        x.SupplierRFQId == rfq.Id &&
+                        x.SupplierRFQId == rfq.BuyerRFQId &&
                         x.UserId == request.UserId &&
                         x.IsActive)
                     .AnyAsync(cancellationToken);
@@ -76,7 +76,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             }
 
             var buyerId = rfq.BuyerId;
-            var supplierRFQId = rfq.Id;
+            var supplierRFQId = rfq.BuyerRFQId;
             _logger.LogInfo($"Fetching verified suppliers for BuyerId: {buyerId}");
             var attachmentResponse = await _buyerApiClient.GetRFQAttachments(
                 request.RFQId,
@@ -123,7 +123,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     CostCenter = item.CostCenter,
                     CostCenterName = costCenterName,
                     Attachments = itemAttachment?.Attachments ?? new List<AssetDto>(),
-                    SupplierRFQItemId = item.Id,
+                    SupplierRFQItemId = item.BuyerRFQItemId,
                     SupplierRFQId = item.SupplierRFQId,
                     BuyerRFQItemId = item.BuyerRFQItemId
 
