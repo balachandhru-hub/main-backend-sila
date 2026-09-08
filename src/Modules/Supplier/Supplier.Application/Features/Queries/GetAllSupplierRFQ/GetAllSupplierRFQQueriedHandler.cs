@@ -76,7 +76,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             }
 
             var buyerId = rfq.BuyerId;
-            var supplierRFQId = rfq.BuyerRFQId;
+            var supplierRFQId = rfq.Id;
             _logger.LogInfo($"Fetching verified suppliers for BuyerId: {buyerId}");
             var attachmentResponse = await _buyerApiClient.GetRFQAttachments(
                 request.RFQId,
