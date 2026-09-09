@@ -17,6 +17,7 @@ using Buyer.Application.Features.Queries.GetCostCenterById;
 using Buyer.Application.Features.Commands.UpdateRFQ;
 using Buyer.Application.Features.Queries.GetBidCompare;
 using Buyer.Domain.Common;
+using Buyer.Application.Features.Queries.CheckRFQUserAccess;
 
 
 namespace Buyer.API.Controllers
@@ -309,6 +310,29 @@ namespace Buyer.API.Controllers
                 success = true,
                 message = "Supplier RFQ status updated successfully."
             });
+        }
+        [HttpGet]
+        [Route("api/v1/buyer/internal/check-user-access/{rfqId}")]
+        [ValidateModelState]
+         [ApiAuthorization(Name = "CHECK-RFQ-USER-ACCESS")]
+        [SwaggerOperation("CheckRFQUserAccess")]
+        [SwaggerResponse(200, type: typeof(bool), description: "User is authorized for this RFQ")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+        [SwaggerResponse(403, type: typeof(ErrorResponseDto), description: "Access Denied")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> CheckRFQUserAccess(
+            [FromRoute] Guid rfqId)
+        {
+            var query = new CheckRFQUserAccessQuery
+            {
+                RFQId = rfqId,
+                UserId = GetUserId()
+            };
+
+            var result = await _mediator.Send(query);
+
+            return Ok(result);
         }
 
     }

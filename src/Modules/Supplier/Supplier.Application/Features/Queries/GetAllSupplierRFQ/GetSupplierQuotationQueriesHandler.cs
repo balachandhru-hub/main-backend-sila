@@ -41,6 +41,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
                     "Supplier RFQ not found.",
                     $"No Supplier RFQ found for BuyerRFQId: {request.RFQId}");
             }
+            var addLotOption = supplierRFQs.First().AddLotOption;
 
             var result = new GetAllSupplierQuotationDto();
 
@@ -129,6 +130,53 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
                     "Supplier Quotation not found.",
                     $"No active SupplierQuotation found for BuyerRFQId: {request.RFQId}");
             }
+             // ADD RANKING LOGIC
+            if (addLotOption)
+            {
+                // AddLotOption = true
+                // Rank based on quotation TotalPrice
+
+                var rankedSuppliers = result.Suppliers
+                    .OrderBy(x => x.TotalPrice)
+                    .Select((x, index) => new
+                    {
+                        Supplier = x,
+                        Rank = $"L{index + 1}"
+                    })
+                    .ToList();
+
+                foreach (var item in rankedSuppliers)
+                {
+                    item.Supplier.Rank = item.Rank;
+                    item.Supplier.IsLead = item.Rank == "L1";
+                }
+
+                result.Suppliers = result.Suppliers
+                    .OrderBy(x => x.TotalPrice)
+                    .ToList();
+            }
+            else
+            {
+                // AddLotOption = false
+                // Rank each RFQ item separately based on SubTotal
+
+                var rankedItems = result.Suppliers
+                    .SelectMany(x => x.SupplierQuotationItems)
+                    .GroupBy(x => x.BuyerRFQItemId)
+                    .SelectMany(group =>
+                        group
+                            .OrderBy(x => x.SubTotal)
+                            .Select((x, index) => new
+                            {
+                                Item = x,
+                                Rank = $"L{index + 1}"
+                            }))
+                    .ToList();
+
+                foreach (var item in rankedItems)
+                {
+                    item.Item.Rank = item.Rank;
+                }
             result.Suppliers = result.Suppliers
                 .OrderBy(x => x.TotalPrice)
                 .ToList();
@@ -138,6 +186,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
             foreach (var supplier in result.Suppliers)
             {
                 supplier.IsLead = supplier.TotalPrice == lowestTotalPrice;
+            }
             }
             _logger.LogInfo($"Total Supplier Quotations found for BuyerRFQId: {request.RFQId} is {result.Suppliers.Count}");
             return result;

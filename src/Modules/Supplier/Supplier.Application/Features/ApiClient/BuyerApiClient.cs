@@ -499,5 +499,63 @@ namespace Supplier.Infrastructure.ApiClients
 
             return result ?? new GetRFQAttachmentsDto();
         }
+        public async Task CheckRFQUserAccessAsync(
+    Guid rfqId,
+    CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            if (string.IsNullOrWhiteSpace(buyerUrl))
+            {
+                throw new BadRequestCustomException(
+                    "Buyer service URL is not configured.",
+                    "Please configure the Buyer service base URL.");
+            }
+
+            var url = $"{buyerUrl}/api/v1/buyer/internal/check-user-access/{rfqId}";
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                url);
+
+            // Get current user's access token from cookie
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request.Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(
+                    cancellationToken);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    throw new ForBiddenCustomException(
+                        "Access denied.",
+                        "You are not authorized to submit a quotation for this RFQ.");
+                }
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    throw new UnAuthorizedCustomException(
+                        "Unauthorized.",
+                        "User authentication failed.");
+                }
+
+                throw new BadRequestCustomException(
+                    "Unable to verify RFQ user access.",
+                    $"StatusCode: {response.StatusCode}, Response: {error}");
+            }
+        }
     }
 }

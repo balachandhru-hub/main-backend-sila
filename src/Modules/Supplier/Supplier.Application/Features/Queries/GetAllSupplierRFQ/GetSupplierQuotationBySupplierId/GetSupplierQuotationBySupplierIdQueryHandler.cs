@@ -41,6 +41,20 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
             }
 
             Guid supplierId = supplier.Id;
+            var supplierRFQForRanking = await _repository.SupplierRFQ
+                .FindByCondition(x =>
+                    x.BuyerRFQId == request.RFQId &&
+                    x.IsActive)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (supplierRFQForRanking == null)
+            {
+                throw new NotFoundCustomException(
+                    "Supplier RFQ not found.",
+                    $"No active Supplier RFQ found for BuyerRFQId: {request.RFQId}");
+            }
+
+            bool addLotOption = supplierRFQForRanking.AddLotOption;
 
 
             var quotations = await _repository.SupplierQuotation
@@ -49,12 +63,30 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                     x.SupplierId == supplierId &&
                     x.IsActive)
                 .ToListAsync(cancellationToken);
-                var lowestQuotation = await _repository.SupplierQuotation
-                .FindByCondition(x =>
-                    x.BuyerRFQId == request.RFQId &&
-                    x.IsActive)
-                .OrderBy(x => x.TotalPrice)
-                .FirstOrDefaultAsync(cancellationToken);
+            var allQuotations = await _repository.SupplierQuotation
+            .FindByCondition(x =>
+                x.BuyerRFQId == request.RFQId &&
+                x.IsActive)
+            .ToListAsync(cancellationToken);
+            var quotationRankings = new Dictionary<Guid, string>();
+
+            if (addLotOption)
+            {
+                quotationRankings = allQuotations
+                    .OrderBy(x => x.TotalPrice)
+                    .Select((x, index) => new
+                    {
+                        QuotationId = x.Id,
+                        Rank = $"L{index + 1}"
+                    })
+                    .ToDictionary(x => x.QuotationId, x => x.Rank);
+            }
+            var lowestQuotation = await _repository.SupplierQuotation
+            .FindByCondition(x =>
+                x.BuyerRFQId == request.RFQId &&
+                x.IsActive)
+            .OrderBy(x => x.TotalPrice)
+            .FirstOrDefaultAsync(cancellationToken);
 
             if (quotations == null || quotations.Count == 0)
             {
@@ -64,18 +96,44 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                     $"No active SupplierQuotation found for BuyerRFQId: {request.RFQId} " +
                     $"and SupplierId: {supplierId}");
             }
+            var quotationItemRankings = new Dictionary<Guid, string>();
+
+            if (!addLotOption)
+            {
+                var quotationIds = allQuotations
+                    .Select(x => x.Id)
+                    .ToList();
+
+                var allQuotationItems = await _repository.SupplierQuotationItem
+                    .FindByCondition(x =>
+                        quotationIds.Contains(x.SupplierQuotationId) &&
+                        x.IsActive)
+                    .ToListAsync(cancellationToken);
+
+                quotationItemRankings = allQuotationItems
+                    .GroupBy(x => x.BuyerRFQItemId)
+                    .SelectMany(group =>
+                        group
+                            .OrderBy(x => x.SubTotal)
+                            .Select((x, index) => new
+                            {
+                                QuotationItemId = x.Id,
+                                Rank = $"L{index + 1}"
+                            }))
+                    .ToDictionary(x => x.QuotationItemId, x => x.Rank);
+            }
 
             var response = new GetAllSupplierQuotationBySupplierIdDto();
 
-           
+
             foreach (var quotation in quotations)
             {
                 _logger.LogInfo($"Processing QuotationId: {quotation.Id} for SupplierId: {supplierId}");
-                 var supplierRFQ = await _repository.SupplierRFQ
-                    .FindByCondition(x =>
-                        x.Id == quotation.SupplierRFQId &&
-                        x.IsActive)
-                    .FirstOrDefaultAsync(cancellationToken);
+                var supplierRFQ = await _repository.SupplierRFQ
+                   .FindByCondition(x =>
+                       x.Id == quotation.SupplierRFQId &&
+                       x.IsActive)
+                   .FirstOrDefaultAsync(cancellationToken);
                 var quotationItems = await _repository.SupplierQuotationItem
                     .FindByCondition(x =>
                         x.SupplierQuotationId == quotation.Id &&
@@ -85,7 +143,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                     {
                         QuotedPrice = x.QuotedPrice,
                         ItemQuotationId = x.Id,
-                         SupplierRFQItemId = x.SupplierRFQItemId,
+                        SupplierRFQItemId = x.SupplierRFQItemId,
                         BuyerRFQItemId = x.BuyerRFQItemId,
                         DeliveryCharge = x.DeliveryCharge,
                         DeliveryType = x.DeliveryType,
@@ -98,9 +156,21 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
 
                         QuotedAmount = x.QuotedAmount,
                         SubTotal = x.SubTotal,
-                       LineNumber = x.SupplierRFQItem.LineNumber 
+                        LineNumber = x.SupplierRFQItem.LineNumber
+
+
                     })
                     .ToListAsync(cancellationToken);
+                if (!addLotOption)
+                {
+                    foreach (var item in quotationItems)
+                    {
+                        if (quotationItemRankings.TryGetValue(item.ItemQuotationId, out var itemRank))
+                        {
+                            item.Rank = itemRank;
+                        }
+                    }
+                }
 
                 var supplierDto = new SupplierQuotationBySupplierIdDto
                 {
@@ -113,10 +183,15 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                     Tax = quotation.Tax,
                     Discount = quotation.Discount,
                     Currency = supplierRFQ?.Currency,
-                    
+
                     DeliveryType = quotation.DeliveryType,
                     Status = quotation.Status,
                     SupplierQuotationItems = quotationItems,
+                    Rank = addLotOption &&
+       quotationRankings.TryGetValue(quotation.Id, out var quotationRank)
+    ? quotationRank
+    : null,
+
                     IsLead = quotation.Id == lowestQuotation?.Id,
                 };
 

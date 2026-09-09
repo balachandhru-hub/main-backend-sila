@@ -102,7 +102,10 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                     "Supplier RFQ not found.",
                     $"Supplier RFQ with ID {quotation.SupplierRFQId} was not found.");
             }
-
+                // Check whether the current user is authorized for this RFQ
+                await _buyerApiClient.CheckRFQUserAccessAsync(
+                    quotation.BuyerRFQId,
+                    cancellationToken);
             var existingVersions = await _repository.SupplierQuotationHistory
                 .FindByCondition(x => x.SupplierQuotationId == quotation.Id)
                 .Select(x => x.Version)
