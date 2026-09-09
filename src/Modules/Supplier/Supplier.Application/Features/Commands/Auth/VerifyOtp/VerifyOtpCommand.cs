@@ -4,7 +4,7 @@ namespace Supplier.Application.Features.Auth.Commands.VerifyOtp
 {
     public class VerifyOtpCommand : IRequest<VerifyOtpResponse>
     {
-        public string Email { get; set; }
+        public Guid UserId { get; set; }
         public string Otp { get; set; }
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 using Supplier.Infrastructure.Contracts.IRepository;
+using Supplier.Application.Contracts;
 
 namespace Supplier.Application.Features.Auth.Commands.VerifyOtp
 {
@@ -13,46 +14,64 @@ namespace Supplier.Application.Features.Auth.Commands.VerifyOtp
         private readonly IRepositoryWrapper _repository;
         private readonly IBcryptHashing _hashing;
         private readonly ILoggerManager _logger;
+        private readonly IIdentityApiClient _identityApiClient;
 
         public VerifyOtpCommandHandler(
             IRepositoryWrapper repository,
             IBcryptHashing hashing,
-            ILoggerManager logger)
+            ILoggerManager logger,
+            IIdentityApiClient identityApiClient)
         {
             _repository = repository;
             _hashing = hashing;
             _logger = logger;
+            _identityApiClient = identityApiClient;
         }
 
         public async Task<VerifyOtpResponse> Handle(
             VerifyOtpCommand request,
             CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(request.Email))
+            if (request.UserId == Guid.Empty)
             {
-                _logger.LogError("OTP verification failed: Email is required.");
+                _logger.LogError("OTP verification failed: UserId is required.");
 
                 throw new BadRequestCustomException(
-                    "Email is required.",
-                    "Please provide the email address.");
+                    "User is required.",
+                    "Please provide a valid authenticated user.");
             }
 
             if (string.IsNullOrWhiteSpace(request.Otp))
             {
                 _logger.LogError(
-                    $"OTP verification failed: OTP is required for email {request.Email}.");
+                    $"OTP verification failed: OTP is required for user {request.UserId}.");
 
                 throw new BadRequestCustomException(
                     "OTP is required.",
                     "Please enter the OTP.");
             }
 
+            var identityUsers = await _identityApiClient.GetUsersByIds(
+                new List<Guid> { request.UserId },
+                cancellationToken);
+
+            var email = identityUsers.FirstOrDefault(u => u.UserId == request.UserId)?.Email;
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                _logger.LogError($"OTP verification failed: User email not found for UserId {request.UserId}.");
+
+                throw new BadRequestCustomException(
+                    "User email not found.",
+                    "User email is not available.");
+            }
+
             _logger.LogInfo(
-                $"Verifying OTP for email: {request.Email}");
+                $"Verifying OTP for email: {email}");
 
             var otp = await _repository.SupplierEmailVerification
                 .FindByCondition(x =>
-                    x.Email == request.Email &&
+                    x.Email == email &&
                     x.IsActive &&
                     !x.IsVerified)
 
@@ -61,7 +80,7 @@ namespace Supplier.Application.Features.Auth.Commands.VerifyOtp
             if (otp == null)
             {
                 _logger.LogError(
-                    $"OTP verification failed: OTP not found for email {request.Email}.");
+                    $"OTP verification failed: OTP not found for email {email}.");
 
                 throw new BadRequestCustomException(
                     "OTP not found.",
@@ -72,7 +91,7 @@ namespace Supplier.Application.Features.Auth.Commands.VerifyOtp
             if (otp.ExpiresOn <= DateTime.UtcNow)
             {
                 _logger.LogError(
-                    $"OTP verification failed: OTP expired for email {request.Email}.");
+                    $"OTP verification failed: OTP expired for email {email}.");
 
                 otp.IsActive = false;
 
@@ -93,7 +112,7 @@ namespace Supplier.Application.Features.Auth.Commands.VerifyOtp
                 await _repository.SaveAsync();
 
                 _logger.LogError(
-                    $"OTP verification failed: Invalid OTP for email {request.Email}. " +
+                    $"OTP verification failed: Invalid OTP for email {email}. " +
                     $"Attempt count: {otp.AttemptCount}");
 
                 throw new BadRequestCustomException(
@@ -116,7 +135,7 @@ namespace Supplier.Application.Features.Auth.Commands.VerifyOtp
             await _repository.SaveAsync();
 
             _logger.LogInfo(
-                $"OTP verified successfully for email: {request.Email}. " +
+                $"OTP verified successfully for email: {email}. " +
                 $"Verification token generated.");
 
             return new VerifyOtpResponse

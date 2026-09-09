@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Supplier.Infrastructure.Contracts.IRepository;
 using Microsoft.Extensions.Logging;
 using SharedKernel.LoggerServices;
+using Supplier.Application.Contracts;
 
 
 namespace Supplier.Application.Features.Auth.Commands.SendEmailVerification
@@ -23,8 +24,9 @@ namespace Supplier.Application.Features.Auth.Commands.SendEmailVerification
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly HttpClient _httpClient;
         private readonly ILoggerManager _logger;
+        private readonly IIdentityApiClient _identityApiClient;
 
-        public SendEmailVerificationCommandHandler(IRepositoryWrapper repository, IBcryptHashing hashing, IConfiguration configuration, HttpClient httpClient, IHttpContextAccessor httpContextAccessor, ILoggerManager logger)
+        public SendEmailVerificationCommandHandler(IRepositoryWrapper repository, IBcryptHashing hashing, IConfiguration configuration, HttpClient httpClient, IHttpContextAccessor httpContextAccessor, ILoggerManager logger, IIdentityApiClient identityApiClient)
         {
             _repository = repository;
             _hashing = hashing;
@@ -32,6 +34,7 @@ namespace Supplier.Application.Features.Auth.Commands.SendEmailVerification
             _httpClient = httpClient;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+            _identityApiClient = identityApiClient;
         }
 
         public async Task<SendEmailVerificationResponseDto> Handle(
@@ -53,14 +56,18 @@ namespace Supplier.Application.Features.Auth.Commands.SendEmailVerification
                     "Supplier business profile was not found.");
             }
 
-            var Email = supplierProfile.Email;
+            var identityUsers = await _identityApiClient.GetUsersByIds(
+                new List<Guid> { request.UserId },
+                cancellationToken);
+
+            var Email = identityUsers.FirstOrDefault(u => u.UserId == request.UserId)?.Email;
 
             if (string.IsNullOrWhiteSpace(Email))
             {
-                _logger.LogError($"Supplier email not found for OrganizationId: {request.OrganizationId}");
+                _logger.LogError($"User email not found for UserId: {request.UserId}");
                 throw new BadRequestCustomException(
-                    "Supplier email not found.",
-                    "Supplier email is not available.");
+                    "User email not found.",
+                    "User email is not available.");
             }
             var existingOtp = _repository.SupplierEmailVerification
       .FindByConditionAsync(x =>

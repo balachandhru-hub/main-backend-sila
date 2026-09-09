@@ -475,11 +475,12 @@ namespace Supplier.API.Controllers
         public async Task<IActionResult> SendOtp()
         {
             Guid organizationId = GetOrganizationId();
+            Guid userId = GetUserId();
 
             _logger.LogDebug(
-                $"Generating OTP for supplier organization: {organizationId}");
+                $"Generating OTP for supplier organization: {organizationId}, user: {userId}");
 
-            var command = new SendEmailVerificationCommand(organizationId);
+            var command = new SendEmailVerificationCommand(organizationId, userId);
 
             var result = await _mediator.Send(command);
             return Ok(new SuccessResponseDto
@@ -506,7 +507,9 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error.")]
         public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpCommand command)
         {
-            _logger.LogDebug($"Verifying OTP for {command.Email}");
+            command.UserId = GetUserId();
+
+            _logger.LogDebug($"Verifying OTP for user: {command.UserId}");
 
             var result = await _mediator.Send(command);
 
