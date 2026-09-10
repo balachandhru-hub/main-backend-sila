@@ -10,6 +10,7 @@ using Buyer.Application.Features.Queries.GetRFQAttachments;
 using Buyer.Application.Features.Queries.GetRFQQuestions;
 using SharedKernel.Dto;
 using Buyer.Application.Features.Queries.GetCostCenterById;
+using Buyer.Application.Features.Queries.Asset.GetDocument;
 
 
 
@@ -90,5 +91,22 @@ namespace Buyer.API.Controllers
 
             return Ok(result);
         }
+         [HttpGet]
+        [Route("api/v1/buyer/externa-asset/{assetId}")]
+        [ExternalSessionAuthorization]
+        [SwaggerOperation("GetDocument")]
+        [SwaggerResponse(statusCode: 200, "Fetched the File Details", typeof(AssetDownloadDto))]
+        [SwaggerResponse(statusCode: 404, "Not Found", typeof(ErrorResponseDto))]
+        [SwaggerResponse(statusCode: 401, "Unauthorized", typeof(ErrorResponseDto))]
+       public async Task<IActionResult> GetDocument([FromRoute] Guid assetId)
+{
+    _logger.LogDebug($"Retrieving document for Asset Id: {assetId}");
+
+    var result = await _mediator.Send(new GetDocumentQuery(assetId));
+
+    _logger.LogDebug($"Document retrieved successfully for Asset Id: {assetId}");
+
+    return Ok(result);
+}
     }
 }

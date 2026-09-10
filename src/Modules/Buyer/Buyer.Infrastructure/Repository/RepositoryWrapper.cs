@@ -46,6 +46,9 @@ namespace Buyer.Infrastructure.Repository
         private IRFQBlockchainRecordRepository _rfqBlockchainRecordRepository;
         private IExternalSupplierRepository _externalSupplierRepository;
         private IRFQExternalSupplierRepository _rfqExternalSupplierRepository;
+        private IMessageThreadRepository _messageThreadRepository;
+        private IMessageRepository _messageRepository;
+        private IMessageAttachmentRepository _messageAttachmentRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -405,6 +408,42 @@ namespace Buyer.Infrastructure.Repository
                 }
 
                 return _rfqExternalSupplierRepository;
+            }
+        }
+        public IMessageThreadRepository MessageThread
+        {
+            get
+            {
+                if (_messageThreadRepository == null)
+                {
+                    _messageThreadRepository = new MessageThreadRepository(_context);
+                }
+
+                return _messageThreadRepository;
+            }
+        }
+        public IMessageRepository Message
+        {
+            get
+            {
+                if (_messageRepository == null)
+                {
+                    _messageRepository = new MessageRepository(_context);
+                }
+
+                return _messageRepository;
+            }
+        }
+        public IMessageAttachmentRepository MessageAttachment
+        {
+            get
+            {
+                if (_messageAttachmentRepository == null)
+                {
+                    _messageAttachmentRepository = new MessageAttachmentRepository(_context);
+                }
+
+                return _messageAttachmentRepository;
             }
         }
         public bool Save()

@@ -50,6 +50,28 @@ CancellationToken cancellationToken = default);
         Task CheckRFQUserAccessAsync(
             Guid rfqId,
             CancellationToken cancellationToken = default);
+
+        Task<MessageResponseDto> SendMessage(
+            SendMessageDto message,
+            CancellationToken cancellationToken = default);
+
+        Task<List<MessageThreadSummaryDto>> GetMessageThreads(
+            Guid rfqId,
+            CancellationToken cancellationToken = default);
+
+        Task<List<MessageResponseDto>> GetMessageHistory(
+            Guid threadId,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken = default);
+
+        Task MarkThreadRead(
+            Guid threadId,
+            CancellationToken cancellationToken = default);
+
+        Task<MessageAttachmentFileDto> DownloadMessageAttachment(
+            Guid attachmentId,
+            CancellationToken cancellationToken = default);
     }
 
 }

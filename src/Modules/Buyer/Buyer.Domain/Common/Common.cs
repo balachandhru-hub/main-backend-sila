@@ -56,6 +56,13 @@ namespace Buyer.Domain.Common
                 public static readonly string EXTERNAL_SUPPLIER_REGISTRATION_LINK = "ExternalSupplier:RegistrationLink";
                 public static readonly string EXTERNAL_SUPPLIER_BID_LINK = "ExternalSupplier:BidLink";
 
+                public const string SUPPLIER = "SUPPLIER";
+                public const string MESSAGE_ATTACHMENT_SUBFOLDER = "messages";
+                public const string SEND_MESSAGE_PERMISSION = "SEND_MESSAGE";
+                public const string GET_MESSAGE_THREADS_PERMISSION = "GET_MESSAGE_THREADS";
+                public const string GET_MESSAGE_HISTORY_PERMISSION = "GET_MESSAGE_HISTORY";
+                public const string MARK_MESSAGE_READ_PERMISSION = "MARK_MESSAGE_READ";
+                public const string DOWNLOAD_MESSAGE_ATTACHMENT_PERMISSION = "DOWNLOAD_MESSAGE_ATTACHMENT";
 
         }
 }

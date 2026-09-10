@@ -557,5 +557,159 @@ namespace Supplier.Infrastructure.ApiClients
                     $"StatusCode: {response.StatusCode}, Response: {error}");
             }
         }
+
+        private void AddAccessTokenCookie(HttpRequestMessage request)
+        {
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request.Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add("Cookie", $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+        }
+
+        public async Task<MessageResponseDto> SendMessage(
+            SendMessageDto message,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"{buyerUrl}/api/v1/buyer/message");
+
+            request.Content = JsonContent.Create(message);
+            AddAccessTokenCookie(request);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                throw new BadRequestCustomException(
+                    "Unable to send message.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<MessageResponseDto>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new MessageResponseDto();
+        }
+
+        public async Task<List<MessageThreadSummaryDto>> GetMessageThreads(
+            Guid rfqId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/message/threads?rfqId={rfqId}");
+
+            AddAccessTokenCookie(request);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch message threads.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<MessageThreadSummaryDto>>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new List<MessageThreadSummaryDto>();
+        }
+
+        public async Task<List<MessageResponseDto>> GetMessageHistory(
+            Guid threadId,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/message/thread/{threadId}/history?page={page}&pageSize={pageSize}");
+
+            AddAccessTokenCookie(request);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch message history.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<MessageResponseDto>>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new List<MessageResponseDto>();
+        }
+
+        public async Task MarkThreadRead(
+            Guid threadId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"{buyerUrl}/api/v1/buyer/message/thread/{threadId}/read");
+
+            AddAccessTokenCookie(request);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                throw new BadRequestCustomException(
+                    "Unable to mark conversation as read.",
+                    error);
+            }
+        }
+
+        public async Task<MessageAttachmentFileDto> DownloadMessageAttachment(
+            Guid attachmentId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/message/attachment/{attachmentId}");
+
+            AddAccessTokenCookie(request);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                throw new BadRequestCustomException(
+                    "Unable to download attachment.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<MessageAttachmentFileDto>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new MessageAttachmentFileDto();
+        }
     }
 }

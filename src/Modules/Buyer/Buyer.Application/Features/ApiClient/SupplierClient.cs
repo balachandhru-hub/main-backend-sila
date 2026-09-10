@@ -427,5 +427,49 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result ?? new BidCompareResponseDto();
         }
+
+        public async Task NotifyNewMessage(
+            Guid threadId,
+            MessageResponseDto message,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo($"Relaying new message notification. ThreadId: {threadId}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"{supplierUrl}/api/v1/supplier/message/internal/notify?threadId={threadId}");
+
+            request.Content = JsonContent.Create(message);
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to relay new message notification. ThreadId: {threadId}, " +
+                    $"Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to relay new message notification.",
+                    error);
+            }
+
+            _logger.LogInfo($"New message notification relayed successfully. ThreadId: {threadId}");
+        }
     }
 }

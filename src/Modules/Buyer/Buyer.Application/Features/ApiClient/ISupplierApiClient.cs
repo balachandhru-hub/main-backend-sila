@@ -30,5 +30,9 @@ CancellationToken cancellationToken = default);
         Task<BidCompareResponseDto> GetBidCompare(
             Guid rfqId,
             CancellationToken cancellationToken = default);
+        Task NotifyNewMessage(
+            Guid threadId,
+            MessageResponseDto message,
+            CancellationToken cancellationToken = default);
     }
 }

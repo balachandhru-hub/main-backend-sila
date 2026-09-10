@@ -39,6 +39,9 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IRFQBlockchainRecordRepository RFQBlockchainRecord {get;}
         IExternalSupplierRepository ExternalSupplier {get;}
         IRFQExternalSupplierRepository RFQExternalSupplier {get;}
+        IMessageThreadRepository MessageThread {get;}
+        IMessageRepository Message {get;}
+        IMessageAttachmentRepository MessageAttachment {get;}
         bool Save();
         Task<bool> SaveAsync();
     }

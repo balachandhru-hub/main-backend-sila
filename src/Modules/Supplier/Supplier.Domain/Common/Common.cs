@@ -38,6 +38,12 @@ namespace Supplier.Domain.Common
         public static readonly string RFQ_LIVE_STATUS = "LIVE";
         public static Guid SUPPLIER_ADMIN_ROLE_ID = new Guid("735bb267-fec0-489f-8249-d3d65b3857ea");
 
+        public const string SEND_MESSAGE_PERMISSION = "SEND_MESSAGE";
+        public const string GET_MESSAGE_THREADS_PERMISSION = "GET_MESSAGE_THREADS";
+        public const string GET_MESSAGE_HISTORY_PERMISSION = "GET_MESSAGE_HISTORY";
+        public const string MARK_MESSAGE_READ_PERMISSION = "MARK_MESSAGE_READ";
+        public const string DOWNLOAD_MESSAGE_ATTACHMENT_PERMISSION = "DOWNLOAD_MESSAGE_ATTACHMENT";
+
     }
 
 }

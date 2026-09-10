@@ -49,6 +49,9 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<RFQOrganizationUserMapping> RFQOrganizationUserMapping {get;set;}
         public DbSet<ExternalSupplier> ExternalSupplier {get;set;}
         public DbSet<RFQExternalSupplier> RFQExternalSupplier {get;set;}
+        public DbSet<MessageThread> MessageThread {get;set;}
+        public DbSet<Message> Message {get;set;}
+        public DbSet<MessageAttachment> MessageAttachment {get;set;}
 
 
 
@@ -88,7 +91,10 @@ namespace Buyer.Infrastructure.DbContext
             _ =  modelBuilder.Entity<RFQOrganizationUserMapping>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<ExternalSupplier>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQExternalSupplier>().HasIndex(a=>a.IsActive);
-          
+            _ =  modelBuilder.Entity<MessageThread>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<Message>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<MessageAttachment>().HasIndex(a=>a.IsActive);
+
 
 
 

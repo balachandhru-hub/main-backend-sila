@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Http.Features;
 using Buyer.Infrastructure;
 using Buyer.API.Extensions;
+using Buyer.API.Hubs;
 
 namespace Buyer.API
 {
@@ -117,6 +118,7 @@ namespace Buyer.API
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
+            app.MapHub<MessageHub>("/messageHub");
 
 
             app.Run();
