@@ -99,9 +99,13 @@ namespace Buyer.Application.Features.Commands.NotifyExternalSupplier
             catch (Exception ex)
             {
                 // A mail-server hiccup must not fail an already-successful
-                // RFQ creation - log and continue.
+                // RFQ creation - log and continue. BaseCustomException puts
+                // the actual diagnostic detail (status code/response body)
+                // in Description, not Message, so both must be logged or
+                // the real failure reason is lost.
+                var detail = (ex as BaseCustomException)?.Description;
                 _logger.LogError(
-                    $"Failed to send external supplier quotation invite email. ExternalSupplierId: {externalSupplier.Id}, RFQId: {rfq.Id}. Error: {ex.Message}");
+                    $"Failed to send external supplier quotation invite email. ExternalSupplierId: {externalSupplier.Id}, RFQId: {rfq.Id}. Error: {ex.Message}{(detail != null ? $" | {detail}" : string.Empty)}");
             }
 
             return true;

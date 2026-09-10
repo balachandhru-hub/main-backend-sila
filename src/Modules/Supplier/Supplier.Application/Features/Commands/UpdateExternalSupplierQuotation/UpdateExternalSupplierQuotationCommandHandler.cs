@@ -444,8 +444,12 @@ namespace Supplier.Application.Features.Commands.UpdateExternalSupplierQuotation
             }
             catch (Exception ex)
             {
+                // BaseCustomException puts the actual diagnostic detail
+                // (status code/response body) in Description, not Message,
+                // so both must be logged or the real failure reason is lost.
+                var detail = (ex as BaseCustomException)?.Description;
                 _logger.LogError(
-                    $"Failed to notify external supplier to register. SupplierId: {quotation.SupplierId}, RFQId: {quotation.BuyerRFQId}. Error: {ex.Message}");
+                    $"Failed to notify external supplier to register. SupplierId: {quotation.SupplierId}, RFQId: {quotation.BuyerRFQId}. Error: {ex.Message}{(detail != null ? $" | {detail}" : string.Empty)}");
             }
 
             return new UpdateSupplierQuotationResultDto
