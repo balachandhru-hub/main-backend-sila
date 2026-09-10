@@ -61,8 +61,8 @@ CancellationToken cancellationToken = default);
 
         Task<List<MessageResponseDto>> GetMessageHistory(
             Guid threadId,
-            int page,
-            int pageSize,
+            int index,
+            int limit,
             CancellationToken cancellationToken = default);
 
         Task MarkThreadRead(

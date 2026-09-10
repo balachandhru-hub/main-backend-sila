@@ -630,15 +630,15 @@ namespace Supplier.Infrastructure.ApiClients
 
         public async Task<List<MessageResponseDto>> GetMessageHistory(
             Guid threadId,
-            int page,
-            int pageSize,
+            int index,
+            int limit,
             CancellationToken cancellationToken = default)
         {
             var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
 
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"{buyerUrl}/api/v1/buyer/message/thread/{threadId}/history?page={page}&pageSize={pageSize}");
+                $"{buyerUrl}/api/v1/buyer/message/thread/{threadId}/history?index={index}&limit={limit}");
 
             AddAccessTokenCookie(request);
 

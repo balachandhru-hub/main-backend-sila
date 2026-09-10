@@ -74,10 +74,10 @@ namespace Supplier.API.Controllers
         [SwaggerResponse(200, type: typeof(List<MessageResponseDto>), description: "Success")]
         public async Task<IActionResult> GetMessageHistory(
             [FromRoute] Guid threadId,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 50)
+            [FromQuery] int index = 0,
+            [FromQuery] int limit = 10)
         {
-            var result = await _buyerApiClient.GetMessageHistory(threadId, page, pageSize);
+            var result = await _buyerApiClient.GetMessageHistory(threadId, index, limit);
 
             return Ok(result);
         }
