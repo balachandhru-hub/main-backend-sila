@@ -349,6 +349,21 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
 
                     var identityUsers = await _identityApiClient.GetUsersByIds(userIds, cancellationToken);
 
+                    var invitedSupplierIds = invitedUserMappings
+                        .Select(x => x.SupplierId)
+                        .Distinct()
+                        .ToList();
+
+                    var supplierNamesById = new Dictionary<Guid, string?>();
+                    foreach (var invitedSupplierId in invitedSupplierIds)
+                    {
+                        var supplierProfile = await _supplierApiClient.GetSupplierById(
+                            invitedSupplierId,
+                            cancellationToken);
+
+                        supplierNamesById[invitedSupplierId] = supplierProfile?.BusinessProfile?.OrganizationName;
+                    }
+
                     invitedUsers = invitedUserMappings
                         .Select(x =>
                         {
@@ -357,6 +372,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                             {
                                 RFQId = x.RFQId,
                                 SupplierId = x.SupplierId,
+                                SupplierName = supplierNamesById.GetValueOrDefault(x.SupplierId),
                                 OrganizationId = x.OrganizationId,
                                 UserId = x.UserId,
                                 Name = identity?.Name,

@@ -6,6 +6,8 @@ namespace Buyer.Domain.Dto
 
         public Guid SupplierId { get; set; }
 
+        public string? SupplierName { get; set; }
+
         public Guid OrganizationId { get; set; }
 
         public Guid UserId { get; set; }
