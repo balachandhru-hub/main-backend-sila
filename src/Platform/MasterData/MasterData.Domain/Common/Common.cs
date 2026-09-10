@@ -16,7 +16,7 @@ namespace MasterData.Domain.Common
         public static readonly string RFQ_NUMBER_PLACEHOLDER = "{RFQ_NUMBER}";
         public static readonly string RFQ_TITLE_PLACEHOLDER = "{RFQ_TITLE}";
         public static readonly string REGISTRATION_LINK_PLACEHOLDER = "{REGISTRATION_LINK}";
-        public static readonly string REGISTRATION_LINK = "https://vosox.chervicaon.com/";
+        public static readonly string REGISTRATION_LINK = "https://sila.chervicaon.com/";
 
     }
 }
