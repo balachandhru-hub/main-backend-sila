@@ -52,6 +52,11 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<MessageThread> MessageThread {get;set;}
         public DbSet<Message> Message {get;set;}
         public DbSet<MessageAttachment> MessageAttachment {get;set;}
+        public DbSet<PredefinedMaterial> PredefinedMaterial {get;set;}
+        public DbSet<MasterApprovalFlow> MasterApprovalFlow {get;set;}
+        public DbSet<ApprovalFlowUserMapping> ApprovalFlowUserMapping {get;set;}
+        public DbSet<PredefinedMaterialApprovalFlowUserMapping> PredefinedMaterialApprovalFlowUserMapping {get;set;}
+        public DbSet<ApprovalFlowPredefinedMaterialMapping> ApprovalFlowPredefinedMaterialMapping {get;set;}
 
 
 
@@ -94,6 +99,11 @@ namespace Buyer.Infrastructure.DbContext
             _ =  modelBuilder.Entity<MessageThread>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<Message>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<MessageAttachment>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<PredefinedMaterial>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<MasterApprovalFlow>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<ApprovalFlowUserMapping>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<PredefinedMaterialApprovalFlowUserMapping>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<ApprovalFlowPredefinedMaterialMapping>().HasIndex(a=>a.IsActive);
 
 
 

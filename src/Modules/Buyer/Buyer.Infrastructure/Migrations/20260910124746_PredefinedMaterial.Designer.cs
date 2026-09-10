@@ -4,6 +4,7 @@ using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Buyer.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260910124746_PredefinedMaterial")]
+    partial class PredefinedMaterial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,9 +53,9 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
-                    b.Property<Guid>("PredefinedMaterialId")
+                    b.Property<Guid>("MaterialId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("predefined_material_id");
+                        .HasColumnName("material_id");
 
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
@@ -61,11 +64,11 @@ namespace Buyer.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_approval_flow_predefined_material_mapping");
 
+                    b.HasIndex("ApprovalFlowId")
+                        .HasDatabaseName("ix_approval_flow_predefined_material_mapping_approval_flow_id");
+
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_approval_flow_predefined_material_mapping_is_active");
-
-                    b.HasIndex("PredefinedMaterialId")
-                        .HasDatabaseName("ix_approval_flow_predefined_material_mapping_predefined_material_id");
 
                     b.ToTable("approval_flow_predefined_material_mapping", "buyersystem");
                 });
@@ -77,9 +80,9 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("ApprovalFlowId")
+                    b.Property<Guid>("ApprovalId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("approval_flow_id");
+                        .HasColumnName("approval_id");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
@@ -112,8 +115,8 @@ namespace Buyer.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_approval_flow_user_mapping");
 
-                    b.HasIndex("ApprovalFlowId")
-                        .HasDatabaseName("ix_approval_flow_user_mapping_approval_flow_id");
+                    b.HasIndex("ApprovalId")
+                        .HasDatabaseName("ix_approval_flow_user_mapping_approval_id");
 
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_approval_flow_user_mapping_is_active");
@@ -1010,10 +1013,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("approval_name");
 
-                    b.Property<Guid>("BuyerId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("buyer_id");
-
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by");
@@ -1030,6 +1029,10 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
+                    b.Property<Guid>("MaterialId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("material_id");
+
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
@@ -1037,11 +1040,11 @@ namespace Buyer.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_master_approval_flow");
 
-                    b.HasIndex("BuyerId")
-                        .HasDatabaseName("ix_master_approval_flow_buyer_id");
-
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_master_approval_flow_is_active");
+
+                    b.HasIndex("MaterialId")
+                        .HasDatabaseName("ix_master_approval_flow_material_id");
 
                     b.ToTable("master_approval_flow", "buyersystem");
                 });
@@ -1351,18 +1354,13 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("ApprovalFlowId")
+                    b.Property<Guid>("ApprovalId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("approval_flow_id");
+                        .HasColumnName("approval_id");
 
-                    b.Property<Guid>("ApprovalFlowPredefinedMaterialId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("approval_flow_predefined_material_id");
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("comment");
+                    b.Property<int>("Comments")
+                        .HasColumnType("int")
+                        .HasColumnName("comments");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
@@ -1395,8 +1393,8 @@ namespace Buyer.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_predefined_material_approval_flow_user_mapping");
 
-                    b.HasIndex("ApprovalFlowPredefinedMaterialId")
-                        .HasDatabaseName("ix_predefined_material_approval_flow_user_mapping_approval_flow_predefined_material_id");
+                    b.HasIndex("ApprovalId")
+                        .HasDatabaseName("ix_predefined_material_approval_flow_user_mapping_approval_id");
 
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_predefined_material_approval_flow_user_mapping_is_active");
@@ -2578,24 +2576,24 @@ namespace Buyer.Infrastructure.Migrations
 
             modelBuilder.Entity("Buyer.Domain.Entities.ApprovalFlowPredefinedMaterialMapping", b =>
                 {
-                    b.HasOne("Buyer.Domain.Entities.PredefinedMaterial", "PredefinedMaterial")
+                    b.HasOne("Buyer.Domain.Entities.MasterApprovalFlow", "MasterApprovalFlow")
                         .WithMany()
-                        .HasForeignKey("PredefinedMaterialId")
+                        .HasForeignKey("ApprovalFlowId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_approval_flow_predefined_material_mapping_predefined_material_predefined_material_id");
+                        .HasConstraintName("fk_approval_flow_predefined_material_mapping_master_approval_flow_approval_flow_id");
 
-                    b.Navigation("PredefinedMaterial");
+                    b.Navigation("MasterApprovalFlow");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.ApprovalFlowUserMapping", b =>
                 {
                     b.HasOne("Buyer.Domain.Entities.MasterApprovalFlow", "MasterApprovalFlow")
                         .WithMany()
-                        .HasForeignKey("ApprovalFlowId")
+                        .HasForeignKey("ApprovalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_approval_flow_user_mapping_master_approval_flow_approval_flow_id");
+                        .HasConstraintName("fk_approval_flow_user_mapping_master_approval_flow_approval_id");
 
                     b.Navigation("MasterApprovalFlow");
                 });
@@ -2650,14 +2648,14 @@ namespace Buyer.Infrastructure.Migrations
 
             modelBuilder.Entity("Buyer.Domain.Entities.MasterApprovalFlow", b =>
                 {
-                    b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
+                    b.HasOne("Buyer.Domain.Entities.PredefinedMaterial", "PredefinedMaterial")
                         .WithMany()
-                        .HasForeignKey("BuyerId")
+                        .HasForeignKey("MaterialId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_master_approval_flow_buyer_business_profile_buyer_id");
+                        .HasConstraintName("fk_master_approval_flow_predefined_material_material_id");
 
-                    b.Navigation("BuyerBusinessProfile");
+                    b.Navigation("PredefinedMaterial");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.Message", b =>
@@ -2710,14 +2708,14 @@ namespace Buyer.Infrastructure.Migrations
 
             modelBuilder.Entity("Buyer.Domain.Entities.PredefinedMaterialApprovalFlowUserMapping", b =>
                 {
-                    b.HasOne("Buyer.Domain.Entities.ApprovalFlowPredefinedMaterialMapping", "ApprovalFlowPredefinedMaterialMapping")
+                    b.HasOne("Buyer.Domain.Entities.MasterApprovalFlow", "MasterApprovalFlow")
                         .WithMany()
-                        .HasForeignKey("ApprovalFlowPredefinedMaterialId")
+                        .HasForeignKey("ApprovalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_predefined_material_approval_flow_user_mapping_approval_flow_predefined_material_mapping_approval_flow_predefined_material_id");
+                        .HasConstraintName("fk_predefined_material_approval_flow_user_mapping_master_approval_flow_approval_id");
 
-                    b.Navigation("ApprovalFlowPredefinedMaterialMapping");
+                    b.Navigation("MasterApprovalFlow");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.RFQ", b =>
