@@ -110,12 +110,47 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 .FindByCondition(x => x.SupplierRFQId == supplierRFQId)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            var lowestQuotation = await _repositorywrapper.SupplierQuotation
+            var allQuotations = await _repositorywrapper.SupplierQuotation
                 .FindByCondition(x =>
                     x.BuyerRFQId == request.RFQId &&
                     x.IsActive)
                 .OrderBy(x => x.TotalPrice)
-                .FirstOrDefaultAsync(cancellationToken);
+                .ToListAsync(cancellationToken);
+
+            var lowestQuotation = allQuotations.FirstOrDefault();
+
+            string? quotationRank = null;
+            var quotationItemRankings = new Dictionary<Guid, string>();
+
+            if (rfq.AddLotOption)
+            {
+                var quotationRankings = allQuotations
+                    .Select((x, index) => new { x.Id, Rank = $"L{index + 1}" })
+                    .ToDictionary(x => x.Id, x => x.Rank);
+
+                if (quotation != null)
+                {
+                    quotationRankings.TryGetValue(quotation.Id, out quotationRank);
+                }
+            }
+            else
+            {
+                var quotationIds = allQuotations.Select(x => x.Id).ToList();
+
+                var allQuotationItems = await _repositorywrapper.SupplierQuotationItem
+                    .FindByCondition(x =>
+                        quotationIds.Contains(x.SupplierQuotationId) &&
+                        x.IsActive)
+                    .ToListAsync(cancellationToken);
+
+                quotationItemRankings = allQuotationItems
+                    .GroupBy(x => x.BuyerRFQItemId)
+                    .SelectMany(group =>
+                        group
+                            .OrderBy(x => x.SubTotal)
+                            .Select((x, index) => new { x.Id, Rank = $"L{index + 1}" }))
+                    .ToDictionary(x => x.Id, x => x.Rank);
+            }
 
             var quotationItems = new List<SupplierQuotationItemDto>();
 
@@ -129,6 +164,17 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                         QuotedPrice = x.QuotedPrice
                     })
                     .ToListAsync(cancellationToken);
+
+                if (!rfq.AddLotOption)
+                {
+                    foreach (var item in quotationItems)
+                    {
+                        if (quotationItemRankings.TryGetValue(item.ItemQuotationId, out var itemRank))
+                        {
+                            item.Rank = itemRank;
+                        }
+                    }
+                }
             }
 
             return new GetRFQByIdDto
@@ -157,7 +203,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                             DeliveryType = quotation.DeliveryType,
                             Status = quotation.Status,
                             QutationId = quotation.Id,
-                            IsLead = quotation.Id == lowestQuotation?.Id
+                            IsLead = quotation.Id == lowestQuotation?.Id,
+                            Rank = quotationRank
                         }
                     },
                 SupplierQuotationItems = quotationItems,
