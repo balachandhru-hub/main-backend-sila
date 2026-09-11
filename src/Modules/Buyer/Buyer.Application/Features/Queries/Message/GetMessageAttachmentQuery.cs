@@ -1,7 +1,7 @@
 using Buyer.Domain.Dto;
 using MediatR;
 
-namespace Buyer.Application.Features.Queries.Message
+namespace Buyer.Application.Features.Queries.CreateMessage
 {
     public class GetMessageAttachmentQuery : IRequest<MessageAttachmentFileDto>
     {

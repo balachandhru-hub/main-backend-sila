@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace Buyer.Application.Features.Commands.Message
+namespace Buyer.Application.Features.Commands.CreateMessage
 {
     public class MarkThreadReadCommand : IRequest<bool>
     {

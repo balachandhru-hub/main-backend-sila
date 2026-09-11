@@ -1,6 +1,6 @@
 using Buyer.API.Hubs;
-using Buyer.Application.Features.Commands.Message;
-using Buyer.Application.Features.Queries.Message;
+using Buyer.Application.Features.Commands.CreateMessage;
+using Buyer.Application.Features.Queries.CreateMessage;
 using Buyer.Domain.Dto;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

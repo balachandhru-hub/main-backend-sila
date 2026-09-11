@@ -2,7 +2,7 @@ using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using SharedKernel.ExceptionHandler;
 
-namespace Buyer.Application.Features.Commands.Message
+namespace Buyer.Application.Features.Commands.CreateMessage
 {
     /// <summary>
     /// Resolves and validates which Buyer/Supplier a caller may act as for a given RFQ or

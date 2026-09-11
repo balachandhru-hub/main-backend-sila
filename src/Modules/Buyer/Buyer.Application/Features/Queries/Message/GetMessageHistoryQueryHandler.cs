@@ -1,5 +1,5 @@
 using Buyer.Application.Contracts;
-using Buyer.Application.Features.Commands.Message;
+using Buyer.Application.Features.Commands.CreateMessage;
 using Buyer.Domain.Dto;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
@@ -7,7 +7,7 @@ using MediatR;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
-namespace Buyer.Application.Features.Queries.Message
+namespace Buyer.Application.Features.Queries.CreateMessage
 {
     public class GetMessageHistoryQueryHandler
         : IRequestHandler<GetMessageHistoryQuery, List<MessageResponseDto>>

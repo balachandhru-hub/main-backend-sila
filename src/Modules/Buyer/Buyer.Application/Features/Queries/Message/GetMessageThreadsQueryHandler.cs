@@ -6,7 +6,7 @@ using MediatR;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
-namespace Buyer.Application.Features.Queries.Message
+namespace Buyer.Application.Features.Queries.CreateMessage
 {
     public class GetMessageThreadsQueryHandler
         : IRequestHandler<GetMessageThreadsQuery, List<MessageThreadSummaryDto>>

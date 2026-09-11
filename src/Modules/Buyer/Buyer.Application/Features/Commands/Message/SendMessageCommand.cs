@@ -1,7 +1,7 @@
 using Buyer.Domain.Dto;
 using MediatR;
 
-namespace Buyer.Application.Features.Commands.Message
+namespace Buyer.Application.Features.Commands.CreateMessage
 {
     public class SendMessageCommand : IRequest<MessageResponseDto>
     {

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
-namespace Buyer.Application.Features.Commands.Message
+namespace Buyer.Application.Features.Commands.CreateMessage
 {
     public class SendMessageCommandHandler
         : IRequestHandler<SendMessageCommand, MessageResponseDto>
@@ -71,38 +71,42 @@ namespace Buyer.Application.Features.Commands.Message
             MessageThread? thread = await _repository.MessageThread
                 .FindFirstByConditionAsync(x => x.RFQId == dto.RFQId && x.SupplierId == supplierId && x.IsActive);
 
-            if (thread == null)
-            {
-                thread = new MessageThread
-                {
-                    Id = Guid.NewGuid(),
-                    RFQId = rfq.Id,
-                    RFQNumber = rfq.RFQNumber,
-                    BuyerId = buyerId,
-                    SupplierId = supplierId
-                };
+           if (thread == null)
+{
+    thread = new MessageThread
+    {
+        Id = Guid.NewGuid(),
+        RFQId = rfq.Id,
+        RFQNumber = rfq.RFQNumber,
+        BuyerId = buyerId,
+        SupplierId = supplierId,
+    };
 
-                _repository.MessageThread.Create(thread);
-            }
+    _repository.MessageThread.Create(thread);
 
-            Guid messageId = Guid.NewGuid();
-            DateTime now = DateTime.UtcNow;
+    // Save the thread first so Message.ThreadId
+    // has a valid FK record in the database.
+    await _repository.SaveAsync();
+}
 
-            Domain.Entities.Message message = new()
-            {
-                Id = messageId,
-                ThreadId = thread.Id,
-                SenderUserId = request.UserId,
-                SenderOrganizationType = isBuyerSender ? Common.BUYER : Common.SUPPLIER,
-                SenderOrganizationId = senderOrganizationId,
-                Body = dto.Body,
-                IsReadByBuyer = isBuyerSender,
-                IsReadBySupplier = isSupplierSender,
-                ReadByBuyerAt = isBuyerSender ? now : null,
-                ReadBySupplierAt = isSupplierSender ? now : null
-            };
+Guid messageId = Guid.NewGuid();
+DateTime now = DateTime.UtcNow;
 
-            _repository.Message.Create(message);
+Message message = new()
+{
+    Id = messageId,
+    ThreadId = thread.Id,
+    SenderUserId = request.UserId,
+    SenderOrganizationType = isBuyerSender ? Common.BUYER : Common.SUPPLIER,
+    SenderOrganizationId = senderOrganizationId,
+    Body = dto.Body,
+    IsReadByBuyer = isBuyerSender,
+    IsReadBySupplier = isSupplierSender,
+    ReadByBuyerAt = isBuyerSender ? now : null,
+    ReadBySupplierAt = isSupplierSender ? now : null
+};
+
+_repository.Message.Create(message);
 
             List<MessageAttachmentResponseDto> attachmentDtos = new();
 
@@ -149,21 +153,26 @@ namespace Buyer.Application.Features.Commands.Message
             thread.LastMessageAt = now;
             _repository.MessageThread.Update(thread);
 
-            await _repository.SaveAsync();
+        
+
 
             _logger.LogInfo($"Message sent successfully. ThreadId: {thread.Id}, MessageId: {messageId}");
 
             string? senderName = null;
 
-            try
-            {
-                List<IdentityUserDto> users = await _identityApiClient.GetUsersByIds(new List<Guid> { request.UserId }, cancellationToken);
-                senderName = users.FirstOrDefault()?.Name;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Unable to resolve sender name for UserId: {request.UserId}. {ex.Message}");
-            }
+        try
+{
+    List<IdentityUserDto> users = await _identityApiClient.GetUsersByIds(
+        new List<Guid> { request.UserId },
+        cancellationToken);
+
+    senderName = users.FirstOrDefault()?.UserName;
+}
+catch (Exception ex)
+{
+    _logger.LogError(
+        $"Unable to resolve sender username for UserId: {request.UserId}. {ex.Message}");
+}
 
             MessageResponseDto responseDto = new()
             {

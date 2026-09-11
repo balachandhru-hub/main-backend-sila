@@ -3,7 +3,7 @@ using MediatR;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
-namespace Buyer.Application.Features.Commands.Message
+namespace Buyer.Application.Features.Commands.CreateMessage
 {
     public class MarkThreadReadCommandHandler : IRequestHandler<MarkThreadReadCommand, bool>
     {
