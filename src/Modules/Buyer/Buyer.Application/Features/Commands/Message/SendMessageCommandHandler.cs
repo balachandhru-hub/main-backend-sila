@@ -71,42 +71,43 @@ namespace Buyer.Application.Features.Commands.CreateMessage
             MessageThread? thread = await _repository.MessageThread
                 .FindFirstByConditionAsync(x => x.RFQId == dto.RFQId && x.SupplierId == supplierId && x.IsActive);
 
-           if (thread == null)
-{
-    thread = new MessageThread
-    {
-        Id = Guid.NewGuid(),
-        RFQId = rfq.Id,
-        RFQNumber = rfq.RFQNumber,
-        BuyerId = buyerId,
-        SupplierId = supplierId,
-    };
+            if (thread == null)
+            {
+                thread = new MessageThread
+                {
+                    Id = Guid.NewGuid(),
+                    RFQId = rfq.Id,
+                    RFQNumber = rfq.RFQNumber,
+                    BuyerId = buyerId,
+                    SupplierId = supplierId,
+                };
 
-    _repository.MessageThread.Create(thread);
+                _repository.MessageThread.Create(thread);
 
-    // Save the thread first so Message.ThreadId
-    // has a valid FK record in the database.
-    await _repository.SaveAsync();
-}
+                // Save the thread first so Message.ThreadId
+                // has a valid FK record in the database.
+                await _repository.SaveAsync();
+            }
 
-Guid messageId = Guid.NewGuid();
-DateTime now = DateTime.UtcNow;
+            Guid messageId = Guid.NewGuid();
+            DateTime now = DateTime.UtcNow;
 
-Message message = new()
-{
-    Id = messageId,
-    ThreadId = thread.Id,
-    SenderUserId = request.UserId,
-    SenderOrganizationType = isBuyerSender ? Common.BUYER : Common.SUPPLIER,
-    SenderOrganizationId = senderOrganizationId,
-    Body = dto.Body,
-    IsReadByBuyer = isBuyerSender,
-    IsReadBySupplier = isSupplierSender,
-    ReadByBuyerAt = isBuyerSender ? now : null,
-    ReadBySupplierAt = isSupplierSender ? now : null
-};
+            Message message = new()
+            {
+                Id = messageId,
+                ThreadId = thread.Id,
+                SenderUserId = request.UserId,
+                SenderOrganizationType = isBuyerSender ? Common.BUYER : Common.SUPPLIER,
+                SenderOrganizationId = senderOrganizationId,
+                Body = dto.Body,
+                IsReadByBuyer = isBuyerSender,
+                IsReadBySupplier = isSupplierSender,
+                ReadByBuyerAt = isBuyerSender ? now : null,
+                ReadBySupplierAt = isSupplierSender ? now : null
+            };
 
-_repository.Message.Create(message);
+            _repository.Message.Create(message);
+            Console.WriteLine($"Message created. ThreadId: {thread.Id}, MessageId: {messageId}");
 
             List<MessageAttachmentResponseDto> attachmentDtos = new();
 
@@ -153,26 +154,41 @@ _repository.Message.Create(message);
             thread.LastMessageAt = now;
             _repository.MessageThread.Update(thread);
 
-        
+            try
+            {
+                await _repository.SaveAsync();
+
+                _logger.LogInfo(
+                    $"Message saved. ThreadId: {thread.Id}, MessageId: {messageId}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    $"Failed to save message. ThreadId: {thread.Id}, MessageId: {messageId}. {ex.Message}");
+
+                throw;
+            }
+
+
 
 
             _logger.LogInfo($"Message sent successfully. ThreadId: {thread.Id}, MessageId: {messageId}");
 
             string? senderName = null;
 
-        try
-{
-    List<IdentityUserDto> users = await _identityApiClient.GetUsersByIds(
-        new List<Guid> { request.UserId },
-        cancellationToken);
+            try
+            {
+                List<IdentityUserDto> users = await _identityApiClient.GetUsersByIds(
+                    new List<Guid> { request.UserId },
+                    cancellationToken);
 
-    senderName = users.FirstOrDefault()?.UserName;
-}
-catch (Exception ex)
-{
-    _logger.LogError(
-        $"Unable to resolve sender username for UserId: {request.UserId}. {ex.Message}");
-}
+                senderName = users.FirstOrDefault()?.UserName;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    $"Unable to resolve sender username for UserId: {request.UserId}. {ex.Message}");
+            }
 
             MessageResponseDto responseDto = new()
             {
