@@ -3,7 +3,7 @@ using MediatR;
 
 namespace Buyer.Application.Features.Commands.CreateMessage
 {
-    public class SendMessageCommand : IRequest<MessageResponseDto>
+    public class SendMessageCommand : IRequest<List<MessageResponseDto>>
     {
         public Guid OrganizationId { get; }
         public string OrganizationType { get; }

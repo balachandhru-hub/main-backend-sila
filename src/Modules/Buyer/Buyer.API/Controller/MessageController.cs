@@ -38,7 +38,7 @@ namespace Buyer.API.Controllers
         [ValidateModelState]
         [ApiAuthorization(Name = "SEND_MESSAGE")]
         [SwaggerOperation("SendMessage")]
-        [SwaggerResponse(200, type: typeof(MessageResponseDto), description: "Message sent successfully")]
+        [SwaggerResponse(200, type: typeof(List<MessageResponseDto>), description: "Message sent successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         public async Task<IActionResult> SendMessage([FromBody] SendMessageDto message)
         {
@@ -46,23 +46,26 @@ namespace Buyer.API.Controllers
             string organizationType = GetOrganizationType();
             Guid userId = GetUserId();
 
-            _logger.LogDebug($"Sending message for RFQId: {message.RFQId}, SupplierId: {message.SupplierId}");
+            _logger.LogDebug($"Sending message for RFQId: {message.RFQId}, SupplierId: {string.Join(",", message.SupplierId ?? new List<Guid>())}");
 
-            MessageResponseDto result = await _mediator.Send(
+            List<MessageResponseDto> results = await _mediator.Send(
                 new SendMessageCommand(organizationId, organizationType, userId, message));
 
-            try
+            foreach (MessageResponseDto result in results)
             {
-                await _hubContext.Clients
-                    .Group(MessageHub.GroupName(result.ThreadId))
-                    .SendAsync("NewMessage", result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Unable to broadcast new message. ThreadId: {result.ThreadId}. {ex.Message}");
+                try
+                {
+                    await _hubContext.Clients
+                        .Group(MessageHub.GroupName(result.RFQId, result.SupplierId))
+                        .SendAsync("NewMessage", result);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Unable to broadcast new message. ThreadId: {result.ThreadId}. {ex.Message}");
+                }
             }
 
-            return Ok(result);
+            return Ok(results);
         }
 
         [HttpGet]

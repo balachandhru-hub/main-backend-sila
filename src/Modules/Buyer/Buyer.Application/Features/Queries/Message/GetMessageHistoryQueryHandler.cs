@@ -80,6 +80,8 @@ namespace Buyer.Application.Features.Queries.CreateMessage
                 {
                     Id = message.Id,
                     ThreadId = message.ThreadId,
+                    RFQId = thread.RFQId,
+                    SupplierId = thread.SupplierId,
                     SenderUserId = message.SenderUserId,
                     SenderName = senderNames.TryGetValue(message.SenderUserId, out string? name) ? name : null,
                     SenderOrganizationType = message.SenderOrganizationType,

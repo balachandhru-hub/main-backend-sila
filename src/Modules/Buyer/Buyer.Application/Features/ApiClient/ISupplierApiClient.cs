@@ -31,7 +31,6 @@ CancellationToken cancellationToken = default);
             Guid rfqId,
             CancellationToken cancellationToken = default);
         Task NotifyNewMessage(
-            Guid threadId,
             MessageResponseDto message,
             CancellationToken cancellationToken = default);
     }

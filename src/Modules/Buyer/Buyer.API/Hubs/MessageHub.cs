@@ -28,7 +28,13 @@ namespace Buyer.API.Hubs
             _logger = logger;
         }
 
-        public async Task JoinThread(Guid threadId)
+        /// <summary>
+        /// Joins the caller to a supplier-level RFQ group-conversation. The group is keyed by
+        /// (RFQId, SupplierId) - never by UserId or ThreadId - so it can be joined even before
+        /// any MessageThread row exists yet (e.g. a supplier's first user registering before
+        /// the buyer has sent a message), and every user of that supplier shares the same group.
+        /// </summary>
+        public Task JoinConversation(Guid rfqId, Guid supplierId)
         {
             ClaimsPrincipal principal = ValidateAccessTokenCookie();
 
@@ -38,14 +44,6 @@ namespace Buyer.API.Hubs
             if (!Guid.TryParse(organizationIdClaim, out Guid organizationId) || string.IsNullOrWhiteSpace(organizationType))
             {
                 throw new HubException("Unauthorized.");
-            }
-
-            MessageThread? thread = await _repository.MessageThread
-                .FindFirstByConditionAsync(x => x.Id == threadId && x.IsActive);
-
-            if (thread == null)
-            {
-                throw new HubException("Conversation not found.");
             }
 
             bool isBuyer = string.Equals(organizationType, "Buyer", StringComparison.OrdinalIgnoreCase);
@@ -58,15 +56,21 @@ namespace Buyer.API.Hubs
                 BuyerBusinessProfile? buyer = _repository.BuyerBusinessProfile
                     .FindFirstByCondition(x => x.OrganizationId == organizationId && x.IsActive);
 
-                authorized = buyer != null && buyer.Id == thread.BuyerId;
+                bool ownsRfq = buyer != null && _repository.RFQ
+                    .FindFirstByCondition(x => x.Id == rfqId && x.BuyerId == buyer.Id && x.IsActive) != null;
+
+                bool supplierInvited = ownsRfq && _repository.RFQSupplierMapping
+                    .FindFirstByCondition(x => x.RFQId == rfqId && x.SupplierId == supplierId && x.IsActive) != null;
+
+                authorized = supplierInvited;
             }
             else if (isSupplier)
             {
                 RFQOrganizationUserMapping? orgMapping = _repository.RFQOrganizationUserMapping
                     .FindFirstByCondition(x =>
-                        x.RFQId == thread.RFQId &&
+                        x.RFQId == rfqId &&
                         x.OrganizationId == organizationId &&
-                        x.SupplierId == thread.SupplierId &&
+                        x.SupplierId == supplierId &&
                         x.IsActive);
 
                 authorized = orgMapping != null;
@@ -78,14 +82,14 @@ namespace Buyer.API.Hubs
 
             if (!authorized)
             {
-                _logger.LogError($"Forbidden JoinThread attempt. ThreadId: {threadId}, OrganizationId: {organizationId}, OrganizationType: {organizationType}");
+                _logger.LogError($"Forbidden JoinConversation attempt. RFQId: {rfqId}, SupplierId: {supplierId}, OrganizationId: {organizationId}, OrganizationType: {organizationType}");
                 throw new ForBiddenCustomException("Forbidden", "You do not have access to this conversation.");
             }
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(threadId));
+            return Groups.AddToGroupAsync(Context.ConnectionId, GroupName(rfqId, supplierId));
         }
 
-        public static string GroupName(Guid threadId) => $"thread-{threadId}";
+        public static string GroupName(Guid rfqId, Guid supplierId) => $"rfq:{rfqId}:supplier:{supplierId}";
 
         private ClaimsPrincipal ValidateAccessTokenCookie()
         {

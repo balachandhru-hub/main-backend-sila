@@ -6,6 +6,10 @@ namespace Supplier.Domain.Dto
 
         public Guid ThreadId { get; set; }
 
+        public Guid RFQId { get; set; }
+
+        public Guid SupplierId { get; set; }
+
         public Guid SenderUserId { get; set; }
 
         public string? SenderName { get; set; }

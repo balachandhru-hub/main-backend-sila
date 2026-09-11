@@ -23,14 +23,15 @@ namespace Supplier.API.Hubs
         }
 
         /// <summary>
-        /// Joins the caller to a private RFQ message thread's real-time group. The thread
-        /// itself is owned by the Buyer service, so participancy is checked here against
-        /// this service's own RFQOrganizationUserMapping mirror (does the caller's
-        /// organization have an active invite for this RFQ) - the threadId itself is only
-        /// ever handed to a caller by the Buyer service's own authorized thread-list
-        /// endpoint, scoped to that caller's SupplierId.
+        /// Joins the caller to a supplier-level RFQ group-conversation. The conversation itself
+        /// is owned by the Buyer service, so participancy is checked here against this
+        /// service's own RFQOrganizationUserMapping mirror - the caller's organization must have
+        /// an active mapping for this exact (RFQId, SupplierId) pair. Checking SupplierId here
+        /// (not just RFQId) is required: several suppliers can be invited to the same RFQ, and
+        /// without this check a caller could join another supplier's group by guessing its
+        /// SupplierId while both suppliers are invited to the same RFQ.
         /// </summary>
-        public async Task JoinThread(Guid rfqId, Guid threadId)
+        public async Task JoinConversation(Guid rfqId, Guid supplierId)
         {
             ClaimsPrincipal principal = ValidateAccessTokenCookie();
 
@@ -42,18 +43,22 @@ namespace Supplier.API.Hubs
             }
 
             var orgMapping = await _repository.RFQOrganizationUserMapping
-                .FindFirstByConditionAsync(x => x.BuyerRFQId == rfqId && x.OrganizationId == organizationId && x.IsActive);
+                .FindFirstByConditionAsync(x =>
+                    x.BuyerRFQId == rfqId &&
+                    x.OrganizationId == organizationId &&
+                    x.SupplierId == supplierId &&
+                    x.IsActive);
 
             if (orgMapping == null)
             {
-                _logger.LogError($"Forbidden JoinThread attempt. RFQId: {rfqId}, ThreadId: {threadId}, OrganizationId: {organizationId}");
-                throw new ForBiddenCustomException("Forbidden", "You do not have access to this RFQ.");
+                _logger.LogError($"Forbidden JoinConversation attempt. RFQId: {rfqId}, SupplierId: {supplierId}, OrganizationId: {organizationId}");
+                throw new ForBiddenCustomException("Forbidden", "You do not have access to this conversation.");
             }
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(threadId));
+            await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(rfqId, supplierId));
         }
 
-        public static string GroupName(Guid threadId) => $"thread-{threadId}";
+        public static string GroupName(Guid rfqId, Guid supplierId) => $"rfq:{rfqId}:supplier:{supplierId}";
 
         private ClaimsPrincipal ValidateAccessTokenCookie()
         {

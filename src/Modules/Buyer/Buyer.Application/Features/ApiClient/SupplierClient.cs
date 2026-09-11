@@ -429,17 +429,18 @@ namespace Buyer.Infrastructure.ApiClients
         }
 
         public async Task NotifyNewMessage(
-            Guid threadId,
             MessageResponseDto message,
             CancellationToken cancellationToken = default)
         {
-            _logger.LogInfo($"Relaying new message notification. ThreadId: {threadId}");
+            Guid threadId = message.ThreadId;
+
+            _logger.LogInfo($"Relaying new message notification. ThreadId: {threadId}, RFQId: {message.RFQId}, SupplierId: {message.SupplierId}");
 
             var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
 
             var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"{supplierUrl}/api/v1/supplier/message/internal/notify?threadId={threadId}");
+                $"{supplierUrl}/api/v1/supplier/message/internal/notify");
 
             request.Content = JsonContent.Create(message);
 

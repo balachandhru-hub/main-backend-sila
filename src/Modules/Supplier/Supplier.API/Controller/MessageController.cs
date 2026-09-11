@@ -124,11 +124,10 @@ namespace Supplier.API.Controllers
         [SwaggerOperation("NotifyNewMessage")]
         [SwaggerResponse(200, description: "Notification relayed")]
         public async Task<IActionResult> NotifyNewMessage(
-            [FromQuery] Guid threadId,
             [FromBody] MessageResponseDto message)
         {
             await _hubContext.Clients
-                .Group(NotificationHub.GroupName(threadId))
+                .Group(NotificationHub.GroupName(message.RFQId, message.SupplierId))
                 .SendAsync("NewMessage", message);
 
             return Ok();
