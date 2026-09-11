@@ -23,6 +23,7 @@ namespace Buyer.Domain.Entities
         public int Order { get; set; }
 
         public string Comment { get; set; }
+        public string Status { get; set; }
 
         public PredefinedMaterialApprovalFlowUserMapping() { }
     }

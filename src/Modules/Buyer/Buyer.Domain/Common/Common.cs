@@ -63,6 +63,7 @@ namespace Buyer.Domain.Common
                 public const string GET_MESSAGE_HISTORY_PERMISSION = "GET_MESSAGE_HISTORY";
                 public const string MARK_MESSAGE_READ_PERMISSION = "MARK_MESSAGE_READ";
                 public const string DOWNLOAD_MESSAGE_ATTACHMENT_PERMISSION = "DOWNLOAD_MESSAGE_ATTACHMENT";
+                public const string ITEM_MASTER_STATUS = "OPEN";
 
         }
 }

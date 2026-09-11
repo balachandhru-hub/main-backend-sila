@@ -1,0 +1,118 @@
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Attributes;
+using SharedKernel.Dto;
+using SharedKernel.LoggerServices;
+using Swashbuckle.AspNetCore.Annotations;
+using Buyer.Domain.Dtos;
+using SharedKernel.Controllers;
+using Buyer.Application.Features.Commands.MasterApprovalFlows;
+using Buyer.Application.Features.Queries.MasterApprovalFlow;
+using Buyer.Application.Features.Queries.ApprovalFlowUserMapping;
+
+namespace Buyer.API.Controller
+{
+    [ApiController]
+    public class ApprovalFlowController : BaseController
+    {
+        private readonly IMediator _mediator;
+        private readonly ILoggerManager _logger;
+
+        public ApprovalFlowController(
+            IMediator mediator,
+            ILoggerManager logger)
+        {
+            _mediator = mediator;
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Create Master Approval Flow
+        /// </summary>
+        [HttpPost]
+        [Route("api/v1/buyer/master-approval-flow")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "CREATE_MASTER_APPROVAL_FLOW")]
+        [SwaggerOperation("CreateMasterApprovalFlow")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Master Approval Flow created successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> CreateMasterApprovalFlow(
+            [FromBody] CreateMasterApprovalFlowDto dto)
+        {
+            _logger.LogDebug(
+                $"Creating Master Approval Flow. " +
+                $"ApprovalCode: {dto.ApprovalCode}");
+
+            var result = await _mediator.Send(
+                new CreateMasterApprovalFlowCommand(
+                    dto,
+                    GetOrganizationId()));
+
+            _logger.LogDebug(
+                $"Master Approval Flow created successfully: {result}");
+
+            return Ok(new SuccessResponseDto
+            {
+                Id = result.ToString(),
+                Message = "Master Approval Flow created successfully",
+                Description = "Master Approval Flow created successfully",
+                StatusCode = 201
+            });
+        }
+
+        /// <summary>
+        /// Get Master Approval Flow
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/buyer/master-approval-flow")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_MASTER_APPROVAL_FLOW")]
+        [SwaggerOperation("GetMasterApprovalFlow")]
+        [SwaggerResponse(200, type: typeof(MasterApprovalFlowDto), description: "Master Approval Flow retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetMasterApprovalFlow(
+            [FromQuery] int index = 0,
+            [FromQuery] int limit = 10,
+            [FromQuery] Guid? buyerId = null)
+        {
+            _logger.LogDebug("Fetching Master Approval Flow.");
+
+            var result = await _mediator.Send(
+                new GetMasterApprovalFlowQuery
+                {
+                    Index = index,
+                    Limit = limit,
+                    BuyerId = buyerId
+                });
+
+            _logger.LogDebug("Master Approval Flow retrieved successfully.");
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get Approval Flow User Mapping
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/buyer/master-approval-flow/{approvalId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_APPROVAL_FLOW_USER_MAPPING")]
+        [SwaggerOperation("GetApprovalFlowUserMapping")]
+        [SwaggerResponse(200, type: typeof(List<Guid>), description: "Approval Flow Users retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetApprovalFlowUserMapping(Guid approvalId)
+        {
+            _logger.LogDebug($"Fetching Approval Flow Users. ApprovalId: {approvalId}");
+
+            var result = await _mediator.Send(
+                new GetApprovalFlowUserMappingQuery(approvalId));
+
+            _logger.LogDebug("Approval Flow Users retrieved successfully.");
+
+            return Ok(result);
+        }
+    }
+}

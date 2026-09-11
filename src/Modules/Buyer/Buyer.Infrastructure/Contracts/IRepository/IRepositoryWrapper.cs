@@ -42,6 +42,11 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IMessageThreadRepository MessageThread {get;}
         IMessageRepository Message {get;}
         IMessageAttachmentRepository MessageAttachment {get;}
+        IPredefinedMaterialRepository PredefinedMaterial {get;}
+        IApprovalFlowUserMappingRepository ApprovalFlowUserMapping {get;}
+        IApprovalFlowPredefinedMaterialMappingRepository ApprovalFlowPredefinedMaterialMapping {get;}
+        IPredefinedMaterialApprovalFlowUserMappingRepository PredefinedMaterialApprovalFlowUserMapping {get;}
+        IMasterApprovalFlowRepository MasterApprovalFlow {get;}
         bool Save();
         Task<bool> SaveAsync();
     }

@@ -4,6 +4,7 @@ using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Buyer.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260911074220_statustoPredefinedMaterialApprovalFlowUserMapping")]
+    partial class statustoPredefinedMaterialApprovalFlowUserMapping
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1018,11 +1021,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("currency");
-
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("datetime2")
                         .HasColumnName("date_created");
@@ -1034,15 +1032,6 @@ namespace Buyer.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("total_amount");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("type");
 
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")

@@ -49,6 +49,11 @@ namespace Buyer.Infrastructure.Repository
         private IMessageThreadRepository _messageThreadRepository;
         private IMessageRepository _messageRepository;
         private IMessageAttachmentRepository _messageAttachmentRepository;
+        private IPredefinedMaterialRepository _predefinedMaterialRepository;
+        private IApprovalFlowUserMappingRepository _approvalFlowUserMappingRepository;
+        private IApprovalFlowPredefinedMaterialMappingRepository _approvalFlowPredefinedMaterialMappingRepository;
+        private IPredefinedMaterialApprovalFlowUserMappingRepository _predefinedMaterialApprovalFlowUserMappingRepository;
+        private IMasterApprovalFlowRepository _masterApprovalFlowRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -444,6 +449,66 @@ namespace Buyer.Infrastructure.Repository
                 }
 
                 return _messageAttachmentRepository;
+            }
+        }
+        public IPredefinedMaterialRepository PredefinedMaterial
+        {
+            get
+            {
+                if (_predefinedMaterialRepository == null)
+                {
+                    _predefinedMaterialRepository = new PredefinedMaterialRepository(_context);
+                }
+
+                return _predefinedMaterialRepository;
+            }
+        }
+        public IApprovalFlowUserMappingRepository ApprovalFlowUserMapping
+        {
+            get
+            {
+                if (_approvalFlowUserMappingRepository == null)
+                {
+                    _approvalFlowUserMappingRepository = new ApprovalFlowUserMappingRepository(_context);
+                }
+
+                return _approvalFlowUserMappingRepository;
+            }
+        }
+        public IApprovalFlowPredefinedMaterialMappingRepository ApprovalFlowPredefinedMaterialMapping
+        {
+            get
+            {
+                if (_approvalFlowPredefinedMaterialMappingRepository == null)
+                {
+                    _approvalFlowPredefinedMaterialMappingRepository = new ApprovalFlowPredefinedMaterialMappingRepository(_context);
+                }
+
+                return _approvalFlowPredefinedMaterialMappingRepository;
+            }
+        }
+        public IPredefinedMaterialApprovalFlowUserMappingRepository PredefinedMaterialApprovalFlowUserMapping
+        {
+            get
+            {
+                if (_predefinedMaterialApprovalFlowUserMappingRepository == null)
+                {
+                    _predefinedMaterialApprovalFlowUserMappingRepository = new PredefinedMaterialApprovalFlowUserMappingRepository(_context);
+                }
+
+                return _predefinedMaterialApprovalFlowUserMappingRepository;
+            }
+        }
+        public IMasterApprovalFlowRepository MasterApprovalFlow
+        {
+            get
+            {
+                if (_masterApprovalFlowRepository == null)
+                {
+                    _masterApprovalFlowRepository = new MasterApprovalFlowRepositoty(_context);
+                }
+
+                return _masterApprovalFlowRepository;
             }
         }
         public bool Save()

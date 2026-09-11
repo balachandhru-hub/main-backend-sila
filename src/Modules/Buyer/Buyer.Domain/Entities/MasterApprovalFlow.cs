@@ -20,7 +20,9 @@ namespace Buyer.Domain.Entities
 
         public BuyerBusinessProfile BuyerBusinessProfile { get; set; }
 
-        
+        public string Type { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string Currency { get; set; }
        
 
       

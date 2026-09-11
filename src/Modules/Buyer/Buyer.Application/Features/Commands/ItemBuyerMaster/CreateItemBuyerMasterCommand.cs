@@ -4,7 +4,7 @@ using MediatR;
 namespace Buyer.Application.Features.Commands.ItemBuyerMaster
 {
     public record CreateItemBuyerMasterCommand(
-        CreateItemBuyerMasterDto ItemBuyerMaster,
+        CreateItemBuyerMasterDto PredefinedMaterial,
         Guid OrganizationId
     ) : IRequest<Guid>;
 }

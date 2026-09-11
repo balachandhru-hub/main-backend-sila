@@ -1,9 +1,10 @@
+using Buyer.Domain.Common;
+using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
-using ItemBuyerMasterEntity = Buyer.Domain.Entities.ItemBuyerMaster;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
-using Buyer.Domain.Entities;
 
 namespace Buyer.Application.Features.Commands.ItemBuyerMaster
 {
@@ -25,63 +26,200 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
             CreateItemBuyerMasterCommand request,
             CancellationToken cancellationToken)
         {
-            _logger.LogInfo("Creating Item Buyer Master.");
+            _logger.LogInfo(
+                $"Creating Item Buyer Master. OrganizationId: {request.OrganizationId}");
 
-            var dto = request.ItemBuyerMaster;
+            var dto = request.PredefinedMaterial;
 
-            var exists = await _repository.ItemBuyerMaster
-                .FindFirstByConditionAsync(x =>
-                    x.MaterialCode == dto.MaterialCode &&
-                    x.IsActive);
+            // =========================================================
+            // 1. Check duplicate Material Code
+            // =========================================================
 
-            if (exists != null)
+            var existingMaterial =
+                await _repository.PredefinedMaterial
+                    .FindFirstByConditionAsync(x =>
+                        x.MaterialCode == dto.MaterialCode &&
+                        x.IsActive);
+
+            if (existingMaterial != null)
             {
+                _logger.LogError(
+                    $"Material Code already exists. " +
+                    $"MaterialCode: {dto.MaterialCode}");
                 throw new PreConditionFailedCustomException(
                     "Material Code already exists.",
                     $"Material Code '{dto.MaterialCode}' already exists.");
             }
 
-            BuyerBusinessProfile? buyer;
+            // =========================================================
+            // 2. Find Buyer using OrganizationId only
+            // =========================================================
 
-            if (dto.BuyerId.HasValue)
-            {
-                // Platform flow
-                buyer = await _repository.BuyerBusinessProfile
-                    .FindFirstByConditionAsync(x =>
-                        x.Id == dto.BuyerId.Value &&
-                        x.IsActive);
-            }
-            else
-            {
-                // Buyer flow
-                buyer = await _repository.BuyerBusinessProfile
+            var buyer =
+                await _repository.BuyerBusinessProfile
                     .FindFirstByConditionAsync(x =>
                         x.OrganizationId == request.OrganizationId &&
                         x.IsActive);
-            }
 
             if (buyer == null)
             {
+                _logger.LogError(
+                    $"Buyer not found. OrganizationId: {request.OrganizationId}");
                 throw new NotFoundCustomException(
                     "Buyer not found.",
-                    "Buyer profile not found.");
+                    "Buyer profile not found for the organization.");
             }
 
-            ItemBuyerMasterEntity entity = new ItemBuyerMasterEntity
+            // =========================================================
+            // 3. Check Approval Flow
+            // =========================================================
+
+            var approvalFlow =
+                await _repository.MasterApprovalFlow
+                    .FindFirstByConditionAsync(x =>
+                        x.Id == dto.ApprovalFlowId &&
+                        x.IsActive);
+
+            if (approvalFlow == null)
+            {
+                _logger.LogError(
+                    $"Approval flow not found. " +
+                    $"ApprovalFlowId: {dto.ApprovalFlowId}");
+                throw new NotFoundCustomException(
+                    "Approval flow not found.",
+                    "The selected approval flow does not exist.");
+            }
+
+            // =========================================================
+            // 4. Create Predefined Material
+            // =========================================================
+
+            var predefinedMaterial = new PredefinedMaterial
             {
                 Id = Guid.NewGuid(),
+
                 BuyerId = buyer.Id,
+
                 Description = dto.Description,
+
                 MaterialCode = dto.MaterialCode,
-                MaterialGroup = dto.MaterialGroup
+
+                MaterialGroup = dto.MaterialGroup,
+
+                ProductType = dto.ProductType,
+
+                BaseUnitOfMeasure = dto.BaseUnitOfMeasure,
+
+                OrderUnitOfMeasure = dto.OrderUnitOfMeasure,
+
+                AlternateUnitOfMeasure = dto.AlternateUnitOfMeasure,
+
+                ValuationClass = dto.ValuationClass,
+
+                UnitOfMeasureMapping = dto.UnitOfMeasureMapping,
+
+                SubUnit = dto.SubUnit,
+
+                MicroUnit = dto.MicroUnit,
+
+                Status = Common.ITEM_MASTER_STATUS
             };
 
-            await _repository.ItemBuyerMaster.CreateAsync(entity);
+            await _repository.PredefinedMaterial
+                .CreateAsync(predefinedMaterial);
+
+            // =========================================================
+            // 5. Create Material -> Approval Flow Mapping
+            // =========================================================
+
+            var materialApprovalFlowMapping =
+                new ApprovalFlowPredefinedMaterialMapping
+                {
+                    Id = Guid.NewGuid(),
+
+                    ApprovalFlowId = dto.ApprovalFlowId,
+
+                    PredefinedMaterialId = predefinedMaterial.Id
+                };
+
+            await _repository
+                .ApprovalFlowPredefinedMaterialMapping
+                .CreateAsync(materialApprovalFlowMapping);
+
+            // =========================================================
+            // 6. Get Approval Flow Users
+            // =========================================================
+
+            var approvalFlowUsers =
+                await _repository.ApprovalFlowUserMapping
+                    .FindByCondition(x =>
+                        x.ApprovalFlowId == dto.ApprovalFlowId &&
+                        x.IsActive)
+                    .ToListAsync(cancellationToken);
+
+            if (!approvalFlowUsers.Any())
+            {
+                _logger.LogError(
+                    $"Approval flow users not found. " +
+                    $"ApprovalFlowId: {dto.ApprovalFlowId}");
+                throw new PreConditionFailedCustomException(
+                    "Approval flow users not found.",
+                    "The selected approval flow has no users configured.");
+            }
+
+            // =========================================================
+            // 7. Create Material -> Approval Flow -> User Mappings
+            // =========================================================
+
+            var materialApprovalFlowUserMappings =
+                approvalFlowUsers
+                    .Select(user =>
+                        new PredefinedMaterialApprovalFlowUserMapping
+                        {
+                            Id = Guid.NewGuid(),
+
+                            ApprovalFlowPredefinedMaterialId =
+                                materialApprovalFlowMapping.Id,
+
+                            ApprovalFlowId =
+                                dto.ApprovalFlowId,
+
+                            UserId =
+                                user.UserId,
+
+                            Order =
+                                user.Order,
+
+                            Comment =
+                                dto.Comment,
+
+                            Status =
+                                Common.PENDING
+                        })
+                    .ToList();
+
+            if (materialApprovalFlowUserMappings.Any())
+            {
+                _logger.LogInfo(
+                    $"Creating {materialApprovalFlowUserMappings.Count} " +
+                    $"Material -> Approval Flow -> User Mappings.");
+                await _repository
+                    .PredefinedMaterialApprovalFlowUserMapping
+                    .CreateRangeAsync(
+                        materialApprovalFlowUserMappings);
+            }
+
+            // =========================================================
+            // 8. Save Everything
+            // =========================================================
+
             await _repository.SaveAsync();
 
-            _logger.LogInfo($"ItemBuyerMaster created : {entity.Id}");
+            _logger.LogInfo(
+                $"Item Buyer Master created successfully. " +
+                $"PredefinedMaterialId: {predefinedMaterial.Id}");
 
-            return entity.Id;
+            return predefinedMaterial.Id;
         }
     }
 }
