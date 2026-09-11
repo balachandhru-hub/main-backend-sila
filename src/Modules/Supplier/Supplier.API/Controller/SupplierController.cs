@@ -33,6 +33,7 @@ using Supplier.Application.Features.Commands.DeleteBankAccount;
 using Supplier.Application.Features.Commands.DeleteDispatchLocation;
 using Supplier.Application.Features.Queries.GetSupplierQuotationHistoryComparison;
 using Supplier.Application.Features.Queries.GetBidCompare;
+using Supplier.Application.Features.Queries.GetSupplierNamesByIds;
 
 
 
@@ -226,6 +227,30 @@ namespace Supplier.API.Controllers
                 new GetSupplierIdQuery(organizationId));
 
             _logger.LogDebug($"Fetched Supplier Id for Organization: {organizationId}");
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get Supplier Names By Ids
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/supplier/internal-names")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_NAMES_BY_IDS")]
+        [SwaggerOperation("GetSupplierNamesByIds")]
+        [SwaggerResponse(200, type: typeof(List<SupplierNameDto>), description: "Supplier names fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetSupplierNamesByIds(
+            [FromQuery] List<Guid> supplierIds)
+        {
+            _logger.LogDebug($"Fetching supplier names for {supplierIds?.Count ?? 0} id(s).");
+
+            var result = await _mediator.Send(
+                new GetSupplierNamesByIdsQuery { SupplierIds = supplierIds ?? new List<Guid>() });
+
+            _logger.LogDebug("Supplier names fetched successfully.");
 
             return Ok(result);
         }

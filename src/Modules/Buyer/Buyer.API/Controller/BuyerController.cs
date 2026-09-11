@@ -17,6 +17,7 @@ using Buyer.Application.Features.Queries.Department;
 using Buyer.Application.Features.Queries.CostCenter;
 using Buyer.Application.Features.Commands.DepartmentAndCostCenter;
 using Buyer.Application.Features.Profile.Queries.GetBuyerId;
+using Buyer.Application.Features.Queries.GetBuyerNameById;
 using Buyer.Application.Features.Queries.GetAllSupplier;
 using Buyer.Domain.Dtos;
 using Buyer.Application.Features.Commands.Buyer.UpdateBuyerStatusOrganization;
@@ -413,6 +414,28 @@ namespace Buyer.API.Controllers
                 new GetBuyerIdQuery(organizationId));
 
             _logger.LogDebug($"Fetched Buyer Id for Organization: {organizationId}");
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get Buyer Name By Id
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/buyer/internal-name/{buyerId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_BUYER_NAME_BY_ID")]
+        [SwaggerOperation("GetBuyerNameById")]
+        [SwaggerResponse(200, type: typeof(BuyerNameDto), description: "Fetched Buyer Name successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetBuyerNameById(Guid buyerId)
+        {
+            _logger.LogDebug($"Fetching Buyer Name for BuyerId: {buyerId}");
+
+            var result = await _mediator.Send(new GetBuyerNameByIdQuery(buyerId));
+
+            _logger.LogDebug($"Fetched Buyer Name for BuyerId: {buyerId}");
 
             return Ok(result);
         }

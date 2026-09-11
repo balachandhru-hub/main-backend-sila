@@ -85,6 +85,12 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             var buyerId = rfq.BuyerId;
             var supplierRFQId = rfq.Id;
             _logger.LogInfo($"Fetching verified suppliers for BuyerId: {buyerId}");
+
+            _logger.LogInfo($"Fetching Buyer Name for BuyerId: {buyerId}");
+            var buyerName = await _buyerApiClient.GetBuyerNameById(
+                buyerId,
+                cancellationToken);
+
             var attachmentResponse = await _buyerApiClient.GetRFQAttachments(
                 request.RFQId,
                 cancellationToken);
@@ -209,6 +215,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
 
             return new GetRFQByIdDto
             {
+                BuyerId = rfq.BuyerId,
+                BuyerName = buyerName?.BuyerName,
                 Title = rfq.Title,
                 Description = rfq.Description,
                 DeliveryLocation = rfq.DeliveryLocation,

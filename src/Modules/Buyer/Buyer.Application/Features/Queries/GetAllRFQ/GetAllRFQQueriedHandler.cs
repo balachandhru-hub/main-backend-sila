@@ -323,10 +323,13 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                                 x.Id == asset.FileType)?.Key ?? string.Empty,
                 FileName = asset.FileName
             }).ToList();
-            var supplierIds = await _repositorywrapper.BuyerSupplierMapping
-            .FindByCondition(x => x.BuyerId == buyerId)
+            var supplierIds = await _repositorywrapper.RFQSupplierMapping
+            .FindByCondition(x => x.RFQId == request.RFQId)
             .Select(x => x.SupplierId)
             .ToListAsync(cancellationToken);
+            var suppliers = await _supplierApiClient.GetSupplierNamesByIds(
+    supplierIds,
+    cancellationToken);
             var verificationTemplateId = await _repositorywrapper.VerificationTemplate
     .FindByCondition(x => x.BuyerId == buyerId)
     .Select(x => x.Id)
@@ -402,7 +405,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 TermsConditionDocuments = termsDocuments,
                 Questions = questions,
                 Items = items,
-                SupplierIds = supplierIds,
+                SupplierIds = suppliers,
                 RFQVerificationTemplateId = verificationTemplateId,
                 SupplierQuotation = supplierQuotation?.Suppliers
     ?? new List<SupplierQuotationBySupplierDto>(),

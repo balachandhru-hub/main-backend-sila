@@ -96,6 +96,41 @@ namespace Supplier.Infrastructure.ApiClients
             return result ?? new GetRFQAttachmentsDto();
         }
 
+        public async Task<BuyerNameDto> GetBuyerNameById(
+            Guid buyerId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/internal-name/{buyerId}");
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request.Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add("Cookie", $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch buyer name.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<BuyerNameDto>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new BuyerNameDto();
+        }
+
         public async Task<SupplierVerificationRequestDetailDto> GetSupplierVerificationRequestDetail(
             Guid requestId,
             CancellationToken cancellationToken = default)

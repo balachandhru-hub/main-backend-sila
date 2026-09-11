@@ -186,6 +186,67 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result ?? new SupplierProfileDto();
         }
+
+        public async Task<List<SupplierNameDto>> GetSupplierNamesByIds(
+            List<Guid> supplierIds,
+            CancellationToken cancellationToken = default)
+        {
+            if (supplierIds == null || !supplierIds.Any())
+            {
+                _logger.LogInfo("No Supplier IDs provided. Returning empty list.");
+               throw new NotFoundCustomException(
+                    "No Supplier IDs provided.",
+                    "The list of Supplier IDs is empty or null.");
+            }
+
+            _logger.LogInfo($"Fetching Supplier Names. Count: {supplierIds.Count}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var queryString = string.Join(
+                "&",
+                supplierIds.Select(id => $"supplierIds={id}"));
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/internal-names?{queryString}");
+
+            // Get access token from current request cookie
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                _logger.LogInfo("Adding access token to request headers.");
+
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to fetch Supplier Names. Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch Supplier Names.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<SupplierNameDto>>(
+                cancellationToken: cancellationToken);
+
+            _logger.LogInfo($"Supplier Names fetched successfully. Count: {result?.Count ?? 0}");
+
+            return result ?? new List<SupplierNameDto>();
+        }
+
         public async Task<GetQuestionsAnswersForSupplierDto> GetQuestionsAnswersForSupplier(
             Guid requestId,
             CancellationToken cancellationToken = default)

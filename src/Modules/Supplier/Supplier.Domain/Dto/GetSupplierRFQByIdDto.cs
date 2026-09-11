@@ -5,6 +5,10 @@ namespace Supplier.Domain.Dto
 {
     public class GetRFQByIdDto
     {
+        public Guid BuyerId { get; set; }
+
+        public string? BuyerName { get; set; }
+
         public string Title { get; set; }
 
         public string Description { get; set; }

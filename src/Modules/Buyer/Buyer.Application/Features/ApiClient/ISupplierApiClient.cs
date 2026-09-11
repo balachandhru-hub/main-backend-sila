@@ -18,6 +18,9 @@ CancellationToken cancellationToken = default);
         Task<SupplierProfileDto> GetSupplierById(
         Guid supplierId,
         CancellationToken cancellationToken = default);
+        Task<List<SupplierNameDto>> GetSupplierNamesByIds(
+        List<Guid> supplierIds,
+        CancellationToken cancellationToken = default);
         Task<GetQuestionsAnswersForSupplierDto> GetQuestionsAnswersForSupplier(
         Guid requestId,
         CancellationToken cancellationToken = default);
