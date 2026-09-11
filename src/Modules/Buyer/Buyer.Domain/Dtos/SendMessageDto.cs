@@ -8,8 +8,7 @@ namespace Buyer.Domain.Dto
         public Guid RFQId { get; set; }
 
         [Required]
-        [MinLength(1)]
-        public List<Guid> SupplierId { get; set; }
+        public Guid SupplierId { get; set; }
 
         public string? Body { get; set; }
 

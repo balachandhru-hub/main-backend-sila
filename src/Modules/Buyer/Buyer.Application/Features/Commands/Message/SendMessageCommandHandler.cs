@@ -11,7 +11,7 @@ using SharedKernel.LoggerServices;
 namespace Buyer.Application.Features.Commands.CreateMessage
 {
     public class SendMessageCommandHandler
-        : IRequestHandler<SendMessageCommand, List<MessageResponseDto>>
+        : IRequestHandler<SendMessageCommand, MessageResponseDto>
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
@@ -33,7 +33,7 @@ namespace Buyer.Application.Features.Commands.CreateMessage
             _identityApiClient = identityApiClient;
         }
 
-        public async Task<List<MessageResponseDto>> Handle(
+        public async Task<MessageResponseDto> Handle(
             SendMessageCommand request,
             CancellationToken cancellationToken)
         {
@@ -58,88 +58,12 @@ namespace Buyer.Application.Features.Commands.CreateMessage
                 throw new NotFoundCustomException("RFQ not found.", "RFQ does not exist.");
             }
 
-            bool isBuyerSender = string.Equals(request.OrganizationType, "Buyer", StringComparison.OrdinalIgnoreCase);
-
-            // A Buyer can address several supplier group-conversations at once for the
-            // same RFQ. A Supplier can only ever post into its own single group-conversation,
-            // which MessageParticipancy resolves independently of the requested SupplierId.
-            List<Guid?> requestedSupplierIds;
-
-            if (isBuyerSender)
-            {
-                if (dto.SupplierId == null || dto.SupplierId.Count == 0)
-                {
-                    throw new BadRequestCustomException("Invalid request", "At least one SupplierId is required.");
-                }
-
-                requestedSupplierIds = dto.SupplierId.Distinct().Select(id => (Guid?)id).ToList();
-
-                // Validate every target supplier up front so a request naming an uninvited
-                // supplier fails atomically, instead of persisting the message for some
-                // suppliers before failing partway through the list.
-                foreach (Guid? requestedSupplierId in requestedSupplierIds)
-                {
-                    MessageParticipancy.ResolveForRFQ(
-                        _repository,
-                        rfq,
-                        request.OrganizationId,
-                        request.OrganizationType,
-                        requestedSupplierId);
-                }
-            }
-            else
-            {
-                requestedSupplierIds = new List<Guid?> { null };
-            }
-
-            string? senderName = null;
-
-            try
-            {
-                List<IdentityUserDto> users = await _identityApiClient.GetUsersByIds(
-                    new List<Guid> { request.UserId },
-                    cancellationToken);
-
-                senderName = users.FirstOrDefault()?.UserName;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(
-                    $"Unable to resolve sender username for UserId: {request.UserId}. {ex.Message}");
-            }
-
-            List<MessageResponseDto> responses = new();
-
-            foreach (Guid? requestedSupplierId in requestedSupplierIds)
-            {
-                MessageResponseDto response = await SendToSupplierGroup(
-                    rfq,
-                    requestedSupplierId,
-                    dto,
-                    request,
-                    senderName,
-                    cancellationToken);
-
-                responses.Add(response);
-            }
-
-            return responses;
-        }
-
-        private async Task<MessageResponseDto> SendToSupplierGroup(
-            RFQ rfq,
-            Guid? requestedSupplierId,
-            SendMessageDto dto,
-            SendMessageCommand request,
-            string? senderName,
-            CancellationToken cancellationToken)
-        {
             (Guid buyerId, Guid supplierId, bool isBuyerSender) = MessageParticipancy.ResolveForRFQ(
                 _repository,
                 rfq,
                 request.OrganizationId,
                 request.OrganizationType,
-                requestedSupplierId);
+                dto.SupplierId);
 
             bool isSupplierSender = !isBuyerSender;
             Guid senderOrganizationId = isBuyerSender ? buyerId : supplierId;
@@ -147,7 +71,7 @@ namespace Buyer.Application.Features.Commands.CreateMessage
             // The group-conversation is keyed by (RFQId, SupplierId), never by UserId, so every
             // user of that supplier - present or registered later - shares the same thread.
             MessageThread? thread = await _repository.MessageThread
-                .FindFirstByConditionAsync(x => x.RFQId == rfq.Id && x.SupplierId == supplierId && x.IsActive);
+                .FindFirstByConditionAsync(x => x.RFQId == dto.RFQId && x.SupplierId == supplierId && x.IsActive);
 
             if (thread == null)
             {
@@ -187,8 +111,6 @@ namespace Buyer.Application.Features.Commands.CreateMessage
             _repository.Message.Create(message);
 
             List<MessageAttachmentResponseDto> attachmentDtos = new();
-
-            bool hasAttachments = dto.Attachments != null && dto.Attachments.Count > 0;
 
             if (hasAttachments)
             {
@@ -249,6 +171,22 @@ namespace Buyer.Application.Features.Commands.CreateMessage
             }
 
             _logger.LogInfo($"Message sent successfully. ThreadId: {thread.Id}, MessageId: {messageId}");
+
+            string? senderName = null;
+
+            try
+            {
+                List<IdentityUserDto> users = await _identityApiClient.GetUsersByIds(
+                    new List<Guid> { request.UserId },
+                    cancellationToken);
+
+                senderName = users.FirstOrDefault()?.UserName;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    $"Unable to resolve sender username for UserId: {request.UserId}. {ex.Message}");
+            }
 
             MessageResponseDto responseDto = new()
             {

@@ -580,17 +580,7 @@ namespace Supplier.Infrastructure.ApiClients
                 HttpMethod.Post,
                 $"{buyerUrl}/api/v1/buyer/message");
 
-            // A Supplier can only ever post into its own single group-conversation, but the
-            // Buyer endpoint's contract accepts a list of SupplierIds (a Buyer may message
-            // several suppliers at once), so wrap the single SupplierId here.
-            request.Content = JsonContent.Create(new
-            {
-                message.RFQId,
-                SupplierId = new List<Guid> { message.SupplierId },
-                message.Body,
-                message.Attachments
-            });
-
+            request.Content = JsonContent.Create(message);
             AddAccessTokenCookie(request);
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
@@ -604,10 +594,10 @@ namespace Supplier.Infrastructure.ApiClients
                     error);
             }
 
-            var result = await response.Content.ReadFromJsonAsync<List<MessageResponseDto>>(
+            var result = await response.Content.ReadFromJsonAsync<MessageResponseDto>(
                 cancellationToken: cancellationToken);
 
-            return result?.FirstOrDefault() ?? new MessageResponseDto();
+            return result ?? new MessageResponseDto();
         }
 
         public async Task<List<MessageThreadSummaryDto>> GetMessageThreads(
