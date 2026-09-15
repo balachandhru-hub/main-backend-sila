@@ -98,11 +98,16 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(statusCode: 200, "Fetched the File Details", typeof(AssetDownloadDto))]
         [SwaggerResponse(statusCode: 404, "Not Found", typeof(ErrorResponseDto))]
         [SwaggerResponse(statusCode: 401, "Unauthorized", typeof(ErrorResponseDto))]
-       public async Task<IActionResult> GetDocument([FromRoute] Guid assetId)
+       public async Task<IActionResult> GetDocument(
+    [FromRoute] Guid assetId,
+    [FromQuery] Guid rfqId)
 {
     _logger.LogDebug($"Retrieving document for Asset Id: {assetId}");
 
-    var result = await _mediator.Send(new GetDocumentQuery(assetId));
+    string sessionToken = Request.Headers[ExternalSessionAuthorizationAttribute.SessionTokenHeaderName]
+        .FirstOrDefault() ?? string.Empty;
+
+    var result = await _mediator.Send(new GetDocumentQuery(assetId, sessionToken, rfqId));
 
     _logger.LogDebug($"Document retrieved successfully for Asset Id: {assetId}");
 

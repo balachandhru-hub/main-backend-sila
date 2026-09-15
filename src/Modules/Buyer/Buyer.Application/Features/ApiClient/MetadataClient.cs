@@ -81,4 +81,29 @@ public class MetadataApiClient : IMetadataApiClient
 
         _logger.LogInfo($"Email sent successfully. EmailKey: {emailKey}, ToEmail: {toEmail}");
     }
+    public async Task<string> GetExternalRefTermKeyById(
+        Guid id,
+        string sessionToken,
+        Guid rfqId)
+    {
+        string masterDataUrl = _configuration[Common.MASTER_DATA_URL]!;
+
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{masterDataUrl}/api/v1/masterdata/external-metadata/{id}?rfqId={rfqId}");
+
+        request.Headers.Add("X-Session-Token", sessionToken);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError(
+                $"Failed to fetch external reference term key. AssetTypeId: {id}, RFQId: {rfqId}, Status Code: {response.StatusCode}");
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadAsStringAsync();
+    }
 }

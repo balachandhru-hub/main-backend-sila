@@ -1,3 +1,5 @@
+using MasterData.Application.Contracts;
+using MasterData.Application.Features.ApiClient;
 using MasterData.Application.Services;
 using MasterData.Infrastructure.Contracts.IRepository;
 using MasterData.Infrastructure.Contracts.IServices;
@@ -27,6 +29,7 @@ public static class ServiceExtensions
         services.AddScoped<IBulkInsertHelper, BulkInsertHelper>();
         services.AddScoped<IUserIdentityService, UserIdentityService>();
         services.AddScoped<IUserContext, UserContext>();
+        services.AddScoped<ISupplierSessionApiClient, SupplierSessionApiClient>();
         _ = services.AddControllers();
     }
     public static void ConfigureLoggerService(

@@ -3,6 +3,7 @@ namespace MasterData.Domain.Common
     public static class Common
     {
         public static readonly string APPLICATION_SCHEMA = "ConnectionStrings:Schema";
+        public static readonly string SUPPLIER_SERVICE_BASE_URL = "InterCallService:SupplierUrl";
         public static readonly string DEFAULT_FRONT_END_ORIGIN_LOCAL = "Origin:HostOriginLocal";
         public static readonly string MAX_REQUEST_SIZE = "MaxRequestBodySize";
         public static readonly string UAT_ENVIRONMENT = "UAT";

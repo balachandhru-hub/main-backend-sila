@@ -5,6 +5,7 @@ using SharedKernel.LoggerServices;
 using SharedKernel.Dto;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.Attributes;
+using MasterData.API.Attributes;
 using MasterData.Application.Features.Metadata.Queries;
 using MasterData.Domain.Dto;
 using MasterData.Application.Features.Metadata.Queries.GetRefTermKeyById;
@@ -82,6 +83,23 @@ public class MetadataController : ControllerBase
     public async Task<IActionResult> GetRefTermKeyById(Guid id)
     {
         _logger.LogDebug($"Fetching reference term key for Id: {id}");
+
+        var result = await _mediator.Send(new GetRefTermKeyByIdQuery(id));
+
+        return Ok(result);
+    }
+     [HttpGet]
+    [Route("api/v1/masterdata/external-metadata/{id}")]
+    [ValidateModelState]
+    [ExternalSessionAuthorization]
+    [SwaggerOperation("GetExternalRefTermKeyById")]
+    [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Reference term key retrieved successfully")]
+    [SwaggerResponse(403, type: typeof(ErrorResponseDto), description: "Invalid or expired session token")]
+    [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Reference term not found")]
+    [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+    public async Task<IActionResult> GetExternalRefTermKeyById(Guid id, [FromQuery] Guid rfqId)
+    {
+        _logger.LogDebug($"Fetching reference term key for Id: {id}, RFQId: {rfqId}");
 
         var result = await _mediator.Send(new GetRefTermKeyByIdQuery(id));
 

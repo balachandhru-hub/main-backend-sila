@@ -60,7 +60,12 @@ namespace Buyer.Application.Features.Queries.Asset.GetDocument
             var fileBytes = await File.ReadAllBytesAsync(filePath, cancellationToken);
 
             // Fetch content type using Metadata API Client
-            var metadata = await _metadataClient.GetRefTermKeyById(asset.FileType);
+            var metadata = !string.IsNullOrWhiteSpace(request.ExternalSessionToken) && request.ExternalRFQId.HasValue
+                ? await _metadataClient.GetExternalRefTermKeyById(
+                    asset.FileType,
+                    request.ExternalSessionToken,
+                    request.ExternalRFQId.Value)
+                : await _metadataClient.GetRefTermKeyById(asset.FileType);
 
             return new AssetDownloadDto
             {
