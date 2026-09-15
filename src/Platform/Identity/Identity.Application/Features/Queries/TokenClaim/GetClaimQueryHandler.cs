@@ -1,9 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Text.Json;
 using Identity.Domain.Dto;
 using MediatR;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
+using Identity.Application.Features.Queries.Permissions;
 using Identity.Application.Contracts;
 using Identity.Domain.Enum;
 
@@ -16,13 +16,15 @@ namespace Identity.Application.Features.Auth.Queries.GetClaim
         private readonly ISupplierApiClient _supplierApiClient;
         private readonly IBuyerIdApiClient _buyerIdApiClient;
         private readonly ISupplierIdApiClient _supplierIdApiClient;
+        private readonly IMediator _mediator;
 
-        public GetClaimQueryHandler(ILoggerManager logger, IBuyerApiClient buyerApiClient, ISupplierApiClient supplierApiClient, IBuyerIdApiClient buyerIdApiClient, ISupplierIdApiClient supplierIdApiClient)
+        public GetClaimQueryHandler(ILoggerManager logger, IBuyerApiClient buyerApiClient, ISupplierApiClient supplierApiClient, IBuyerIdApiClient buyerIdApiClient, ISupplierIdApiClient supplierIdApiClient, IMediator mediator)
         {
             _buyerApiClient = buyerApiClient;
             _supplierApiClient = supplierApiClient;
             _buyerIdApiClient = buyerIdApiClient;
             _supplierIdApiClient = supplierIdApiClient;
+            _mediator = mediator;
             _logger = logger;
         }
 
@@ -51,11 +53,13 @@ namespace Identity.Application.Features.Auth.Queries.GetClaim
             };
 
 
-            if (claims.TryGetValue("Permissions", out var permissions))
-            {
-                _logger.LogInfo($"Fetched Permissions: {permissions}");
-                dto.Permissions = JsonSerializer.Deserialize<List<string>>(permissions) ?? new List<string>();
-            }
+            // The token no longer carries the permission keys, so read them
+            // from the database. The response shape is unchanged.
+            dto.Permissions = await _mediator.Send(
+                new GetPermissionsQuery { RoleId = dto.RoleId },
+                cancellationToken);
+
+            _logger.LogInfo($"Fetched {dto.Permissions.Count} Permissions");
             if (claims.TryGetValue("OrganizationType", out var organizationType))
             {
 

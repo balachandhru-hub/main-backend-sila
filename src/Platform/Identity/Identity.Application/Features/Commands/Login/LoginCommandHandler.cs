@@ -13,9 +13,8 @@ using SharedKernel.ExceptionHandler;
 using Microsoft.AspNetCore.Http;
 using Identity.Domain.Common;
 using SharedKernel.LoggerServices;
-using System.Text.Json;
-using Contracts.IRepository;
-
+using Microsoft.Extensions.Caching.Memory;
+using SharedKernel.Attributes;
 
 namespace Identity.Application.Features.Auth.Commands.Login
 {
@@ -26,6 +25,7 @@ namespace Identity.Application.Features.Auth.Commands.Login
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILoggerManager _logger;
+        private readonly IMemoryCache _cache;
 
 
 
@@ -34,7 +34,8 @@ namespace Identity.Application.Features.Auth.Commands.Login
             IBcryptHashing hashing,
             IConfiguration configuration,
             IHttpContextAccessor httpContextAccessor,
-            ILoggerManager logger
+            ILoggerManager logger,
+            IMemoryCache cache
            )
         {
             _repository = repository;
@@ -42,6 +43,7 @@ namespace Identity.Application.Features.Auth.Commands.Login
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+            _cache = cache;
 
         }
 
@@ -152,18 +154,18 @@ namespace Identity.Application.Features.Auth.Commands.Login
                     "Organization disabled",
                     "Your organization has been disabled");
             }
-                var permissions = (
-                    from roleFeature in _repository.RoleFeatureMapping.FindByConditionAsync(rf => rf.IsActive)
-                    join feature in _repository.Feature.FindByConditionAsync(f => f.IsActive)
-                        on roleFeature.FeatureId equals feature.Id
-                    where roleFeature.RoleId == userRoleMapping.RoleId
-                            && roleFeature.IsActive
-                            && feature.IsActive
-                    select feature.Key
-                ).ToList();
-
-                string permissionJson = JsonSerializer.Serialize(permissions);
-
+                // Permissions are resolved per request from the role cache
+                // instead of being carried in the token. A full-access role has
+                // ~130 feature keys, and serializing those into a claim pushed
+                // the access_token cookie past the 4096-byte limit browsers
+                // enforce - at which point the browser discarded the cookie and
+                // login succeeded with no usable token.
+                //
+                // Evicting here is what makes a permission change take effect
+                // on the user's next login. It only clears this service's
+                // cache; Buyer, Supplier and MasterData hold their own copy
+                // until it expires.
+                _cache.Remove(ApiAuthorizationAttribute.PermissionCacheKey(userRoleMapping.RoleId));
 
                 var claims = new[]
                 {
@@ -171,7 +173,6 @@ namespace Identity.Application.Features.Auth.Commands.Login
                     new Claim("PersonId", user.PersonId.ToString()),
                     new Claim("UserId", user.Id.ToString()),
                     new Claim("OrganizationId", person.OrganizationId.ToString()),
-                    new Claim("Permissions", permissionJson),
                     new Claim("SNID", organization.SNID),
                     new Claim("OrganizationType", organization.OrganizationType.ToString()),
                 };

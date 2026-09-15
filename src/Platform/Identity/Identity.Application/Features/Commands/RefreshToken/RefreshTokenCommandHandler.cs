@@ -110,13 +110,27 @@ var refreshToken = refreshTokens.FirstOrDefault(x =>
             "Person not found.");
     }
 
-   
+    var organization = _repository.Organization
+        .FindFirstByCondition(x => x.Id == person.OrganizationId);
+
+    if (organization == null)
+    {
+        throw new UnAuthorizedCustomException(
+            "Unauthorized",
+            "Organization not found.");
+    }
+
+    // A refreshed token has to carry the same claim set as the one issued at
+    // login. SNID and OrganizationType back BaseController and MessageHub, so
+    // leaving them out here broke every call made after a refresh.
     var claims = new[]
     {
         new Claim(ClaimTypes.Role, userRole.RoleId.ToString()),
         new Claim("PersonId", user.PersonId.ToString()),
         new Claim("UserId", user.Id.ToString()),
-        new Claim("OrganizationId", person.OrganizationId.ToString())
+        new Claim("OrganizationId", person.OrganizationId.ToString()),
+        new Claim("SNID", organization.SNID),
+        new Claim("OrganizationType", organization.OrganizationType.ToString())
     };
 
    

@@ -14,6 +14,8 @@ using Identity.Domain.Common;
 using Identity.Domain.Dto;
 using Identity.Application.Features.Auth.Queries.GetClaim;
 using Identity.Application.Features.Commands.Logout;
+using Identity.Application.Features.Queries.Permissions;
+using System.Security.Claims;
 
 
 
@@ -260,6 +262,45 @@ namespace Identity.API.Controllers
             });
 
             return Ok(result);
+        }
+
+        /// <summary>
+        /// Permissions granted to the signed-in user's role.
+        /// </summary>
+        /// <remarks>
+        /// Serves the permission keys that used to ride in the access token as
+        /// a claim. ApiAuthorizationAttribute in every service loads them from
+        /// here and caches them per role.
+        ///
+        /// TokenOnly is deliberate: requiring a permission to read the
+        /// permission list would make the check depend on itself. A valid
+        /// signed token is still required, and the role is taken from that
+        /// token rather than the request, so a caller only ever sees its own.
+        /// </remarks>
+        [HttpGet]
+        [Route("api/v1/identity/auth/permissions")]
+        [ApiAuthorization(TokenOnly = true)]
+        [SwaggerOperation("GetPermissions")]
+        [SwaggerResponse(200, type: typeof(List<string>), description: "Permissions fetched successfully")]
+        [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+        public async Task<IActionResult> GetPermissions()
+        {
+            if (!Guid.TryParse(User.FindFirst(ClaimTypes.Role)?.Value, out Guid roleId))
+            {
+                _logger.LogError("Role claim missing from a validated token.");
+
+                return Unauthorized(new ErrorResponseDto
+                {
+                    StatusCode = 401,
+                    Message = "Unauthorized",
+                    Description = "Invalid token."
+                });
+            }
+
+            List<string> permissions = await _mediator.Send(
+                new GetPermissionsQuery { RoleId = roleId });
+
+            return Ok(permissions);
         }
 
          /// <summary>
