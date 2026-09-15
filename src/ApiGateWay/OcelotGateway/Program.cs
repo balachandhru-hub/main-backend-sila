@@ -71,6 +71,11 @@ namespace OcelotGateway
                 opt.PathToSwaggerGenerator = "/swagger/docs";
             });
 
+            // Required for Ocelot to proxy the WebSocket upgrade for the "ws" DownstreamScheme
+            // routes (messageHub/notificationHub) - Ocelot only registers this automatically
+            // from v25 onward, and this project pins v24.1.0.
+            app.UseWebSockets();
+
             await app.UseOcelot();
             app.UseHttpsRedirection();
             app.MapControllers();

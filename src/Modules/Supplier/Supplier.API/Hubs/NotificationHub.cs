@@ -1,14 +1,23 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.IdentityModel.Tokens;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
+using SharedKernel.Security;
 using Supplier.Infrastructure.Contracts.IRepository;
 
 namespace Supplier.API.Hubs
 {
+    /// <summary>
+    /// Real-time hub for RFQ message threads on the Supplier side. Every caller here belongs
+    /// to a Supplier organization (Buyer users connect to Buyer.API's MessageHub instead) - the
+    /// conversation itself is owned by the Buyer service, so this hub only relays events the
+    /// Buyer service pushes to it via the internal notify endpoint.
+    ///
+    /// On connect, the caller is automatically joined to every RFQ+Supplier conversation group
+    /// their organization is a party to, not just the one thread currently open in the UI, so a
+    /// logged-in user still receives NewMessage/NewMessageNotification for a conversation while
+    /// they're not looking at that specific chat and the frontend can raise an unread badge.
+    /// </summary>
     public class NotificationHub : Hub
     {
         private readonly IConfiguration _configuration;
@@ -22,18 +31,70 @@ namespace Supplier.API.Hubs
             _logger = logger;
         }
 
+        public override async Task OnConnectedAsync()
+        {
+            ClaimsPrincipal? principal;
+
+            try
+            {
+                principal = ValidateAccessToken();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"NotificationHub connection rejected. ConnectionId: {Context.ConnectionId}. {ex.Message}");
+                Context.Abort();
+                return;
+            }
+
+            string? organizationIdClaim = principal.FindFirst("OrganizationId")?.Value;
+
+            if (!Guid.TryParse(organizationIdClaim, out Guid organizationId))
+            {
+                _logger.LogError($"NotificationHub connection rejected - missing organization claim. ConnectionId: {Context.ConnectionId}.");
+                Context.Abort();
+                return;
+            }
+
+            try
+            {
+                List<string> groups = _repository.RFQOrganizationUserMapping
+                    .FindByCondition(x => x.OrganizationId == organizationId && x.IsActive)
+                    .Select(x => GroupName(x.BuyerRFQId, x.SupplierId))
+                    .Distinct()
+                    .ToList();
+
+                foreach (string groupName in groups)
+                {
+                    await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Unable to auto-join conversations on connect. OrganizationId: {organizationId}. {ex}");
+            }
+
+            await base.OnConnectedAsync();
+        }
+
+        public override Task OnDisconnectedAsync(Exception? exception)
+        {
+            if (exception != null)
+            {
+                _logger.LogError($"NotificationHub connection {Context.ConnectionId} closed with error: {exception}");
+            }
+
+            return base.OnDisconnectedAsync(exception);
+        }
+
         /// <summary>
-        /// Joins the caller to a supplier-level RFQ group-conversation. The conversation itself
-        /// is owned by the Buyer service, so participancy is checked here against this
-        /// service's own RFQOrganizationUserMapping mirror - the caller's organization must have
-        /// an active mapping for this exact (RFQId, SupplierId) pair. Checking SupplierId here
+        /// Joins the caller to a supplier-level RFQ group-conversation. Checking SupplierId here
         /// (not just RFQId) is required: several suppliers can be invited to the same RFQ, and
         /// without this check a caller could join another supplier's group by guessing its
         /// SupplierId while both suppliers are invited to the same RFQ.
         /// </summary>
         public async Task JoinConversation(Guid rfqId, Guid supplierId)
         {
-            ClaimsPrincipal principal = ValidateAccessTokenCookie();
+            ClaimsPrincipal principal = ValidateAccessToken();
 
             string? organizationIdClaim = principal.FindFirst("OrganizationId")?.Value;
 
@@ -55,46 +116,47 @@ namespace Supplier.API.Hubs
                 throw new ForBiddenCustomException("Forbidden", "You do not have access to this conversation.");
             }
 
+            _logger.LogInfo($"ConnectionId {Context.ConnectionId} joined {GroupName(rfqId, supplierId)}.");
+
             await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(rfqId, supplierId));
         }
 
+        /// <summary>Alias matching the frontend's JoinChat naming.</summary>
+        public Task JoinChat(Guid rfqId, Guid supplierId) => JoinConversation(rfqId, supplierId);
+
+        public Task LeaveConversation(Guid rfqId, Guid supplierId)
+        {
+            _logger.LogInfo($"ConnectionId {Context.ConnectionId} left {GroupName(rfqId, supplierId)}.");
+
+            return Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupName(rfqId, supplierId));
+        }
+
+        /// <summary>Alias matching the frontend's LeaveChat naming.</summary>
+        public Task LeaveChat(Guid rfqId, Guid supplierId) => LeaveConversation(rfqId, supplierId);
+
         public static string GroupName(Guid rfqId, Guid supplierId) => $"rfq:{rfqId}:supplier:{supplierId}";
 
-        private ClaimsPrincipal ValidateAccessTokenCookie()
+        private ClaimsPrincipal ValidateAccessToken()
         {
-            string? token = Context.GetHttpContext()?.Request.Cookies["access_token"];
+            HttpContext? httpContext = Context.GetHttpContext();
+
+            string? token = httpContext?.Request.Cookies[AccessTokenValidator.CookieName];
 
             if (string.IsNullOrWhiteSpace(token))
             {
-                throw new HubException("Access token not found.");
+                token = httpContext?.Request.Query[AccessTokenValidator.QueryParameterName];
             }
 
             string jwtKey = _configuration["Tokens:Key"]!;
             string issuer = _configuration["Tokens:Issuer"]!;
 
-            JwtSecurityTokenHandler tokenHandler = new();
-
             try
             {
-                ClaimsPrincipal principal = tokenHandler.ValidateToken(
-                    token,
-                    new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidIssuer = issuer,
-                        ValidateAudience = false,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-                        ClockSkew = TimeSpan.Zero
-                    },
-                    out _);
-
-                return principal;
+                return AccessTokenValidator.Validate(token, jwtKey, issuer);
             }
-            catch (Exception)
+            catch (UnAuthorizedCustomException ex)
             {
-                throw new HubException("Invalid or expired token.");
+                throw new HubException(ex.Message);
             }
         }
     }

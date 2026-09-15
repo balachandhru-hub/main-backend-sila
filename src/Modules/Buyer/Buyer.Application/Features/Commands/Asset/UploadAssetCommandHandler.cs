@@ -111,7 +111,7 @@ namespace Buyer.Application.Features.Assets.Commands
 
             };
             _repositoryWrapper.Asset.Create(asset);
-            _repositoryWrapper.Save();
+          await _repositoryWrapper.SaveAsync();
             _logger.LogInfo($"Asset with ID {assetId} uploaded successfully.");
             return assetId;
         }

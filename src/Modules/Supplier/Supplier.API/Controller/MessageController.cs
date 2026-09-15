@@ -126,9 +126,17 @@ namespace Supplier.API.Controllers
         public async Task<IActionResult> NotifyNewMessage(
             [FromBody] MessageResponseDto message)
         {
-            await _hubContext.Clients
-                .Group(NotificationHub.GroupName(message.RFQId, message.SupplierId))
-                .SendAsync("NewMessage", message);
+            try
+            {
+                IClientProxy group = _hubContext.Clients.Group(NotificationHub.GroupName(message.RFQId, message.SupplierId));
+
+                await group.SendAsync("NewMessage", message);
+                await group.SendAsync("NewMessageNotification", message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Unable to relay new message to Supplier clients. ThreadId: {message.ThreadId}. {ex}");
+            }
 
             return Ok();
         }

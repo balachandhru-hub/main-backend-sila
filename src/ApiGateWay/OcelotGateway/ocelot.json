@@ -57,6 +57,32 @@
           "Port": 8004
         }
       ]
+    },
+    {
+      "Key": "buyer-messagehub-ws",
+      "UpstreamPathTemplate": "/messageHub/{everything}",
+      "DownstreamPathTemplate": "/messageHub/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamScheme": "ws",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8004
+        }
+      ]
+    },
+    {
+      "Key": "supplier-notificationhub-ws",
+      "UpstreamPathTemplate": "/notificationHub/{everything}",
+      "DownstreamPathTemplate": "/notificationHub/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamScheme": "ws",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8003
+        }
+      ]
     }
   ],
   

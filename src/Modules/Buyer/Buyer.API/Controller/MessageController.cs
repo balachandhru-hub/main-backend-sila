@@ -53,13 +53,18 @@ namespace Buyer.API.Controllers
 
             try
             {
-                await _hubContext.Clients
-                    .Group(MessageHub.GroupName(result.RFQId, result.SupplierId))
-                    .SendAsync("NewMessage", result);
+                IClientProxy group = _hubContext.Clients.Group(MessageHub.GroupName(result.RFQId, result.SupplierId));
+
+                // "NewMessage" is for whoever has this exact thread open - append immediately.
+                // "NewMessageNotification" reaches the same group (every user auto-joined to it
+                // on connect) so someone logged in but viewing a different page can still raise
+                // an unread badge instead of missing the message entirely.
+                await group.SendAsync("NewMessage", result);
+                await group.SendAsync("NewMessageNotification", result);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Unable to broadcast new message. ThreadId: {result.ThreadId}. {ex.Message}");
+                _logger.LogError($"Unable to broadcast new message. ThreadId: {result.ThreadId}. {ex}");
             }
 
             return Ok(result);
