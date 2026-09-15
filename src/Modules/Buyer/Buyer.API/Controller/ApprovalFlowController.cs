@@ -9,6 +9,8 @@ using SharedKernel.Controllers;
 using Buyer.Application.Features.Commands.MasterApprovalFlows;
 using Buyer.Application.Features.Queries.MasterApprovalFlow;
 using Buyer.Application.Features.Queries.ApprovalFlowUserMapping;
+using Buyer.Application.Features.Commands.ApproveRejectMaster;
+using Buyer.Application.Features.Queries.GetPendingApprovals;
 
 namespace Buyer.API.Controller
 {
@@ -111,6 +113,57 @@ namespace Buyer.API.Controller
                 new GetApprovalFlowUserMappingQuery(approvalId));
 
             _logger.LogDebug("Approval Flow Users retrieved successfully.");
+
+            return Ok(result);
+        }
+        [HttpPut]
+        [Route("api/v1/buyer/item-master/approval/{predefinedMaterialId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "APPROVE_ITEM_MASTER")]
+        [SwaggerOperation("ApproveOrRejectItemMaster")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto),
+            description: "Material approval status updated successfully")]
+        public async Task<IActionResult> ApproveOrRejectItemMaster(
+            Guid predefinedMaterialId,
+            [FromBody] ApproveRejectItemMasterDto dto)
+        {
+            Guid userId = GetUserId();
+
+            _logger.LogDebug(
+                $"Processing material approval for PredefinedMaterialId: {predefinedMaterialId}, UserId: {userId}");
+
+            Guid result = await _mediator.Send(
+                new ApproveRejectMasterCommand(
+                    predefinedMaterialId,
+                    userId,
+                    dto));
+
+            return Ok(new SuccessResponseDto
+            {
+                Id = result.ToString(),
+                Message = "Material approval status updated successfully",
+                Description = "Material approval status updated successfully",
+                StatusCode = 200
+            });
+        }
+        [HttpGet]
+        [Route("api/v1/buyer/item-master/pending-approvals")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "VIEW_ITEM_MASTER_APPROVAL")]
+        [SwaggerOperation("GetPendingApprovals")]
+        [SwaggerResponse(200,type: typeof(List<PendingApprovalDto>),description: "Pending approvals retrieved successfully")]
+        [SwaggerResponse(400,type: typeof(ErrorResponseDto),description: "Bad Request")]
+        [SwaggerResponse(500,type: typeof(ErrorResponseDto),description: "Internal Server Error")]
+        public async Task<IActionResult> GetPendingApprovals()
+        {
+            Guid userId = GetUserId();
+
+            _logger.LogDebug(
+                $"Getting pending approvals for UserId: {userId}");
+
+            var result =
+                await _mediator.Send(
+                    new GetPendingApprovalsQuery(userId));
 
             return Ok(result);
         }

@@ -7,21 +7,21 @@ using Buyer.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Buyer.Domain.Dtos;
 
-namespace Buyer.Application.Features.Commands.ItemBuyerMaster
+namespace Buyer.Application.Features.Commands.PredefinedMaterialMaster
 {
-    public class UploadItemBuyerMasterCommandHandler
-        : IRequestHandler<UploadItemBuyerMasterCommand, ExcelUploadResultDto>
+    public class UploadPredefinedMaterialCommandHandler
+        : IRequestHandler<UploadPredefinedMaterialCommand, ExcelUploadResultDto>
     {
         private readonly IRepositoryWrapper _repository;
 
-        public UploadItemBuyerMasterCommandHandler(
+        public UploadPredefinedMaterialCommandHandler(
             IRepositoryWrapper repository)
         {
             _repository = repository;
         }
 
         public async Task<ExcelUploadResultDto> Handle(
-    UploadItemBuyerMasterCommand request,
+    UploadPredefinedMaterialCommand request,
     CancellationToken cancellationToken)
         {
             ValidateFile(request.UploadDto.File);
@@ -103,7 +103,7 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
             }
         }
         private async Task<Guid> GetBuyerId(
-            UploadItemBuyerMasterCommand request)
+            UploadPredefinedMaterialCommand request)
         {
             BuyerBusinessProfile? buyer;
 

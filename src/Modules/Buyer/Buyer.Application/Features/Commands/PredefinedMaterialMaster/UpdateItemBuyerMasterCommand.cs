@@ -1,9 +1,9 @@
 using Buyer.Domain.Dtos;
 using MediatR;
 
-namespace Buyer.Application.Features.Commands.ItemBuyerMaster
+namespace Buyer.Application.Features.Commands.PredefinedMaterialMaster
 {
-    public class UpdateItemBuyerMasterCommand : IRequest<Guid>
+    public class UpdatePredefinedMaterialCommand : IRequest<Guid>
     {
         public Guid Id { get; set; }
 
@@ -11,7 +11,7 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
 
         public UpdateItemBuyerMasterDto ItemBuyerMasterDto { get; set; }
 
-        public UpdateItemBuyerMasterCommand(
+        public UpdatePredefinedMaterialCommand(
             Guid id,
             Guid organizationId,
             UpdateItemBuyerMasterDto dto)

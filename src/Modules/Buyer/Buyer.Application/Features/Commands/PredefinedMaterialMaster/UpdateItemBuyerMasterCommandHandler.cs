@@ -4,15 +4,15 @@ using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
-namespace Buyer.Application.Features.Commands.ItemBuyerMaster
+namespace Buyer.Application.Features.Commands.PredefinedMaterialMaster
 {
-    public class UpdateItemBuyerMasterCommandHandler
-        : IRequestHandler<UpdateItemBuyerMasterCommand, Guid>
+    public class UpdatePredefinedMaterialCommandHandler
+        : IRequestHandler<UpdatePredefinedMaterialCommand, Guid>
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
 
-        public UpdateItemBuyerMasterCommandHandler(
+        public UpdatePredefinedMaterialCommandHandler(
             IRepositoryWrapper repository,
             ILoggerManager logger)
         {
@@ -21,7 +21,7 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
         }
 
         public async Task<Guid> Handle(
-            UpdateItemBuyerMasterCommand request,
+            UpdatePredefinedMaterialCommand request,
             CancellationToken cancellationToken)
         {
             _logger.LogInfo($"Updating ItemBuyerMaster : {request.Id}");

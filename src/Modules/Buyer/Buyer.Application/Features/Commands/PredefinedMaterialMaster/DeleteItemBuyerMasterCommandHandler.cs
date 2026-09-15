@@ -4,15 +4,15 @@ using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
-namespace Buyer.Application.Features.Commands.ItemBuyerMaster
+namespace Buyer.Application.Features.Commands.PredefinedMaterialMaster
 {
-    public class DeleteItemBuyerMasterCommandHandler
-        : IRequestHandler<DeleteItemBuyerMasterCommand, bool>
+    public class DeletePredefinedMaterialCommandHandler
+        : IRequestHandler<DeletePredefinedMaterialCommand, bool>
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
 
-        public DeleteItemBuyerMasterCommandHandler(
+        public DeletePredefinedMaterialCommandHandler(
             IRepositoryWrapper repository,
             ILoggerManager logger)
         {
@@ -21,10 +21,10 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
         }
 
         public async Task<bool> Handle(
-            DeleteItemBuyerMasterCommand request,
+            DeletePredefinedMaterialCommand request,
             CancellationToken cancellationToken)
         {
-            _logger.LogInfo($"Deleting ItemBuyerMaster : {request.Id}");
+            _logger.LogInfo($"Deleting PredefinedMaterial : {request.Id}");
 
             var entity = await _repository.ItemBuyerMaster
                 .FindByCondition(x =>
@@ -35,7 +35,7 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
             if (entity == null)
             {
                 throw new NotFoundCustomException(
-                    "Item Buyer Master not found.",
+                    "Predefined Material not found.",
                     "");
             }
 
@@ -43,7 +43,7 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
 
             await _repository.SaveAsync();
 
-            _logger.LogInfo($"ItemBuyerMaster deleted : {entity.Id}");
+            _logger.LogInfo($"PredefinedMaterial deleted : {entity.Id}");
 
             return true;
         }

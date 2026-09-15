@@ -43,12 +43,14 @@ namespace Buyer.Application.Features.Queries.MasterApprovalFlow
                 .Skip(request.Index)
                 .Take(request.Limit)
                 .ToList();
+              
 
             var result = items.Select(x => new MasterApprovalFlowDto
             {
                 Id = x.Id,
                 ApprovalCode = x.ApprovalCode,
                 ApprovalName = x.ApprovalName,
+
                 BuyerId = x.BuyerId
             }).ToList();
             if (result == null)

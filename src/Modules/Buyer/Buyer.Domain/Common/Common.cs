@@ -64,6 +64,9 @@ namespace Buyer.Domain.Common
                 public const string MARK_MESSAGE_READ_PERMISSION = "MARK_MESSAGE_READ";
                 public const string DOWNLOAD_MESSAGE_ATTACHMENT_PERMISSION = "DOWNLOAD_MESSAGE_ATTACHMENT";
                 public const string ITEM_MASTER_STATUS = "OPEN";
+                public const string APPROVED = "APPROVE";
+                public const string REJECTED = "REJECT";
+
 
         }
 }

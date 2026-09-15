@@ -5,9 +5,10 @@ using SharedKernel.Attributes;
 using SharedKernel.Dto;
 using SharedKernel.LoggerServices;
 using Swashbuckle.AspNetCore.Annotations;
-using Buyer.Application.Features.Commands.ItemBuyerMaster;
+using Buyer.Application.Features.Commands.PredefinedMaterialMaster;
 using Buyer.Domain.Dtos;
 using SharedKernel.Controllers;
+
 namespace Buyer.API.Controller
 {
     [ApiController]
@@ -74,15 +75,15 @@ namespace Buyer.API.Controller
             _logger.LogDebug($"Creating Item Buyer Master. MaterialCode : {dto.MaterialCode}");
 
             var result = await _mediator.Send(
-                new CreateItemBuyerMasterCommand(dto, GetOrganizationId()));
+                new CreatePredefinedMaterialCommand(dto, GetOrganizationId()));
 
-            _logger.LogDebug($"Item Buyer Master created successfully : {result}");
+            _logger.LogDebug($"Predefined Material created successfully : {result}");
 
             return Ok(new SuccessResponseDto
             {
                 Id = result.ToString(),
-                Message = "Item Buyer Master created successfully",
-                Description = "Item Buyer Master created successfully",
+                Message = "Predefined Material created successfully",
+                Description = "Predefined Material created successfully",
                 StatusCode = 201
             });
         }
@@ -110,7 +111,7 @@ namespace Buyer.API.Controller
                 OrganizationId = GetOrganizationId()
             };
 
-            var result = await _mediator.Send(new UploadItemBuyerMasterCommand(dto));
+            var result = await _mediator.Send(new UploadPredefinedMaterialCommand(dto));
 
             _logger.LogDebug($"Item Buyer Master uploaded successfully. Records : {result.SuccessfulUploads}");
             return Ok(new SuccessResponseDto
@@ -142,7 +143,7 @@ namespace Buyer.API.Controller
             _logger.LogDebug($"Updating Item Buyer Master : {id}");
 
             var result = await _mediator.Send(
-                new UpdateItemBuyerMasterCommand(
+                new UpdatePredefinedMaterialCommand(
                     id,
                     GetOrganizationId(),
                     dto));
@@ -173,7 +174,7 @@ namespace Buyer.API.Controller
         {
             _logger.LogDebug($"Deleting Item Buyer Master : {id}");
 
-            await _mediator.Send(new DeleteItemBuyerMasterCommand(id));
+            await _mediator.Send(new DeletePredefinedMaterialCommand(id));
 
             _logger.LogDebug($"Item Buyer Master deleted successfully : {id}");
 

@@ -1,9 +1,9 @@
 using Buyer.Domain.Dtos;
 using MediatR;
 
-namespace Buyer.Application.Features.Commands.ItemBuyerMaster
+namespace Buyer.Application.Features.Commands.PredefinedMaterialMaster
 {
-    public record CreateItemBuyerMasterCommand(
+    public record CreatePredefinedMaterialCommand(
         CreateItemBuyerMasterDto PredefinedMaterial,
         Guid OrganizationId
     ) : IRequest<Guid>;

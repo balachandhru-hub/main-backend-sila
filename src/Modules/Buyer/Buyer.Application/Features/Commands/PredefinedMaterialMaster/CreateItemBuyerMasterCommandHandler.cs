@@ -6,15 +6,15 @@ using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
-namespace Buyer.Application.Features.Commands.ItemBuyerMaster
+namespace Buyer.Application.Features.Commands.PredefinedMaterialMaster
 {
-    public class CreateItemBuyerMasterCommandHandler
-        : IRequestHandler<CreateItemBuyerMasterCommand, Guid>
+    public class CreatePredefinedMaterialCommandHandler
+        : IRequestHandler<CreatePredefinedMaterialCommand, Guid>
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
 
-        public CreateItemBuyerMasterCommandHandler(
+        public CreatePredefinedMaterialCommandHandler(
             IRepositoryWrapper repository,
             ILoggerManager logger)
         {
@@ -23,11 +23,11 @@ namespace Buyer.Application.Features.Commands.ItemBuyerMaster
         }
 
         public async Task<Guid> Handle(
-            CreateItemBuyerMasterCommand request,
+            CreatePredefinedMaterialCommand request,
             CancellationToken cancellationToken)
         {
             _logger.LogInfo(
-                $"Creating Item Buyer Master. OrganizationId: {request.OrganizationId}");
+                $"Creating Predefined Material. OrganizationId: {request.OrganizationId}");
 
             var dto = request.PredefinedMaterial;
 
