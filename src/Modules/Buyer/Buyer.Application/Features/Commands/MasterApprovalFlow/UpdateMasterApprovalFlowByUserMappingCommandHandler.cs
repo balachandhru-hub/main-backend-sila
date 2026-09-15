@@ -54,12 +54,7 @@ namespace Buyer.Application.Features.Commands.MasterApprovalFlows
                     $"No master approval flow exists with Id: {userMapping.ApprovalFlowId}.");
             }
 
-            if (request.ApprovalFlow.ApprovalCode != null)
-            {
-                _logger.LogInfo(
-                    $"Updating ApprovalCode for Master Approval Flow Id: {approvalFlow.Id}");
-                approvalFlow.ApprovalCode = request.ApprovalFlow.ApprovalCode;
-            }
+          
 
             if (request.ApprovalFlow.ApprovalName != null)
             {

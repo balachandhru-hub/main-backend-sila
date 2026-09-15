@@ -11,6 +11,7 @@ using Buyer.Application.Features.Queries.MasterApprovalFlow;
 using Buyer.Application.Features.Queries.ApprovalFlowUserMapping;
 using Buyer.Application.Features.Commands.ApproveRejectMaster;
 using Buyer.Application.Features.Queries.GetPendingApprovals;
+using Buyer.Application.Features.Queries.GetPredefinedMaterialDetail;
 
 namespace Buyer.API.Controller
 {
@@ -182,6 +183,32 @@ namespace Buyer.API.Controller
                 StatusCode = 200
             });
         }
+        /// <summary>
+        /// Get Predefined Material Detail (including approval user ids)
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/buyer/item-master/approval/{predefinedMaterialId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_ITEM_MASTER_APPROVAL_DETAIL")]
+        [SwaggerOperation("GetPredefinedMaterialDetail")]
+        [SwaggerResponse(200, type: typeof(PredefinedMaterialDetailDto), description: "Predefined Material detail retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Predefined Material not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetPredefinedMaterialDetail(Guid predefinedMaterialId)
+        {
+            _logger.LogDebug(
+                $"Fetching Predefined Material detail. PredefinedMaterialId: {predefinedMaterialId}");
+
+            var result = await _mediator.Send(
+                new GetPredefinedMaterialDetailQuery(predefinedMaterialId));
+
+            _logger.LogDebug(
+                $"Predefined Material detail retrieved successfully. PredefinedMaterialId: {predefinedMaterialId}");
+
+            return Ok(result);
+        }
+
         [HttpGet]
         [Route("api/v1/buyer/item-master/pending-approvals")]
         [ValidateModelState]
