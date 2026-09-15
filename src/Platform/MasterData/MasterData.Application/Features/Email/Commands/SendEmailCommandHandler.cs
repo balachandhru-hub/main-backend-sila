@@ -1,10 +1,11 @@
-using System.Net;
-using System.Net.Mail;
+using Azure.Identity;
 using MasterData.Domain.Common;
 using MasterData.Domain.Entities;
 using MasterData.Infrastructure.Contracts.IRepository;
 using MediatR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using SharedKernel.LoggerServices;
 using SharedKernel.ExceptionHandler;
 
@@ -75,46 +76,38 @@ public class SendEmailCommandHandler :
 
 
 
-            using MailMessage message = new();
+            Message message = new()
+            {
+                Subject = subject,
+                Body = new ItemBody
+                {
+                    ContentType = BodyType.Html,
+                    Content = body
+                },
+                ToRecipients = new List<Recipient>
+                {
+                    new() { EmailAddress = new EmailAddress { Address = request.ToEmail } }
+                }
+            };
 
 
-            message.From =
-                new MailAddress(
-                    apiConfig.Username!);
-
-
-            message.To.Add(request.ToEmail);
-
-
-            request.CcEmail?.Where(email => !string.IsNullOrWhiteSpace(email)).ToList().ForEach(email => message.CC.Add(new MailAddress(email)));
-
-
-            message.Subject = subject;
-
-            message.Body = body;
-
-            message.IsBodyHtml = true;
-
-
-
-            using SmtpClient smtp =
-                new(
-                    apiConfig.BaseUrl,
-                    int.Parse(
-                        _configuration["EmailSettings:Port"]!));
-
-
-            smtp.EnableSsl = true;
-
-
-            smtp.Credentials =
-                new NetworkCredential(
-                    apiConfig.Username,
-                    apiConfig.Password);
+            request.CcEmail?.Where(email => !string.IsNullOrWhiteSpace(email)).ToList().ForEach(email =>
+                (message.CcRecipients ??= new List<Recipient>())
+                    .Add(new Recipient { EmailAddress = new EmailAddress { Address = email } }));
 
 
 
-            await smtp.SendMailAsync(message);
+            GraphServiceClient graphClient = GetGraphClient(apiConfig);
+
+            await graphClient.Users[apiConfig.Username]
+                .SendMail
+                .PostAsync(
+                    new Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody
+                    {
+                        Message = message,
+                        SaveToSentItems = false
+                    });
+
             _logger.LogInfo("Email sent successfully");
             EmailFailedDetail? failed =
                 await _repository.EmailFailedDetail
@@ -154,6 +147,20 @@ public class SendEmailCommandHandler :
                 "Email sending failed",
                 ex.Message);
         }
+    }
+
+
+
+    private static GraphServiceClient GetGraphClient(ApiConfig apiConfig)
+    {
+        ClientSecretCredential credential = new(
+            apiConfig.TenantId,
+            apiConfig.ClientId,
+            apiConfig.ClientSecret);
+
+        return new GraphServiceClient(
+            credential,
+            new[] { "https://graph.microsoft.com/.default" });
     }
 
 
