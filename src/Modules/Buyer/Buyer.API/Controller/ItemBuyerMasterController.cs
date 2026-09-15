@@ -59,6 +59,29 @@ namespace Buyer.API.Controller
         }
 
         /// <summary>
+        /// Get Item Buyer Master By Id
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/buyer/item-master/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_ITEM_BUYER_MASTER_BY_ID")]
+        [SwaggerOperation("GetItemBuyerMasterById")]
+        [SwaggerResponse(200, type: typeof(ItemBuyerMasterDetailDto), description: "Item Buyer Master retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Item Buyer Master not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            _logger.LogDebug($"Fetching Item Buyer Master details for Id: {id}");
+
+            var result = await _mediator.Send(new GetItemBuyerMasterByIdQuery(id));
+
+            _logger.LogDebug($"Item Buyer Master details retrieved successfully for Id: {id}");
+
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Create Item Buyer Master
         /// </summary>
         [HttpPost]

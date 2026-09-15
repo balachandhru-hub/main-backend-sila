@@ -116,6 +116,42 @@ namespace Buyer.API.Controller
 
             return Ok(result);
         }
+
+        /// <summary>
+        /// Update Master Approval Flow By Approval Flow User Mapping Id
+        /// </summary>
+        [HttpPut]
+        [Route("api/v1/buyer/approval-flow-user-mapping/{approvalFlowUserMappingId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_MASTER_APPROVAL_FLOW")]
+        [SwaggerOperation("UpdateMasterApprovalFlowByUserMapping")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Master Approval Flow updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Not Found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateMasterApprovalFlowByUserMapping(
+            Guid approvalFlowUserMappingId,
+            [FromBody] UpdateMasterApprovalFlowDto dto)
+        {
+            _logger.LogDebug(
+                $"Updating Master Approval Flow via ApprovalFlowUserMappingId: {approvalFlowUserMappingId}");
+
+            var result = await _mediator.Send(
+                new UpdateMasterApprovalFlowByUserMappingCommand(
+                    approvalFlowUserMappingId,
+                    dto));
+
+            _logger.LogDebug(
+                $"Master Approval Flow updated successfully: {result}");
+
+            return Ok(new SuccessResponseDto
+            {
+                Id = result.ToString(),
+                Message = "Master Approval Flow updated successfully",
+                Description = "Master Approval Flow updated successfully",
+                StatusCode = 200
+            });
+        }
         [HttpPut]
         [Route("api/v1/buyer/item-master/approval/{predefinedMaterialId}")]
         [ValidateModelState]
