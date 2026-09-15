@@ -38,6 +38,7 @@ namespace Buyer.Application.Features.Queries.ApprovalFlowUserMapping
                     .OrderBy(x => x.Order)
                     .Select(x => new ApprovalFlowUserMappingDto
                     {
+                        Id = x.Id,
                         UserId = x.UserId,
                         Order = x.Order
                     })
