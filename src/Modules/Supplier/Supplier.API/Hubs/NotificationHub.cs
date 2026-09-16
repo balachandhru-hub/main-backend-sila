@@ -92,27 +92,20 @@ namespace Supplier.API.Hubs
         /// without this check a caller could join another supplier's group by guessing its
         /// SupplierId while both suppliers are invited to the same RFQ.
         /// </summary>
-        public async Task JoinConversation(Guid rfqId, Guid supplierId)
+        public async Task JoinConversation(Guid rfqId, Guid buyerId, Guid supplierId)
         {
-            ClaimsPrincipal principal = ValidateAccessToken();
-
-            string? organizationIdClaim = principal.FindFirst("OrganizationId")?.Value;
-
-            if (!Guid.TryParse(organizationIdClaim, out Guid organizationId))
-            {
-                throw new HubException("Unauthorized.");
-            }
+            ValidateAccessToken();
 
             var orgMapping = await _repository.RFQOrganizationUserMapping
                 .FindFirstByConditionAsync(x =>
                     x.BuyerRFQId == rfqId &&
-                    x.OrganizationId == organizationId &&
+                    x.BuyerId == buyerId &&
                     x.SupplierId == supplierId &&
                     x.IsActive);
 
             if (orgMapping == null)
             {
-                _logger.LogError($"Forbidden JoinConversation attempt. RFQId: {rfqId}, SupplierId: {supplierId}, OrganizationId: {organizationId}");
+                _logger.LogError($"Forbidden JoinConversation attempt. RFQId: {rfqId}, BuyerId: {buyerId}, SupplierId: {supplierId}.");
                 throw new ForBiddenCustomException("Forbidden", "You do not have access to this conversation.");
             }
 
@@ -122,9 +115,9 @@ namespace Supplier.API.Hubs
         }
 
         /// <summary>Alias matching the frontend's JoinChat naming.</summary>
-        public Task JoinChat(Guid rfqId, Guid supplierId) => JoinConversation(rfqId, supplierId);
+        public Task JoinChat(Guid rfqId, Guid buyerId, Guid supplierId) => JoinConversation(rfqId, buyerId, supplierId);
 
-        public Task LeaveConversation(Guid rfqId, Guid supplierId)
+        public Task LeaveConversation(Guid rfqId, Guid buyerId, Guid supplierId)
         {
             _logger.LogInfo($"ConnectionId {Context.ConnectionId} left {GroupName(rfqId, supplierId)}.");
 
@@ -132,7 +125,7 @@ namespace Supplier.API.Hubs
         }
 
         /// <summary>Alias matching the frontend's LeaveChat naming.</summary>
-        public Task LeaveChat(Guid rfqId, Guid supplierId) => LeaveConversation(rfqId, supplierId);
+        public Task LeaveChat(Guid rfqId, Guid buyerId, Guid supplierId) => LeaveConversation(rfqId, buyerId, supplierId);
 
         public static string GroupName(Guid rfqId, Guid supplierId) => $"rfq:{rfqId}:supplier:{supplierId}";
 

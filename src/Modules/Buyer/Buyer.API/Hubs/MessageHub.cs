@@ -91,21 +91,13 @@ namespace Buyer.API.Hubs
         /// any MessageThread row exists yet (e.g. a supplier's first user registering before
         /// the buyer has sent a message), and every user of that supplier shares the same group.
         /// </summary>
-        public Task JoinConversation(Guid rfqId, Guid supplierId)
+        public Task JoinConversation(Guid rfqId, Guid buyerId, Guid supplierId)
         {
-            ClaimsPrincipal principal = ValidateAccessToken();
+            ValidateAccessToken();
 
-            string? organizationIdClaim = principal.FindFirst("OrganizationId")?.Value;
-            string? organizationType = principal.FindFirst("OrganizationType")?.Value;
-
-            if (!Guid.TryParse(organizationIdClaim, out Guid organizationId) || string.IsNullOrWhiteSpace(organizationType))
+            if (!IsAuthorizedForConversation(rfqId, buyerId, supplierId))
             {
-                throw new HubException("Unauthorized.");
-            }
-
-            if (!IsAuthorizedForConversation(organizationId, organizationType, rfqId, supplierId))
-            {
-                _logger.LogError($"Forbidden JoinConversation attempt. RFQId: {rfqId}, SupplierId: {supplierId}, OrganizationId: {organizationId}, OrganizationType: {organizationType}");
+                _logger.LogError($"Forbidden JoinConversation attempt. RFQId: {rfqId}, BuyerId: {buyerId}, SupplierId: {supplierId}.");
                 throw new ForBiddenCustomException("Forbidden", "You do not have access to this conversation.");
             }
 
@@ -115,9 +107,9 @@ namespace Buyer.API.Hubs
         }
 
         /// <summary>Alias matching the frontend's JoinChat naming.</summary>
-        public Task JoinChat(Guid rfqId, Guid supplierId) => JoinConversation(rfqId, supplierId);
+        public Task JoinChat(Guid rfqId, Guid buyerId, Guid supplierId) => JoinConversation(rfqId, buyerId, supplierId);
 
-        public Task LeaveConversation(Guid rfqId, Guid supplierId)
+        public Task LeaveConversation(Guid rfqId, Guid buyerId, Guid supplierId)
         {
             _logger.LogInfo($"ConnectionId {Context.ConnectionId} left {GroupName(rfqId, supplierId)}.");
 
@@ -125,35 +117,23 @@ namespace Buyer.API.Hubs
         }
 
         /// <summary>Alias matching the frontend's LeaveChat naming.</summary>
-        public Task LeaveChat(Guid rfqId, Guid supplierId) => LeaveConversation(rfqId, supplierId);
+        public Task LeaveChat(Guid rfqId, Guid buyerId, Guid supplierId) => LeaveConversation(rfqId, buyerId, supplierId);
 
         public static string GroupName(Guid rfqId, Guid supplierId) => $"rfq:{rfqId}:supplier:{supplierId}";
 
-        private bool IsAuthorizedForConversation(Guid organizationId, string organizationType, Guid rfqId, Guid supplierId)
+        /// <summary>
+        /// Validates that (rfqId, buyerId, supplierId) is a real, active RFQ+Supplier
+        /// conversation - not that the caller's own organization is one of its two parties.
+        /// The caller only needs a valid access_token (checked by ValidateAccessToken) plus
+        /// the three conversation ids the frontend already holds.
+        /// </summary>
+        private bool IsAuthorizedForConversation(Guid rfqId, Guid buyerId, Guid supplierId)
         {
-            if (string.Equals(organizationType, "Buyer", StringComparison.OrdinalIgnoreCase))
-            {
-                BuyerBusinessProfile? buyer = _repository.BuyerBusinessProfile
-                    .FindFirstByCondition(x => x.OrganizationId == organizationId && x.IsActive);
+            bool rfqBelongsToBuyer = _repository.RFQ
+                .FindFirstByCondition(x => x.Id == rfqId && x.BuyerId == buyerId && x.IsActive) != null;
 
-                bool ownsRfq = buyer != null && _repository.RFQ
-                    .FindFirstByCondition(x => x.Id == rfqId && x.BuyerId == buyer.Id && x.IsActive) != null;
-
-                return ownsRfq && _repository.RFQSupplierMapping
-                    .FindFirstByCondition(x => x.RFQId == rfqId && x.SupplierId == supplierId && x.IsActive) != null;
-            }
-
-            if (string.Equals(organizationType, "Supplier", StringComparison.OrdinalIgnoreCase))
-            {
-                return _repository.RFQOrganizationUserMapping
-                    .FindFirstByCondition(x =>
-                        x.RFQId == rfqId &&
-                        x.OrganizationId == organizationId &&
-                        x.SupplierId == supplierId &&
-                        x.IsActive) != null;
-            }
-
-            return false;
+            return rfqBelongsToBuyer && _repository.RFQSupplierMapping
+                .FindFirstByCondition(x => x.RFQId == rfqId && x.SupplierId == supplierId && x.IsActive) != null;
         }
 
         /// <summary>
