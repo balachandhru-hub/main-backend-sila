@@ -150,6 +150,9 @@ namespace Buyer.Application.Features.Queries.GetPendingApprovals
                     PredefinedMaterialId =
                         predefinedMaterial.Id,
 
+                    ApprovalId =
+                        materialApprovalFlowMapping.ApprovalFlowId,
+
                     ApprovalFlowPredefinedMaterialId =
                         approval.ApprovalFlowPredefinedMaterialId,
 
