@@ -1,3 +1,4 @@
+using Buyer.Application.Contracts;
 using Buyer.Domain.Dtos;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
@@ -12,13 +13,16 @@ namespace Buyer.Application.Features.Queries.ApprovalFlowUserMapping
             List<ApprovalFlowUserMappingDto>>
     {
         private readonly IRepositoryWrapper _repositoryWrapper;
+        private readonly IIdentityApiClient _identityApiClient;
         private readonly ILoggerManager _logger;
 
         public GetApprovalFlowUserMappingQueryHandler(
             IRepositoryWrapper repositoryWrapper,
+            IIdentityApiClient identityApiClient,
             ILoggerManager logger)
         {
             _repositoryWrapper = repositoryWrapper;
+            _identityApiClient = identityApiClient;
             _logger = logger;
         }
 
@@ -59,7 +63,25 @@ namespace Buyer.Application.Features.Queries.ApprovalFlowUserMapping
                 $"Found {userMappings.Count} user mapping(s) for Approval Flow. " +
                 $"ApprovalId: {request.ApprovalId}");
 
-            return await Task.FromResult(userMappings);
+            var userIds = userMappings
+                .Select(x => x.UserId)
+                .Distinct()
+                .ToList();
+
+            var identityUsers = await _identityApiClient.GetUsersByIds(
+                userIds,
+                cancellationToken);
+
+            foreach (var mapping in userMappings)
+            {
+                var identity = identityUsers
+                    .FirstOrDefault(x => x.UserId == mapping.UserId);
+
+                mapping.Name = identity?.Name;
+                mapping.Email = identity?.Email;
+            }
+
+            return userMappings;
         }
     }
 }

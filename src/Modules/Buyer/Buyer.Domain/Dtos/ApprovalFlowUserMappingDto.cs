@@ -6,5 +6,9 @@ namespace Buyer.Domain.Dtos
         public Guid UserId { get; set; }
 
         public int Order { get; set; }
+
+        public string? Name { get; set; }
+
+        public string? Email { get; set; }
     }
 }
