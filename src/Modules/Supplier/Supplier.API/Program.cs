@@ -135,7 +135,7 @@ builder.Services.ConfigureAuthentication();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
-        app.MapHub<NotificationHub>("/notificationHub");
+        app.MapHub<NotificationHub>("/suppliermessageHub");
 
         app.Run();
     }

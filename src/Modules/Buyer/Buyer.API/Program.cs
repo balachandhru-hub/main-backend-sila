@@ -118,7 +118,7 @@ namespace Buyer.API
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
-            app.MapHub<MessageHub>("/messageHub");
+            app.MapHub<MessageHub>("/buyermessageHub");
 
 
             app.Run();

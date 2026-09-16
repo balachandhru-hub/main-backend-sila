@@ -60,8 +60,8 @@
     },
     {
       "Key": "buyer-messagehub-ws",
-      "UpstreamPathTemplate": "/messageHub/{everything}",
-      "DownstreamPathTemplate": "/messageHub/{everything}",
+      "UpstreamPathTemplate": "/buyermessageHub/{everything}",
+      "DownstreamPathTemplate": "/buyermessageHub/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST" ],
       "DownstreamScheme": "ws",
       "DownstreamHostAndPorts": [
@@ -72,9 +72,9 @@
       ]
     },
     {
-      "Key": "supplier-notificationhub-ws",
-      "UpstreamPathTemplate": "/notificationHub/{everything}",
-      "DownstreamPathTemplate": "/notificationHub/{everything}",
+      "Key": "supplier-messagehub-ws",
+      "UpstreamPathTemplate": "/suppliermessageHub/{everything}",
+      "DownstreamPathTemplate": "/suppliermessageHub/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST" ],
       "DownstreamScheme": "ws",
       "DownstreamHostAndPorts": [
