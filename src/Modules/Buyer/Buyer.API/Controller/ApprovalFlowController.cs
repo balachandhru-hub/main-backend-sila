@@ -217,16 +217,19 @@ namespace Buyer.API.Controller
         [SwaggerResponse(200,type: typeof(List<PendingApprovalDto>),description: "Pending approvals retrieved successfully")]
         [SwaggerResponse(400,type: typeof(ErrorResponseDto),description: "Bad Request")]
         [SwaggerResponse(500,type: typeof(ErrorResponseDto),description: "Internal Server Error")]
-        public async Task<IActionResult> GetPendingApprovals()
+        public async Task<IActionResult> GetPendingApprovals(
+            [FromQuery] string? status ,
+            [FromQuery] string? searchTerm )
         {
             Guid userId = GetUserId();
 
             _logger.LogDebug(
-                $"Getting pending approvals for UserId: {userId}");
+                $"Getting approvals for UserId: {userId}, " +
+                $"Status: {status}, SearchTerm: {searchTerm}");
 
             var result =
                 await _mediator.Send(
-                    new GetPendingApprovalsQuery(userId));
+                    new GetPendingApprovalsQuery(userId, status, searchTerm));
 
             return Ok(result);
         }

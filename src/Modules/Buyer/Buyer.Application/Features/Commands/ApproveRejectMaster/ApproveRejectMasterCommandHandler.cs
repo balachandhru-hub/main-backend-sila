@@ -39,7 +39,7 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
             {
                 throw new BadRequestCustomException(
                     "Approval status is required.",
-                    "Please provide Approved or Rejected.");
+                    "Please provide APPROVE or REJECT.");
             }
 
             if (request.Approval.Status != Common.APPROVED &&
@@ -47,7 +47,7 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
             {
                 throw new BadRequestCustomException(
                     "Invalid approval status.",
-                    "Status must be Approved or Rejected.");
+                    "Status must be APPROVE or REJECT.");
             }
 
             // ---------------------------------------------------------

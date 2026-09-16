@@ -9,6 +9,7 @@ using SharedKernel.Attributes;
 using Swashbuckle.AspNetCore.Annotations;
 using SharedKernel.Dto;
 using Buyer.Domain.Dto;
+using Buyer.Application.Features.Queries.GetApprovalKpi;
 
 
 
@@ -82,6 +83,26 @@ namespace Buyer.API.Controllers
                     OrganizationId = organizationId,
                     OrganizationType = organizationType
                 });
+
+            return Ok(result);
+        }
+        [HttpGet]
+        [Route("api/v1/buyer/item-master/approval-kpi")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_APPROVAL_KPI")]
+        [SwaggerOperation("GetApprovalKpi")]
+        [SwaggerResponse(200,type: typeof(ApprovalKpiDto),description: "Approval KPI counts retrieved successfully")]
+        [SwaggerResponse(400,type: typeof(ErrorResponseDto),description: "Bad Request")]
+        [SwaggerResponse(500,type: typeof(ErrorResponseDto),description: "Internal Server Error")]
+        public async Task<IActionResult> GetApprovalKpi()
+        {
+            Guid userId = GetUserId();
+
+            _logger.LogDebug(
+                $"Fetching approval KPI counts for UserId: {userId}");
+
+            var result = await _mediator.Send(
+                new GetApprovalKpiQuery(userId));
 
             return Ok(result);
         }
