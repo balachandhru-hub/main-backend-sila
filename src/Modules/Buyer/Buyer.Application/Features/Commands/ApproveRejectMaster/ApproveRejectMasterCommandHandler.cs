@@ -130,9 +130,9 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
                     $"Current user is not part of the approval flow. " +
                     $"PredefinedMaterialId: {request.PredefinedMaterialId}, " +
                     $"UserId: {request.UserId}");
-               throw new ForBiddenCustomException(
-                    "You are not authorized to approve this material.",
-                    "The current user is not part of the approval flow.");
+                throw new ForBiddenCustomException(
+                     "You are not authorized to approve this material.",
+                     "The current user is not part of the approval flow.");
             }
 
             // ---------------------------------------------------------
@@ -191,12 +191,29 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
                 .Update(currentApproval);
 
             // ---------------------------------------------------------
-            // 9. If Rejected
+            // 9. Find Last Approval Level
+            // ---------------------------------------------------------
+
+            int lastApprovalOrder =
+                approvalUsers.Max(x => x.Order);
+
+            // ---------------------------------------------------------
+            // 10. If Rejected
             // ---------------------------------------------------------
 
             if (request.Approval.Status == Common.REJECTED)
             {
-                predefinedMaterial.Status = Common.REJECTED;
+                // If the last approver rejects,
+                // the approval process is completed.
+                if (currentApproval.Order == lastApprovalOrder)
+                {
+                    predefinedMaterial.Status = Common.COMPLETE;
+                }
+                else
+                {
+                    // Keep existing logic for rejection
+                    predefinedMaterial.Status = Common.REJECTED;
+                }
 
                 _repositoryWrapper
                     .PredefinedMaterial
@@ -207,17 +224,11 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
                 _logger.LogInfo(
                     $"Predefined material rejected. " +
                     $"PredefinedMaterialId: {predefinedMaterial.Id}, " +
-                    $"UserId: {request.UserId}");
+                    $"UserId: {request.UserId}, " +
+                    $"MaterialStatus: {predefinedMaterial.Status}");
 
                 return predefinedMaterial.Id;
             }
-
-            // ---------------------------------------------------------
-            // 10. Find Last Approval Level
-            // ---------------------------------------------------------
-
-            int lastApprovalOrder =
-                approvalUsers.Max(x => x.Order);
 
             // ---------------------------------------------------------
             // 11. If Current User Is Last Approver
@@ -239,6 +250,7 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
                         $"Not all approval levels are approved. " +
                         $"PredefinedMaterialId: {request.PredefinedMaterialId}, " +
                         $"UserId: {request.UserId}");
+
                     throw new PreConditionFailedCustomException(
                         "Approval flow is incomplete.",
                         "All approval levels must be approved before creating the item master.");
@@ -311,11 +323,24 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
                 }
 
                 // -----------------------------------------------------
-                // 15. Update Predefined Material Status
+                // 15. Final Approval Completed
                 // -----------------------------------------------------
 
                 predefinedMaterial.Status =
-                    Common.APPROVED;
+                    Common.COMPLETE;
+
+                _repositoryWrapper
+                    .PredefinedMaterial
+                    .Update(predefinedMaterial);
+            }
+            else
+            {
+                // -----------------------------------------------------
+                // 16. Approval Is Still In Progress
+                // -----------------------------------------------------
+
+                predefinedMaterial.Status =
+                    Common.PROCESSING;
 
                 _repositoryWrapper
                     .PredefinedMaterial
@@ -323,7 +348,7 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
             }
 
             // ---------------------------------------------------------
-            // 16. Save Changes
+            // 17. Save Changes
             // ---------------------------------------------------------
 
             await _repositoryWrapper.SaveAsync();
@@ -332,7 +357,8 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
                 $"Material approval processed successfully. " +
                 $"PredefinedMaterialId: {predefinedMaterial.Id}, " +
                 $"UserId: {request.UserId}, " +
-                $"Status: {request.Approval.Status}");
+                $"Status: {request.Approval.Status}, " +
+                $"MaterialStatus: {predefinedMaterial.Status}");
 
             return predefinedMaterial.Id;
         }
