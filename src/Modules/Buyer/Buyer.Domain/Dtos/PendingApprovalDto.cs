@@ -4,6 +4,8 @@ namespace Buyer.Domain.Dtos
     {
         public Guid PredefinedMaterialId { get; set; }
 
+        public Guid ApprovalId { get; set; }
+
         public Guid ApprovalFlowPredefinedMaterialId { get; set; }
 
         public Guid ApprovalMappingId { get; set; }
