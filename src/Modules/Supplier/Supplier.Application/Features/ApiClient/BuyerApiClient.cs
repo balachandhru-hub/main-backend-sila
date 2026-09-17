@@ -535,6 +535,46 @@ namespace Supplier.Infrastructure.ApiClients
 
             return result ?? new GetRFQAttachmentsDto();
         }
+        public async Task<ExternalSupplierNameDto> GetExternalSupplierName(
+            Guid rfqId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/external-supplier-name?rfqId={rfqId}");
+
+            var sessionToken = _httpContextAccessor.HttpContext?
+                .Request.Headers["X-Session-Token"]
+                .FirstOrDefault();
+
+            if (!string.IsNullOrWhiteSpace(sessionToken))
+            {
+                request.Headers.Add(
+                    "X-Session-Token",
+                    sessionToken);
+            }
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch external supplier name.",
+                    error);
+            }
+
+            var result = await response.Content
+                .ReadFromJsonAsync<ExternalSupplierNameDto>(
+                    cancellationToken: cancellationToken);
+
+            return result ?? new ExternalSupplierNameDto();
+        }
         public async Task CheckRFQUserAccessAsync(
     Guid rfqId,
     CancellationToken cancellationToken = default)

@@ -9,6 +9,10 @@ namespace Supplier.Domain.Dto
 
         public string? BuyerName { get; set; }
 
+        public Guid? ExternalSupplierId { get; set; }
+
+        public string? ExternalSupplierName { get; set; }
+
         public string Title { get; set; }
 
         public string Description { get; set; }

@@ -55,6 +55,20 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
 
             var supplierRFQId = rfq.Id;
 
+            ExternalSupplierNameDto? externalSupplierName = null;
+
+            try
+            {
+                externalSupplierName = await _buyerApiClient.GetExternalSupplierName(
+                    request.RFQId,
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    $"Unable to fetch external supplier name for SupplierId: {request.SupplierId}. Error: {ex.Message}");
+            }
+
             var attachmentResponse = await _buyerApiClient.GetExternalRFQAttachments(
                 request.RFQId,
                 cancellationToken);
@@ -179,6 +193,10 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
 
             return new GetRFQByIdDto
             {
+                BuyerId = rfq.BuyerId,
+                BuyerName = rfq.BuyerName,
+                ExternalSupplierId = rfq.SupplierId,
+                ExternalSupplierName = externalSupplierName?.ExternalSupplierName,
                 Title = rfq.Title,
                 Description = rfq.Description,
                 DeliveryLocation = rfq.DeliveryLocation,

@@ -11,6 +11,7 @@ using Buyer.Application.Features.Queries.GetRFQQuestions;
 using SharedKernel.Dto;
 using Buyer.Application.Features.Queries.GetCostCenterById;
 using Buyer.Application.Features.Queries.Asset.GetDocument;
+using Buyer.Application.Features.Queries.GetExternalSupplierName;
 
 
 
@@ -113,5 +114,23 @@ namespace Buyer.API.Controllers
 
     return Ok(result);
 }
+
+        [HttpGet]
+        [Route("api/v1/buyer/external-supplier-name")]
+        [ExternalSessionAuthorization]
+        [SwaggerOperation("GetExternalSupplierName")]
+        [SwaggerResponse(200, type: typeof(ExternalSupplierNameDto), description: "Success")]
+        [SwaggerResponse(401, type: typeof(ErrorResponseDto), description: "Unauthorized")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "External supplier not found")]
+        public async Task<IActionResult> GetExternalSupplierName([FromQuery] Guid rfqId)
+        {
+            var externalSupplierId = GetExternalSupplierId();
+
+            _logger.LogDebug($"Fetching external supplier name for ExternalSupplierId: {externalSupplierId}");
+
+            var result = await _mediator.Send(new GetExternalSupplierNameQuery(externalSupplierId));
+
+            return Ok(result);
+        }
     }
 }

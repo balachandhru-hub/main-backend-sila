@@ -50,6 +50,9 @@ CancellationToken cancellationToken = default);
         Task<GetRFQAttachmentsDto> GetExternalRFQAttachments(
         Guid rfqId,
         CancellationToken cancellationToken = default);
+        Task<ExternalSupplierNameDto> GetExternalSupplierName(
+        Guid rfqId,
+        CancellationToken cancellationToken = default);
         Task CheckRFQUserAccessAsync(
             Guid rfqId,
             CancellationToken cancellationToken = default);
