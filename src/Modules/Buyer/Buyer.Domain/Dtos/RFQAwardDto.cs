@@ -7,9 +7,6 @@ namespace Buyer.Domain.Dto
         [Required]
         public Guid RFQId { get; set; }
 
-        [Required]
-        public string SelectionMode { get; set; }
-
         public string? Remarks { get; set; }
 
         [Required]
@@ -34,8 +31,6 @@ namespace Buyer.Domain.Dto
         public string? RFQNumber { get; set; }
 
         public Guid BuyerId { get; set; }
-
-        public string? SelectionMode { get; set; }
 
         public decimal TotalAwardValue { get; set; }
 

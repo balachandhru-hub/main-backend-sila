@@ -1,5 +1,6 @@
 using Buyer.Domain.Common;
 using Buyer.Domain.Dtos;
+using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -222,29 +223,65 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
             // so their presence doubles as the "RFQ awarded" check.
             // Lot-wise awards write no item rows — an active award on a
             // lot RFQ means every line is awarded.
+            RFQAward? award = null;
+            var awardItems = new List<RFQAwardItem>();
             HashSet<Guid> awardedItemIds;
+
             if (rfq.AddLotOption)
             {
-                var hasAward = await _repositorywrapper.RFQAward
+                award = await _repositorywrapper.RFQAward
                     .FindByCondition(x =>
                         x.RFQId == request.RFQId &&
                         x.IsActive)
-                    .AnyAsync(cancellationToken);
+                    .FirstOrDefaultAsync(cancellationToken);
 
-                awardedItemIds = hasAward
+                awardedItemIds = award != null
                     ? rfqItems.Select(x => x.Id).ToHashSet()
                     : new HashSet<Guid>();
             }
             else
             {
-                awardedItemIds = (await _repositorywrapper.RFQAwardItem
+                awardItems = await _repositorywrapper.RFQAwardItem
                     .FindByCondition(x =>
                         x.RFQAward.RFQId == request.RFQId &&
                         x.RFQAward.IsActive &&
                         x.IsActive)
+                    .ToListAsync(cancellationToken);
+
+                awardedItemIds = awardItems
                     .Select(x => x.RFQItemId)
-                    .ToListAsync(cancellationToken))
                     .ToHashSet();
+            }
+
+            // Flag the winning quotation/item rows inside the supplier
+            // quotation payload: quotation level for lot awards, item level
+            // for line-wise awards.
+            if (supplierQuotation != null)
+            {
+                if (rfq.AddLotOption)
+                {
+                    foreach (var supplier in supplierQuotation.Suppliers)
+                    {
+                        supplier.IsAwarded = award != null &&
+                            (supplier.QuotationId == award.SupplierQuotationId ||
+                             supplier.SupplierId == award.SupplierId);
+                    }
+                }
+                else
+                {
+                    var awardedQuoteItemIds = awardItems
+                        .Select(x => x.SupplierQuotationItemId)
+                        .ToHashSet();
+
+                    foreach (var supplier in supplierQuotation.Suppliers)
+                    {
+                        foreach (var quoteItem in supplier.SupplierQuotationItems)
+                        {
+                            quoteItem.IsAwarded =
+                                awardedQuoteItemIds.Contains(quoteItem.ItemQuotationId);
+                        }
+                    }
+                }
             }
 
             var items = new List<GetRFQItemDto>();

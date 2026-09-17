@@ -27,6 +27,7 @@ namespace Buyer.Domain.Dto
 
         public Guid? QuotationId { get; set; }
         public bool IsLead { get; set; }
+        public bool IsAwarded { get; set; }
         public string  Currency { get; set; }
          public string? Rank { get; set; }
 
@@ -54,5 +55,6 @@ namespace Buyer.Domain.Dto
             public decimal SubTotal { get; set; }
             public int LineNumber { get; set; }
              public string? Rank { get; set; }
+            public bool IsAwarded { get; set; }
     }
 }

@@ -21,8 +21,6 @@ namespace Buyer.Domain.Entities
 
         public string? QuotationVersion { get; set; }
 
-        public string SelectionMode { get; set; }
-
         public string Status { get; set; }
 
         public string? Remarks { get; set; }

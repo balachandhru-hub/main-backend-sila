@@ -156,7 +156,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
 
                         QuotedAmount = x.QuotedAmount,
                         SubTotal = x.SubTotal,
-                        LineNumber = x.SupplierRFQItem.LineNumber
+                        LineNumber = x.SupplierRFQItem.LineNumber,
+                        IsAwarded = x.SupplierRFQItem.IsAwarded && x.SupplierRFQItem.AwardedSupplierId == supplierId
 
 
                     })
@@ -169,6 +170,16 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                         {
                             item.Rank = itemRank;
                         }
+                    }
+                }
+
+                var isLotAwarded = addLotOption && quotationItems.Any(i => i.IsAwarded);
+
+                if (addLotOption)
+                {
+                    foreach (var item in quotationItems)
+                    {
+                        item.IsAwarded = false;
                     }
                 }
 
@@ -193,6 +204,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
     : null,
 
                     IsLead = quotation.Id == lowestQuotation?.Id,
+                    IsAwarded = isLotAwarded
                 };
 
                 response.Suppliers.Add(supplierDto);

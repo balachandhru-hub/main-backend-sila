@@ -58,21 +58,6 @@ namespace Buyer.Application.Features.Commands.SaveRFQAward
                     "Each line item can be awarded to only one supplier.");
             }
 
-            var validModes = new[]
-            {
-                Common.AWARD_SELECTION_MODE,
-                Common.BID_COMPARISON_MODE,
-                Common.BY_SUPPLIER_MODE
-            };
-
-            if (!validModes.Contains(dto.SelectionMode))
-            {
-                _logger.LogError($"Invalid selection mode: {dto.SelectionMode}. SelectionMode must be one of: {string.Join(", ", validModes)}.");
-                throw new BadRequestCustomException(
-                    "Invalid selection mode.",
-                    $"SelectionMode must be one of: {string.Join(", ", validModes)}.");
-            }
-
             _logger.LogInfo($"Saving RFQ Award for RFQId: {dto.RFQId}");
 
             var rfq = await _repository.RFQ
@@ -112,7 +97,6 @@ namespace Buyer.Application.Features.Commands.SaveRFQAward
             {
                 Id = Guid.NewGuid(),
                 RFQId = rfq.Id,
-                SelectionMode = dto.SelectionMode,
                 Status = Common.RFQ_AWARDED_STATUS,
                 Remarks = dto.Remarks
             };

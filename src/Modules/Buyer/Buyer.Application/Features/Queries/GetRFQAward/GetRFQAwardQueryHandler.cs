@@ -178,7 +178,6 @@ namespace Buyer.Application.Features.Queries.GetRFQAward
                 RFQId = award.RFQId,
                 RFQNumber = award.RFQ.RFQNumber,
                 BuyerId = award.RFQ.BuyerId,
-                SelectionMode = award.SelectionMode,
                 TotalAwardValue = awardedQuotation != null
                     ? awardedQuotation.TotalPrice
                     : itemDtos.Sum(x => x.SubTotal ?? 0),

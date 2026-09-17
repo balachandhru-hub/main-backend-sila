@@ -100,6 +100,7 @@ namespace Supplier.Domain.Dto
     public decimal SubTotal { get; set; }
       public int LineNumber { get; set; }
       public string? Rank { get; set; }
+      public bool IsAwarded { get; set; }
 
     }
 
@@ -165,6 +166,7 @@ public class SupplierQuotationBySupplierIdDto
     public string  Currency { get; set; } 
      
     public string? Rank { get; set; }
+    public bool IsAwarded { get; set; }
     public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } = new();
 }
        
