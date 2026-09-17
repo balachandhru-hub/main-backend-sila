@@ -52,7 +52,9 @@ namespace Supplier.Domain.Dto
         public Guid? SupplierRFQItemId{get;set;}
         public Guid? BuyerRFQItemId {get;set;}
         public int LineNumber { get; set; }
-       
+        public bool IsAwarded { get; set; }
+        public Guid? AwardedSupplierId { get; set; }
+
     }
      public class GetSupplierQuotationDto
     {

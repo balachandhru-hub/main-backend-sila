@@ -56,6 +56,10 @@ namespace Buyer.Domain.Common
                 public static readonly string EXTERNAL_SUPPLIER_REGISTRATION_LINK = "ExternalSupplier:RegistrationLink";
                 public static readonly string EXTERNAL_SUPPLIER_BID_LINK = "ExternalSupplier:BidLink";
 
+                public const string RFQ_AWARDED_STATUS = "AWARDED";
+                public const string AWARD_SELECTION_MODE = "AWARD_SELECTION";
+                public const string BID_COMPARISON_MODE = "BID_COMPARISON";
+                public const string BY_SUPPLIER_MODE = "BY_SUPPLIER";
                 public const string SUPPLIER = "SUPPLIER";
                 public const string MESSAGE_ATTACHMENT_SUBFOLDER = "messages";
                 public const string SEND_MESSAGE_PERMISSION = "SEND_MESSAGE";

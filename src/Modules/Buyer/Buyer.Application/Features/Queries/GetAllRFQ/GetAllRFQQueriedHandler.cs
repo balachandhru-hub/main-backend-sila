@@ -218,6 +218,35 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
     .FindByCondition(x => x.RFQId == request.RFQId)
     .ToListAsync(cancellationToken);
 
+            // rfqaward_item rows only exist once the RFQ is awarded,
+            // so their presence doubles as the "RFQ awarded" check.
+            // Lot-wise awards write no item rows — an active award on a
+            // lot RFQ means every line is awarded.
+            HashSet<Guid> awardedItemIds;
+            if (rfq.AddLotOption)
+            {
+                var hasAward = await _repositorywrapper.RFQAward
+                    .FindByCondition(x =>
+                        x.RFQId == request.RFQId &&
+                        x.IsActive)
+                    .AnyAsync(cancellationToken);
+
+                awardedItemIds = hasAward
+                    ? rfqItems.Select(x => x.Id).ToHashSet()
+                    : new HashSet<Guid>();
+            }
+            else
+            {
+                awardedItemIds = (await _repositorywrapper.RFQAwardItem
+                    .FindByCondition(x =>
+                        x.RFQAward.RFQId == request.RFQId &&
+                        x.RFQAward.IsActive &&
+                        x.IsActive)
+                    .Select(x => x.RFQItemId)
+                    .ToListAsync(cancellationToken))
+                    .ToHashSet();
+            }
+
             var items = new List<GetRFQItemDto>();
 
             foreach (var item in rfqItems)
@@ -272,6 +301,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
 
                     CostCenter = costCenterName,
                     Attachments = attachments,
+                    IsAwarded = awardedItemIds.Contains(item.Id)
 
 
                 });

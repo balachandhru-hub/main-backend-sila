@@ -54,6 +54,8 @@ namespace Buyer.Infrastructure.Repository
         private IApprovalFlowPredefinedMaterialMappingRepository _approvalFlowPredefinedMaterialMappingRepository;
         private IPredefinedMaterialApprovalFlowUserMappingRepository _predefinedMaterialApprovalFlowUserMappingRepository;
         private IMasterApprovalFlowRepository _masterApprovalFlowRepository;
+        private IRFQAwardRepository _rfqAwardRepository;
+        private IRFQAwardItemRepository _rfqAwardItemRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -509,6 +511,28 @@ namespace Buyer.Infrastructure.Repository
                 }
 
                 return _masterApprovalFlowRepository;
+            }
+        }
+        public IRFQAwardRepository RFQAward
+        {
+            get
+            {
+                if (_rfqAwardRepository == null)
+                {
+                    _rfqAwardRepository = new RFQAwardRepository(_context);
+                }
+                return _rfqAwardRepository;
+            }
+        }
+        public IRFQAwardItemRepository RFQAwardItem
+        {
+            get
+            {
+                if (_rfqAwardItemRepository == null)
+                {
+                    _rfqAwardItemRepository = new RFQAwardItemRepository(_context);
+                }
+                return _rfqAwardItemRepository;
             }
         }
         public bool Save()

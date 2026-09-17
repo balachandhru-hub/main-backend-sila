@@ -140,7 +140,9 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     SupplierRFQItemId = item.Id,
                     SupplierRFQId = item.SupplierRFQId,
                     BuyerRFQItemId = item.BuyerRFQItemId,
-                    LineNumber = item.LineNumber
+                    LineNumber = item.LineNumber,
+                    IsAwarded = item.IsAwarded,
+                    AwardedSupplierId = item.AwardedSupplierId
 
 
                 });

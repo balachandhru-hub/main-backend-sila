@@ -4,6 +4,7 @@ using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Buyer.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260916124421_NormalizeRFQAwardSchema")]
+    partial class NormalizeRFQAwardSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -942,16 +945,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<string>("AlternateUnitOfMeasure")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("alternate_unit_of_measure");
-
-                    b.Property<string>("BaseUnitOfMeasure")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("base_unit_of_measure");
-
                     b.Property<Guid>("BuyerId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("buyer_id");
@@ -987,37 +980,9 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("material_group");
 
-                    b.Property<string>("MicroUnit")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("micro_unit");
-
-                    b.Property<string>("OrderUnitOfMeasure")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("order_unit_of_measure");
-
-                    b.Property<string>("ProductType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("product_type");
-
-                    b.Property<string>("SubUnit")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("sub_unit");
-
-                    b.Property<string>("UnitOfMeasureMapping")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("unit_of_measure_mapping");
-
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
-
-                    b.Property<string>("ValuationClass")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("valuation_class");
 
                     b.HasKey("Id")
                         .HasName("pk_item_buyer_master");
@@ -1693,10 +1658,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
-                    b.Property<string>("QuotationVersion")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("quotation_version");
-
                     b.Property<Guid>("RFQId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("rfqid");
@@ -1714,10 +1675,6 @@ namespace Buyer.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
-
-                    b.Property<Guid?>("SupplierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_id");
 
                     b.Property<Guid?>("SupplierQuotationId")
                         .HasColumnType("uniqueidentifier")

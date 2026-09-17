@@ -58,6 +58,7 @@ namespace Buyer.Domain.Dtos
         public string MaterialGroup { get; set; }
         public string CostCenter { get; set; }
         public List<AssetDto>? Attachments { get; set; }
+        public bool IsAwarded { get; set; }
 
     }
 

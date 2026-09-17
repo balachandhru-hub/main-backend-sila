@@ -4,6 +4,7 @@ using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Buyer.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260916030903_AddRFQAward")]
+    partial class AddRFQAward
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -942,16 +945,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<string>("AlternateUnitOfMeasure")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("alternate_unit_of_measure");
-
-                    b.Property<string>("BaseUnitOfMeasure")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("base_unit_of_measure");
-
                     b.Property<Guid>("BuyerId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("buyer_id");
@@ -987,37 +980,9 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("material_group");
 
-                    b.Property<string>("MicroUnit")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("micro_unit");
-
-                    b.Property<string>("OrderUnitOfMeasure")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("order_unit_of_measure");
-
-                    b.Property<string>("ProductType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("product_type");
-
-                    b.Property<string>("SubUnit")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("sub_unit");
-
-                    b.Property<string>("UnitOfMeasureMapping")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("unit_of_measure_mapping");
-
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
-
-                    b.Property<string>("ValuationClass")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("valuation_class");
 
                     b.HasKey("Id")
                         .HasName("pk_item_buyer_master");
@@ -1677,9 +1642,26 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
+                    b.Property<int>("AwardedItems")
+                        .HasColumnType("int")
+                        .HasColumnName("awarded_items");
+
+                    b.Property<int>("AwardedSuppliers")
+                        .HasColumnType("int")
+                        .HasColumnName("awarded_suppliers");
+
+                    b.Property<Guid>("BuyerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("buyer_id");
+
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("currency");
 
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("datetime2")
@@ -1689,17 +1671,34 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("date_updated");
 
+                    b.Property<decimal?>("DeliveryCharge")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("delivery_charge");
+
+                    b.Property<string>("DeliveryType")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("delivery_type");
+
+                    b.Property<decimal?>("Discount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("discount");
+
+                    b.Property<string>("DiscountType")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("discount_type");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
-                    b.Property<string>("QuotationVersion")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("quotation_version");
-
                     b.Property<Guid>("RFQId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("rfqid");
+
+                    b.Property<string>("RFQNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("rfqnumber");
 
                     b.Property<string>("Remarks")
                         .HasColumnType("nvarchar(max)")
@@ -1715,13 +1714,17 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
 
-                    b.Property<Guid?>("SupplierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_id");
+                    b.Property<decimal?>("Tax")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("tax");
 
-                    b.Property<Guid?>("SupplierQuotationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_quotation_id");
+                    b.Property<string>("TaxType")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("tax_type");
+
+                    b.Property<decimal>("TotalAwardValue")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("total_award_value");
 
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
@@ -1758,21 +1761,61 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("date_updated");
 
+                    b.Property<decimal?>("DeliveryCharge")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("delivery_charge");
+
+                    b.Property<string>("DeliveryType")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("delivery_type");
+
+                    b.Property<decimal?>("Discount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("discount");
+
+                    b.Property<string>("DiscountType")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("discount_type");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
+
+                    b.Property<int>("LineNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("line_number");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("quantity");
 
                     b.Property<string>("QuotationVersion")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("quotation_version");
 
+                    b.Property<decimal?>("QuotedAmount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("quoted_amount");
+
+                    b.Property<decimal?>("QuotedPrice")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("quoted_price");
+
                     b.Property<Guid>("RFQAwardId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("rfqaward_id");
 
+                    b.Property<Guid>("RFQId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("rfqid");
+
                     b.Property<Guid>("RFQItemId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("rfqitem_id");
+
+                    b.Property<decimal?>("SubTotal")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("sub_total");
 
                     b.Property<Guid>("SupplierId")
                         .HasColumnType("uniqueidentifier")
@@ -1785,6 +1828,22 @@ namespace Buyer.Infrastructure.Migrations
                     b.Property<Guid?>("SupplierQuotationItemId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("supplier_quotation_item_id");
+
+                    b.Property<Guid?>("SupplierRFQId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_rfqid");
+
+                    b.Property<Guid?>("SupplierRFQItemId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_rfqitem_id");
+
+                    b.Property<decimal?>("Tax")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("tax");
+
+                    b.Property<string>("TaxType")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("tax_type");
 
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
@@ -1799,8 +1858,8 @@ namespace Buyer.Infrastructure.Migrations
                     b.HasIndex("RFQAwardId")
                         .HasDatabaseName("ix_rfqaward_item_rfqaward_id");
 
-                    b.HasIndex("RFQItemId")
-                        .HasDatabaseName("ix_rfqaward_item_rfqitem_id");
+                    b.HasIndex("RFQId")
+                        .HasDatabaseName("ix_rfqaward_item_rfqid");
 
                     b.ToTable("rfqaward_item", "buyersystem");
                 });
@@ -2957,16 +3016,7 @@ namespace Buyer.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_rfqaward_item_rfqaward_rfqaward_id");
 
-                    b.HasOne("Buyer.Domain.Entities.RFQItem", "RFQItem")
-                        .WithMany()
-                        .HasForeignKey("RFQItemId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("fk_rfqaward_item_rfqitem_rfqitem_id");
-
                     b.Navigation("RFQAward");
-
-                    b.Navigation("RFQItem");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.RFQExternalSupplier", b =>

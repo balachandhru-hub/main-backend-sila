@@ -26,6 +26,7 @@ using Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId;
 
 using Supplier.Domain.Dto;
 using Supplier.Application.Features.Commands.RFQ;
+using Supplier.Application.Features.Commands.SaveSupplierRFQAward;
 using Supplier.Domain.Common;
 
 namespace Supplier.API.Controllers
@@ -280,6 +281,30 @@ namespace Supplier.API.Controllers
             {
                 success = true,
                 message = "Supplier RFQ status updated successfully."
+            });
+        }
+
+        [HttpPost]
+        [Route("api/v1/supplier/internal/rfq-award")]
+        [ValidateModelState]
+        [SwaggerOperation("SaveSupplierRFQAward")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier RFQ award saved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> SaveSupplierRFQAward(
+            [FromBody] SaveSupplierRFQAwardDto dto)
+        {
+            _logger.LogDebug(
+                $"Saving supplier RFQ award for BuyerRFQId: {dto.BuyerRFQId}");
+
+            var result = await _mediator.Send(
+                new SaveSupplierRFQAwardCommand(dto));
+
+            return Ok(new
+            {
+                success = true,
+                message = "Supplier RFQ award saved successfully."
             });
         }
 

@@ -32,6 +32,10 @@ namespace Supplier.Domain.Entities
         public string? CostCenter { get; set; }
         public int LineNumber { get; set; }
 
+        public bool IsAwarded { get; set; }
+
+        public Guid? AwardedSupplierId { get; set; }
+
         public SupplierRFQItem()
         {
         }

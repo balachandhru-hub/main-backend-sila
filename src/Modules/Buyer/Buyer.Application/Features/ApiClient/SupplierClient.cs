@@ -441,6 +441,60 @@ namespace Buyer.Infrastructure.ApiClients
                 $"RFQId: {rfqId}, Status: {status}");
         }
 
+        public async Task SaveSupplierRFQAward(
+            SupplierRFQAwardRequestDto requestDto,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo(
+                $"Pushing RFQ award to Supplier service. " +
+                $"BuyerRFQId: {requestDto.BuyerRFQId}, " +
+                $"Items: {requestDto.Items.Count}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"{supplierUrl}/api/v1/supplier/internal/rfq-award");
+
+            request.Content = JsonContent.Create(requestDto);
+
+            // Get access token from current request cookie
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                _logger.LogInfo("Adding access token to request headers.");
+
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to push RFQ award to Supplier service. " +
+                    $"BuyerRFQId: {requestDto.BuyerRFQId}, " +
+                    $"Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to push RFQ award to Supplier service.",
+                    error);
+            }
+
+            _logger.LogInfo(
+                $"RFQ award pushed to Supplier service successfully. " +
+                $"BuyerRFQId: {requestDto.BuyerRFQId}");
+        }
+
         public async Task<BidCompareResponseDto> GetBidCompare(
             Guid rfqId,
             CancellationToken cancellationToken = default)
