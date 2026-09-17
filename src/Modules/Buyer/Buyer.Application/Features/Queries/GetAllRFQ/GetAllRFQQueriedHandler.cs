@@ -380,6 +380,18 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
             .FindByCondition(x => x.RFQId == request.RFQId && x.IsActive)
             .Select(x => x.ExternalSupplierId)
             .ToListAsync(cancellationToken);
+
+            var externalSupplierIdSet = externalSupplierIds.ToHashSet();
+
+            foreach (var supplierQuote in supplierQuotation.Suppliers)
+            {
+                supplierQuote.VerificationStatus = externalSupplierIdSet.Contains(supplierQuote.SupplierId)
+                    ? Common.EXTERNAL_SUPPLIER
+                    : verifiedSupplierIdsForRFQ.Contains(supplierQuote.SupplierId)
+                        ? Common.VERIFIED_STATUS
+                        : Common.UNVERIFIED_STATUS;
+            }
+
             var externalSuppliers = await _repositorywrapper.ExternalSupplier
             .FindByCondition(x => externalSupplierIds.Contains(x.Id) && x.IsActive)
             .Select(x => new ExternalSupplierNameDto

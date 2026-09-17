@@ -30,6 +30,8 @@ namespace Buyer.Domain.Dto
         public string  Currency { get; set; }
          public string? Rank { get; set; }
 
+        public string? VerificationStatus { get; set; }
+
         public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } = new();
     }
 
