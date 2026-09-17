@@ -361,6 +361,21 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
     supplierIds,
     cancellationToken);
 
+            // Verified = this buyer already has an active BuyerSupplierMapping with the
+            // supplier (same check CreateRFQCommandHandler uses to decide who gets a fresh
+            // SupplierVerificationRequest). Everyone else invited on this RFQ is unverified.
+            var verifiedSupplierIdsForRFQ = _repositorywrapper.BuyerSupplierMapping
+                .FindByCondition(x => x.BuyerId == buyerId && x.IsActive)
+                .Select(x => x.SupplierId)
+                .ToHashSet();
+
+            foreach (var supplier in suppliers)
+            {
+                supplier.VerificationStatus = verifiedSupplierIdsForRFQ.Contains(supplier.SupplierId)
+                    ? Common.VERIFIED_STATUS
+                    : Common.UNVERIFIED_STATUS;
+            }
+
             var externalSupplierIds = await _repositorywrapper.RFQExternalSupplier
             .FindByCondition(x => x.RFQId == request.RFQId && x.IsActive)
             .Select(x => x.ExternalSupplierId)
@@ -370,7 +385,8 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
             .Select(x => new ExternalSupplierNameDto
             {
                 ExternalSupplierId = x.Id,
-                ExternalSupplierName = x.SupplierName
+                ExternalSupplierName = x.SupplierName,
+                SupplierType = Common.EXTERNAL_SUPPLIER
             })
             .ToListAsync(cancellationToken);
             var verificationTemplateId = await _repositorywrapper.VerificationTemplate

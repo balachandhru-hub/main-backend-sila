@@ -426,6 +426,12 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                 .Where(x => !verifiedSupplierIds.Contains(x))
                 .ToList();
 
+            // ExternalSuppliers have no BuyerSupplierMapping concept - they are always
+            // "unverified" and get the same verification-template invitation (a
+            // SupplierVerificationRequest row) as any other unverified supplier, keyed by
+            // ExternalSupplier.Id stored in the same SupplierOrganizationId field.
+            unVerifiedSuppliers.AddRange(createdExternalSuppliers.Select(x => x.Id));
+
             // ======================================================
             // Call InviteSuppliers only if required
             // ======================================================
