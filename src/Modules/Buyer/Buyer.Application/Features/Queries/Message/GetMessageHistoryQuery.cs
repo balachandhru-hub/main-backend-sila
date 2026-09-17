@@ -10,5 +10,8 @@ namespace Buyer.Application.Features.Queries.CreateMessage
         public string OrganizationType { get; set; }
         public int Index { get; set; } = 0;
         public int Limit { get; set; } = 10;
+
+        /// <summary>Set only when the caller is a session-token-authenticated ExternalSupplier.</summary>
+        public Guid? ExternalSupplierCallerId { get; set; }
     }
 }

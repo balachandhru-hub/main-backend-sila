@@ -1,4 +1,7 @@
+using System.Security.Claims;
+
 using Buyer.Application.Contracts;
+using Buyer.Domain.Dto;
 
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,17 +53,26 @@ namespace Buyer.API.Attributes
             var supplierApiClient = context.HttpContext.RequestServices
                 .GetRequiredService<ISupplierApiClient>();
 
-            bool isValid = await supplierApiClient.ValidateExternalSessionToken(
+            ExternalSupplierSessionDto? session = await supplierApiClient.ValidateExternalSessionToken(
                 sessionToken,
                 rfqId,
                 context.HttpContext.RequestAborted);
 
-            if (!isValid)
+            if (session == null)
             {
                 throw new ForBiddenCustomException(
                     "Forbidden",
                     "Invalid or expired session token.");
             }
+
+            var claims = new List<Claim>
+            {
+                new Claim("RFQId", session.RFQId.ToString()),
+                new Claim("ExternalSupplierId", session.ExternalSupplierId.ToString()),
+                new Claim("ExternalSupplierRFQId", session.ExternalSupplierRFQId.ToString())
+            };
+
+            context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "ExternalSupplierSession"));
         }
     }
 }

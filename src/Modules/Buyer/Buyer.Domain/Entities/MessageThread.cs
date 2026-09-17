@@ -19,7 +19,12 @@ namespace Buyer.Domain.Entities
 
         public Guid BuyerId { get; set; }
 
-        public Guid SupplierId { get; set; }
+        public Guid? SupplierId { get; set; }
+
+        [ForeignKey("ExternalSupplier")]
+        public Guid? ExternalSupplierId { get; set; }
+
+        public ExternalSupplier ExternalSupplier { get; set; }
 
         public DateTime? LastMessageAt { get; set; }
 

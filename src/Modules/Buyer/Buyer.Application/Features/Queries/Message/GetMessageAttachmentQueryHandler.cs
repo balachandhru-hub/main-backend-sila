@@ -4,6 +4,7 @@ using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
 using SharedKernel.ExceptionHandler;
+using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Features.Queries.CreateMessage
 {
@@ -11,10 +12,12 @@ namespace Buyer.Application.Features.Queries.CreateMessage
         : IRequestHandler<GetMessageAttachmentQuery, MessageAttachmentFileDto>
     {
         private readonly IRepositoryWrapper _repository;
+        private readonly ILoggerManager _logger;
 
-        public GetMessageAttachmentQueryHandler(IRepositoryWrapper repository)
+        public GetMessageAttachmentQueryHandler(IRepositoryWrapper repository, ILoggerManager logger)
         {
             _repository = repository;
+            _logger = logger;
         }
 
         public async Task<MessageAttachmentFileDto> Handle(
@@ -45,11 +48,23 @@ namespace Buyer.Application.Features.Queries.CreateMessage
                 throw new NotFoundCustomException("Attachment not found.", "Attachment does not exist.");
             }
 
-            MessageParticipancy.ResolveForThread(
-                _repository,
-                thread,
-                request.OrganizationId,
-                request.OrganizationType);
+            if (request.ExternalSupplierCallerId.HasValue)
+            {
+                MessageParticipancy.ResolveExternalThreadForExternalSupplier(thread, request.ExternalSupplierCallerId.Value, _logger);
+            }
+            else if (thread.ExternalSupplierId.HasValue)
+            {
+                MessageParticipancy.ResolveExternalThreadForBuyer(_repository, thread, request.OrganizationId, _logger);
+            }
+            else
+            {
+                MessageParticipancy.ResolveForThread(
+                    _repository,
+                    thread,
+                    request.OrganizationId,
+                    request.OrganizationType,
+                    _logger);
+            }
 
             if (!File.Exists(attachment.StoragePath))
             {

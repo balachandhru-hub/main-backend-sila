@@ -1,4 +1,5 @@
 using Buyer.Application.Contracts;
+using Buyer.Application.Features.Commands.CreateMessage;
 using Buyer.Domain.Dto;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
@@ -38,12 +39,23 @@ namespace Buyer.Application.Features.Queries.CreateMessage
                 throw new NotFoundCustomException("RFQ not found.", "RFQ does not exist.");
             }
 
-            bool isBuyer = string.Equals(request.OrganizationType, "Buyer", StringComparison.OrdinalIgnoreCase);
-            bool isSupplier = string.Equals(request.OrganizationType, "Supplier", StringComparison.OrdinalIgnoreCase);
+            bool isExternalSupplierCaller = request.ExternalSupplierCallerId.HasValue;
+            bool isBuyer = !isExternalSupplierCaller
+                && string.Equals(request.OrganizationType, "Buyer", StringComparison.OrdinalIgnoreCase);
+            bool isSupplier = !isExternalSupplierCaller
+                && string.Equals(request.OrganizationType, "Supplier", StringComparison.OrdinalIgnoreCase);
 
             List<MessageThread> threads;
 
-            if (isBuyer)
+            if (isExternalSupplierCaller)
+            {
+                MessageParticipancy.ResolveForRFQAsExternalSupplier(_repository, rfq, request.ExternalSupplierCallerId!.Value, _logger);
+
+                threads = _repository.MessageThread
+                    .FindByCondition(x => x.RFQId == request.RFQId && x.ExternalSupplierId == request.ExternalSupplierCallerId && x.IsActive)
+                    .ToList();
+            }
+            else if (isBuyer)
             {
                 BuyerBusinessProfile? buyer = _repository.BuyerBusinessProfile
                     .FindFirstByCondition(x => x.OrganizationId == request.OrganizationId && x.IsActive);
@@ -99,10 +111,16 @@ namespace Buyer.Application.Features.Queries.CreateMessage
 
                 try
                 {
-                    if (isBuyer)
+                    if (isBuyer && thread.SupplierId.HasValue)
                     {
-                        SupplierProfileDto supplier = await _supplierApiClient.GetSupplierById(thread.SupplierId, cancellationToken);
+                        SupplierProfileDto supplier = await _supplierApiClient.GetSupplierById(thread.SupplierId.Value, cancellationToken);
                         counterpartyName = supplier?.BusinessProfile?.OrganizationName;
+                    }
+                    else if (isBuyer && thread.ExternalSupplierId.HasValue)
+                    {
+                        ExternalSupplier? externalSupplier = _repository.ExternalSupplier
+                            .FindFirstByCondition(x => x.Id == thread.ExternalSupplierId && x.IsActive);
+                        counterpartyName = externalSupplier?.SupplierName;
                     }
                     else
                     {
@@ -123,6 +141,7 @@ namespace Buyer.Application.Features.Queries.CreateMessage
                     RFQNumber = thread.RFQNumber,
                     BuyerId = thread.BuyerId,
                     SupplierId = thread.SupplierId,
+                    ExternalSupplierId = thread.ExternalSupplierId,
                     CounterpartyName = counterpartyName,
                     LastMessageBody = lastMessage?.Body,
                     LastMessageAt = thread.LastMessageAt,

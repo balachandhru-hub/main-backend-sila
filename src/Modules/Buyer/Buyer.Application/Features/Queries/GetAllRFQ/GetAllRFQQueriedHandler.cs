@@ -360,6 +360,19 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
             var suppliers = await _supplierApiClient.GetSupplierNamesByIds(
     supplierIds,
     cancellationToken);
+
+            var externalSupplierIds = await _repositorywrapper.RFQExternalSupplier
+            .FindByCondition(x => x.RFQId == request.RFQId && x.IsActive)
+            .Select(x => x.ExternalSupplierId)
+            .ToListAsync(cancellationToken);
+            var externalSuppliers = await _repositorywrapper.ExternalSupplier
+            .FindByCondition(x => externalSupplierIds.Contains(x.Id) && x.IsActive)
+            .Select(x => new ExternalSupplierNameDto
+            {
+                ExternalSupplierId = x.Id,
+                ExternalSupplierName = x.SupplierName
+            })
+            .ToListAsync(cancellationToken);
             var verificationTemplateId = await _repositorywrapper.VerificationTemplate
     .FindByCondition(x => x.BuyerId == buyerId)
     .Select(x => x.Id)
@@ -436,6 +449,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 Questions = questions,
                 Items = items,
                 SupplierIds = suppliers,
+                ExternalSupplierIds = externalSuppliers,
                 RFQVerificationTemplateId = verificationTemplateId,
                 SupplierQuotation = supplierQuotation?.Suppliers
     ?? new List<SupplierQuotationBySupplierDto>(),

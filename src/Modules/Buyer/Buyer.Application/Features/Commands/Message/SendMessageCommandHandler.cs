@@ -58,20 +58,53 @@ namespace Buyer.Application.Features.Commands.CreateMessage
                 throw new NotFoundCustomException("RFQ not found.", "RFQ does not exist.");
             }
 
-            (Guid buyerId, Guid supplierId, bool isBuyerSender) = MessageParticipancy.ResolveForRFQ(
-                _repository,
-                rfq,
-                request.OrganizationId,
-                request.OrganizationType,
-                dto.SupplierId);
+            bool isExternalSupplierCaller = request.ExternalSupplierCallerId.HasValue;
+            bool isBuyerCaller = !isExternalSupplierCaller
+                && string.Equals(request.OrganizationType, Common.BUYER, StringComparison.OrdinalIgnoreCase);
+            bool isBuyerSendingToExternalSupplier = isBuyerCaller && dto.ExternalSupplierId.HasValue;
 
-            bool isSupplierSender = !isBuyerSender;
-            Guid senderOrganizationId = isBuyerSender ? buyerId : supplierId;
+            Guid buyerId;
+            Guid? supplierId = null;
+            Guid? externalSupplierId = null;
+            bool isBuyerSender;
 
-            // The group-conversation is keyed by (RFQId, SupplierId), never by UserId, so every
-            // user of that supplier - present or registered later - shares the same thread.
-            MessageThread? thread = await _repository.MessageThread
-                .FindFirstByConditionAsync(x => x.RFQId == dto.RFQId && x.SupplierId == supplierId && x.IsActive);
+            if (isExternalSupplierCaller)
+            {
+                externalSupplierId = request.ExternalSupplierCallerId!.Value;
+                buyerId = MessageParticipancy.ResolveForRFQAsExternalSupplier(_repository, rfq, externalSupplierId.Value, _logger);
+                isBuyerSender = false;
+            }
+            else if (isBuyerSendingToExternalSupplier)
+            {
+                (buyerId, externalSupplierId) = MessageParticipancy.ResolveForRFQAsBuyer(
+                    _repository, rfq, request.OrganizationId, dto.ExternalSupplierId!.Value, _logger);
+                isBuyerSender = true;
+            }
+            else
+            {
+                (buyerId, Guid resolvedSupplierId, bool resolvedIsBuyerSender) = MessageParticipancy.ResolveForRFQ(
+                    _repository,
+                    rfq,
+                    request.OrganizationId,
+                    request.OrganizationType,
+                    dto.SupplierId,
+                    _logger);
+
+                supplierId = resolvedSupplierId;
+                isBuyerSender = resolvedIsBuyerSender;
+            }
+
+            bool isCounterpartySender = !isBuyerSender;
+            Guid senderOrganizationId = isBuyerSender ? buyerId : (supplierId ?? externalSupplierId!.Value);
+
+            // The group-conversation is keyed by (RFQId, SupplierId) or (RFQId, ExternalSupplierId),
+            // never by UserId, so every user of that party - present or registered later - shares
+            // the same thread.
+            MessageThread? thread = supplierId.HasValue
+                ? await _repository.MessageThread
+                    .FindFirstByConditionAsync(x => x.RFQId == dto.RFQId && x.SupplierId == supplierId && x.IsActive)
+                : await _repository.MessageThread
+                    .FindFirstByConditionAsync(x => x.RFQId == dto.RFQId && x.ExternalSupplierId == externalSupplierId && x.IsActive);
 
             if (thread == null)
             {
@@ -82,6 +115,7 @@ namespace Buyer.Application.Features.Commands.CreateMessage
                     RFQNumber = rfq.RFQNumber,
                     BuyerId = buyerId,
                     SupplierId = supplierId,
+                    ExternalSupplierId = externalSupplierId,
                 };
 
                 _repository.MessageThread.Create(thread);
@@ -94,18 +128,22 @@ namespace Buyer.Application.Features.Commands.CreateMessage
             Guid messageId = Guid.NewGuid();
             DateTime now = DateTime.UtcNow;
 
+            string senderOrganizationType = isBuyerSender
+                ? Common.BUYER
+                : (supplierId.HasValue ? Common.SUPPLIER : Common.EXTERNAL_SUPPLIER);
+
             Message message = new()
             {
                 Id = messageId,
                 ThreadId = thread.Id,
-                SenderUserId = request.UserId,
-                SenderOrganizationType = isBuyerSender ? Common.BUYER : Common.SUPPLIER,
+                SenderUserId = isExternalSupplierCaller ? null : request.UserId,
+                SenderOrganizationType = senderOrganizationType,
                 SenderOrganizationId = senderOrganizationId,
                 Body = dto.Body,
                 IsReadByBuyer = isBuyerSender,
-                IsReadBySupplier = isSupplierSender,
+                IsReadBySupplier = isCounterpartySender,
                 ReadByBuyerAt = isBuyerSender ? now : null,
-                ReadBySupplierAt = isSupplierSender ? now : null
+                ReadBySupplierAt = isCounterpartySender ? now : null
             };
 
             _repository.Message.Create(message);
@@ -174,18 +212,28 @@ namespace Buyer.Application.Features.Commands.CreateMessage
 
             string? senderName = null;
 
-            try
+            if (isExternalSupplierCaller)
             {
-                List<IdentityUserDto> users = await _identityApiClient.GetUsersByIds(
-                    new List<Guid> { request.UserId },
-                    cancellationToken);
+                ExternalSupplier? externalSupplier = await _repository.ExternalSupplier
+                    .FindFirstByConditionAsync(x => x.Id == externalSupplierId && x.IsActive);
 
-                senderName = users.FirstOrDefault()?.UserName;
+                senderName = externalSupplier?.SupplierName;
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogError(
-                    $"Unable to resolve sender username for UserId: {request.UserId}. {ex.Message}");
+                try
+                {
+                    List<IdentityUserDto> users = await _identityApiClient.GetUsersByIds(
+                        new List<Guid> { request.UserId },
+                        cancellationToken);
+
+                    senderName = users.FirstOrDefault()?.UserName;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        $"Unable to resolve sender username for UserId: {request.UserId}. {ex.Message}");
+                }
             }
 
             MessageResponseDto responseDto = new()
@@ -194,7 +242,8 @@ namespace Buyer.Application.Features.Commands.CreateMessage
                 ThreadId = thread.Id,
                 RFQId = thread.RFQId,
                 SupplierId = thread.SupplierId,
-                SenderUserId = request.UserId,
+                ExternalSupplierId = thread.ExternalSupplierId,
+                SenderUserId = message.SenderUserId,
                 SenderName = senderName,
                 SenderOrganizationType = message.SenderOrganizationType,
                 Body = message.Body,
@@ -204,13 +253,18 @@ namespace Buyer.Application.Features.Commands.CreateMessage
                 IsReadBySupplier = message.IsReadBySupplier
             };
 
-            try
+            if (supplierId.HasValue)
             {
-                await _supplierApiClient.NotifyNewMessage(responseDto, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Unable to relay new message notification to Supplier service. ThreadId: {thread.Id}. {ex.Message}");
+                // ExternalSupplier conversations have no separate microservice/hub to relay to -
+                // the external supplier connects directly to this hub via its session token.
+                try
+                {
+                    await _supplierApiClient.NotifyNewMessage(responseDto, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Unable to relay new message notification to Supplier service. ThreadId: {thread.Id}. {ex.Message}");
+                }
             }
 
             return responseDto;

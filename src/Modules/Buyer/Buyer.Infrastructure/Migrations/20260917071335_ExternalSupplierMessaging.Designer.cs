@@ -4,6 +4,7 @@ using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Buyer.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260917071335_ExternalSupplierMessaging")]
+    partial class ExternalSupplierMessaging
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1677,141 +1680,6 @@ namespace Buyer.Infrastructure.Migrations
                     b.ToTable("rfqattachment_mapping", "buyersystem");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.RFQAward", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_created");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_updated");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("QuotationVersion")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("quotation_version");
-
-                    b.Property<Guid>("RFQId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("rfqid");
-
-                    b.Property<string>("Remarks")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("remarks");
-
-                    b.Property<string>("SelectionMode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("selection_mode");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("status");
-
-                    b.Property<Guid?>("SupplierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_id");
-
-                    b.Property<Guid?>("SupplierQuotationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_quotation_id");
-
-                    b.Property<Guid>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_rfqaward");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_rfqaward_is_active");
-
-                    b.HasIndex("RFQId")
-                        .HasDatabaseName("ix_rfqaward_rfqid");
-
-                    b.ToTable("rfqaward", "buyersystem");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.RFQAwardItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_created");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_updated");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("QuotationVersion")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("quotation_version");
-
-                    b.Property<Guid>("RFQAwardId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("rfqaward_id");
-
-                    b.Property<Guid>("RFQItemId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("rfqitem_id");
-
-                    b.Property<Guid>("SupplierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_id");
-
-                    b.Property<Guid?>("SupplierQuotationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_quotation_id");
-
-                    b.Property<Guid?>("SupplierQuotationItemId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_quotation_item_id");
-
-                    b.Property<Guid>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_rfqaward_item");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_rfqaward_item_is_active");
-
-                    b.HasIndex("RFQAwardId")
-                        .HasDatabaseName("ix_rfqaward_item_rfqaward_id");
-
-                    b.HasIndex("RFQItemId")
-                        .HasDatabaseName("ix_rfqaward_item_rfqitem_id");
-
-                    b.ToTable("rfqaward_item", "buyersystem");
-                });
-
             modelBuilder.Entity("Buyer.Domain.Entities.RFQBlockchainRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2948,39 +2816,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasConstraintName("fk_rfqattachment_mapping_rfq_rfqid");
 
                     b.Navigation("RFQ");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.RFQAward", b =>
-                {
-                    b.HasOne("Buyer.Domain.Entities.RFQ", "RFQ")
-                        .WithMany()
-                        .HasForeignKey("RFQId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_rfqaward_rfq_rfqid");
-
-                    b.Navigation("RFQ");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.RFQAwardItem", b =>
-                {
-                    b.HasOne("Buyer.Domain.Entities.RFQAward", "RFQAward")
-                        .WithMany()
-                        .HasForeignKey("RFQAwardId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_rfqaward_item_rfqaward_rfqaward_id");
-
-                    b.HasOne("Buyer.Domain.Entities.RFQItem", "RFQItem")
-                        .WithMany()
-                        .HasForeignKey("RFQItemId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("fk_rfqaward_item_rfqitem_rfqitem_id");
-
-                    b.Navigation("RFQAward");
-
-                    b.Navigation("RFQItem");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.RFQExternalSupplier", b =>

@@ -90,7 +90,7 @@ namespace SharedKernel.Controllers
         }
         protected Guid GetSupplierId()
         {
-           
+
             var claim = User.FindFirst("SupplierId")?.Value;
 
             if (!Guid.TryParse(claim, out Guid supplierId))
@@ -101,6 +101,20 @@ namespace SharedKernel.Controllers
             }
 
             return supplierId;
+        }
+
+        protected Guid GetExternalSupplierId()
+        {
+            var claim = User.FindFirst("ExternalSupplierId")?.Value;
+
+            if (!Guid.TryParse(claim, out Guid externalSupplierId))
+            {
+                throw new UnAuthorizedCustomException(
+                    "Unauthorized",
+                    "ExternalSupplier claim not found.");
+            }
+
+            return externalSupplierId;
         }
     }
 }

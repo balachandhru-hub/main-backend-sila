@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using Buyer.Application.Contracts;
+using Buyer.Domain.Dto;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using Microsoft.AspNetCore.SignalR;
@@ -24,19 +26,37 @@ namespace Buyer.API.Hubs
     /// </summary>
     public class MessageHub : Hub
     {
+        public const string ExternalSessionTokenQueryParameterName = "session_token";
+        public const string ExternalRfqIdQueryParameterName = "external_rfq_id";
+
         private readonly IConfiguration _configuration;
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
+        private readonly ISupplierApiClient _supplierApiClient;
 
-        public MessageHub(IConfiguration configuration, IRepositoryWrapper repository, ILoggerManager logger)
+        public MessageHub(
+            IConfiguration configuration,
+            IRepositoryWrapper repository,
+            ILoggerManager logger,
+            ISupplierApiClient supplierApiClient)
         {
             _configuration = configuration;
             _repository = repository;
             _logger = logger;
+            _supplierApiClient = supplierApiClient;
         }
 
         public override async Task OnConnectedAsync()
         {
+            HttpContext? httpContext = Context.GetHttpContext();
+            string? externalSessionToken = httpContext?.Request.Query[ExternalSessionTokenQueryParameterName];
+
+            if (!string.IsNullOrWhiteSpace(externalSessionToken))
+            {
+                await ConnectAsExternalSupplier(externalSessionToken, httpContext);
+                return;
+            }
+
             ClaimsPrincipal? principal;
 
             try
@@ -86,6 +106,47 @@ namespace Buyer.API.Hubs
         }
 
         /// <summary>
+        /// An ExternalSupplier has no JWT, so it connects with a session token + rfqId
+        /// (query params) instead of an access_token. A session token is scoped to exactly
+        /// one RFQ+ExternalSupplier, so - unlike the JWT flow - only that single group is
+        /// joined, not every conversation the caller participates in.
+        /// </summary>
+        private async Task ConnectAsExternalSupplier(string sessionToken, HttpContext? httpContext)
+        {
+            string? rfqIdValue = httpContext?.Request.Query[ExternalRfqIdQueryParameterName];
+
+            if (!Guid.TryParse(rfqIdValue, out Guid rfqId))
+            {
+                _logger.LogError($"MessageHub connection rejected - missing rfqId. ConnectionId: {Context.ConnectionId}.");
+                Context.Abort();
+                return;
+            }
+
+            ExternalSupplierSessionDto? session;
+
+            try
+            {
+                session = await _supplierApiClient.ValidateExternalSessionToken(sessionToken, rfqId, Context.ConnectionAborted);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"MessageHub external-supplier connection rejected. ConnectionId: {Context.ConnectionId}. {ex.Message}");
+                Context.Abort();
+                return;
+            }
+
+            if (session == null)
+            {
+                _logger.LogError($"MessageHub connection rejected - invalid external session token. ConnectionId: {Context.ConnectionId}.");
+                Context.Abort();
+                return;
+            }
+
+            await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(session.RFQId, session.ExternalSupplierId));
+            await base.OnConnectedAsync();
+        }
+
+        /// <summary>
         /// Joins the caller to a supplier-level RFQ group-conversation. The group is keyed by
         /// (RFQId, SupplierId) - never by UserId or ThreadId - so it can be joined even before
         /// any MessageThread row exists yet (e.g. a supplier's first user registering before
@@ -119,7 +180,38 @@ namespace Buyer.API.Hubs
         /// <summary>Alias matching the frontend's LeaveChat naming.</summary>
         public Task LeaveChat(Guid rfqId, Guid buyerId, Guid supplierId) => LeaveConversation(rfqId, buyerId, supplierId);
 
-        public static string GroupName(Guid rfqId, Guid supplierId) => $"rfq:{rfqId}:supplier:{supplierId}";
+        /// <summary>
+        /// Buyer-side manual join for a brand-new ExternalSupplier conversation created after
+        /// the connection was already established (mirrors JoinConversation/JoinChat).
+        /// </summary>
+        public Task JoinExternalConversation(Guid rfqId, Guid externalSupplierId)
+        {
+            ValidateAccessToken();
+
+            bool authorized = _repository.RFQ.FindFirstByCondition(x => x.Id == rfqId && x.IsActive) != null
+                && _repository.RFQExternalSupplier.FindFirstByCondition(
+                    x => x.RFQId == rfqId && x.ExternalSupplierId == externalSupplierId && x.IsActive) != null;
+
+            if (!authorized)
+            {
+                _logger.LogError($"Forbidden JoinExternalConversation attempt. RFQId: {rfqId}, ExternalSupplierId: {externalSupplierId}.");
+                throw new ForBiddenCustomException("Forbidden", "You do not have access to this conversation.");
+            }
+
+            _logger.LogInfo($"ConnectionId {Context.ConnectionId} joined {GroupName(rfqId, externalSupplierId)}.");
+
+            return Groups.AddToGroupAsync(Context.ConnectionId, GroupName(rfqId, externalSupplierId));
+        }
+
+        public Task LeaveExternalConversation(Guid rfqId, Guid externalSupplierId)
+        {
+            _logger.LogInfo($"ConnectionId {Context.ConnectionId} left {GroupName(rfqId, externalSupplierId)}.");
+
+            return Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupName(rfqId, externalSupplierId));
+        }
+
+        /// <summary>Group key is agnostic to counterparty type - the id is either a SupplierId or an ExternalSupplierId.</summary>
+        public static string GroupName(Guid rfqId, Guid counterpartyId) => $"rfq:{rfqId}:supplier:{counterpartyId}";
 
         /// <summary>
         /// Validates that (rfqId, buyerId, supplierId) is a real, active RFQ+Supplier
@@ -157,11 +249,17 @@ namespace Buyer.API.Hubs
                     .Select(x => x.Id)
                     .ToList();
 
-                return _repository.RFQSupplierMapping
+                List<string> supplierGroups = _repository.RFQSupplierMapping
                     .FindByCondition(x => rfqIds.Contains(x.RFQId) && x.IsActive)
                     .Select(x => GroupName(x.RFQId, x.SupplierId))
-                    .Distinct()
                     .ToList();
+
+                List<string> externalSupplierGroups = _repository.RFQExternalSupplier
+                    .FindByCondition(x => rfqIds.Contains(x.RFQId) && x.IsActive)
+                    .Select(x => GroupName(x.RFQId, x.ExternalSupplierId))
+                    .ToList();
+
+                return supplierGroups.Concat(externalSupplierGroups).Distinct().ToList();
             }
 
             if (string.Equals(organizationType, "Supplier", StringComparison.OrdinalIgnoreCase))

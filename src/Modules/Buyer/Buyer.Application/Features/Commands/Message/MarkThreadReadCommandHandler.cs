@@ -28,11 +28,27 @@ namespace Buyer.Application.Features.Commands.CreateMessage
                 throw new NotFoundCustomException("Conversation not found.", "Conversation does not exist.");
             }
 
-            bool isBuyer = MessageParticipancy.ResolveForThread(
-                _repository,
-                thread,
-                request.OrganizationId,
-                request.OrganizationType);
+            bool isBuyer;
+
+            if (request.ExternalSupplierCallerId.HasValue)
+            {
+                MessageParticipancy.ResolveExternalThreadForExternalSupplier(thread, request.ExternalSupplierCallerId.Value, _logger);
+                isBuyer = false;
+            }
+            else if (thread.ExternalSupplierId.HasValue)
+            {
+                MessageParticipancy.ResolveExternalThreadForBuyer(_repository, thread, request.OrganizationId, _logger);
+                isBuyer = true;
+            }
+            else
+            {
+                isBuyer = MessageParticipancy.ResolveForThread(
+                    _repository,
+                    thread,
+                    request.OrganizationId,
+                    request.OrganizationType,
+                    _logger);
+            }
 
             DateTime now = DateTime.UtcNow;
 

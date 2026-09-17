@@ -15,7 +15,7 @@ namespace Buyer.Domain.Entities
 
         public MessageThread MessageThread { get; set; }
 
-        public Guid SenderUserId { get; set; }
+        public Guid? SenderUserId { get; set; }
 
         public string SenderOrganizationType { get; set; }
 

@@ -28,7 +28,7 @@ namespace Buyer.Infrastructure.ApiClients
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<bool> ValidateExternalSessionToken(
+        public async Task<ExternalSupplierSessionDto?> ValidateExternalSessionToken(
             string sessionToken,
             Guid rfqId,
             CancellationToken cancellationToken = default)
@@ -42,7 +42,13 @@ namespace Buyer.Infrastructure.ApiClients
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
 
-            return response.IsSuccessStatusCode;
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<ExternalSupplierSessionDto>(
+                cancellationToken: cancellationToken);
         }
 
         public async Task CreateSupplierRFQ(

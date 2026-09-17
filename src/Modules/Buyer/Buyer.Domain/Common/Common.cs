@@ -61,6 +61,7 @@ namespace Buyer.Domain.Common
                 public const string BID_COMPARISON_MODE = "BID_COMPARISON";
                 public const string BY_SUPPLIER_MODE = "BY_SUPPLIER";
                 public const string SUPPLIER = "SUPPLIER";
+                public const string EXTERNAL_SUPPLIER = "EXTERNAL_SUPPLIER";
                 public const string MESSAGE_ATTACHMENT_SUBFOLDER = "messages";
                 public const string SEND_MESSAGE_PERMISSION = "SEND_MESSAGE";
                 public const string GET_MESSAGE_THREADS_PERMISSION = "GET_MESSAGE_THREADS";

@@ -10,7 +10,9 @@ namespace Buyer.Domain.Dto
 
         public Guid BuyerId { get; set; }
 
-        public Guid SupplierId { get; set; }
+        public Guid? SupplierId { get; set; }
+
+        public Guid? ExternalSupplierId { get; set; }
 
         public string? CounterpartyName { get; set; }
 

@@ -173,12 +173,17 @@ namespace Supplier.API.Controllers
             [FromQuery] Guid rfqId,
             CancellationToken cancellationToken)
         {
-            await _sessionTokenValidator.ValidateAsync(
+            SessionTokenValidationResult result = await _sessionTokenValidator.ValidateAsync(
                 sessionToken,
                 rfqId,
                 cancellationToken);
 
-            return Ok();
+            return Ok(new
+            {
+                RFQId = result.RFQId,
+                ExternalSupplierId = result.SupplierId,
+                ExternalSupplierRFQId = result.SupplierRFQId
+            });
         }
 
         [HttpGet]

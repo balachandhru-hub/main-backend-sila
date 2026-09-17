@@ -38,11 +38,23 @@ namespace Buyer.Application.Features.Queries.CreateMessage
                 throw new NotFoundCustomException("Conversation not found.", "Conversation does not exist.");
             }
 
-            MessageParticipancy.ResolveForThread(
-                _repository,
-                thread,
-                request.OrganizationId,
-                request.OrganizationType);
+            if (request.ExternalSupplierCallerId.HasValue)
+            {
+                MessageParticipancy.ResolveExternalThreadForExternalSupplier(thread, request.ExternalSupplierCallerId.Value, _logger);
+            }
+            else if (thread.ExternalSupplierId.HasValue)
+            {
+                MessageParticipancy.ResolveExternalThreadForBuyer(_repository, thread, request.OrganizationId, _logger);
+            }
+            else
+            {
+                MessageParticipancy.ResolveForThread(
+                    _repository,
+                    thread,
+                    request.OrganizationId,
+                    request.OrganizationType,
+                    _logger);
+            }
 
             List<Domain.Entities.Message> messages = _repository.Message
                 .FindByCondition(x => x.ThreadId == thread.Id && x.IsActive)
@@ -55,7 +67,11 @@ namespace Buyer.Application.Features.Queries.CreateMessage
 
             try
             {
-                List<Guid> senderIds = messages.Select(x => x.SenderUserId).Distinct().ToList();
+                List<Guid> senderIds = messages
+                    .Where(x => x.SenderUserId.HasValue)
+                    .Select(x => x.SenderUserId!.Value)
+                    .Distinct()
+                    .ToList();
 
                 if (senderIds.Count > 0)
                 {
@@ -68,6 +84,16 @@ namespace Buyer.Application.Features.Queries.CreateMessage
                 _logger.LogError($"Unable to resolve sender names for ThreadId: {thread.Id}. {ex.Message}");
             }
 
+            string? externalSupplierName = null;
+
+            if (thread.ExternalSupplierId.HasValue)
+            {
+                ExternalSupplier? externalSupplier = await _repository.ExternalSupplier
+                    .FindFirstByConditionAsync(x => x.Id == thread.ExternalSupplierId && x.IsActive);
+
+                externalSupplierName = externalSupplier?.SupplierName;
+            }
+
             List<MessageResponseDto> result = new();
 
             foreach (Domain.Entities.Message message in messages)
@@ -76,14 +102,19 @@ namespace Buyer.Application.Features.Queries.CreateMessage
                     .FindByCondition(x => x.MessageId == message.Id && x.IsActive)
                     .ToList();
 
+                string? senderName = message.SenderUserId.HasValue
+                    ? (senderNames.TryGetValue(message.SenderUserId.Value, out string? name) ? name : null)
+                    : externalSupplierName;
+
                 result.Add(new MessageResponseDto
                 {
                     Id = message.Id,
                     ThreadId = message.ThreadId,
                     RFQId = thread.RFQId,
                     SupplierId = thread.SupplierId,
+                    ExternalSupplierId = thread.ExternalSupplierId,
                     SenderUserId = message.SenderUserId,
-                    SenderName = senderNames.TryGetValue(message.SenderUserId, out string? name) ? name : null,
+                    SenderName = senderName,
                     SenderOrganizationType = message.SenderOrganizationType,
                     Body = message.Body,
                     Attachments = attachments.Select(a => new MessageAttachmentResponseDto
