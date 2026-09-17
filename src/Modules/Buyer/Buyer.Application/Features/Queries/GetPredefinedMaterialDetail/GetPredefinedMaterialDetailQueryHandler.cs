@@ -1,3 +1,4 @@
+using Buyer.Application.Contracts;
 using Buyer.Domain.Dtos;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
@@ -11,13 +12,16 @@ namespace Buyer.Application.Features.Queries.GetPredefinedMaterialDetail
         : IRequestHandler<GetPredefinedMaterialDetailQuery, PredefinedMaterialDetailDto>
     {
         private readonly IRepositoryWrapper _repositoryWrapper;
+        private readonly IIdentityApiClient _identityApiClient;
         private readonly ILoggerManager _logger;
 
         public GetPredefinedMaterialDetailQueryHandler(
             IRepositoryWrapper repositoryWrapper,
+            IIdentityApiClient identityApiClient,
             ILoggerManager logger)
         {
             _repositoryWrapper = repositoryWrapper;
+            _identityApiClient = identityApiClient;
             _logger = logger;
         }
 
@@ -58,22 +62,49 @@ namespace Buyer.Application.Features.Queries.GetPredefinedMaterialDetail
                         x.IsActive);
 
             // ---------------------------------------------------------
-            // 3. Get Approval User Ids
+            // 3. Get Approval Users (Order + Status from the mapping,
+            //    UserName + Email from the Identity service)
             // ---------------------------------------------------------
 
-            var approvalUserIds = new List<Guid>();
+            var approvalUsers = new List<PredefinedMaterialApprovalUserDto>();
 
             if (materialApprovalFlowMapping != null)
             {
-                approvalUserIds =
+                approvalUsers =
                     await _repositoryWrapper.PredefinedMaterialApprovalFlowUserMapping
                         .FindByCondition(x =>
                             x.ApprovalFlowPredefinedMaterialId ==
                                 materialApprovalFlowMapping.Id &&
                             x.IsActive)
                         .OrderBy(x => x.Order)
-                        .Select(x => x.UserId)
+                        .Select(x => new PredefinedMaterialApprovalUserDto
+                        {
+                            UserId = x.UserId,
+                            Order = x.Order,
+                            Status = x.Status
+                        })
                         .ToListAsync(cancellationToken);
+
+                if (approvalUsers.Any())
+                {
+                    var userIds = approvalUsers
+                        .Select(x => x.UserId)
+                        .Distinct()
+                        .ToList();
+
+                    var identityUsers = await _identityApiClient.GetUsersByIds(
+                        userIds,
+                        cancellationToken);
+
+                    foreach (var approvalUser in approvalUsers)
+                    {
+                        var identity = identityUsers
+                            .FirstOrDefault(x => x.UserId == approvalUser.UserId);
+
+                        approvalUser.UserName = identity?.UserName;
+                        approvalUser.Email = identity?.Email;
+                    }
+                }
             }
 
             // ---------------------------------------------------------
@@ -84,7 +115,7 @@ namespace Buyer.Application.Features.Queries.GetPredefinedMaterialDetail
             return new PredefinedMaterialDetailDto
             {
                 Id = predefinedMaterial.Id,
-                BuyerId = predefinedMaterial.BuyerId,          
+                BuyerId = predefinedMaterial.BuyerId,
                 BaseUnitOfMeasure = predefinedMaterial.BaseUnitOfMeasure,
                 OrderUnitOfMeasure = predefinedMaterial.OrderUnitOfMeasure,
                 AlternateUnitOfMeasure = predefinedMaterial.AlternateUnitOfMeasure,
@@ -93,11 +124,11 @@ namespace Buyer.Application.Features.Queries.GetPredefinedMaterialDetail
                 SubUnit = predefinedMaterial.SubUnit,
                 MicroUnit = predefinedMaterial.MicroUnit,
                 Status = predefinedMaterial.Status,
-                ApprovalUserIds = approvalUserIds
-                
+                ApprovalUsers = approvalUsers
+
             };
-            
+
         }
-        
+
     }
 }
