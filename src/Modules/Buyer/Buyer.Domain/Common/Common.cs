@@ -73,6 +73,7 @@ namespace Buyer.Domain.Common
                 public const string ITEM_MASTER_STATUS = "OPEN";
                 public const string APPROVED = "APPROVE";
                 public const string REJECTED = "REJECT";
+                public const string ACCEPTED_STATUS = "ACCEPTED";
                 public const string COMPLETE = "COMPLETE";
                 public const string PROCESSING = "PROCESSING";
 
