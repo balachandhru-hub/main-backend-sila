@@ -41,7 +41,8 @@ namespace Supplier.Infrastructure.DbContext
         public DbSet<SupplierQuotationHistory> SupplierQuotationHistory { get; set; }
         public DbSet<SupplierQuotationItemHistory> SupplierQuotationItemHistory { get; set; }
         public DbSet<RFQOrganizationUserMapping> RFQOrganizationUserMapping { get; set; }
-      
+        public DbSet<RFQAttachmentMapping> RFQAttachmentMapping { get; set; }
+
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
             _ = modelBuilder.HasDefaultSchema(_configuration[Common.APPLICATION_SCHEMA]);
@@ -66,6 +67,7 @@ namespace Supplier.Infrastructure.DbContext
             _ = modelBuilder.Entity<SupplierQuotationHistory>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<SupplierQuotationItemHistory>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<RFQOrganizationUserMapping>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<RFQAttachmentMapping>().HasIndex(a => a.IsActive);
 
                 modelBuilder.Entity<SupplierQuotationItem>()
                     .HasOne(x => x.SupplierRFQItem)

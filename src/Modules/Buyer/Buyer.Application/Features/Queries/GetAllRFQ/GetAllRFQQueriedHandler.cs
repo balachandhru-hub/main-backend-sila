@@ -398,6 +398,23 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
     supplierIds,
     cancellationToken);
 
+            // Terms and Condition acceptance + uploaded document for every
+            // supplier invited to this RFQ, in one call.
+            List<RFQTermsConditionDto> supplierTermsConditions;
+
+            try
+            {
+                supplierTermsConditions = await _supplierApiClient.GetRFQTermsCondition(
+                    request.RFQId,
+                    cancellationToken);
+            }
+            catch
+            {
+                _logger.LogInfo(
+                    $"No Terms and Condition found for BuyerRFQId: {request.RFQId}");
+                supplierTermsConditions = new List<RFQTermsConditionDto>();
+            }
+
             // Verified = this buyer already has an active BuyerSupplierMapping with the
             // supplier (same check CreateRFQCommandHandler uses to decide who gets a fresh
             // SupplierVerificationRequest). Everyone else invited on this RFQ is unverified.
@@ -520,7 +537,8 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
     ?? new List<SupplierQuotationBySupplierDto>(),
 
                 SupplierAnswers = supplierAnswers,
-                InvitedUsers = invitedUsers
+                InvitedUsers = invitedUsers,
+                SupplierTermsConditions = supplierTermsConditions
             };
         }
     }

@@ -42,6 +42,7 @@ namespace Buyer.Domain.Dtos
        public List<SupplierQuotationBySupplierDto> SupplierQuotation { get; set; } = new();
         public SupplierRFQAnswerDto? SupplierAnswers { get; set; }
         public List<InvitedUserDto>? InvitedUsers { get; set; }
+        public List<RFQTermsConditionDto> SupplierTermsConditions { get; set; } = new();
         public string Status {get;set;}
 
       

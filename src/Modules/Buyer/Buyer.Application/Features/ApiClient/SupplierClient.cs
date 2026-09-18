@@ -593,5 +593,51 @@ namespace Buyer.Infrastructure.ApiClients
 
             _logger.LogInfo($"New message notification relayed successfully. ThreadId: {threadId}");
         }
+
+        public async Task<List<RFQTermsConditionDto>> GetRFQTermsCondition(
+            Guid rfqId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo($"Fetching Terms and Condition. RFQId: {rfqId}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/internal/rfq-terms-condition?rfqId={rfqId}");
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to fetch Terms and Condition. RFQId: {rfqId}, " +
+                    $"Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch Terms and Condition.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<RFQTermsConditionDto>>(
+                cancellationToken: cancellationToken);
+
+            _logger.LogInfo($"Terms and Condition fetched successfully. RFQId: {rfqId}");
+
+            return result ?? new List<RFQTermsConditionDto>();
+        }
     }
 }

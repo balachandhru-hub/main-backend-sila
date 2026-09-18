@@ -39,5 +39,8 @@ CancellationToken cancellationToken = default);
         Task NotifyNewMessage(
             MessageResponseDto message,
             CancellationToken cancellationToken = default);
+        Task<List<RFQTermsConditionDto>> GetRFQTermsCondition(
+            Guid rfqId,
+            CancellationToken cancellationToken = default);
     }
 }

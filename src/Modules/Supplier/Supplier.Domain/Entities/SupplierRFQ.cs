@@ -34,6 +34,8 @@ namespace Supplier.Domain.Entities
 
         public bool AddLotOption { get; set; }
 
+        public bool TermsAndCondition { get; set; }
+
         public string Status { get; set; }
         public string DeliveryLocation {get;set;}
         public string Currency { get; set; }

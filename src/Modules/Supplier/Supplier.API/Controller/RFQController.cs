@@ -14,7 +14,9 @@ using Swashbuckle.AspNetCore.Annotations;
 using Supplier.API.Hubs;
 
 using Supplier.Application.Features.Commands.CreateSupplierRFQ;
+using Supplier.Application.Features.Commands.RFQAttachment;
 using Supplier.Application.Features.Commands.UpdateSupplierQuotation;
+using Supplier.Application.Features.Queries.GetRFQTermsCondition;
 using Supplier.Application.Features.Commands.SupplierAnswers;
 
 using Supplier.Application.Features.Queries.GetSupplier;
@@ -82,6 +84,61 @@ namespace Supplier.API.Controllers
                 Description = "Supplier RFQ created successfully.",
                 Id = supplierRFQId.ToString()
             });
+        }
+
+        [HttpPost]
+        [Route("api/v1/supplier/supplier-terms-condition")]
+        [ApiAuthorization(Name = "UPLOAD_SUPPLIER_RFQ_TERMS_CONDITION")]
+        [ValidateModelState]
+        [SwaggerOperation("UploadSupplierRFQTermsCondition")]
+        [SwaggerResponse(201, type: typeof(SuccessResponseDto), description: "Terms and Condition document uploaded successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UploadSupplierRFQTermsCondition(
+            [FromQuery] Guid rfqId,
+            [FromQuery] bool termsAndCondition,
+            [FromBody] AssetUploadDto? document)
+        {
+            var organizationId = GetOrganizationId();
+
+            var result = await _mediator.Send(new UploadRFQTermsConditionCommand
+            {
+                RFQId = rfqId,
+                OrganizationId = organizationId,
+                TermsAndCondition = termsAndCondition,
+                Document = document
+            });
+
+            return StatusCode(201, new SuccessResponseDto
+            {
+                StatusCode = 201,
+                Message = "Success",
+                Description = result.HasValue
+                    ? "Terms and Condition document uploaded successfully."
+                    : "Terms and Condition flag updated. No document uploaded.",
+                Id = result?.ToString()
+            });
+        }
+
+        [HttpGet]
+        [Route("api/v1/supplier/internal/rfq-terms-condition")]
+        [ApiAuthorization(Name = "GET_SUPPLIER_RFQ_TERMS_CONDITION")]
+        [ValidateModelState]
+        [SwaggerOperation("GetSupplierRFQTermsCondition")]
+        [SwaggerResponse(200, type: typeof(List<RFQTermsConditionDto>), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetSupplierRFQTermsCondition(
+            [FromQuery] Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetRFQTermsConditionQuery
+            {
+                RFQId = rfqId
+            });
+
+            return Ok(result);
         }
 
         [HttpPost]

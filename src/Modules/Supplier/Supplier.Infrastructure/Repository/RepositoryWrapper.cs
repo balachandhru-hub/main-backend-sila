@@ -42,6 +42,7 @@ namespace Supplier.Infrastructure.Repository
         private ISupplierEmailVerificationRepository _supplierEmailVerification;
         private ISupplierQuotationHistoryRepository _supplierQuotationHistory;
         private ISupplierQuotationItemHistoryRepository _supplierQuotationItemHistory;
+        private IRFQAttachmentMappingRepository _rfqAttachmentMapping;
 
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
@@ -296,6 +297,17 @@ namespace Supplier.Infrastructure.Repository
                     _supplierQuotationItemHistory = new SupplierQuotationItemHistoryRepository(_context);
                 }
                 return _supplierQuotationItemHistory;
+            }
+        }
+        public IRFQAttachmentMappingRepository RFQAttachmentMapping
+        {
+            get
+            {
+                if (_rfqAttachmentMapping == null)
+                {
+                    _rfqAttachmentMapping = new RFQAttachmentMappingRepository(_context);
+                }
+                return _rfqAttachmentMapping;
             }
         }
 

@@ -32,6 +32,7 @@ public interface IRepositoryWrapper
     ISupplierEmailVerificationRepository SupplierEmailVerification {get;}
     ISupplierQuotationHistoryRepository SupplierQuotationHistory { get; }
     ISupplierQuotationItemHistoryRepository SupplierQuotationItemHistory { get; }
+    IRFQAttachmentMappingRepository RFQAttachmentMapping { get; }
 
     bool Save();
     Task<bool> SaveAsync();
