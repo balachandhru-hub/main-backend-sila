@@ -151,6 +151,82 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             _logger.LogInfo($"Fetching technical specification and terms documents for RFQId: {request.RFQId}");
             var technicalDocuments = attachmentResponse.TechnicalSpecificationDocuments;
             var termsDocuments = attachmentResponse.TermsConditionDocuments;
+
+            _logger.LogInfo($"Fetching E-Sign document for SupplierRFQId: {supplierRFQId}");
+            var esignMappings = await _repositorywrapper.RFQAttachmentMapping
+                .FindByCondition(x =>
+                    x.SupplierRFQId == supplierRFQId &&
+                    x.Type == Common.ESIGN &&
+                    x.IsActive)
+                .ToListAsync(cancellationToken);
+
+            List<AssetDto> esignDocuments = new();
+
+            if (esignMappings.Any())
+            {
+                var esignAssetIds = esignMappings
+                    .Select(x => x.AssetId)
+                    .Distinct()
+                    .ToList();
+
+                var esignAssets = await _repositorywrapper.Asset
+                    .FindByCondition(x => esignAssetIds.Contains(x.Id) && x.IsActive)
+                    .ToListAsync(cancellationToken);
+
+                var esignMetadataList = await _metadataClient.GetReferenceList(
+                    new List<string> { Common.ASSET_TYPE, Common.FILE_TYPE });
+
+                esignDocuments = esignAssets.Select(asset => new AssetDto
+                {
+                    Id = asset.Id,
+                    AssetType = esignMetadataList.FirstOrDefault(x =>
+                        x.Type == Common.ASSET_TYPE &&
+                        x.Id == asset.AssetType)?.Key ?? string.Empty,
+                    AssetName = asset.AssetName,
+                    FileType = esignMetadataList.FirstOrDefault(x =>
+                        x.Type == Common.FILE_TYPE &&
+                        x.Id == asset.FileType)?.Key ?? string.Empty,
+                    FileName = asset.FileName
+                }).ToList();
+            }
+
+            _logger.LogInfo($"Fetching Terms and Condition document for SupplierRFQId: {supplierRFQId}");
+            var supplierTermsConditionMappings = await _repositorywrapper.RFQAttachmentMapping
+                .FindByCondition(x =>
+                    x.SupplierRFQId == supplierRFQId &&
+                    x.Type == Common.TERMS_CONDITION &&
+                    x.IsActive)
+                .ToListAsync(cancellationToken);
+
+            List<AssetDto> supplierTermsConditionDocuments = new();
+
+            if (supplierTermsConditionMappings.Any())
+            {
+                var termsConditionAssetIds = supplierTermsConditionMappings
+                    .Select(x => x.AssetId)
+                    .Distinct()
+                    .ToList();
+
+                var termsConditionAssets = await _repositorywrapper.Asset
+                    .FindByCondition(x => termsConditionAssetIds.Contains(x.Id) && x.IsActive)
+                    .ToListAsync(cancellationToken);
+
+                var termsConditionMetadataList = await _metadataClient.GetReferenceList(
+                    new List<string> { Common.ASSET_TYPE, Common.FILE_TYPE });
+
+                supplierTermsConditionDocuments = termsConditionAssets.Select(asset => new AssetDto
+                {
+                    Id = asset.Id,
+                    AssetType = termsConditionMetadataList.FirstOrDefault(x =>
+                        x.Type == Common.ASSET_TYPE &&
+                        x.Id == asset.AssetType)?.Key ?? string.Empty,
+                    AssetName = asset.AssetName,
+                    FileType = termsConditionMetadataList.FirstOrDefault(x =>
+                        x.Type == Common.FILE_TYPE &&
+                        x.Id == asset.FileType)?.Key ?? string.Empty,
+                    FileName = asset.FileName
+                }).ToList();
+            }
             // Supplier Quotation Header
             var quotation = await _repositorywrapper.SupplierQuotation
                 .FindByCondition(x => x.SupplierRFQId == supplierRFQId)
@@ -227,6 +303,9 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 AddLotOption = rfq.AddLotOption,
                 TechnicalSpecificationDocuments = technicalDocuments,
                 TermsConditionDocuments = termsDocuments,
+                ESignDocuments = esignDocuments,
+                SupplierTermsAndCondition = rfq.TermsAndCondition,
+                SupplierTermsConditionDocuments = supplierTermsConditionDocuments,
                 Status = rfq.Status,
                 Items = items,
                 Questions = questions,

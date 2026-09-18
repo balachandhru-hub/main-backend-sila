@@ -29,6 +29,7 @@ namespace Buyer.Domain.Common
                 public static readonly string RFQ_OPEN_STATUS = "Open";
                 public static readonly string RFQ_LIVE_STATUS = "LIVE";
                 public static readonly string TERMS_CONDITION = "TERMS_CONDITION";
+                public const string ESIGN = "ESIGN";
                 public static readonly string TECHNICAL_SPECIFICATION = "TECHNICAL_SPECIFICATION";
                 public static int DISPLAY_ORDER = 1;
                 public const string PENDING = "PENDING";

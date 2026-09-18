@@ -18,6 +18,8 @@ using Buyer.Application.Features.Commands.UpdateRFQ;
 using Buyer.Application.Features.Queries.GetBidCompare;
 using Buyer.Domain.Common;
 using Buyer.Application.Features.Queries.CheckRFQUserAccess;
+using Buyer.Application.Features.Commands.RFQAttachment;
+using Buyer.Application.Features.Queries.GetRFQESign;
 
 
 namespace Buyer.API.Controllers
@@ -121,6 +123,24 @@ namespace Buyer.API.Controllers
             return Ok(result);
         }
         [HttpGet]
+        [Route("api/v1/buyer/rfq-esign")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_RFQ_ESIGN")]
+        [SwaggerOperation("GetRFQESign")]
+        [SwaggerResponse(200, type: typeof(List<RFQESignDto>), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetRFQESign([FromQuery] Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetRFQESignQuery
+            {
+                RFQId = rfqId
+            });
+
+            return Ok(result);
+        }
+
+        [HttpGet]
         [Route("api/v1/buyer/rfq-attachments")]
         [ValidateModelState]
         [ApiAuthorization(Name = "GET_RFQ_ATTACHMENTS")]
@@ -135,6 +155,34 @@ namespace Buyer.API.Controllers
 
             return Ok(result);
         }
+        [HttpPost]
+        [Route("api/v1/buyer/rfq-esign")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPLOAD_RFQ_ESIGN")]
+        [SwaggerOperation("UploadRFQESign")]
+        [SwaggerResponse(201, type: typeof(SuccessResponseDto), description: "E-Sign document uploaded successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UploadRFQESign(
+            [FromQuery] Guid rfqId,
+            [FromBody] AssetUploadDto document)
+        {
+            var result = await _mediator.Send(new UploadRFQESignCommand
+            {
+                RFQId = rfqId,
+                Document = document
+            });
+
+            return StatusCode(201, new SuccessResponseDto
+            {
+                StatusCode = 201,
+                Message = "Success",
+                Description = "E-Sign document uploaded successfully.",
+                Id = result.ToString()
+            });
+        }
+
         [HttpGet]
         [Route("api/v1/buyer/internal-rfq-questions")]
         [ValidateModelState]

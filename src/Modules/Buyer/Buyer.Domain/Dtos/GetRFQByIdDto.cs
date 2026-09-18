@@ -30,6 +30,8 @@ namespace Buyer.Domain.Dtos
 
         public List<AssetDto>? TermsConditionDocuments { get; set; }
 
+        public List<AssetDto>? ESignDocuments { get; set; }
+
         public List<RFQQuestionDto> Questions { get; set; }
 
         public List<GetRFQItemDto> Items { get; set; }
@@ -43,6 +45,7 @@ namespace Buyer.Domain.Dtos
         public SupplierRFQAnswerDto? SupplierAnswers { get; set; }
         public List<InvitedUserDto>? InvitedUsers { get; set; }
         public List<RFQTermsConditionDto> SupplierTermsConditions { get; set; } = new();
+        public List<RFQESignDto> SupplierESigns { get; set; } = new();
         public string Status {get;set;}
 
       

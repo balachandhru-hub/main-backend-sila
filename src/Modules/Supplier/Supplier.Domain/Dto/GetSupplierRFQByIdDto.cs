@@ -28,6 +28,12 @@ namespace Supplier.Domain.Dto
         public List<AssetDto>? TechnicalSpecificationDocuments { get; set; }
 
         public List<AssetDto>? TermsConditionDocuments { get; set; }
+
+        public List<AssetDto>? ESignDocuments { get; set; }
+
+        public bool SupplierTermsAndCondition { get; set; }
+
+        public List<AssetDto>? SupplierTermsConditionDocuments { get; set; }
         public List<GetRFQItemDto> Items { get; set; }
         public List<GetSupplierQuotationDto> SupplierQuotation {get;set;}
          public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } 

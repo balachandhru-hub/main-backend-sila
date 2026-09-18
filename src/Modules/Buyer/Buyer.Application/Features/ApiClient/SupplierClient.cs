@@ -639,5 +639,51 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result ?? new List<RFQTermsConditionDto>();
         }
+
+        public async Task<List<RFQESignDto>> GetRFQESign(
+            Guid rfqId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo($"Fetching E-Sign. RFQId: {rfqId}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/internal/rfq-esign?rfqId={rfqId}");
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to fetch E-Sign. RFQId: {rfqId}, " +
+                    $"Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch E-Sign.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<RFQESignDto>>(
+                cancellationToken: cancellationToken);
+
+            _logger.LogInfo($"E-Sign fetched successfully. RFQId: {rfqId}");
+
+            return result ?? new List<RFQESignDto>();
+        }
     }
 }

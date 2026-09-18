@@ -38,6 +38,7 @@ namespace Supplier.Domain.Common
         public static readonly string RFQ_LIVE_STATUS = "LIVE";
         public const string AWARDED_STATUS = "AWARDED";
         public const string TERMS_CONDITION = "TERMS_CONDITION";
+        public const string ESIGN = "ESIGN";
         public static Guid SUPPLIER_ADMIN_ROLE_ID = new Guid("735bb267-fec0-489f-8249-d3d65b3857ea");
 
         public const string SEND_MESSAGE_PERMISSION = "SEND_MESSAGE";

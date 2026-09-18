@@ -17,6 +17,7 @@ using Supplier.Application.Features.Commands.CreateSupplierRFQ;
 using Supplier.Application.Features.Commands.RFQAttachment;
 using Supplier.Application.Features.Commands.UpdateSupplierQuotation;
 using Supplier.Application.Features.Queries.GetRFQTermsCondition;
+using Supplier.Application.Features.Queries.GetRFQESign;
 using Supplier.Application.Features.Commands.SupplierAnswers;
 
 using Supplier.Application.Features.Queries.GetSupplier;
@@ -121,6 +122,37 @@ namespace Supplier.API.Controllers
             });
         }
 
+        [HttpPost]
+        [Route("api/v1/supplier/supplier-esign")]
+        [ApiAuthorization(Name = "UPLOAD_SUPPLIER_RFQ_ESIGN")]
+        [ValidateModelState]
+        [SwaggerOperation("UploadSupplierRFQESign")]
+        [SwaggerResponse(201, type: typeof(SuccessResponseDto), description: "E-Sign document uploaded successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UploadSupplierRFQESign(
+            [FromQuery] Guid rfqId,
+            [FromBody] AssetUploadDto document)
+        {
+            var organizationId = GetOrganizationId();
+
+            var result = await _mediator.Send(new UploadRFQESignCommand
+            {
+                RFQId = rfqId,
+                OrganizationId = organizationId,
+                Document = document
+            });
+
+            return StatusCode(201, new SuccessResponseDto
+            {
+                StatusCode = 201,
+                Message = "Success",
+                Description = "E-Sign document uploaded successfully.",
+                Id = result.ToString()
+            });
+        }
+
         [HttpGet]
         [Route("api/v1/supplier/internal/rfq-terms-condition")]
         [ApiAuthorization(Name = "GET_SUPPLIER_RFQ_TERMS_CONDITION")]
@@ -134,6 +166,26 @@ namespace Supplier.API.Controllers
             [FromQuery] Guid rfqId)
         {
             var result = await _mediator.Send(new GetRFQTermsConditionQuery
+            {
+                RFQId = rfqId
+            });
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("api/v1/supplier/internal/rfq-esign")]
+        [ApiAuthorization(Name = "GET_SUPPLIER_RFQ_ESIGN")]
+        [ValidateModelState]
+        [SwaggerOperation("GetSupplierRFQESign")]
+        [SwaggerResponse(200, type: typeof(List<RFQESignDto>), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetSupplierRFQESign(
+            [FromQuery] Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetRFQESignQuery
             {
                 RFQId = rfqId
             });

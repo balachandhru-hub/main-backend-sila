@@ -390,6 +390,30 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                                 x.Id == asset.FileType)?.Key ?? string.Empty,
                 FileName = asset.FileName
             }).ToList();
+            var esignAssetData = await (
+                from mapping in _repositorywrapper.RFQAttachmentMapping.FindByCondition(x =>
+                    x.RFQId == request.RFQId &&
+                    x.Type == Common.ESIGN)
+
+                join asset in _repositorywrapper.Asset.FindByCondition(x => x.IsActive)
+                    on mapping.AssetId equals asset.Id
+
+                select asset
+            ).ToListAsync(cancellationToken);
+
+            var esignDocuments = esignAssetData.Select(asset => new AssetDto
+            {
+                Id = asset.Id,
+                AssetType = metadataList!.FirstOrDefault(x =>
+                                x.Type == Common.ASSET_TYPE &&
+                                x.Id == asset.AssetType)?.Key ?? string.Empty,
+                AssetName = asset.AssetName,
+                FileType = metadataList.FirstOrDefault(x =>
+                                x.Type == Common.FILE_TYPE &&
+                                x.Id == asset.FileType)?.Key ?? string.Empty,
+                FileName = asset.FileName
+            }).ToList();
+
             var supplierIds = await _repositorywrapper.RFQSupplierMapping
             .FindByCondition(x => x.RFQId == request.RFQId)
             .Select(x => x.SupplierId)
@@ -413,6 +437,23 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 _logger.LogInfo(
                     $"No Terms and Condition found for BuyerRFQId: {request.RFQId}");
                 supplierTermsConditions = new List<RFQTermsConditionDto>();
+            }
+
+            // E-Sign status + uploaded document for every supplier invited
+            // to this RFQ, in one call.
+            List<RFQESignDto> supplierESigns;
+
+            try
+            {
+                supplierESigns = await _supplierApiClient.GetRFQESign(
+                    request.RFQId,
+                    cancellationToken);
+            }
+            catch
+            {
+                _logger.LogInfo(
+                    $"No E-Sign found for BuyerRFQId: {request.RFQId}");
+                supplierESigns = new List<RFQESignDto>();
             }
 
             // Verified = this buyer already has an active BuyerSupplierMapping with the
@@ -528,6 +569,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 Status=rfq.Status,
                 TechnicalSpecificationDocuments = technicalDocuments,
                 TermsConditionDocuments = termsDocuments,
+                ESignDocuments = esignDocuments,
                 Questions = questions,
                 Items = items,
                 SupplierIds = suppliers,
@@ -538,7 +580,8 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
 
                 SupplierAnswers = supplierAnswers,
                 InvitedUsers = invitedUsers,
-                SupplierTermsConditions = supplierTermsConditions
+                SupplierTermsConditions = supplierTermsConditions,
+                SupplierESigns = supplierESigns
             };
         }
     }
