@@ -1,5 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 using SharedKernel.Models;
 
 namespace Buyer.Domain.Entities
@@ -18,6 +19,7 @@ namespace Buyer.Domain.Entities
         [Required]
         [ForeignKey("RFQItem")]
         public Guid RFQItemId { get; set; }
+        [DeleteBehavior(DeleteBehavior.NoAction)]
         public RFQItem RFQItem { get; set; }
 
         public Guid SupplierId { get; set; }

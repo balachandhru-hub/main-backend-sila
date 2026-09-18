@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Buyer.Domain.Entities;
 using SharedKernel.Models;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -112,11 +112,6 @@ namespace Buyer.Infrastructure.DbContext
             _ =  modelBuilder.Entity<ApprovalFlowPredefinedMaterialMapping>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQAward>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQAwardItem>().HasIndex(a=>a.IsActive);
-            _ =  modelBuilder.Entity<RFQAwardItem>()
-                .HasOne(a => a.RFQItem)
-                .WithMany()
-                .HasForeignKey(a => a.RFQItemId)
-                .OnDelete(DeleteBehavior.NoAction);
             _ = modelBuilder.Entity<Contract>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<ContractAttachment>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<ContractApprovalFlow>().HasIndex(a=>a.IsActive);
