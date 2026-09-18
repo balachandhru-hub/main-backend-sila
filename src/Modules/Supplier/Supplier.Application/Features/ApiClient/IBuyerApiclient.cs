@@ -78,6 +78,10 @@ CancellationToken cancellationToken = default);
         Task<MessageAttachmentFileDto> DownloadMessageAttachment(
             Guid attachmentId,
             CancellationToken cancellationToken = default);
+
+        Task<ContractResponseDto> GetContract(
+            Guid contractId,
+            CancellationToken cancellationToken = default);
     }
 
 }

@@ -787,5 +787,35 @@ namespace Supplier.Infrastructure.ApiClients
 
             return result ?? new MessageAttachmentFileDto();
         }
+
+        public async Task<ContractResponseDto> GetContract(
+            Guid contractId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/internal-contract/{contractId}");
+
+            AddAccessTokenCookie(request);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch contract.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ContractResponseDto>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new ContractResponseDto();
+        }
+
     }
 }

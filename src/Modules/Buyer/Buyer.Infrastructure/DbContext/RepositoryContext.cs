@@ -59,6 +59,10 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<ApprovalFlowPredefinedMaterialMapping> ApprovalFlowPredefinedMaterialMapping {get;set;}
         public DbSet<RFQAward> RFQAward {get;set;}
         public DbSet<RFQAwardItem> RFQAwardItem {get;set;}
+        public DbSet<Contract> Contract {get;set;}
+        public DbSet<ContractAttachment> ContractAttachment {get;set;}
+        public DbSet<ContractApprovalFlow> ContractApprovalFlow {get;set;}
+        public DbSet<ContractApprovalUserMapping> ContractApprovalUserMapping {get;set;}
 
 
 
@@ -113,6 +117,14 @@ namespace Buyer.Infrastructure.DbContext
                 .WithMany()
                 .HasForeignKey(a => a.RFQItemId)
                 .OnDelete(DeleteBehavior.NoAction);
+            _ = modelBuilder.Entity<Contract>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<ContractAttachment>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<ContractApprovalFlow>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<ContractApprovalUserMapping>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.HasSequence<long>(
+                Common.CONTRACT_NUMBER_SEQUENCE,
+                _configuration[Common.APPLICATION_SCHEMA]!);
+
 
 
 

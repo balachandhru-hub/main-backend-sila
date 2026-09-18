@@ -76,6 +76,21 @@ namespace Buyer.Domain.Common
                 public const string COMPLETE = "COMPLETE";
                 public const string PROCESSING = "PROCESSING";
 
+                public const string CONTRACT_DRAFT_STATUS = "DRAFT";
+                public const string CONTRACT_IN_PROCESS_STATUS = "IN_PROCESS";
+                public const string CONTRACT_COMPLETED_STATUS = "COMPLETED";
+                public const string CONTRACT_REJECTED_STATUS = "REJECTED";
+
+                public const string CONTRACT_ASSET_BUYER_TERMS = "BUYER_TERMS";
+                public const string CONTRACT_ASSET_SUPPLIER_TERMS = "SUPPLIER_TERMS";
+                public const string CONTRACT_ASSET_BUYER_ESIGN = "BUYER_ESIGN";
+                public const string CONTRACT_ASSET_SUPPLIER_ESIGN = "SUPPLIER_ESIGN";
+                public const string CONTRACT_ASSET_SIGNED_CONTRACT = "SIGNED_CONTRACT";
+
+                public const string CONTRACT_NUMBER_SEQUENCE = "ContractSNSequence";
+                public static readonly string CONTRACT_ATTACHMENT = "CONTRACT_ATTACHMENT";
+                
+
 
         }
 }

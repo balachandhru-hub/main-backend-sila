@@ -49,6 +49,10 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IMasterApprovalFlowRepository MasterApprovalFlow {get;}
         IRFQAwardRepository RFQAward { get; }
         IRFQAwardItemRepository RFQAwardItem { get; }
+        IContractRepository Contract { get; }
+        IContractAttachmentRepository ContractAttachment { get; }
+        IContractApprovalFlowRepository ContractApprovalFlow { get; }
+        IContractApprovalUserMappingRepository ContractApprovalUserMapping { get; }
         bool Save();
         Task<bool> SaveAsync();
     }

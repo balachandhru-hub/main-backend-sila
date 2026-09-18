@@ -56,6 +56,10 @@ namespace Buyer.Infrastructure.Repository
         private IMasterApprovalFlowRepository _masterApprovalFlowRepository;
         private IRFQAwardRepository _rfqAwardRepository;
         private IRFQAwardItemRepository _rfqAwardItemRepository;
+        private IContractRepository _contractRepository;
+        private IContractAttachmentRepository _contractAttachmentRepository;
+        private IContractApprovalFlowRepository _contractApprovalFlowRepository;
+        private IContractApprovalUserMappingRepository _contractApprovalUserMappingRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -533,6 +537,50 @@ namespace Buyer.Infrastructure.Repository
                     _rfqAwardItemRepository = new RFQAwardItemRepository(_context);
                 }
                 return _rfqAwardItemRepository;
+            }
+        }
+        public IContractRepository Contract
+        {
+            get
+            {
+                if (_contractRepository == null)
+                {
+                    _contractRepository = new ContractRepository(_context);
+                }
+                return _contractRepository;
+            }
+        }
+        public IContractAttachmentRepository ContractAttachment
+        {
+            get
+            {
+                if (_contractAttachmentRepository == null)
+                {
+                    _contractAttachmentRepository = new ContractAttachmentRepository(_context);
+                }
+                return _contractAttachmentRepository;
+            }
+        }
+        public IContractApprovalFlowRepository ContractApprovalFlow
+        {
+            get
+            {
+                if (_contractApprovalFlowRepository == null)
+                {
+                    _contractApprovalFlowRepository = new ContractApprovalFlowRepository(_context);
+                }
+                return _contractApprovalFlowRepository;
+            }
+        }
+        public IContractApprovalUserMappingRepository ContractApprovalUserMapping
+        {
+            get
+            {
+                if (_contractApprovalUserMappingRepository == null)
+                {
+                    _contractApprovalUserMappingRepository = new ContractApprovalUserMappingRepository(_context);
+                }
+                return _contractApprovalUserMappingRepository;
             }
         }
         public bool Save()
