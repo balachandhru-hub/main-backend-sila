@@ -790,8 +790,6 @@ namespace Supplier.Infrastructure.ApiClients
 
         public async Task<SupplierTermsAndConditionStatusDto> GetSupplierTermsConditionStatus(
             Guid rfqId,
-        public async Task<ContractResponseDto> GetContract(
-            Guid contractId,
             CancellationToken cancellationToken = default)
         {
             var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
@@ -799,7 +797,6 @@ namespace Supplier.Infrastructure.ApiClients
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
                 $"{buyerUrl}/api/v1/buyer/interal/supplier-terms-condition-status?rfqId={rfqId}");
-                $"{buyerUrl}/api/v1/buyer/internal-contract/{contractId}");
 
             AddAccessTokenCookie(request);
 
@@ -819,6 +816,26 @@ namespace Supplier.Infrastructure.ApiClients
 
             return result ?? new SupplierTermsAndConditionStatusDto();
         }
+
+        public async Task<ContractResponseDto> GetContract(
+            Guid contractId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/internal-contract/{contractId}");
+
+            AddAccessTokenCookie(request);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                throw new BadRequestCustomException(
                     "Unable to fetch contract.",
                     error);
             }
