@@ -4,6 +4,7 @@ using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Buyer.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260918125747_AddContractBuyerSupplierApprovalFields")]
+    partial class AddContractBuyerSupplierApprovalFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1818,10 +1821,6 @@ namespace Buyer.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
-
-                    b.Property<bool>("SupplierTermsAndConditionAccepted")
-                        .HasColumnType("bit")
-                        .HasColumnName("supplier_terms_and_condition_accepted");
 
                     b.Property<decimal?>("TaxCharge")
                         .HasColumnType("decimal(18,2)")

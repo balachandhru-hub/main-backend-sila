@@ -4,6 +4,7 @@ using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Buyer.Infrastructure.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20260918115127_AddContractApprovalFlowTables")]
+    partial class AddContractApprovalFlowTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -783,10 +786,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("amount");
 
-                    b.Property<Guid>("BuyerId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("buyer_id");
-
                     b.Property<string>("ContractName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -825,24 +824,12 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("start_date");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("status");
-
-                    b.Property<Guid>("SupplierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_id");
-
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
                         .HasName("pk_contract");
-
-                    b.HasIndex("BuyerId")
-                        .HasDatabaseName("ix_contract_buyer_id");
 
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_contract_is_active");
@@ -927,11 +914,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("comment");
-
                     b.Property<Guid>("ContractApprovalFlowId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("contract_approval_flow_id");
@@ -955,11 +937,6 @@ namespace Buyer.Infrastructure.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int")
                         .HasColumnName("order");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("status");
 
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
@@ -1818,10 +1795,6 @@ namespace Buyer.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
-
-                    b.Property<bool>("SupplierTermsAndConditionAccepted")
-                        .HasColumnType("bit")
-                        .HasColumnName("supplier_terms_and_condition_accepted");
 
                     b.Property<decimal?>("TaxCharge")
                         .HasColumnType("decimal(18,2)")
@@ -3098,21 +3071,12 @@ namespace Buyer.Infrastructure.Migrations
 
             modelBuilder.Entity("Buyer.Domain.Entities.Contract", b =>
                 {
-                    b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
-                        .WithMany()
-                        .HasForeignKey("BuyerId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("fk_contract_buyer_business_profile_buyer_id");
-
                     b.HasOne("Buyer.Domain.Entities.RFQ", "RFQ")
                         .WithMany()
                         .HasForeignKey("RFQId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_contract_rfq_rfqid");
-
-                    b.Navigation("BuyerBusinessProfile");
 
                     b.Navigation("RFQ");
                 });
