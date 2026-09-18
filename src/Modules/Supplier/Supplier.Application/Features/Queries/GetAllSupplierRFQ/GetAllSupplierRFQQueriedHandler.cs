@@ -227,6 +227,25 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     FileName = asset.FileName
                 }).ToList();
             }
+
+            _logger.LogInfo($"Fetching Supplier Terms and Condition status for BuyerRFQId: {request.RFQId}");
+            bool supplierTermsAndConditionAccepted;
+
+            try
+            {
+                var supplierTermsConditionStatus = await _buyerApiClient.GetSupplierTermsConditionStatus(
+                    request.RFQId,
+                    cancellationToken);
+
+                supplierTermsAndConditionAccepted =
+                    supplierTermsConditionStatus?.Status == Common.ACCEPTED_STATUS;
+            }
+            catch
+            {
+                _logger.LogInfo(
+                    $"No Supplier Terms and Condition status found for BuyerRFQId: {request.RFQId}");
+                supplierTermsAndConditionAccepted = false;
+            }
             // Supplier Quotation Header
             var quotation = await _repositorywrapper.SupplierQuotation
                 .FindByCondition(x => x.SupplierRFQId == supplierRFQId)
@@ -306,6 +325,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 ESignDocuments = esignDocuments,
                 SupplierTermsAndCondition = rfq.TermsAndCondition,
                 SupplierTermsConditionDocuments = supplierTermsConditionDocuments,
+                BuyerTermsAndConditionAccepted = rfq.BuyerTermsAndConditionAccepted,
+                SupplierTermsAndConditionAccepted = supplierTermsAndConditionAccepted,
                 Status = rfq.Status,
                 Items = items,
                 Questions = questions,

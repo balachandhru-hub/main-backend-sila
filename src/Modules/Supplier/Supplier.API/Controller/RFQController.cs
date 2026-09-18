@@ -18,6 +18,7 @@ using Supplier.Application.Features.Commands.RFQAttachment;
 using Supplier.Application.Features.Commands.UpdateSupplierQuotation;
 using Supplier.Application.Features.Queries.GetRFQTermsCondition;
 using Supplier.Application.Features.Queries.GetRFQESign;
+using Supplier.Application.Features.Queries.GetBuyerTermsConditionStatus;
 using Supplier.Application.Features.Commands.SupplierAnswers;
 
 using Supplier.Application.Features.Queries.GetSupplier;
@@ -166,6 +167,57 @@ namespace Supplier.API.Controllers
             [FromQuery] Guid rfqId)
         {
             var result = await _mediator.Send(new GetRFQTermsConditionQuery
+            {
+                RFQId = rfqId
+            });
+
+            return Ok(result);
+        }
+
+        [HttpPut]
+        [Route("api/v1/supplier/buyer-terms-condition-status")]
+        [ApiAuthorization(Name = "UPDATE_BUYER_TERMS_CONDITION_STATUS")]
+        [ValidateModelState]
+        [SwaggerOperation("UpdateBuyerTermsConditionStatus")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Buyer Terms and Condition status updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateBuyerTermsConditionStatus(
+            [FromQuery] Guid rfqId,
+            [FromQuery] string status)
+        {
+            var organizationId = GetOrganizationId();
+
+            var result = await _mediator.Send(new UpdateBuyerTermsConditionStatusCommand
+            {
+                RFQId = rfqId,
+                OrganizationId = organizationId,
+                Status = status
+            });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Buyer Terms and Condition status updated successfully.",
+                Id = result.ToString()
+            });
+        }
+
+        [HttpGet]
+        [Route("api/v1/supplier/internal/buyer-terms-condition-status")]
+        [ApiAuthorization(Name = "GET_BUYER_TERMS_CONDITION_STATUS")]
+        [ValidateModelState]
+        [SwaggerOperation("GetBuyerTermsConditionStatus")]
+        [SwaggerResponse(200, type: typeof(List<BuyerTermsAndConditionStatusDto>), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetBuyerTermsConditionStatus(
+            [FromQuery] Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetBuyerTermsConditionStatusQuery
             {
                 RFQId = rfqId
             });

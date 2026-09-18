@@ -45,5 +45,8 @@ CancellationToken cancellationToken = default);
         Task<List<RFQESignDto>> GetRFQESign(
             Guid rfqId,
             CancellationToken cancellationToken = default);
+        Task<List<BuyerTermsAndConditionStatusDto>> GetBuyerTermsConditionStatus(
+            Guid rfqId,
+            CancellationToken cancellationToken = default);
     }
 }

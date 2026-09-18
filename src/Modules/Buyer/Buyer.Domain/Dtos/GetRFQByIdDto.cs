@@ -46,6 +46,8 @@ namespace Buyer.Domain.Dtos
         public List<InvitedUserDto>? InvitedUsers { get; set; }
         public List<RFQTermsConditionDto> SupplierTermsConditions { get; set; } = new();
         public List<RFQESignDto> SupplierESigns { get; set; } = new();
+        public bool SupplierTermsAndConditionAccepted { get; set; }
+        public List<BuyerTermsAndConditionStatusDto> BuyerTermsAndConditionStatuses { get; set; } = new();
         public string Status {get;set;}
 
       

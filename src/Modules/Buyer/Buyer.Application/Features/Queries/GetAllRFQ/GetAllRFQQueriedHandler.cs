@@ -439,6 +439,23 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 supplierTermsConditions = new List<RFQTermsConditionDto>();
             }
 
+            // Buyer Terms and Condition acceptance status for every supplier
+            // invited to this RFQ, in one call.
+            List<BuyerTermsAndConditionStatusDto> buyerTermsConditionStatuses;
+
+            try
+            {
+                buyerTermsConditionStatuses = await _supplierApiClient.GetBuyerTermsConditionStatus(
+                    request.RFQId,
+                    cancellationToken);
+            }
+            catch
+            {
+                _logger.LogInfo(
+                    $"No Buyer Terms and Condition status found for BuyerRFQId: {request.RFQId}");
+                buyerTermsConditionStatuses = new List<BuyerTermsAndConditionStatusDto>();
+            }
+
             // E-Sign status + uploaded document for every supplier invited
             // to this RFQ, in one call.
             List<RFQESignDto> supplierESigns;
@@ -581,7 +598,9 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 SupplierAnswers = supplierAnswers,
                 InvitedUsers = invitedUsers,
                 SupplierTermsConditions = supplierTermsConditions,
-                SupplierESigns = supplierESigns
+                SupplierESigns = supplierESigns,
+                SupplierTermsAndConditionAccepted = rfq.SupplierTermsAndConditionAccepted,
+                BuyerTermsAndConditionStatuses = buyerTermsConditionStatuses
             };
         }
     }

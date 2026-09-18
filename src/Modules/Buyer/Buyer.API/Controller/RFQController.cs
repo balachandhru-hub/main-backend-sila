@@ -20,6 +20,7 @@ using Buyer.Domain.Common;
 using Buyer.Application.Features.Queries.CheckRFQUserAccess;
 using Buyer.Application.Features.Commands.RFQAttachment;
 using Buyer.Application.Features.Queries.GetRFQESign;
+using Buyer.Application.Features.Queries.GetSupplierTermsConditionStatus;
 
 
 namespace Buyer.API.Controllers
@@ -122,6 +123,53 @@ namespace Buyer.API.Controllers
 
             return Ok(result);
         }
+        [HttpPut]
+        [Route("api/v1/buyer/supplier-terms-condition-status")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_SUPPLIER_TERMS_CONDITION_STATUS")]
+        [SwaggerOperation("UpdateSupplierTermsConditionStatus")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier Terms and Condition status updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateSupplierTermsConditionStatus(
+            [FromQuery] Guid rfqId,
+            [FromQuery] string status)
+        {
+            var result = await _mediator.Send(new UpdateSupplierTermsConditionStatusCommand
+            {
+                RFQId = rfqId,
+                Status = status
+            });
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Supplier Terms and Condition status updated successfully.",
+                Id = result.ToString()
+            });
+        }
+
+        [HttpGet]
+        [Route("api/v1/buyer/interal/supplier-terms-condition-status")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_TERMS_CONDITION_STATUS")]
+        [SwaggerOperation("GetSupplierTermsConditionStatus")]
+        [SwaggerResponse(200, type: typeof(SupplierTermsAndConditionStatusDto), description: "Success")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetSupplierTermsConditionStatus([FromQuery] Guid rfqId)
+        {
+            var result = await _mediator.Send(new GetSupplierTermsConditionStatusQuery
+            {
+                RFQId = rfqId
+            });
+
+            return Ok(result);
+        }
+
         [HttpGet]
         [Route("api/v1/buyer/rfq-esign")]
         [ValidateModelState]
