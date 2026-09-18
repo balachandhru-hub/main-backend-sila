@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
      <ItemGroup>
-  
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.17" />
     <ProjectReference Include="..\..\..\Platform\SharedKernel\SharedKernel.csproj" />
   </ItemGroup>
 
