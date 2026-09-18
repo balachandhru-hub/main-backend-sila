@@ -685,5 +685,51 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result ?? new List<RFQESignDto>();
         }
+
+        public async Task<List<BuyerTermsAndConditionStatusDto>> GetBuyerTermsConditionStatus(
+            Guid rfqId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo($"Fetching Buyer Terms and Condition status. RFQId: {rfqId}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/internal/buyer-terms-condition-status?rfqId={rfqId}");
+
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to fetch Buyer Terms and Condition status. RFQId: {rfqId}, " +
+                    $"Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch Buyer Terms and Condition status.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<BuyerTermsAndConditionStatusDto>>(
+                cancellationToken: cancellationToken);
+
+            _logger.LogInfo($"Buyer Terms and Condition status fetched successfully. RFQId: {rfqId}");
+
+            return result ?? new List<BuyerTermsAndConditionStatusDto>();
+        }
     }
 }

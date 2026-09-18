@@ -36,6 +36,8 @@ namespace Supplier.Domain.Entities
 
         public bool TermsAndCondition { get; set; }
 
+        public bool BuyerTermsAndConditionAccepted { get; set; }
+
         public string Status { get; set; }
         public string DeliveryLocation {get;set;}
         public string Currency { get; set; }
