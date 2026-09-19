@@ -10,6 +10,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using SharedKernel.Dto;
 using Buyer.Domain.Dto;
 using Buyer.Application.Features.Queries.GetApprovalKpi;
+using Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics;
 
 
 
@@ -103,6 +104,31 @@ namespace Buyer.API.Controllers
 
             var result = await _mediator.Send(
                 new GetApprovalKpiQuery(userId));
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Aggregated RFQ, supplier and contract figures for the buyer dashboard.
+        /// Uses the RFQ list permission: anyone who can list RFQs can see their analytics.
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/buyer/dashboard-analytics")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_RFQ_MASTER_DATA")]
+        [SwaggerOperation("GetBuyerDashboardAnalytics")]
+        [SwaggerResponse(200, type: typeof(BuyerDashboardAnalyticsDto), description: "Dashboard analytics retrieved successfully")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Buyer not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetDashboardAnalytics(CancellationToken cancellationToken)
+        {
+            Guid organizationId = GetOrganizationId();
+
+            _logger.LogDebug($"Fetching buyer dashboard analytics for OrganizationId: {organizationId}");
+
+            var result = await _mediator.Send(
+                new GetBuyerDashboardAnalyticsQuery(organizationId, GetUserId(), GetRoleId()),
+                cancellationToken);
 
             return Ok(result);
         }

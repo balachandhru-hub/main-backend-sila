@@ -90,8 +90,37 @@ namespace Buyer.Domain.Common
 
                 public const string CONTRACT_NUMBER_SEQUENCE = "ContractSNSequence";
                 public static readonly string CONTRACT_ATTACHMENT = "CONTRACT_ATTACHMENT";
-                
 
+                // ---- RFQ status written by the Freeze Bid action (PUT api/v1/buyer/rfq-status).
+                // UpdateRFQStatusCommandHandler stores the posted value as-is; the buyer UI posts "Freezing".
+                public const string RFQ_FREEZING_STATUS = "Freezing";
 
+                // ---- Dashboard analytics (GET api/v1/buyer/dashboard-analytics)
+                public const int DASHBOARD_TREND_MONTHS = 12;
+                public const int DASHBOARD_TOP_DEPARTMENTS = 8;
+                public const int DASHBOARD_TOP_SUPPLIERS = 6;
+                public const int DASHBOARD_UPCOMING_DEADLINES = 6;
+                public const int DASHBOARD_CLOSING_SOON_DAYS = 7;
+                public const string DASHBOARD_MONTH_FORMAT = "yyyy-MM";
+                public const string DASHBOARD_STAGE_UPCOMING = "Upcoming";
+                public const string DASHBOARD_STAGE_LIVE = "Live";
+                public const string DASHBOARD_STAGE_FROZEN = "Frozen";
+                public const string DASHBOARD_STAGE_BIDDING_CLOSED = "Bidding closed";
+                public const string DASHBOARD_STAGE_AWARDED = "Awarded";
+                public static readonly string[] DASHBOARD_STAGE_ORDER =
+                {
+                        DASHBOARD_STAGE_UPCOMING, DASHBOARD_STAGE_LIVE, DASHBOARD_STAGE_FROZEN,
+                        DASHBOARD_STAGE_BIDDING_CLOSED, DASHBOARD_STAGE_AWARDED
+                };
+                public const string DASHBOARD_UNASSIGNED_DEPARTMENT = "Unassigned";
+                public const string DASHBOARD_UNKNOWN_SUPPLIER_PREFIX = "Supplier";
+                /// <summary>Days-until-close buckets for the closing schedule (inclusive bounds).</summary>
+                public static readonly (string Key, string Label, int FromDay, int ToDay)[] DASHBOARD_CLOSING_WINDOWS =
+                {
+                        ("THIS_WEEK", "0–7 days", 0, 7),
+                        ("NEXT_WEEK", "8–14 days", 8, 14),
+                        ("TWO_TO_FOUR_WEEKS", "15–30 days", 15, 30),
+                        ("LATER", "30+ days", 31, int.MaxValue),
+                };
         }
 }

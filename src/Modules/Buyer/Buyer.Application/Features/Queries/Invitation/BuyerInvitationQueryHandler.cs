@@ -106,26 +106,31 @@ namespace Buyer.Application.Features.Queries.Invitation
                 .Distinct()
                 .ToList();
 
-            var suppliers = new Dictionary<Guid, SupplierProfileDto>();
+            // One batch lookup for the names. It skips suppliers the Supplier service cannot
+            // find (e.g. an inactive profile) instead of failing, so one missing supplier no
+            // longer breaks the whole invitation list; those rows show no organization name.
+            var supplierNames = (await _supplierService.GetSupplierNamesByIds(
+                    supplierIds,
+                    cancellationToken))
+                .GroupBy(x => x.SupplierId)
+                .ToDictionary(g => g.Key, g => g.First().SupplierName);
 
-            foreach (var supplierId in supplierIds)
+            var missingSupplierIds = supplierIds
+                .Where(id => !supplierNames.ContainsKey(id))
+                .ToList();
+
+            if (missingSupplierIds.Any())
             {
-                var supplier = await _supplierService.GetSupplierById(
-                    supplierId,
-                    cancellationToken);
-
-                if (supplier != null)
-                {
-                    suppliers[supplierId] = supplier;
-                }
+                _logger.LogError(
+                    $"Supplier profile not found or inactive for SupplierOrganizationId(s): {string.Join(", ", missingSupplierIds)}");
             }
 
             var result = invitationData
                 .Select(x =>
                 {
-                    suppliers.TryGetValue(
+                    supplierNames.TryGetValue(
                         x.SupplierOrganizationId,
-                        out var supplier);
+                        out var supplierName);
 
                     return new RFQListDto
                     {
@@ -136,8 +141,7 @@ namespace Buyer.Application.Features.Queries.Invitation
                         Description = x.Description,
                         EndDate = x.EndDate,
                         DeliveryLocation = x.DeliveryLocation,
-                        OrganizationName =
-                            supplier?.BusinessProfile?.OrganizationName,
+                        OrganizationName = supplierName,
                         Status = x.Status
                     };
                 })

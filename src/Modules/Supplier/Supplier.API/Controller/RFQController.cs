@@ -32,6 +32,7 @@ using Supplier.Domain.Dto;
 using Supplier.Application.Features.Commands.RFQ;
 using Supplier.Application.Features.Commands.SaveSupplierRFQAward;
 using Supplier.Domain.Common;
+using Supplier.Application.Features.Queries.GetSupplierDashboardAnalytics;
 
 namespace Supplier.API.Controllers
 {
@@ -280,6 +281,27 @@ namespace Supplier.API.Controllers
             query.RoleId = GetRoleId();
 
             var result = await _mediator.Send(query);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Aggregated invitation, quotation and award figures for the supplier dashboard.
+        /// Uses the supplier RFQ list permission: anyone who can list invitations can see their analytics.
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/supplier/dashboard-analytics")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SUPPLIER_RFQ_MASTER_DATA")]
+        [SwaggerOperation("GetSupplierDashboardAnalytics")]
+        [SwaggerResponse(200, type: typeof(SupplierDashboardAnalyticsDto), description: "Dashboard analytics retrieved successfully")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetDashboardAnalytics(CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(
+                new GetSupplierDashboardAnalyticsQuery(GetOrganizationId(), GetUserId(), GetRoleId()),
+                cancellationToken);
 
             return Ok(result);
         }
