@@ -1,15 +1,11 @@
 namespace Supplier.Domain.Dto
 {
     /// <summary>
-    /// Aggregated figures for the supplier dashboard. RFQ invitations can be in any currency and
-    /// the platform holds no exchange rates, so every money figure is reported per currency
-    /// (<see cref="SupplierDashboardMoneyDto"/>) and never summed across currencies.
+    /// Aggregated counts for the supplier dashboard. Deliberately count-only: invitations come in
+    /// many currencies (and some without one), so money is not totalled on the dashboard.
     /// </summary>
     public class SupplierDashboardAnalyticsDto
     {
-        /// <summary>Currencies used by the supplier's invitations, most used first.</summary>
-        public List<SupplierDashboardCurrencyDto> Currencies { get; set; } = new();
-
         public SupplierDashboardKpiDto Kpis { get; set; } = new();
 
         /// <summary>Last 12 calendar months, oldest first.</summary>
@@ -21,8 +17,8 @@ namespace Supplier.Domain.Dto
         /// <summary>Invited → Quoted → Won funnel.</summary>
         public List<SupplierDashboardBreakdownDto> Pipeline { get; set; } = new();
 
-        /// <summary>Submitted quotation value per buyer.</summary>
-        public List<SupplierDashboardBreakdownDto> QuotedValueByBuyer { get; set; } = new();
+        /// <summary>RFQs quoted on per buyer, most first.</summary>
+        public List<SupplierDashboardBreakdownDto> QuotationsByBuyer { get; set; } = new();
 
         /// <summary>Open invitations bucketed by how soon bidding closes.</summary>
         public List<SupplierDashboardBreakdownDto> ClosingSchedule { get; set; } = new();
@@ -56,16 +52,18 @@ namespace Supplier.Domain.Dto
         public int ActionRequired { get; set; }
 
         public int QuotationsSubmitted { get; set; }
+
+        /// <summary>Quoted RFQs whose bidding is frozen or closed but not yet awarded.</summary>
+        public int AwaitingDecision { get; set; }
+
+        /// <summary>RFQs where at least one line item was awarded to this supplier.</summary>
         public int RfqsWon { get; set; }
+
+        /// <summary>Quoted RFQs awarded to another supplier.</summary>
+        public int RfqsNotAwarded { get; set; }
 
         /// <summary>Won as a percentage of decided RFQs this supplier quoted on.</summary>
         public decimal WinRate { get; set; }
-
-        /// <summary>Total of submitted quotations, per currency.</summary>
-        public List<SupplierDashboardMoneyDto> QuotedValue { get; set; } = new();
-
-        /// <summary>Quoted value of awarded line items, per currency.</summary>
-        public List<SupplierDashboardMoneyDto> WonValue { get; set; } = new();
     }
 
     public class SupplierMonthlyTrendDto
@@ -75,9 +73,6 @@ namespace Supplier.Domain.Dto
         public int Invited { get; set; }
         public int Quoted { get; set; }
         public int Won { get; set; }
-
-        /// <summary>Submitted quotation value that month, per currency.</summary>
-        public List<SupplierDashboardMoneyDto> QuotedValue { get; set; } = new();
     }
 
     public class SupplierDashboardBreakdownDto
@@ -88,8 +83,6 @@ namespace Supplier.Domain.Dto
 
         /// <summary>Items in this slice still waiting on the supplier (e.g. not yet quoted).</summary>
         public int PendingCount { get; set; }
-
-        public List<SupplierDashboardMoneyDto> Values { get; set; } = new();
     }
 
     public class SupplierUpcomingDeadlineDto

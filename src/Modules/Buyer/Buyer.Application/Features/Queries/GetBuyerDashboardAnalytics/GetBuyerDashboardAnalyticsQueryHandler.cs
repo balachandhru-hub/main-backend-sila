@@ -32,8 +32,6 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
             string Title,
             string Status,
             string Department,
-            string Currency,
-            decimal Budget,
             DateTime StartDate,
             DateTime EndDate,
             DateTime DateCreated);
@@ -67,8 +65,6 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                     x.Title,
                     x.Status,
                     x.Department,
-                    x.Currency,
-                    x.Budget,
                     x.StartDate,
                     x.EndDate,
                     x.DateCreated))
@@ -77,18 +73,8 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
             var rfqIds = rfqs.Select(x => x.Id).ToList();
             var now = DateTime.UtcNow;
 
-            // RFQs carry their own currency and there are no exchange rates, so money is always
-            // grouped per currency code; nothing is converted or dropped.
-            static string CurrencyOf(string? code) =>
-                string.IsNullOrWhiteSpace(code) ? Common.DASHBOARD_UNSPECIFIED_CURRENCY : code.Trim().ToUpperInvariant();
-
-            static List<DashboardMoneyDto> ByCurrency<T>(IEnumerable<T> items, Func<T, string?> currency, Func<T, decimal> amount) =>
-                items
-                    .GroupBy(x => CurrencyOf(currency(x)))
-                    .Select(g => new DashboardMoneyDto { Currency = g.Key, Amount = g.Sum(amount), Count = g.Count() })
-                    .OrderByDescending(x => x.Amount)
-                    .ToList();
-
+            // Awarded comes from the RFQ status (set by SaveRFQAwardCommandHandler); frozen from the
+            // status posted by the Freeze Bid action; the rest from the bidding window dates.
             string StageOf(RfqRow rfq)
             {
                 if (string.Equals(rfq.Status, Common.RFQ_AWARDED_STATUS, StringComparison.OrdinalIgnoreCase)) return Common.DASHBOARD_STAGE_AWARDED;
@@ -122,13 +108,28 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                 .Select(x => new { x.RFQId, x.DateCreated })
                 .ToListAsync(cancellationToken);
 
-            var rfqCurrency = rfqs.ToDictionary(x => x.Id, x => CurrencyOf(x.Currency));
-            var contracts = (await _repository.Contract
-                    .FindByCondition(x => x.BuyerId == buyer.Id && rfqIds.Contains(x.RFQId) && x.IsActive)
-                    .Select(x => new { x.RFQId, x.SupplierId, x.Amount, x.Status })
-                    .ToListAsync(cancellationToken))
-                .Select(x => new { x.SupplierId, x.Amount, x.Status, Currency = rfqCurrency[x.RFQId] })
-                .ToList();
+            var contracts = await _repository.Contract
+                .FindByCondition(x => x.BuyerId == buyer.Id && rfqIds.Contains(x.RFQId) && x.IsActive)
+                .Select(x => new { x.SupplierId, x.Status })
+                .ToListAsync(cancellationToken);
+
+            // ---- Department names: RFQ.Department stores the BuyerDepartment id.
+            var departmentNames = await _repository.BuyerDepartment
+                .FindByCondition(x => x.BuyerId == buyer.Id)
+                .ToDictionaryAsync(x => x.Id, x => x.Department, cancellationToken);
+
+            string DepartmentOf(string? value)
+            {
+                if (string.IsNullOrWhiteSpace(value)) return Common.DASHBOARD_UNASSIGNED_DEPARTMENT;
+                if (Guid.TryParse(value, out var id))
+                {
+                    return departmentNames.TryGetValue(id, out var name) && !string.IsNullOrWhiteSpace(name)
+                        ? name.Trim()
+                        : Common.DASHBOARD_UNKNOWN_DEPARTMENT;
+                }
+                // Older RFQs stored the department name itself.
+                return value.Trim();
+            }
 
             // ---- Department names: RFQ.Department stores the BuyerDepartment id.
             var departmentNames = await _repository.BuyerDepartment
@@ -154,26 +155,19 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
 
             var result = new BuyerDashboardAnalyticsDto
             {
-                Currencies = rfqs
-                    .GroupBy(x => CurrencyOf(x.Currency))
-                    .Select(g => new DashboardCurrencyDto { Code = g.Key, RfqCount = g.Count() })
-                    .OrderByDescending(x => x.RfqCount)
-                    .ToList(),
                 Kpis = new BuyerDashboardKpiDto
                 {
                     TotalRfqs = rfqs.Count,
                     LiveRfqs = stages.Values.Count(s => s == Common.DASHBOARD_STAGE_LIVE),
                     ClosingThisWeek = rfqs.Count(x => stages[x.Id] == Common.DASHBOARD_STAGE_LIVE && x.EndDate <= now.AddDays(Common.DASHBOARD_CLOSING_SOON_DAYS)),
+                    AwaitingAward = stages.Values.Count(s => s == Common.DASHBOARD_STAGE_FROZEN || s == Common.DASHBOARD_STAGE_BIDDING_CLOSED),
                     AwardedRfqs = awardedCount,
                     AwardRate = endedCount == 0 ? 0 : Math.Round(awardedCount * 100m / endedCount, 1),
-                    OpenBudget = ByCurrency(
-                        rfqs.Where(x => stages[x.Id] == Common.DASHBOARD_STAGE_LIVE || stages[x.Id] == Common.DASHBOARD_STAGE_UPCOMING),
-                        x => x.Currency, x => x.Budget),
                     SuppliersEngaged = supplierInvites.Select(x => x.SupplierId).Distinct().Count()
                         + externalInvites.Select(x => x.ExternalSupplierId).Distinct().Count(),
+                    Contracts = contracts.Count,
                     ActiveContracts = contracts.Count(x =>
                         !string.Equals(x.Status, Common.CONTRACT_REJECTED_STATUS, StringComparison.OrdinalIgnoreCase)),
-                    ContractValue = ByCurrency(contracts, x => x.Currency, x => x.Amount),
                 },
             };
 
@@ -183,51 +177,38 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
             {
                 var monthStart = firstMonth.AddMonths(i);
                 var monthEnd = monthStart.AddMonths(1);
-                var created = rfqs.Where(x => x.DateCreated >= monthStart && x.DateCreated < monthEnd).ToList();
 
                 result.MonthlyTrend.Add(new BuyerMonthlyTrendDto
                 {
                     Month = monthStart.ToString(Common.DASHBOARD_MONTH_FORMAT),
-                    Created = created.Count,
+                    Created = rfqs.Count(x => x.DateCreated >= monthStart && x.DateCreated < monthEnd),
                     Awarded = awards.Where(a => a.DateCreated >= monthStart && a.DateCreated < monthEnd)
                         .Select(a => a.RFQId).Distinct().Count(),
-                    Budget = ByCurrency(created, x => x.Currency, x => x.Budget),
                 });
             }
 
             // ---- Lifecycle breakdown (fixed order so the chart reads left to right)
             result.StatusBreakdown = Common.DASHBOARD_STAGE_ORDER
-                .Select(stage =>
+                .Select(stage => new DashboardBreakdownDto
                 {
-                    var inStage = rfqs.Where(x => stages[x.Id] == stage).ToList();
-                    return new DashboardBreakdownDto
-                    {
-                        Key = stage.ToUpperInvariant().Replace(' ', '_'),
-                        Label = stage,
-                        Count = inStage.Count,
-                        Values = ByCurrency(inStage, x => x.Currency, x => x.Budget),
-                    };
+                    Key = stage.ToUpperInvariant().Replace(' ', '_'),
+                    Label = stage,
+                    Count = stages.Values.Count(s => s == stage),
                 })
                 .ToList();
 
-            // ---- Budget by department (the UI ranks these within the selected currency)
-            result.BudgetByDepartment = rfqs
-                .GroupBy(x => string.IsNullOrWhiteSpace(x.Department) ? string.Empty : x.Department.Trim())
-                .Select(g => new DashboardBreakdownDto
-                {
-                    Key = string.IsNullOrEmpty(g.Key) ? Common.DASHBOARD_UNASSIGNED_DEPARTMENT : g.Key,
-                    Label = DepartmentOf(g.Key),
-                    Count = g.Count(),
-                    Values = ByCurrency(g, x => x.Currency, x => x.Budget),
-                })
+            // ---- RFQs by department
+            result.RfqsByDepartment = rfqs
+                .GroupBy(x => DepartmentOf(x.Department))
+                .Select(g => new DashboardBreakdownDto { Key = g.Key, Label = g.Key, Count = g.Count() })
                 .OrderByDescending(x => x.Count)
                 .Take(Common.DASHBOARD_MAX_BREAKDOWN_ROWS)
                 .ToList();
 
-            // ---- Contract value by supplier (names resolved through the Supplier service)
+            // ---- Contracts by supplier (names resolved through the Supplier service)
             var supplierGroups = contracts
                 .GroupBy(x => x.SupplierId)
-                .Select(g => new { SupplierId = g.Key, Count = g.Count(), Values = ByCurrency(g, x => x.Currency, x => x.Amount) })
+                .Select(g => new { SupplierId = g.Key, Count = g.Count() })
                 .OrderByDescending(x => x.Count)
                 .Take(Common.DASHBOARD_MAX_BREAKDOWN_ROWS)
                 .ToList();
@@ -251,7 +232,7 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                 }
             }
 
-            result.ContractValueBySupplier = supplierGroups
+            result.ContractsBySupplier = supplierGroups
                 .Select(x => new DashboardBreakdownDto
                 {
                     Key = x.SupplierId.ToString(),
@@ -259,7 +240,6 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                         ? name
                         : $"{Common.DASHBOARD_UNKNOWN_SUPPLIER_PREFIX} {x.SupplierId.ToString()[..8]}",
                     Count = x.Count,
-                    Values = x.Values,
                 })
                 .ToList();
 
@@ -267,20 +247,15 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
             var today = now.Date;
             var live = rfqs.Where(x => stages[x.Id] == Common.DASHBOARD_STAGE_LIVE).ToList();
             result.ClosingSchedule = Common.DASHBOARD_CLOSING_WINDOWS
-                .Select(w =>
+                .Select(w => new DashboardBreakdownDto
                 {
-                    var matching = live.Where(x =>
+                    Key = w.Key,
+                    Label = w.Label,
+                    Count = live.Count(x =>
                     {
                         int days = (int)(x.EndDate.Date - today).TotalDays;
                         return days >= w.FromDay && days <= w.ToDay;
-                    }).ToList();
-                    return new DashboardBreakdownDto
-                    {
-                        Key = w.Key,
-                        Label = w.Label,
-                        Count = matching.Count,
-                        Values = ByCurrency(matching, x => x.Currency, x => x.Budget),
-                    };
+                    }),
                 })
                 .ToList();
 
@@ -293,10 +268,9 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                     RfqId = x.Id,
                     RfqNumber = x.RFQNumber,
                     Title = x.Title,
+                    Department = DepartmentOf(x.Department),
                     EndDate = x.EndDate,
                     InvitedSuppliers = invitedPerRfq.TryGetValue(x.Id, out var invited) ? invited : 0,
-                    Budget = x.Budget,
-                    Currency = CurrencyOf(x.Currency),
                 })
                 .ToList();
 

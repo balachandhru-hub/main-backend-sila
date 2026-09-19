@@ -56,8 +56,8 @@ namespace Supplier.Domain.Common
 
         // ---- Dashboard analytics (GET api/v1/supplier/dashboard-analytics)
         public const int DASHBOARD_TREND_MONTHS = 12;
-        /// <summary>Rows returned per breakdown; the UI ranks them within the selected currency.</summary>
-        public const int DASHBOARD_MAX_BREAKDOWN_ROWS = 20;
+        /// <summary>Rows returned per ranked breakdown (departments, suppliers, buyers).</summary>
+        public const int DASHBOARD_MAX_BREAKDOWN_ROWS = 8;
         public const int DASHBOARD_UPCOMING_DEADLINES = 6;
         public const int DASHBOARD_CLOSING_SOON_DAYS = 7;
         public const string DASHBOARD_MONTH_FORMAT = "yyyy-MM";

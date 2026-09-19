@@ -29,7 +29,6 @@ namespace Supplier.Application.Features.Queries.GetSupplierDashboardAnalytics
             string Title,
             string BuyerName,
             string Status,
-            string Currency,
             DateTime StartDate,
             DateTime EndDate,
             DateTime DateCreated);
@@ -70,7 +69,6 @@ namespace Supplier.Application.Features.Queries.GetSupplierDashboardAnalytics
                     x.Title,
                     x.BuyerName,
                     x.Status,
-                    x.Currency,
                     x.StartDate,
                     x.EndDate,
                     x.DateCreated))
@@ -85,42 +83,22 @@ namespace Supplier.Application.Features.Queries.GetSupplierDashboardAnalytics
                     invitationIds.Contains(x.SupplierRFQId) &&
                     x.Status == Common.SUBMITTED_STATUS &&
                     x.IsActive)
-                .Select(x => new { x.Id, x.SupplierRFQId, x.TotalPrice, x.DateUpdated })
+                .Select(x => new { x.SupplierRFQId, x.DateUpdated })
                 .ToListAsync(cancellationToken);
 
             // An RFQ is "won" when at least one of its line items was awarded to this supplier.
+            // (Awarding marks every invited supplier's RFQ copy AWARDED, so status alone is not a win.)
             var wonItems = await _repository.SupplierRFQItem
                 .FindByCondition(x =>
                     invitationIds.Contains(x.SupplierRFQId) &&
                     x.IsAwarded &&
                     x.AwardedSupplierId == supplier.Id &&
                     x.IsActive)
-                .Select(x => new { x.Id, x.SupplierRFQId, x.DateUpdated })
+                .Select(x => new { x.SupplierRFQId, x.DateUpdated })
                 .ToListAsync(cancellationToken);
 
-            var wonItemIds = wonItems.Select(x => x.Id).ToList();
-            var wonItemAmounts = await _repository.SupplierQuotationItem
-                .FindByCondition(x => wonItemIds.Contains(x.SupplierRFQItemId) && x.SupplierId == supplier.Id && x.IsActive)
-                .Select(x => new { x.SupplierRFQItemId, x.SupplierQuotationId, x.QuotedAmount })
-                .ToListAsync(cancellationToken);
-
-            var submittedIds = submitted.Select(x => x.Id).ToHashSet();
             var quotedRfqIds = submitted.Select(x => x.SupplierRFQId).ToHashSet();
             var wonRfqIds = wonItems.Select(x => x.SupplierRFQId).ToHashSet();
-
-            // Invitations carry their own currency and there are no exchange rates, so money is
-            // always grouped per currency code; nothing is converted or dropped.
-            static string CurrencyOf(string? code) =>
-                string.IsNullOrWhiteSpace(code) ? Common.DASHBOARD_UNSPECIFIED_CURRENCY : code.Trim().ToUpperInvariant();
-
-            static List<SupplierDashboardMoneyDto> ByCurrency<T>(IEnumerable<T> items, Func<T, string> currency, Func<T, decimal> amount) =>
-                items
-                    .GroupBy(currency)
-                    .Select(g => new SupplierDashboardMoneyDto { Currency = g.Key, Amount = g.Sum(amount), Count = g.Count() })
-                    .OrderByDescending(x => x.Amount)
-                    .ToList();
-
-            var currencyByRfq = invitations.ToDictionary(x => x.Id, x => CurrencyOf(x.Currency));
 
             string StageOf(InvitationRow rfq)
             {
@@ -135,41 +113,25 @@ namespace Supplier.Application.Features.Queries.GetSupplierDashboardAnalytics
             var stages = invitations.ToDictionary(x => x.Id, StageOf);
             bool IsOpen(Guid id) => stages[id] == Common.DASHBOARD_STAGE_OPEN || stages[id] == Common.DASHBOARD_STAGE_QUOTED;
 
-            // Won value: the quoted amount of awarded line items from submitted quotations.
-            // Lot-wise RFQs carry no item prices, so fall back to the quotation total.
-            decimal WonValueOf(Guid supplierRfqId)
-            {
-                var itemIds = wonItems.Where(i => i.SupplierRFQId == supplierRfqId).Select(i => i.Id).ToHashSet();
-                var itemValue = wonItemAmounts
-                    .Where(a => itemIds.Contains(a.SupplierRFQItemId) && submittedIds.Contains(a.SupplierQuotationId))
-                    .Sum(a => a.QuotedAmount);
-                if (itemValue > 0) return itemValue;
-                return submitted.Where(q => q.SupplierRFQId == supplierRfqId).Sum(q => q.TotalPrice);
-            }
-
-            var decided = invitations.Count(x => quotedRfqIds.Contains(x.Id) &&
-                (stages[x.Id] == Common.DASHBOARD_STAGE_WON || stages[x.Id] == Common.DASHBOARD_STAGE_NOT_AWARDED));
+            int notAwarded = invitations.Count(x => quotedRfqIds.Contains(x.Id) && stages[x.Id] == Common.DASHBOARD_STAGE_NOT_AWARDED);
+            int decided = wonRfqIds.Count + notAwarded;
 
             var quotedValue = ByCurrency(submitted, q => currencyByRfq[q.SupplierRFQId], q => q.TotalPrice);
             var wonValue = ByCurrency(wonRfqIds, id => currencyByRfq[id], WonValueOf);
 
             var result = new SupplierDashboardAnalyticsDto
             {
-                Currencies = invitations
-                    .GroupBy(x => currencyByRfq[x.Id])
-                    .Select(g => new SupplierDashboardCurrencyDto { Code = g.Key, RfqCount = g.Count() })
-                    .OrderByDescending(x => x.RfqCount)
-                    .ToList(),
                 Kpis = new SupplierDashboardKpiDto
                 {
                     Invitations = invitations.Count,
                     OpenForBidding = invitations.Count(x => IsOpen(x.Id)),
                     ActionRequired = invitations.Count(x => stages[x.Id] == Common.DASHBOARD_STAGE_OPEN && x.EndDate <= now.AddDays(Common.DASHBOARD_CLOSING_SOON_DAYS)),
                     QuotationsSubmitted = quotedRfqIds.Count,
+                    AwaitingDecision = invitations.Count(x => quotedRfqIds.Contains(x.Id) &&
+                        (stages[x.Id] == Common.DASHBOARD_STAGE_FROZEN || stages[x.Id] == Common.DASHBOARD_STAGE_CLOSED)),
                     RfqsWon = wonRfqIds.Count,
+                    RfqsNotAwarded = notAwarded,
                     WinRate = decided == 0 ? 0 : Math.Round(wonRfqIds.Count * 100m / decided, 1),
-                    QuotedValue = quotedValue,
-                    WonValue = wonValue,
                 },
             };
 
@@ -179,16 +141,15 @@ namespace Supplier.Application.Features.Queries.GetSupplierDashboardAnalytics
             {
                 var start = firstMonth.AddMonths(i);
                 var end = start.AddMonths(1);
-                var quotedThisMonth = submitted.Where(q => q.DateUpdated >= start && q.DateUpdated < end).ToList();
 
                 result.MonthlyTrend.Add(new SupplierMonthlyTrendDto
                 {
                     Month = start.ToString(Common.DASHBOARD_MONTH_FORMAT),
                     Invited = invitations.Count(x => x.DateCreated >= start && x.DateCreated < end),
-                    Quoted = quotedThisMonth.Select(q => q.SupplierRFQId).Distinct().Count(),
+                    Quoted = submitted.Where(q => q.DateUpdated >= start && q.DateUpdated < end)
+                        .Select(q => q.SupplierRFQId).Distinct().Count(),
                     Won = wonItems.Where(w => w.DateUpdated >= start && w.DateUpdated < end)
                         .Select(w => w.SupplierRFQId).Distinct().Count(),
-                    QuotedValue = ByCurrency(quotedThisMonth, q => currencyByRfq[q.SupplierRFQId], q => q.TotalPrice),
                 });
             }
 
@@ -206,29 +167,15 @@ namespace Supplier.Application.Features.Queries.GetSupplierDashboardAnalytics
             result.Pipeline = new List<SupplierDashboardBreakdownDto>
             {
                 new() { Key = Common.DASHBOARD_FUNNEL_INVITED.ToUpperInvariant(), Label = Common.DASHBOARD_FUNNEL_INVITED, Count = invitations.Count },
-                new()
-                {
-                    Key = Common.DASHBOARD_FUNNEL_QUOTED.ToUpperInvariant(), Label = Common.DASHBOARD_FUNNEL_QUOTED, Count = quotedRfqIds.Count,
-                    Values = quotedValue,
-                },
-                new()
-                {
-                    Key = Common.DASHBOARD_FUNNEL_WON.ToUpperInvariant(), Label = Common.DASHBOARD_FUNNEL_WON, Count = wonRfqIds.Count,
-                    Values = wonValue,
-                },
+                new() { Key = Common.DASHBOARD_FUNNEL_QUOTED.ToUpperInvariant(), Label = Common.DASHBOARD_FUNNEL_QUOTED, Count = quotedRfqIds.Count },
+                new() { Key = Common.DASHBOARD_FUNNEL_WON.ToUpperInvariant(), Label = Common.DASHBOARD_FUNNEL_WON, Count = wonRfqIds.Count },
             };
 
-            // ---- Quoted value by buyer (the UI ranks these within the selected currency)
+            // ---- RFQs quoted on, per buyer
             var buyerByRfq = invitations.ToDictionary(x => x.Id, x => string.IsNullOrWhiteSpace(x.BuyerName) ? Common.DASHBOARD_UNKNOWN_BUYER : x.BuyerName.Trim());
-            result.QuotedValueByBuyer = submitted
-                .GroupBy(q => buyerByRfq[q.SupplierRFQId])
-                .Select(g => new SupplierDashboardBreakdownDto
-                {
-                    Key = g.Key,
-                    Label = g.Key,
-                    Count = g.Select(q => q.SupplierRFQId).Distinct().Count(),
-                    Values = ByCurrency(g, q => currencyByRfq[q.SupplierRFQId], q => q.TotalPrice),
-                })
+            result.QuotationsByBuyer = quotedRfqIds
+                .GroupBy(id => buyerByRfq[id])
+                .Select(g => new SupplierDashboardBreakdownDto { Key = g.Key, Label = g.Key, Count = g.Count() })
                 .OrderByDescending(x => x.Count)
                 .Take(Common.DASHBOARD_MAX_BREAKDOWN_ROWS)
                 .ToList();
