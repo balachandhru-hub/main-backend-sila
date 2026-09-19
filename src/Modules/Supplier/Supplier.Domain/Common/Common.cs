@@ -77,8 +77,6 @@ namespace Supplier.Domain.Common
         public const string DASHBOARD_FUNNEL_QUOTED = "Quoted";
         public const string DASHBOARD_FUNNEL_WON = "Won";
         public const string DASHBOARD_UNKNOWN_BUYER = "Unknown buyer";
-        /// <summary>Bucket for invitations saved without a currency.</summary>
-        public const string DASHBOARD_UNSPECIFIED_CURRENCY = "N/A";
         /// <summary>Days-until-close buckets for the closing schedule (inclusive bounds).</summary>
         public static readonly (string Key, string Label, int FromDay, int ToDay)[] DASHBOARD_CLOSING_WINDOWS =
         {

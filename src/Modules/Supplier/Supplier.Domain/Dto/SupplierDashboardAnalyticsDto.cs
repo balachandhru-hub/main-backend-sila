@@ -27,22 +27,6 @@ namespace Supplier.Domain.Dto
         public List<SupplierUpcomingDeadlineDto> UpcomingDeadlines { get; set; } = new();
     }
 
-    /// <summary>An amount in a single currency.</summary>
-    public class SupplierDashboardMoneyDto
-    {
-        public string Currency { get; set; } = string.Empty;
-        public decimal Amount { get; set; }
-
-        /// <summary>How many items (RFQs, contracts or quotations) make up the amount.</summary>
-        public int Count { get; set; }
-    }
-
-    public class SupplierDashboardCurrencyDto
-    {
-        public string Code { get; set; } = string.Empty;
-        public int RfqCount { get; set; }
-    }
-
     public class SupplierDashboardKpiDto
     {
         public int Invitations { get; set; }

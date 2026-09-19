@@ -102,7 +102,7 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                 .GroupBy(x => x)
                 .ToDictionary(g => g.Key, g => g.Count());
 
-            // ---- Awards and contracts (a contract is valued in its RFQ's currency)
+            // ---- Awards and contracts
             var awards = await _repository.RFQAward
                 .FindByCondition(x => rfqIds.Contains(x.RFQId) && x.IsActive)
                 .Select(x => new { x.RFQId, x.DateCreated })
@@ -112,24 +112,6 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                 .FindByCondition(x => x.BuyerId == buyer.Id && rfqIds.Contains(x.RFQId) && x.IsActive)
                 .Select(x => new { x.SupplierId, x.Status })
                 .ToListAsync(cancellationToken);
-
-            // ---- Department names: RFQ.Department stores the BuyerDepartment id.
-            var departmentNames = await _repository.BuyerDepartment
-                .FindByCondition(x => x.BuyerId == buyer.Id)
-                .ToDictionaryAsync(x => x.Id, x => x.Department, cancellationToken);
-
-            string DepartmentOf(string? value)
-            {
-                if (string.IsNullOrWhiteSpace(value)) return Common.DASHBOARD_UNASSIGNED_DEPARTMENT;
-                if (Guid.TryParse(value, out var id))
-                {
-                    return departmentNames.TryGetValue(id, out var name) && !string.IsNullOrWhiteSpace(name)
-                        ? name.Trim()
-                        : Common.DASHBOARD_UNKNOWN_DEPARTMENT;
-                }
-                // Older RFQs stored the department name itself.
-                return value.Trim();
-            }
 
             // ---- Department names: RFQ.Department stores the BuyerDepartment id.
             var departmentNames = await _repository.BuyerDepartment

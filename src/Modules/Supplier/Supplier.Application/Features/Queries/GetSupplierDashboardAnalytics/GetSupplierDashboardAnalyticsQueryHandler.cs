@@ -116,9 +116,6 @@ namespace Supplier.Application.Features.Queries.GetSupplierDashboardAnalytics
             int notAwarded = invitations.Count(x => quotedRfqIds.Contains(x.Id) && stages[x.Id] == Common.DASHBOARD_STAGE_NOT_AWARDED);
             int decided = wonRfqIds.Count + notAwarded;
 
-            var quotedValue = ByCurrency(submitted, q => currencyByRfq[q.SupplierRFQId], q => q.TotalPrice);
-            var wonValue = ByCurrency(wonRfqIds, id => currencyByRfq[id], WonValueOf);
-
             var result = new SupplierDashboardAnalyticsDto
             {
                 Kpis = new SupplierDashboardKpiDto
