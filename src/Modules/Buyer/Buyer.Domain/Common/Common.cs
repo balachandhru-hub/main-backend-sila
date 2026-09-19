@@ -97,8 +97,8 @@ namespace Buyer.Domain.Common
 
                 // ---- Dashboard analytics (GET api/v1/buyer/dashboard-analytics)
                 public const int DASHBOARD_TREND_MONTHS = 12;
-                public const int DASHBOARD_TOP_DEPARTMENTS = 8;
-                public const int DASHBOARD_TOP_SUPPLIERS = 6;
+                /// <summary>Rows returned per breakdown; the UI ranks them within the selected currency.</summary>
+                public const int DASHBOARD_MAX_BREAKDOWN_ROWS = 20;
                 public const int DASHBOARD_UPCOMING_DEADLINES = 6;
                 public const int DASHBOARD_CLOSING_SOON_DAYS = 7;
                 public const string DASHBOARD_MONTH_FORMAT = "yyyy-MM";
@@ -113,6 +113,10 @@ namespace Buyer.Domain.Common
                         DASHBOARD_STAGE_BIDDING_CLOSED, DASHBOARD_STAGE_AWARDED
                 };
                 public const string DASHBOARD_UNASSIGNED_DEPARTMENT = "Unassigned";
+                /// <summary>Label for an RFQ whose department id no longer exists.</summary>
+                public const string DASHBOARD_UNKNOWN_DEPARTMENT = "Deleted department";
+                /// <summary>Bucket for RFQs saved without a currency.</summary>
+                public const string DASHBOARD_UNSPECIFIED_CURRENCY = "N/A";
                 public const string DASHBOARD_UNKNOWN_SUPPLIER_PREFIX = "Supplier";
                 /// <summary>Days-until-close buckets for the closing schedule (inclusive bounds).</summary>
                 public static readonly (string Key, string Label, int FromDay, int ToDay)[] DASHBOARD_CLOSING_WINDOWS =

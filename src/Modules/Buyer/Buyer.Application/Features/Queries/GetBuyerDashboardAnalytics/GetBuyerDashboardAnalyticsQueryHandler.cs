@@ -77,16 +77,17 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
             var rfqIds = rfqs.Select(x => x.Id).ToList();
             var now = DateTime.UtcNow;
 
-            var currency = rfqs
-                .Where(x => !string.IsNullOrWhiteSpace(x.Currency))
-                .GroupBy(x => x.Currency.Trim().ToUpperInvariant())
-                .OrderByDescending(g => g.Count())
-                .Select(g => g.Key)
-                .FirstOrDefault() ?? string.Empty;
+            // RFQs carry their own currency and there are no exchange rates, so money is always
+            // grouped per currency code; nothing is converted or dropped.
+            static string CurrencyOf(string? code) =>
+                string.IsNullOrWhiteSpace(code) ? Common.DASHBOARD_UNSPECIFIED_CURRENCY : code.Trim().ToUpperInvariant();
 
-            bool InCurrency(string? value) =>
-                !string.IsNullOrWhiteSpace(value) &&
-                string.Equals(value.Trim(), currency, StringComparison.OrdinalIgnoreCase);
+            static List<DashboardMoneyDto> ByCurrency<T>(IEnumerable<T> items, Func<T, string?> currency, Func<T, decimal> amount) =>
+                items
+                    .GroupBy(x => CurrencyOf(currency(x)))
+                    .Select(g => new DashboardMoneyDto { Currency = g.Key, Amount = g.Sum(amount), Count = g.Count() })
+                    .OrderByDescending(x => x.Amount)
+                    .ToList();
 
             string StageOf(RfqRow rfq)
             {
@@ -115,21 +116,37 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                 .GroupBy(x => x)
                 .ToDictionary(g => g.Key, g => g.Count());
 
-            // ---- Awards and contracts
+            // ---- Awards and contracts (a contract is valued in its RFQ's currency)
             var awards = await _repository.RFQAward
                 .FindByCondition(x => rfqIds.Contains(x.RFQId) && x.IsActive)
                 .Select(x => new { x.RFQId, x.DateCreated })
                 .ToListAsync(cancellationToken);
 
-            var contracts = await _repository.Contract
-                .FindByCondition(x => x.BuyerId == buyer.Id && rfqIds.Contains(x.RFQId) && x.IsActive)
-                .Select(x => new { x.RFQId, x.SupplierId, x.Amount, x.Status })
-                .ToListAsync(cancellationToken);
-
-            var rfqCurrency = rfqs.ToDictionary(x => x.Id, x => x.Currency);
-            var contractsInCurrency = contracts
-                .Where(x => rfqCurrency.TryGetValue(x.RFQId, out var c) && InCurrency(c))
+            var rfqCurrency = rfqs.ToDictionary(x => x.Id, x => CurrencyOf(x.Currency));
+            var contracts = (await _repository.Contract
+                    .FindByCondition(x => x.BuyerId == buyer.Id && rfqIds.Contains(x.RFQId) && x.IsActive)
+                    .Select(x => new { x.RFQId, x.SupplierId, x.Amount, x.Status })
+                    .ToListAsync(cancellationToken))
+                .Select(x => new { x.SupplierId, x.Amount, x.Status, Currency = rfqCurrency[x.RFQId] })
                 .ToList();
+
+            // ---- Department names: RFQ.Department stores the BuyerDepartment id.
+            var departmentNames = await _repository.BuyerDepartment
+                .FindByCondition(x => x.BuyerId == buyer.Id)
+                .ToDictionaryAsync(x => x.Id, x => x.Department, cancellationToken);
+
+            string DepartmentOf(string? value)
+            {
+                if (string.IsNullOrWhiteSpace(value)) return Common.DASHBOARD_UNASSIGNED_DEPARTMENT;
+                if (Guid.TryParse(value, out var id))
+                {
+                    return departmentNames.TryGetValue(id, out var name) && !string.IsNullOrWhiteSpace(name)
+                        ? name.Trim()
+                        : Common.DASHBOARD_UNKNOWN_DEPARTMENT;
+                }
+                // Older RFQs stored the department name itself.
+                return value.Trim();
+            }
 
             // ---- KPIs
             int awardedCount = stages.Values.Count(s => s == Common.DASHBOARD_STAGE_AWARDED);
@@ -137,7 +154,11 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
 
             var result = new BuyerDashboardAnalyticsDto
             {
-                Currency = currency,
+                Currencies = rfqs
+                    .GroupBy(x => CurrencyOf(x.Currency))
+                    .Select(g => new DashboardCurrencyDto { Code = g.Key, RfqCount = g.Count() })
+                    .OrderByDescending(x => x.RfqCount)
+                    .ToList(),
                 Kpis = new BuyerDashboardKpiDto
                 {
                     TotalRfqs = rfqs.Count,
@@ -145,14 +166,14 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                     ClosingThisWeek = rfqs.Count(x => stages[x.Id] == Common.DASHBOARD_STAGE_LIVE && x.EndDate <= now.AddDays(Common.DASHBOARD_CLOSING_SOON_DAYS)),
                     AwardedRfqs = awardedCount,
                     AwardRate = endedCount == 0 ? 0 : Math.Round(awardedCount * 100m / endedCount, 1),
-                    OpenBudget = rfqs
-                        .Where(x => (stages[x.Id] == Common.DASHBOARD_STAGE_LIVE || stages[x.Id] == Common.DASHBOARD_STAGE_UPCOMING) && InCurrency(x.Currency))
-                        .Sum(x => x.Budget),
+                    OpenBudget = ByCurrency(
+                        rfqs.Where(x => stages[x.Id] == Common.DASHBOARD_STAGE_LIVE || stages[x.Id] == Common.DASHBOARD_STAGE_UPCOMING),
+                        x => x.Currency, x => x.Budget),
                     SuppliersEngaged = supplierInvites.Select(x => x.SupplierId).Distinct().Count()
                         + externalInvites.Select(x => x.ExternalSupplierId).Distinct().Count(),
                     ActiveContracts = contracts.Count(x =>
                         !string.Equals(x.Status, Common.CONTRACT_REJECTED_STATUS, StringComparison.OrdinalIgnoreCase)),
-                    ContractValue = contractsInCurrency.Sum(x => x.Amount),
+                    ContractValue = ByCurrency(contracts, x => x.Currency, x => x.Amount),
                 },
             };
 
@@ -170,52 +191,54 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                     Created = created.Count,
                     Awarded = awards.Where(a => a.DateCreated >= monthStart && a.DateCreated < monthEnd)
                         .Select(a => a.RFQId).Distinct().Count(),
-                    Budget = created.Where(x => InCurrency(x.Currency)).Sum(x => x.Budget),
+                    Budget = ByCurrency(created, x => x.Currency, x => x.Budget),
                 });
             }
 
             // ---- Lifecycle breakdown (fixed order so the chart reads left to right)
-            var stageOrder = Common.DASHBOARD_STAGE_ORDER;
-            result.StatusBreakdown = stageOrder
-                .Select(stage => new DashboardBreakdownDto
+            result.StatusBreakdown = Common.DASHBOARD_STAGE_ORDER
+                .Select(stage =>
                 {
-                    Key = stage.ToUpperInvariant().Replace(' ', '_'),
-                    Label = stage,
-                    Count = stages.Values.Count(s => s == stage),
-                    Value = rfqs.Where(x => stages[x.Id] == stage && InCurrency(x.Currency)).Sum(x => x.Budget),
+                    var inStage = rfqs.Where(x => stages[x.Id] == stage).ToList();
+                    return new DashboardBreakdownDto
+                    {
+                        Key = stage.ToUpperInvariant().Replace(' ', '_'),
+                        Label = stage,
+                        Count = inStage.Count,
+                        Values = ByCurrency(inStage, x => x.Currency, x => x.Budget),
+                    };
                 })
                 .ToList();
 
-            // ---- Budget by department
+            // ---- Budget by department (the UI ranks these within the selected currency)
             result.BudgetByDepartment = rfqs
-                .Where(x => InCurrency(x.Currency))
-                .GroupBy(x => string.IsNullOrWhiteSpace(x.Department) ? Common.DASHBOARD_UNASSIGNED_DEPARTMENT : x.Department.Trim())
+                .GroupBy(x => string.IsNullOrWhiteSpace(x.Department) ? string.Empty : x.Department.Trim())
                 .Select(g => new DashboardBreakdownDto
                 {
-                    Key = g.Key,
-                    Label = g.Key,
+                    Key = string.IsNullOrEmpty(g.Key) ? Common.DASHBOARD_UNASSIGNED_DEPARTMENT : g.Key,
+                    Label = DepartmentOf(g.Key),
                     Count = g.Count(),
-                    Value = g.Sum(x => x.Budget),
+                    Values = ByCurrency(g, x => x.Currency, x => x.Budget),
                 })
-                .OrderByDescending(x => x.Value)
-                .Take(Common.DASHBOARD_TOP_DEPARTMENTS)
+                .OrderByDescending(x => x.Count)
+                .Take(Common.DASHBOARD_MAX_BREAKDOWN_ROWS)
                 .ToList();
 
             // ---- Contract value by supplier (names resolved through the Supplier service)
-            var topSuppliers = contractsInCurrency
+            var supplierGroups = contracts
                 .GroupBy(x => x.SupplierId)
-                .Select(g => new { SupplierId = g.Key, Count = g.Count(), Value = g.Sum(x => x.Amount) })
-                .OrderByDescending(x => x.Value)
-                .Take(Common.DASHBOARD_TOP_SUPPLIERS)
+                .Select(g => new { SupplierId = g.Key, Count = g.Count(), Values = ByCurrency(g, x => x.Currency, x => x.Amount) })
+                .OrderByDescending(x => x.Count)
+                .Take(Common.DASHBOARD_MAX_BREAKDOWN_ROWS)
                 .ToList();
 
             var supplierNames = new Dictionary<Guid, string>();
-            if (topSuppliers.Count > 0)
+            if (supplierGroups.Count > 0)
             {
                 try
                 {
                     var names = await _supplierApiClient.GetSupplierNamesByIds(
-                        topSuppliers.Select(x => x.SupplierId).ToList(), cancellationToken);
+                        supplierGroups.Select(x => x.SupplierId).ToList(), cancellationToken);
                     foreach (var name in names)
                     {
                         supplierNames[name.SupplierId] = name.SupplierName;
@@ -228,7 +251,7 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                 }
             }
 
-            result.ContractValueBySupplier = topSuppliers
+            result.ContractValueBySupplier = supplierGroups
                 .Select(x => new DashboardBreakdownDto
                 {
                     Key = x.SupplierId.ToString(),
@@ -236,15 +259,14 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                         ? name
                         : $"{Common.DASHBOARD_UNKNOWN_SUPPLIER_PREFIX} {x.SupplierId.ToString()[..8]}",
                     Count = x.Count,
-                    Value = x.Value,
+                    Values = x.Values,
                 })
                 .ToList();
 
             // ---- Closing schedule for live RFQs
             var today = now.Date;
             var live = rfqs.Where(x => stages[x.Id] == Common.DASHBOARD_STAGE_LIVE).ToList();
-            var windows = Common.DASHBOARD_CLOSING_WINDOWS;
-            result.ClosingSchedule = windows
+            result.ClosingSchedule = Common.DASHBOARD_CLOSING_WINDOWS
                 .Select(w =>
                 {
                     var matching = live.Where(x =>
@@ -257,7 +279,7 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                         Key = w.Key,
                         Label = w.Label,
                         Count = matching.Count,
-                        Value = matching.Where(x => InCurrency(x.Currency)).Sum(x => x.Budget),
+                        Values = ByCurrency(matching, x => x.Currency, x => x.Budget),
                     };
                 })
                 .ToList();
@@ -274,7 +296,7 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                     EndDate = x.EndDate,
                     InvitedSuppliers = invitedPerRfq.TryGetValue(x.Id, out var invited) ? invited : 0,
                     Budget = x.Budget,
-                    Currency = x.Currency,
+                    Currency = CurrencyOf(x.Currency),
                 })
                 .ToList();
 

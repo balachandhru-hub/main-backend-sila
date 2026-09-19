@@ -56,7 +56,8 @@ namespace Supplier.Domain.Common
 
         // ---- Dashboard analytics (GET api/v1/supplier/dashboard-analytics)
         public const int DASHBOARD_TREND_MONTHS = 12;
-        public const int DASHBOARD_TOP_BUYERS = 6;
+        /// <summary>Rows returned per breakdown; the UI ranks them within the selected currency.</summary>
+        public const int DASHBOARD_MAX_BREAKDOWN_ROWS = 20;
         public const int DASHBOARD_UPCOMING_DEADLINES = 6;
         public const int DASHBOARD_CLOSING_SOON_DAYS = 7;
         public const string DASHBOARD_MONTH_FORMAT = "yyyy-MM";
@@ -76,6 +77,8 @@ namespace Supplier.Domain.Common
         public const string DASHBOARD_FUNNEL_QUOTED = "Quoted";
         public const string DASHBOARD_FUNNEL_WON = "Won";
         public const string DASHBOARD_UNKNOWN_BUYER = "Unknown buyer";
+        /// <summary>Bucket for invitations saved without a currency.</summary>
+        public const string DASHBOARD_UNSPECIFIED_CURRENCY = "N/A";
         /// <summary>Days-until-close buckets for the closing schedule (inclusive bounds).</summary>
         public static readonly (string Key, string Label, int FromDay, int ToDay)[] DASHBOARD_CLOSING_WINDOWS =
         {

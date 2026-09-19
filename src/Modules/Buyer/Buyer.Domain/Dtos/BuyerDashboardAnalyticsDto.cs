@@ -1,26 +1,27 @@
 namespace Buyer.Domain.Dto
 {
     /// <summary>
-    /// Aggregated figures for the buyer dashboard. Money values are in <see cref="Currency"/>,
-    /// the currency used by most of the buyer's RFQs; amounts in other currencies are excluded
-    /// from money totals rather than summed across currencies.
+    /// Aggregated figures for the buyer dashboard. RFQs can be raised in any currency and the
+    /// platform holds no exchange rates, so every money figure is reported per currency
+    /// (<see cref="DashboardMoneyDto"/>) and never summed across currencies.
     /// </summary>
     public class BuyerDashboardAnalyticsDto
     {
-        public string Currency { get; set; } = string.Empty;
+        /// <summary>Currencies used by the buyer's RFQs, most used first.</summary>
+        public List<DashboardCurrencyDto> Currencies { get; set; } = new();
 
         public BuyerDashboardKpiDto Kpis { get; set; } = new();
 
         /// <summary>Last 12 calendar months, oldest first.</summary>
         public List<BuyerMonthlyTrendDto> MonthlyTrend { get; set; } = new();
 
-        /// <summary>RFQs by lifecycle stage (Live, Upcoming, Bidding closed, Frozen, Awarded).</summary>
+        /// <summary>RFQs by lifecycle stage (Upcoming, Live, Frozen, Bidding closed, Awarded).</summary>
         public List<DashboardBreakdownDto> StatusBreakdown { get; set; } = new();
 
-        /// <summary>RFQ budget per department, largest first (top 8).</summary>
+        /// <summary>RFQ count and budget per department (department names, not ids).</summary>
         public List<DashboardBreakdownDto> BudgetByDepartment { get; set; } = new();
 
-        /// <summary>Contract value per supplier, largest first (top 6).</summary>
+        /// <summary>Contract count and value per supplier.</summary>
         public List<DashboardBreakdownDto> ContractValueBySupplier { get; set; } = new();
 
         /// <summary>Live RFQs bucketed by how soon they close.</summary>
@@ -28,6 +29,22 @@ namespace Buyer.Domain.Dto
 
         /// <summary>The live RFQs closing soonest.</summary>
         public List<BuyerUpcomingDeadlineDto> UpcomingDeadlines { get; set; } = new();
+    }
+
+    /// <summary>An amount in a single currency.</summary>
+    public class DashboardMoneyDto
+    {
+        public string Currency { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+
+        /// <summary>How many items (RFQs, contracts or quotations) make up the amount.</summary>
+        public int Count { get; set; }
+    }
+
+    public class DashboardCurrencyDto
+    {
+        public string Code { get; set; } = string.Empty;
+        public int RfqCount { get; set; }
     }
 
     public class BuyerDashboardKpiDto
@@ -40,16 +57,16 @@ namespace Buyer.Domain.Dto
         /// <summary>Awarded RFQs as a percentage of RFQs whose bidding window has ended.</summary>
         public decimal AwardRate { get; set; }
 
-        /// <summary>Budget of RFQs that are live or upcoming, in the dashboard currency.</summary>
-        public decimal OpenBudget { get; set; }
+        /// <summary>Budget of live and upcoming RFQs, per currency.</summary>
+        public List<DashboardMoneyDto> OpenBudget { get; set; } = new();
 
         /// <summary>Distinct registered and external suppliers invited to the RFQs.</summary>
         public int SuppliersEngaged { get; set; }
 
         public int ActiveContracts { get; set; }
 
-        /// <summary>Total value of contracts, in the dashboard currency.</summary>
-        public decimal ContractValue { get; set; }
+        /// <summary>Total contract value, per currency (a contract takes its RFQ's currency).</summary>
+        public List<DashboardMoneyDto> ContractValue { get; set; } = new();
     }
 
     public class BuyerMonthlyTrendDto
@@ -59,17 +76,17 @@ namespace Buyer.Domain.Dto
         public int Created { get; set; }
         public int Awarded { get; set; }
 
-        /// <summary>Budget of RFQs created that month, in the dashboard currency.</summary>
-        public decimal Budget { get; set; }
+        /// <summary>Budget of RFQs created that month, per currency.</summary>
+        public List<DashboardMoneyDto> Budget { get; set; } = new();
     }
 
-    /// <summary>A labelled slice of a breakdown: how many items and, where relevant, their value.</summary>
+    /// <summary>A labelled slice of a breakdown: how many items and their value per currency.</summary>
     public class DashboardBreakdownDto
     {
         public string Key { get; set; } = string.Empty;
         public string Label { get; set; } = string.Empty;
         public int Count { get; set; }
-        public decimal Value { get; set; }
+        public List<DashboardMoneyDto> Values { get; set; } = new();
     }
 
     public class BuyerUpcomingDeadlineDto

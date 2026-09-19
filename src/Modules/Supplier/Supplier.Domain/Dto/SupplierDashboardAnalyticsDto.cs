@@ -1,13 +1,14 @@
 namespace Supplier.Domain.Dto
 {
     /// <summary>
-    /// Aggregated figures for the supplier dashboard. Money values are in <see cref="Currency"/>,
-    /// the currency used by most of the supplier's RFQ invitations; other currencies are excluded
-    /// from money totals rather than summed across currencies.
+    /// Aggregated figures for the supplier dashboard. RFQ invitations can be in any currency and
+    /// the platform holds no exchange rates, so every money figure is reported per currency
+    /// (<see cref="SupplierDashboardMoneyDto"/>) and never summed across currencies.
     /// </summary>
     public class SupplierDashboardAnalyticsDto
     {
-        public string Currency { get; set; } = string.Empty;
+        /// <summary>Currencies used by the supplier's invitations, most used first.</summary>
+        public List<SupplierDashboardCurrencyDto> Currencies { get; set; } = new();
 
         public SupplierDashboardKpiDto Kpis { get; set; } = new();
 
@@ -20,7 +21,7 @@ namespace Supplier.Domain.Dto
         /// <summary>Invited → Quoted → Won funnel.</summary>
         public List<SupplierDashboardBreakdownDto> Pipeline { get; set; } = new();
 
-        /// <summary>Submitted quotation value per buyer, largest first (top 6).</summary>
+        /// <summary>Submitted quotation value per buyer.</summary>
         public List<SupplierDashboardBreakdownDto> QuotedValueByBuyer { get; set; } = new();
 
         /// <summary>Open invitations bucketed by how soon bidding closes.</summary>
@@ -28,6 +29,22 @@ namespace Supplier.Domain.Dto
 
         /// <summary>The open invitations closing soonest.</summary>
         public List<SupplierUpcomingDeadlineDto> UpcomingDeadlines { get; set; } = new();
+    }
+
+    /// <summary>An amount in a single currency.</summary>
+    public class SupplierDashboardMoneyDto
+    {
+        public string Currency { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+
+        /// <summary>How many items (RFQs, contracts or quotations) make up the amount.</summary>
+        public int Count { get; set; }
+    }
+
+    public class SupplierDashboardCurrencyDto
+    {
+        public string Code { get; set; } = string.Empty;
+        public int RfqCount { get; set; }
     }
 
     public class SupplierDashboardKpiDto
@@ -44,11 +61,11 @@ namespace Supplier.Domain.Dto
         /// <summary>Won as a percentage of decided RFQs this supplier quoted on.</summary>
         public decimal WinRate { get; set; }
 
-        /// <summary>Total of submitted quotations, in the dashboard currency.</summary>
-        public decimal QuotedValue { get; set; }
+        /// <summary>Total of submitted quotations, per currency.</summary>
+        public List<SupplierDashboardMoneyDto> QuotedValue { get; set; } = new();
 
-        /// <summary>Quoted value of awarded line items, in the dashboard currency.</summary>
-        public decimal WonValue { get; set; }
+        /// <summary>Quoted value of awarded line items, per currency.</summary>
+        public List<SupplierDashboardMoneyDto> WonValue { get; set; } = new();
     }
 
     public class SupplierMonthlyTrendDto
@@ -59,8 +76,8 @@ namespace Supplier.Domain.Dto
         public int Quoted { get; set; }
         public int Won { get; set; }
 
-        /// <summary>Submitted quotation value that month, in the dashboard currency.</summary>
-        public decimal QuotedValue { get; set; }
+        /// <summary>Submitted quotation value that month, per currency.</summary>
+        public List<SupplierDashboardMoneyDto> QuotedValue { get; set; } = new();
     }
 
     public class SupplierDashboardBreakdownDto
@@ -68,7 +85,11 @@ namespace Supplier.Domain.Dto
         public string Key { get; set; } = string.Empty;
         public string Label { get; set; } = string.Empty;
         public int Count { get; set; }
-        public decimal Value { get; set; }
+
+        /// <summary>Items in this slice still waiting on the supplier (e.g. not yet quoted).</summary>
+        public int PendingCount { get; set; }
+
+        public List<SupplierDashboardMoneyDto> Values { get; set; } = new();
     }
 
     public class SupplierUpcomingDeadlineDto
