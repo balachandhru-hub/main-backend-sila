@@ -570,6 +570,19 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 }
             }
 
+            var contracts = await _repositorywrapper.Contract
+                .FindByCondition(x =>
+                    x.RFQId == request.RFQId &&
+                    x.BuyerId == buyerId &&
+                    x.IsActive)
+                .Select(x => new RFQContractDto
+                {
+                    ContractId = x.Id,
+                    ContractNumber = x.ContractNumber,
+                    SupplierId = x.SupplierId
+                })
+                .ToListAsync(cancellationToken);
+
             return new GetRFQByIdDto
             {
                 Title = rfq.Title,
@@ -600,7 +613,8 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 SupplierTermsConditions = supplierTermsConditions,
                 SupplierESigns = supplierESigns,
                 SupplierTermsAndConditionAccepted = rfq.SupplierTermsAndConditionAccepted,
-                BuyerTermsAndConditionStatuses = buyerTermsConditionStatuses
+                BuyerTermsAndConditionStatuses = buyerTermsConditionStatuses,
+                Contracts = contracts
             };
         }
     }

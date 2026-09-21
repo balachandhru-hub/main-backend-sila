@@ -276,6 +276,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             // Once the RFQ is awarded, read this supplier's contract status from the
             // Contract table (Buyer service). It stays null until a contract exists.
             string? contractStatus = null;
+            Guid? contractId = null;
 
             if (rfq.Status == Common.AWARDED_STATUS)
             {
@@ -289,6 +290,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     if (contract.ContractCreated)
                     {
                         contractStatus = contract.ContractStatus;
+                        contractId = contract.ContractId;
                     }
                 }
                 catch (Exception ex)
@@ -355,6 +357,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 SupplierTermsAndConditionAccepted = supplierTermsAndConditionAccepted,
                 Status = rfq.Status,
                 ContractStatus = contractStatus,
+                ContractId = contractId,
                 Items = items,
                 Questions = questions,
                 SupplierQuotation = quotation == null
