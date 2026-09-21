@@ -1,5 +1,6 @@
 using Buyer.Application.Features.Assets.Commands;
 using Buyer.Domain.Common;
+using Buyer.Domain.Dto;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
@@ -44,6 +45,7 @@ namespace Buyer.Application.Features.Commands.CreateContract
             var rfq = await _repository.RFQ
                 .FindByCondition(x =>
                     x.Id == dto.RFQId &&
+                    x.BuyerId == request.BuyerId &&
                     x.IsActive)
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -55,12 +57,21 @@ namespace Buyer.Application.Features.Commands.CreateContract
                     $"No RFQ was found with RFQId: {dto.RFQId}");
             }
 
+            if (!dto.SupplierId.HasValue || dto.SupplierId.Value == Guid.Empty)
+            {
+                throw new BadRequestCustomException(
+                    "Supplier is required.",
+                    "Please provide a valid supplierId for the contract.");
+            }
+
+            Guid supplierId = dto.SupplierId.Value;
+
             // Same RFQ + same supplier => update the existing contract.
             // Id and ContractNumber are never regenerated.
             var contract = await _repository.Contract
                 .FindFirstByConditionAsync(x =>
                     x.RFQId == rfq.Id &&
-                    x.SupplierId == request.SupplierId &&
+                    x.SupplierId == supplierId &&
                     x.IsActive);
 
             bool isUpdate = contract != null;
@@ -68,7 +79,7 @@ namespace Buyer.Application.Features.Commands.CreateContract
             if (isUpdate)
             {
                 _logger.LogInfo(
-                    $"Contract already exists for RFQId: {dto.RFQId}, SupplierId: {request.SupplierId}. " +
+                    $"Contract already exists for RFQId: {dto.RFQId}, SupplierId: {supplierId}. " +
                     $"Updating ContractId: {contract!.Id}, ContractNumber: {contract.ContractNumber}");
 
                 contract.ContractName = dto.ContractName;
@@ -90,7 +101,7 @@ namespace Buyer.Application.Features.Commands.CreateContract
                     RFQId = rfq.Id,
                     ContractName = dto.ContractName,
                     BuyerId = request.BuyerId,
-                    SupplierId = request.SupplierId,
+                    SupplierId = supplierId,
                     StartDate = dto.StartDate,
                     EndDate = dto.EndDate,
                     Amount = dto.Amount,

@@ -7,13 +7,11 @@ namespace Buyer.Application.Features.Commands.CreateContract
     {
         public CreateContractDto Request { get; }
         public Guid BuyerId { get; }
-        public Guid SupplierId { get; }
 
-        public CreateContractCommand(CreateContractDto request, Guid buyerId, Guid supplierId)
+        public CreateContractCommand(CreateContractDto request, Guid buyerId)
         {
             Request = request;
             BuyerId = buyerId;
-            SupplierId = supplierId;
         }
     }
 }

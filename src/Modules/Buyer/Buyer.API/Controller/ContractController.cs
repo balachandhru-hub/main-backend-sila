@@ -1,5 +1,6 @@
 using Buyer.Application.Features.Commands.ApproveRejectContract;
 using Buyer.Application.Features.Commands.CreateContract;
+using Buyer.Application.Features.Profile.Queries.GetBuyerId;
 using Buyer.Application.Features.Queries.GetAllContracts;
 using Buyer.Application.Features.Queries.GetContract;
 using Buyer.Application.Features.Queries.GetSupplierContractStatus;
@@ -43,8 +44,13 @@ namespace Buyer.API.Controllers
         {
             _logger.LogDebug($"Creating contract for RFQ Id: {request.RFQId}");
 
+            // The login token carries no BuyerId claim, so resolve the buyer from the
+            // caller's organization. The supplier is resolved from the RFQ award.
+            Guid buyerId = await _mediator.Send(
+                new GetBuyerIdQuery(GetOrganizationId()));
+
             Guid contractId = await _mediator.Send(
-                new CreateContractCommand(request, GetBuyerId(), GetSupplierId()));
+                new CreateContractCommand(request, buyerId));
 
             return Ok(new SuccessResponseDto
             {
@@ -78,11 +84,14 @@ namespace Buyer.API.Controllers
             [FromQuery] int index = 0,
             [FromQuery] int limit = 10)
         {
+            Guid buyerId = await _mediator.Send(
+                new GetBuyerIdQuery(GetOrganizationId()));
+
             var result = await _mediator.Send(new GetAllContractsQuery
             {
                 Index = index,
                 Limit = limit,
-                BuyerId = GetBuyerId()
+                BuyerId = buyerId
             });
 
             return Ok(result);

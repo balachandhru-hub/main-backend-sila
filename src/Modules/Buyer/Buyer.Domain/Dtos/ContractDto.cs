@@ -13,6 +13,9 @@ namespace Buyer.Domain.Dto
         public Guid RFQId { get; set; }
 
         [Required]
+        public Guid? SupplierId { get; set; }
+
+        [Required]
         public DateTime StartDate { get; set; }
 
         [Required]
