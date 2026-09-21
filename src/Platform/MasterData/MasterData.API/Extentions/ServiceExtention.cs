@@ -1,6 +1,7 @@
 using MasterData.Application.Contracts;
 using MasterData.Application.Features.ApiClient;
 using MasterData.Application.Services;
+using MasterData.Domain.Common;
 using MasterData.Infrastructure.Contracts.IRepository;
 using MasterData.Infrastructure.Contracts.IServices;
 using MasterData.Infrastructure.Persistence;
@@ -14,6 +15,31 @@ namespace MasterData.API.Extensions;
 
 public static class ServiceExtensions
 {
+    /// <summary>
+    /// Configures CORS so the frontend host origin (Origin:HostOriginLocal) can call this API
+    /// through the gateway with credentials.
+    /// </summary>
+    public static void ConfigureCors(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddCors(options =>
+        {
+            options.AddPolicy(
+                "CorsPolicy",
+                builder =>
+                    builder
+                        .SetIsOriginAllowed(origin =>
+                            origin.Equals(
+                                configuration[Common.DEFAULT_FRONT_END_ORIGIN_LOCAL],
+                                StringComparison.OrdinalIgnoreCase))
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials()
+                        .WithExposedHeaders("Content-Disposition"));
+        });
+    }
+
     public static void ConfigureDatabase(
         this IServiceCollection services,
         IConfiguration configuration)

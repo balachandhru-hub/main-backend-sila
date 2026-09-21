@@ -43,6 +43,7 @@ public partial class Program
         builder.Services.AddControllers();
 
         builder.Services.ConfigureDatabase(configuration);
+        builder.Services.ConfigureCors(configuration);
         builder.Services.ConfigureServiceWrapper();
         builder.Services.ConfigureRepositoryWrapper();
 

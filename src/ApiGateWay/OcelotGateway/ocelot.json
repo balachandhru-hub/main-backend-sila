@@ -62,7 +62,7 @@
       "Key": "buyer-messagehub-ws",
       "UpstreamPathTemplate": "/buyermessageHub/{everything}",
       "DownstreamPathTemplate": "/buyermessageHub/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "UpstreamHttpMethod": [ "GET", "POST" ,"OPTIONS"],
       "DownstreamScheme": "ws",
       "DownstreamHostAndPorts": [
         {
@@ -75,7 +75,7 @@
       "Key": "supplier-messagehub-ws",
       "UpstreamPathTemplate": "/suppliermessageHub/{everything}",
       "DownstreamPathTemplate": "/suppliermessageHub/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "UpstreamHttpMethod": [ "GET", "POST","OPTIONS" ],
       "DownstreamScheme": "ws",
       "DownstreamHostAndPorts": [
         {
