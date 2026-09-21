@@ -21,12 +21,15 @@ namespace Supplier.Application.Features.Handlers.RFQ
             UpdateSupplierRFQStatusCommand request,
             CancellationToken cancellationToken)
         {
-            var supplierRfq = await _repository.SupplierRFQ
+            // One SupplierRFQ row exists per invited supplier (registered and external)
+            // for the same BuyerRFQId, so the status must be applied to all of them -
+            // otherwise only one supplier moves from Open to Freezing.
+            var supplierRfqs = await _repository.SupplierRFQ
                 .FindByCondition(x =>
                     x.BuyerRFQId == request.Request.RFQId)
-                .FirstOrDefaultAsync(cancellationToken);
+                .ToListAsync(cancellationToken);
 
-            if (supplierRfq == null)
+            if (supplierRfqs.Count == 0)
             {
 
 
@@ -36,9 +39,12 @@ namespace Supplier.Application.Features.Handlers.RFQ
 
             }
 
-            supplierRfq.Status = request.Request.Status;
+            foreach (var supplierRfq in supplierRfqs)
+            {
+                supplierRfq.Status = request.Request.Status;
 
-            _repository.SupplierRFQ.Update(supplierRfq);
+                _repository.SupplierRFQ.Update(supplierRfq);
+            }
 
             await _repository.SaveAsync();
 
