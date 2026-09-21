@@ -98,7 +98,10 @@ namespace Buyer.Infrastructure.Repository
                         Id = Guid.NewGuid(),
                         ContractApprovalFlowId = contractApprovalFlow.Id,
                         UserId = user.UserId,
-                        Order = user.Order
+                        Order = user.Order,
+                        // Both columns are NOT NULL; a new approver starts as pending.
+                        Status = Common.PENDING,
+                        Comment = string.Empty
                     })
                     .ToList();
 
