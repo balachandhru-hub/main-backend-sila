@@ -45,7 +45,13 @@ namespace Supplier.Domain.Dto
         public List<InvitedUserDto>? InvitedUsers { get; set; }
 
         public string Status{get;set;}
-      
+
+        /// <summary>
+        /// Status of this supplier's contract (from the Contract table) once the RFQ is awarded
+        /// and a contract exists; null until then.
+        /// </summary>
+        public string? ContractStatus { get; set; }
+
     }
      public class GetRFQItemDto
     {

@@ -273,6 +273,32 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     .ToListAsync(cancellationToken);
             }
 
+            // Once the RFQ is awarded, read this supplier's contract status from the
+            // Contract table (Buyer service). It stays null until a contract exists.
+            string? contractStatus = null;
+
+            if (rfq.Status == Common.AWARDED_STATUS)
+            {
+                try
+                {
+                    var contract = await _buyerApiClient.GetSupplierContractStatus(
+                        request.RFQId,
+                        supplier.Id,
+                        cancellationToken);
+
+                    if (contract.ContractCreated)
+                    {
+                        contractStatus = contract.ContractStatus;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        $"Unable to fetch contract status for BuyerRFQId: {request.RFQId}, " +
+                        $"SupplierId: {supplier.Id}. {ex.Message}");
+                }
+            }
+
             List<InvitedUserDto>? invitedUsers = null;
 
             if (request.RoleId.Equals(Common.SUPPLIER_ADMIN_ROLE_ID))
@@ -328,6 +354,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 BuyerTermsAndConditionAccepted = rfq.BuyerTermsAndConditionAccepted,
                 SupplierTermsAndConditionAccepted = supplierTermsAndConditionAccepted,
                 Status = rfq.Status,
+                ContractStatus = contractStatus,
                 Items = items,
                 Questions = questions,
                 SupplierQuotation = quotation == null

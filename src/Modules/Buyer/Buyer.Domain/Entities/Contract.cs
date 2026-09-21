@@ -32,6 +32,11 @@ namespace Buyer.Domain.Entities
         public DateTime EndDate { get; set; }
         public decimal Amount { get; set; }
         public string Status { get; set; }
+
+        /// <summary>
+        /// Set to CONTRACT_CREATED when the contract is created; shown to the supplier once the RFQ is awarded.
+        /// </summary>
+        public string? ContractStatus { get; set; }
         public Contract() { }
     }
 }

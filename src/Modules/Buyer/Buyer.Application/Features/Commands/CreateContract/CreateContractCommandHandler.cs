@@ -55,21 +55,48 @@ namespace Buyer.Application.Features.Commands.CreateContract
                     $"No RFQ was found with RFQId: {dto.RFQId}");
             }
 
-            long nextNumber = await _repository.Contract
-                .GetNextContractNumberAsync(cancellationToken);
+            // Same RFQ + same supplier => update the existing contract.
+            // Id and ContractNumber are never regenerated.
+            var contract = await _repository.Contract
+                .FindFirstByConditionAsync(x =>
+                    x.RFQId == rfq.Id &&
+                    x.SupplierId == request.SupplierId &&
+                    x.IsActive);
 
-            var contract = new Contract
+            bool isUpdate = contract != null;
+
+            if (isUpdate)
             {
-                Id = Guid.NewGuid(),
-                RFQId = rfq.Id,
-                ContractName = dto.ContractName,
-                BuyerId = request.BuyerId,
-                SupplierId = request.SupplierId,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                Amount = dto.Amount,
-                ContractNumber = $"CN{nextNumber:D8}"
-            };
+                _logger.LogInfo(
+                    $"Contract already exists for RFQId: {dto.RFQId}, SupplierId: {request.SupplierId}. " +
+                    $"Updating ContractId: {contract!.Id}, ContractNumber: {contract.ContractNumber}");
+
+                contract.ContractName = dto.ContractName;
+                contract.StartDate = dto.StartDate;
+                contract.EndDate = dto.EndDate;
+                contract.Amount = dto.Amount;
+
+                // The amount may have changed, so the old approval flow no longer applies.
+                await RemoveExistingApprovalFlowAsync(contract.Id, cancellationToken);
+            }
+            else
+            {
+                long nextNumber = await _repository.Contract
+                    .GetNextContractNumberAsync(cancellationToken);
+
+                contract = new Contract
+                {
+                    Id = Guid.NewGuid(),
+                    RFQId = rfq.Id,
+                    ContractName = dto.ContractName,
+                    BuyerId = request.BuyerId,
+                    SupplierId = request.SupplierId,
+                    StartDate = dto.StartDate,
+                    EndDate = dto.EndDate,
+                    Amount = dto.Amount,
+                    ContractNumber = $"CN{nextNumber:D8}"
+                };
+            }
 
             bool requiresApproval = await _repository.Contract.CreateApprovalFlowForContractAsync(
                 contract.Id,
@@ -81,7 +108,16 @@ namespace Buyer.Application.Features.Commands.CreateContract
                 ? Common.CONTRACT_IN_PROCESS_STATUS
                 : Common.CONTRACT_COMPLETED_STATUS;
 
-            _repository.Contract.Create(contract);
+            contract.ContractStatus = Common.CONTRACT_CREATED_STATUS;
+
+            if (isUpdate)
+            {
+                _repository.Contract.Update(contract);
+            }
+            else
+            {
+                _repository.Contract.Create(contract);
+            }
 
             if (dto.Attachments != null && dto.Attachments.Any())
             {
@@ -106,10 +142,33 @@ namespace Buyer.Application.Features.Commands.CreateContract
             await _repository.SaveAsync();
 
             _logger.LogInfo(
-                $"Contract created for RFQId: {dto.RFQId}. " +
+                $"Contract {(isUpdate ? "updated" : "created")} for RFQId: {dto.RFQId}. " +
                 $"ContractId: {contract.Id}, ContractNumber: {contract.ContractNumber}");
 
             return contract.Id;
+        }
+
+        private async Task RemoveExistingApprovalFlowAsync(
+            Guid contractId,
+            CancellationToken cancellationToken)
+        {
+            var approvalFlows = await _repository.ContractApprovalFlow
+                .FindByCondition(x => x.ContractId == contractId)
+                .ToListAsync(cancellationToken);
+
+            if (!approvalFlows.Any())
+            {
+                return;
+            }
+
+            var flowIds = approvalFlows.Select(x => x.Id).ToList();
+
+            var approvalUsers = await _repository.ContractApprovalUserMapping
+                .FindByCondition(x => flowIds.Contains(x.ContractApprovalFlowId))
+                .ToListAsync(cancellationToken);
+
+            _repository.ContractApprovalUserMapping.DeleteRange(approvalUsers);
+            _repository.ContractApprovalFlow.DeleteRange(approvalFlows);
         }
     }
 }

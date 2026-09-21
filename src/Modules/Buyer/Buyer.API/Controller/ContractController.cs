@@ -2,6 +2,7 @@ using Buyer.Application.Features.Commands.ApproveRejectContract;
 using Buyer.Application.Features.Commands.CreateContract;
 using Buyer.Application.Features.Queries.GetAllContracts;
 using Buyer.Application.Features.Queries.GetContract;
+using Buyer.Application.Features.Queries.GetSupplierContractStatus;
 using Buyer.Domain.Dto;
 using Buyer.Domain.Dtos;
 using MediatR;
@@ -124,7 +125,25 @@ namespace Buyer.API.Controllers
             });
         }
 
-        // ---- Internal route called by the Supplier service ----
+        // ---- Internal routes called by the Supplier service ----
+
+        [HttpGet]
+        [Route("api/v1/buyer/internal-contract-status")]
+        [ApiAuthorization(Name = "GET_CONTRACT")]
+        [SwaggerOperation("InternalGetSupplierContractStatus")]
+        [SwaggerResponse(200, type: typeof(SupplierContractStatusDto), description: "Success")]
+        public async Task<IActionResult> InternalGetSupplierContractStatus(
+            [FromQuery] Guid rfqId,
+            [FromQuery] Guid supplierId)
+        {
+            var result = await _mediator.Send(new GetSupplierContractStatusQuery
+            {
+                RFQId = rfqId,
+                SupplierId = supplierId
+            });
+
+            return Ok(result);
+        }
 
         [HttpGet]
         [Route("api/v1/buyer/internal-contract/{contractId}")]

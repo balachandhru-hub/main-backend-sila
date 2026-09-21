@@ -81,6 +81,7 @@ namespace Buyer.Domain.Common
                 public const string CONTRACT_IN_PROCESS_STATUS = "IN_PROCESS";
                 public const string CONTRACT_COMPLETED_STATUS = "COMPLETED";
                 public const string CONTRACT_REJECTED_STATUS = "REJECTED";
+                public const string CONTRACT_CREATED_STATUS = "CONTRACT_CREATED";
 
                 public const string CONTRACT_ASSET_BUYER_TERMS = "BUYER_TERMS";
                 public const string CONTRACT_ASSET_SUPPLIER_TERMS = "SUPPLIER_TERMS";
