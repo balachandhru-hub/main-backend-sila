@@ -3,7 +3,8 @@ using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using Buyer.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.CompilerServices;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Data;
 
 namespace Buyer.Infrastructure.Repository
 {
@@ -20,12 +21,34 @@ namespace Buyer.Infrastructure.Repository
         {
             string schema = RepositoryContext.Model.GetDefaultSchema() ?? "dbo";
 
-            var sql = FormattableStringFactory.Create(
-                $"SELECT NEXT VALUE FOR [{schema}].[{Common.CONTRACT_NUMBER_SEQUENCE}] AS Value");
+            // NEXT VALUE FOR is not allowed inside a sub-query, and SqlQuery<T>().FirstAsync()
+            // wraps the SQL in one, so run it as a plain scalar command instead.
+            var connection = RepositoryContext.Database.GetDbConnection();
+            bool wasClosed = connection.State != ConnectionState.Open;
 
-            return await RepositoryContext.Database
-                .SqlQuery<long>(sql)
-                .FirstAsync(cancellationToken);
+            if (wasClosed)
+            {
+                await RepositoryContext.Database.OpenConnectionAsync(cancellationToken);
+            }
+
+            try
+            {
+                using var command = connection.CreateCommand();
+                command.CommandText =
+                    $"SELECT NEXT VALUE FOR [{schema}].[{Common.CONTRACT_NUMBER_SEQUENCE}]";
+                command.Transaction = RepositoryContext.Database.CurrentTransaction?.GetDbTransaction();
+
+                object? value = await command.ExecuteScalarAsync(cancellationToken);
+
+                return Convert.ToInt64(value);
+            }
+            finally
+            {
+                if (wasClosed)
+                {
+                    await RepositoryContext.Database.CloseConnectionAsync();
+                }
+            }
         }
 
         public async Task<bool> CreateApprovalFlowForContractAsync(
