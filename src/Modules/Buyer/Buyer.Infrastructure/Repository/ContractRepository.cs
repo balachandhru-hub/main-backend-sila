@@ -61,7 +61,7 @@ namespace Buyer.Infrastructure.Repository
                 .Where(x =>
                     x.BuyerId == buyerId &&
                     x.IsActive &&
-                    amount >= x.TotalAmount)
+                    amount <= x.TotalAmount)
                 .OrderByDescending(x => x.TotalAmount)
                 .FirstOrDefaultAsync(cancellationToken);
 

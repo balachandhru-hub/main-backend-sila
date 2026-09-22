@@ -1,3 +1,4 @@
+using Buyer.Application.Contracts;
 using Buyer.Domain.Dto;
 using Buyer.Domain.Dtos;
 using Buyer.Infrastructure.Contracts.IRepository;
@@ -10,10 +11,14 @@ namespace Buyer.Application.Features.Queries.GetAllContracts
         : IRequestHandler<GetAllContractsQuery, List<ContractResponseDto>>
     {
         private readonly IRepositoryWrapper _repository;
+        private readonly IIdentityApiClient _identityApiClient;
 
-        public GetAllContractsQueryHandler(IRepositoryWrapper repository)
+        public GetAllContractsQueryHandler(
+            IRepositoryWrapper repository,
+            IIdentityApiClient identityApiClient)
         {
             _repository = repository;
+            _identityApiClient = identityApiClient;
         }
 
         public async Task<List<ContractResponseDto>> Handle(
@@ -90,6 +95,49 @@ namespace Buyer.Application.Features.Queries.GetAllContracts
                         Currency = x.Currency
                     }).ToList());
 
+            var approvalFlowIds = approvalFlows.Select(x => x.Id).ToList();
+            var approvalFlowIdToContractId = approvalFlows
+                .ToDictionary(x => x.Id, x => x.ContractId);
+
+            var approvalUserMappings = await _repository.ContractApprovalUserMapping
+                .FindByCondition(x =>
+                    approvalFlowIds.Contains(x.ContractApprovalFlowId) &&
+                    x.IsActive)
+                .OrderBy(x => x.Order)
+                .ToListAsync(cancellationToken);
+
+            var approvalUsersByContractId = approvalUserMappings
+                .GroupBy(x => approvalFlowIdToContractId[x.ContractApprovalFlowId])
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => new ContractApprovalUserDto
+                    {
+                        UserId = x.UserId,
+                        Order = x.Order,
+                        Status = x.Status
+                    }).ToList());
+
+            var approvalUserIds = approvalUserMappings
+                .Select(x => x.UserId)
+                .Distinct()
+                .ToList();
+
+            if (approvalUserIds.Any())
+            {
+                var identityUsers = await _identityApiClient.GetUsersByIds(
+                    approvalUserIds,
+                    cancellationToken);
+
+                foreach (var approvalUser in approvalUsersByContractId.Values.SelectMany(x => x))
+                {
+                    var identity = identityUsers
+                        .FirstOrDefault(x => x.UserId == approvalUser.UserId);
+
+                    approvalUser.UserName = identity?.UserName;
+                    approvalUser.Email = identity?.Email;
+                }
+            }
+
             foreach (var contract in contracts)
             {
                 contract.Attachments = attachmentsByContractId.TryGetValue(contract.Id, out var atts)
@@ -99,6 +147,10 @@ namespace Buyer.Application.Features.Queries.GetAllContracts
                 contract.ApprovalFlows = approvalFlowsByContractId.TryGetValue(contract.Id, out var flows)
                     ? flows
                     : new List<ContractApprovalFlowDto>();
+
+                contract.ApprovalUsers = approvalUsersByContractId.TryGetValue(contract.Id, out var approvers)
+                    ? approvers
+                    : new List<ContractApprovalUserDto>();
             }
 
             return contracts;

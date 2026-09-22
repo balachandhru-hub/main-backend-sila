@@ -1,3 +1,4 @@
+using Buyer.Application.Contracts;
 using Buyer.Domain.Dto;
 using Buyer.Domain.Dtos;
 using Buyer.Infrastructure.Contracts.IRepository;
@@ -12,13 +13,16 @@ namespace Buyer.Application.Features.Queries.GetContract
         : IRequestHandler<GetContractQuery, ContractResponseDto>
     {
         private readonly IRepositoryWrapper _repository;
+        private readonly IIdentityApiClient _identityApiClient;
         private readonly ILoggerManager _logger;
 
         public GetContractQueryHandler(
             IRepositoryWrapper repository,
+            IIdentityApiClient identityApiClient,
             ILoggerManager logger)
         {
             _repository = repository;
+            _identityApiClient = identityApiClient;
             _logger = logger;
         }
 
@@ -59,6 +63,42 @@ namespace Buyer.Application.Features.Queries.GetContract
                     x.IsActive)
                 .ToListAsync(cancellationToken);
 
+            var approvalFlowIds = approvalFlows.Select(x => x.Id).ToList();
+
+            var approvalUsers = await _repository.ContractApprovalUserMapping
+                .FindByCondition(x =>
+                    approvalFlowIds.Contains(x.ContractApprovalFlowId) &&
+                    x.IsActive)
+                .OrderBy(x => x.Order)
+                .Select(x => new ContractApprovalUserDto
+                {
+                    UserId = x.UserId,
+                    Order = x.Order,
+                    Status = x.Status
+                })
+                .ToListAsync(cancellationToken);
+
+            if (approvalUsers.Any())
+            {
+                var approvalUserIds = approvalUsers
+                    .Select(x => x.UserId)
+                    .Distinct()
+                    .ToList();
+
+                var identityUsers = await _identityApiClient.GetUsersByIds(
+                    approvalUserIds,
+                    cancellationToken);
+
+                foreach (var approvalUser in approvalUsers)
+                {
+                    var identity = identityUsers
+                        .FirstOrDefault(x => x.UserId == approvalUser.UserId);
+
+                    approvalUser.UserName = identity?.UserName;
+                    approvalUser.Email = identity?.Email;
+                }
+            }
+
             return new ContractResponseDto
             {
                 Id = contract.Id,
@@ -93,7 +133,8 @@ namespace Buyer.Application.Features.Queries.GetContract
                         TotalAmount = x.TotalAmount,
                         Currency = x.Currency
                     })
-                    .ToList()
+                    .ToList(),
+                ApprovalUsers = approvalUsers
             };
         }
     }

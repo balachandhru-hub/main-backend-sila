@@ -63,5 +63,20 @@ namespace Buyer.Domain.Dto
         public List<ContractAttachmentDto> Attachments { get; set; } = new();
 
         public List<ContractApprovalFlowDto> ApprovalFlows { get; set; } = new();
+
+        public List<ContractApprovalUserDto> ApprovalUsers { get; set; } = new();
+    }
+
+    public class ContractApprovalUserDto
+    {
+        public Guid UserId { get; set; }
+
+        public string? UserName { get; set; }
+
+        public string? Email { get; set; }
+
+        public int Order { get; set; }
+
+        public string? Status { get; set; }
     }
 }
