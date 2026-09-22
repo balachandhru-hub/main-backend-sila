@@ -79,6 +79,30 @@ namespace Buyer.Application.Features.Queries.GetRFQAttachments
                     x.Id == asset.FileType)?.Key ?? string.Empty,
                 FileName = asset.FileName
             }).ToList();
+            var esignAssets = await (
+                from mapping in _repository.RFQAttachmentMapping.FindByCondition(x =>
+                    x.RFQId == request.RFQId &&
+                    x.Type == Common.ESIGN)
+
+                join asset in _repository.Asset.FindByCondition(x => x.IsActive)
+                    on mapping.AssetId equals asset.Id
+
+                select asset
+            ).ToListAsync(cancellationToken);
+
+            var esignDocuments = esignAssets.Select(asset => new AssetDto
+            {
+                Id = asset.Id,
+                AssetType = metadataList.FirstOrDefault(x =>
+                    x.Type == Common.ASSET_TYPE &&
+                    x.Id == asset.AssetType)?.Key ?? string.Empty,
+                AssetName = asset.AssetName,
+                FileType = metadataList.FirstOrDefault(x =>
+                    x.Type == Common.FILE_TYPE &&
+                    x.Id == asset.FileType)?.Key ?? string.Empty,
+                FileName = asset.FileName
+            }).ToList();
+
             var rfqItems = await _repository.RFQItem
     .FindByCondition(x => x.RFQId == request.RFQId)
     .ToListAsync(cancellationToken);
@@ -125,6 +149,7 @@ namespace Buyer.Application.Features.Queries.GetRFQAttachments
             {
                 TechnicalSpecificationDocuments = technicalDocuments,
                 TermsConditionDocuments = termsDocuments,
+                ESignDocuments = esignDocuments,
                 ItemAttachments = itemAttachments
             };
         }

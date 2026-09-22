@@ -43,7 +43,7 @@ namespace Supplier.Domain.Entities
         public string Currency { get; set; }
 
         public string? SessionToken { get; set; }
-
+        public bool IsSupplierInvitedForContract { get; set; }
         public SupplierRFQ()
         {
         }

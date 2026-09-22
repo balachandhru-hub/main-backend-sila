@@ -343,6 +343,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             {
                 BuyerId = rfq.BuyerId,
                 BuyerName = buyerName?.BuyerName,
+                SupplierId = rfq.SupplierId,
+                IsSupplierInvitedForContract = rfq.IsSupplierInvitedForContract,
                 Title = rfq.Title,
                 Description = rfq.Description,
                 DeliveryLocation = rfq.DeliveryLocation,
@@ -352,6 +354,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 TechnicalSpecificationDocuments = technicalDocuments,
                 TermsConditionDocuments = termsDocuments,
                 ESignDocuments = esignDocuments,
+                BuyerESignDocuments = attachmentResponse.ESignDocuments,
                 SupplierTermsAndCondition = rfq.TermsAndCondition,
                 SupplierTermsConditionDocuments = supplierTermsConditionDocuments,
                 BuyerTermsAndConditionAccepted = rfq.BuyerTermsAndConditionAccepted,

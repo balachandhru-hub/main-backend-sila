@@ -6,7 +6,12 @@ namespace Supplier.Domain.Dto
     {
         public List<AssetDto> TechnicalSpecificationDocuments { get; set; } 
 
-        public List<AssetDto> TermsConditionDocuments { get; set; } 
+        public List<AssetDto> TermsConditionDocuments { get; set; }
+
+        /// <summary>
+        /// The buyer's own e-sign for this RFQ (one per RFQ, not per supplier).
+        /// </summary>
+        public List<AssetDto> ESignDocuments { get; set; } = new();
         public List<RFQItemAttachmentDto> ItemAttachments { get; set; }
     }
      public class RFQItemAttachmentDto

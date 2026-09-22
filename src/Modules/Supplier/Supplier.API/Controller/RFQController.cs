@@ -326,6 +326,29 @@ namespace Supplier.API.Controllers
             return Ok(result);
         }
 
+        [HttpPut]
+        [Route("api/v1/supplier/rfq/invite-for-contract")]
+        [ApiAuthorization(Name = "UPDATE_SUPPLIER_INVITED_FOR_CONTRACT")]
+        [ValidateModelState]
+        [SwaggerOperation("InviteSupplierForContract")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier invited for contract successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> InviteSupplierForContract(
+            [FromBody] InviteSupplierForContractCommand command)
+        {
+            var result = await _mediator.Send(command);
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Supplier invited for contract successfully.",
+                Id = result.ToString()
+            });
+        }
+
         [HttpGet]
         [Route("api/v1/supplier/external-rfq/{rfqId}")]
         [ApiSessionAuthorization]

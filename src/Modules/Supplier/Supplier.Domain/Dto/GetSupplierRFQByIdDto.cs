@@ -9,6 +9,14 @@ namespace Supplier.Domain.Dto
 
         public string? BuyerName { get; set; }
 
+        public Guid SupplierId { get; set; }
+
+        /// <summary>
+        /// True once the buyer has invited this supplier to contract
+        /// (PUT api/v1/supplier/rfq/invite-for-contract), for this RFQ.
+        /// </summary>
+        public bool IsSupplierInvitedForContract { get; set; }
+
         public Guid? ExternalSupplierId { get; set; }
 
         public string? ExternalSupplierName { get; set; }
@@ -29,7 +37,11 @@ namespace Supplier.Domain.Dto
 
         public List<AssetDto>? TermsConditionDocuments { get; set; }
 
+        /// <summary>This supplier's own e-sign for the RFQ.</summary>
         public List<AssetDto>? ESignDocuments { get; set; }
+
+        /// <summary>The buyer's e-sign for the RFQ.</summary>
+        public List<AssetDto>? BuyerESignDocuments { get; set; }
 
         public bool SupplierTermsAndCondition { get; set; }
 
