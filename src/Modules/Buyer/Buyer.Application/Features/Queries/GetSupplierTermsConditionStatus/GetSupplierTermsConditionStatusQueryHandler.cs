@@ -27,7 +27,8 @@ namespace Buyer.Application.Features.Queries.GetSupplierTermsConditionStatus
             CancellationToken cancellationToken)
         {
             _logger.LogInfo(
-                $"Fetching Supplier Terms and Condition status for RFQId: {request.RFQId}");
+                $"Fetching Supplier Terms and Condition status for RFQId: {request.RFQId}, " +
+                $"SupplierId: {request.SupplierId}");
 
             var rfq = await _repository.RFQ
                 .FindByCondition(x => x.Id == request.RFQId)
@@ -41,6 +42,23 @@ namespace Buyer.Application.Features.Queries.GetSupplierTermsConditionStatus
                     $"No RFQ exists with Id: {request.RFQId}.");
             }
 
+            var rfqSupplierMapping = await _repository.RFQSupplierMapping
+                .FindByCondition(x =>
+                    x.RFQId == request.RFQId &&
+                    x.SupplierId == request.SupplierId &&
+                    x.IsActive)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (rfqSupplierMapping == null)
+            {
+                _logger.LogError(
+                    $"RFQ Supplier mapping not found for RFQId: {request.RFQId}, " +
+                    $"SupplierId: {request.SupplierId}");
+                throw new NotFoundCustomException(
+                    "RFQ not found for the given supplier.",
+                    $"No RFQ exists with Id: {request.RFQId} for SupplierId: {request.SupplierId}.");
+            }
+
             var buyer = _repository.BuyerBusinessProfile
                 .FindFirstByCondition(x =>
                     x.Id == rfq.BuyerId &&
@@ -50,7 +68,7 @@ namespace Buyer.Application.Features.Queries.GetSupplierTermsConditionStatus
             {
                 BuyerId = rfq.BuyerId,
                 BuyerName = buyer?.OrganizationName,
-                Status = rfq.SupplierTermsAndConditionAccepted
+                Status = rfqSupplierMapping.SupplierTermsAndConditionAccepted
                     ? Common.ACCEPTED_STATUS
                     : Common.REJECTED_STATUS
             };

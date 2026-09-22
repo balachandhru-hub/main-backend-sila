@@ -21,6 +21,8 @@ namespace Buyer.Domain.Entities
 
         public Guid SupplierId { get; set; }
 
+        public bool SupplierTermsAndConditionAccepted { get; set; }
+
         public RFQSupplierMapping()
         {
         }

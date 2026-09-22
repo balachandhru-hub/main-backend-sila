@@ -235,6 +235,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             {
                 var supplierTermsConditionStatus = await _buyerApiClient.GetSupplierTermsConditionStatus(
                     request.RFQId,
+                    supplier.Id,
                     cancellationToken);
 
                 supplierTermsAndConditionAccepted =

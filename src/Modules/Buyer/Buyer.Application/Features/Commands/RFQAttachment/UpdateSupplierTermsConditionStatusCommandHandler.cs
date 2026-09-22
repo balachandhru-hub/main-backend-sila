@@ -26,8 +26,8 @@ namespace Buyer.Application.Features.Commands.RFQAttachment
             CancellationToken cancellationToken)
         {
             _logger.LogInfo(
-                $"Updating Supplier Terms and Condition status for RFQId: {request.RFQId}. " +
-                $"Status: {request.Status}");
+                $"Updating Supplier Terms and Condition status for RFQId: {request.RFQId}, " +
+                $"SupplierId: {request.SupplierId}. Status: {request.Status}");
 
             if (request.Status != Common.APPROVED && request.Status != Common.REJECTED)
             {
@@ -36,27 +36,32 @@ namespace Buyer.Application.Features.Commands.RFQAttachment
                     "Status must be either APPROVE or REJECT.");
             }
 
-            var rfq = await _repository.RFQ
-                .FindByCondition(x => x.Id == request.RFQId)
+            var rfqSupplierMapping = await _repository.RFQSupplierMapping
+                .FindByCondition(x =>
+                    x.RFQId == request.RFQId &&
+                    x.SupplierId == request.SupplierId &&
+                    x.IsActive)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (rfq == null)
+            if (rfqSupplierMapping == null)
             {
-                _logger.LogError($"RFQ not found for RFQId: {request.RFQId}");
+                _logger.LogError(
+                    $"RFQ Supplier mapping not found for RFQId: {request.RFQId}, " +
+                    $"SupplierId: {request.SupplierId}");
                 throw new NotFoundCustomException(
-                    "RFQ not found.",
-                    $"No RFQ exists with Id: {request.RFQId}.");
+                    "RFQ not found for the given supplier.",
+                    $"No RFQ exists with Id: {request.RFQId} for SupplierId: {request.SupplierId}.");
             }
 
-            rfq.SupplierTermsAndConditionAccepted = request.Status == Common.APPROVED;
-            _repository.RFQ.Update(rfq);
+            rfqSupplierMapping.SupplierTermsAndConditionAccepted = request.Status == Common.APPROVED;
+            _repository.RFQSupplierMapping.Update(rfqSupplierMapping);
             await _repository.SaveAsync();
 
             _logger.LogInfo(
-                $"Supplier Terms and Condition status updated for RFQId: {request.RFQId}. " +
-                $"Accepted: {rfq.SupplierTermsAndConditionAccepted}");
+                $"Supplier Terms and Condition status updated for RFQId: {request.RFQId}, " +
+                $"SupplierId: {request.SupplierId}. Accepted: {rfqSupplierMapping.SupplierTermsAndConditionAccepted}");
 
-            return rfq.Id;
+            return rfqSupplierMapping.RFQId;
         }
     }
 }

@@ -81,6 +81,7 @@ CancellationToken cancellationToken = default);
 
         Task<SupplierTermsAndConditionStatusDto> GetSupplierTermsConditionStatus(
             Guid rfqId,
+            Guid supplierId,
             CancellationToken cancellationToken = default);
 
         Task<ContractResponseDto> GetContract(

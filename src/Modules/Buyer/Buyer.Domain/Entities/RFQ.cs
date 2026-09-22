@@ -48,7 +48,6 @@ namespace Buyer.Domain.Entities
         public decimal? DeliveryCharge { get; set; }
         public string Currency { get; set; }
 
-        public bool SupplierTermsAndConditionAccepted { get; set; }
         public RFQ() { }
 
     }

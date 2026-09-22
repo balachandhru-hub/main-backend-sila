@@ -133,14 +133,9 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
         public async Task<IActionResult> UpdateSupplierTermsConditionStatus(
-            [FromQuery] Guid rfqId,
-            [FromQuery] string status)
+            [FromBody] UpdateSupplierTermsConditionStatusCommand command)
         {
-            var result = await _mediator.Send(new UpdateSupplierTermsConditionStatusCommand
-            {
-                RFQId = rfqId,
-                Status = status
-            });
+            var result = await _mediator.Send(command);
 
             return Ok(new SuccessResponseDto
             {
@@ -160,11 +155,14 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> GetSupplierTermsConditionStatus([FromQuery] Guid rfqId)
+        public async Task<IActionResult> GetSupplierTermsConditionStatus(
+            [FromQuery] Guid rfqId,
+            [FromQuery] Guid supplierId)
         {
             var result = await _mediator.Send(new GetSupplierTermsConditionStatusQuery
             {
-                RFQId = rfqId
+                RFQId = rfqId,
+                SupplierId = supplierId
             });
 
             return Ok(result);

@@ -414,13 +414,24 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 FileName = asset.FileName
             }).ToList();
 
-            var supplierIds = await _repositorywrapper.RFQSupplierMapping
+            var rfqSupplierMappings = await _repositorywrapper.RFQSupplierMapping
             .FindByCondition(x => x.RFQId == request.RFQId)
-            .Select(x => x.SupplierId)
             .ToListAsync(cancellationToken);
+            var supplierIds = rfqSupplierMappings
+            .Select(x => x.SupplierId)
+            .ToList();
             var suppliers = await _supplierApiClient.GetSupplierNamesByIds(
     supplierIds,
     cancellationToken);
+
+            var supplierTermsAndConditionAccepted = rfqSupplierMappings
+                .Select(x => new SupplierTermsAndConditionAcceptedDto
+                {
+                    SupplierId = x.SupplierId,
+                    SupplierName = suppliers.FirstOrDefault(s => s.SupplierId == x.SupplierId)?.SupplierName,
+                    SupplierTermsAndConditionAccepted = x.SupplierTermsAndConditionAccepted
+                })
+                .ToList();
 
             // Terms and Condition acceptance + uploaded document for every
             // supplier invited to this RFQ, in one call.
@@ -612,7 +623,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 InvitedUsers = invitedUsers,
                 SupplierTermsConditions = supplierTermsConditions,
                 SupplierESigns = supplierESigns,
-                SupplierTermsAndConditionAccepted = rfq.SupplierTermsAndConditionAccepted,
+                SupplierTermsAndConditionAccepted = supplierTermsAndConditionAccepted,
                 BuyerTermsAndConditionStatuses = buyerTermsConditionStatuses,
                 Contracts = contracts
             };
