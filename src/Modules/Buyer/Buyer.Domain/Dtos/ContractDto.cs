@@ -60,6 +60,8 @@ namespace Buyer.Domain.Dto
 
         public DateTime DateCreated { get; set; }
 
+        public string? Status { get; set; }
+
         public List<ContractAttachmentDto> Attachments { get; set; } = new();
 
         public List<ContractApprovalFlowDto> ApprovalFlows { get; set; } = new();

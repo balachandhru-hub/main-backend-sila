@@ -115,9 +115,12 @@ namespace Buyer.Application.Features.Commands.CreateContract
                 contract.Amount,
                 cancellationToken);
 
+            // No approver in the flow means there is nothing to wait on, so the
+            // contract is complete immediately; otherwise it starts out OPEN
+            // until the approval flow finishes.
             contract.Status = requiresApproval
-                ? Common.CONTRACT_IN_PROCESS_STATUS
-                : Common.CONTRACT_COMPLETED_STATUS;
+                ? Common.CONTRACT_OPEN_STATUS
+                : Common.COMPLETE;
 
             contract.ContractStatus = Common.CONTRACT_CREATED_STATUS;
 

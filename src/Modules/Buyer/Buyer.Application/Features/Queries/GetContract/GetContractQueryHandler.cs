@@ -111,6 +111,7 @@ namespace Buyer.Application.Features.Queries.GetContract
                 EndDate = contract.EndDate,
                 Amount = contract.Amount,
                 DateCreated = contract.DateCreated,
+                Status = contract.Status,
                 Attachments = attachments
                     .Select(x => new ContractAttachmentDto
                     {

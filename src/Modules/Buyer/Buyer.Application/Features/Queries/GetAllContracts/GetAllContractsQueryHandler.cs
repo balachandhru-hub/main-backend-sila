@@ -42,7 +42,8 @@ namespace Buyer.Application.Features.Queries.GetAllContracts
                     StartDate = contract.StartDate,
                     EndDate = contract.EndDate,
                     Amount = contract.Amount,
-                    DateCreated = contract.DateCreated
+                    DateCreated = contract.DateCreated,
+                    Status = contract.Status
                 })
                 .ToListAsync(cancellationToken);
 

@@ -256,7 +256,7 @@ namespace Buyer.Application.Features.Commands.ApproveRejectContract
                         "All approval levels must be approved before completing the contract.");
                 }
 
-                contract.Status = Common.CONTRACT_COMPLETED_STATUS;
+                contract.Status = Common.COMPLETE;
 
                 _repositoryWrapper.Contract.Update(contract);
             }

@@ -78,6 +78,7 @@ namespace Buyer.Domain.Common
                 public const string PROCESSING = "PROCESSING";
 
                 public const string CONTRACT_DRAFT_STATUS = "DRAFT";
+                public const string CONTRACT_OPEN_STATUS = "OPEN";
                 public const string CONTRACT_IN_PROCESS_STATUS = "IN_PROCESS";
                 public const string CONTRACT_COMPLETED_STATUS = "COMPLETED";
                 public const string CONTRACT_REJECTED_STATUS = "REJECTED";
