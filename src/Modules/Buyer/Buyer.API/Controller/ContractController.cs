@@ -1,5 +1,6 @@
 using Buyer.Application.Features.Commands.ApproveRejectContract;
 using Buyer.Application.Features.Commands.CreateContract;
+using Buyer.Application.Features.Commands.InviteSupplierForContract;
 using Buyer.Application.Features.Profile.Queries.GetBuyerId;
 using Buyer.Application.Features.Queries.GetAllContracts;
 using Buyer.Application.Features.Queries.GetContract;
@@ -97,6 +98,34 @@ namespace Buyer.API.Controllers
             });
 
             return Ok(result);
+        }
+
+        /// <summary>
+        /// Marks a supplier as invited for contract on an awarded RFQ. Relays the
+        /// call internally to the Supplier service, which flags its own copy of
+        /// the RFQ (SupplierRFQ.IsSupplierInvitedForContract).
+        /// </summary>
+        [HttpPut]
+        [Route("api/v1/buyer/rfq/invite-for-contract")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_RFQ_CONTRACT")]
+        [SwaggerOperation("InviteSupplierForContract")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier invited for contract successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ Not Found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> InviteSupplierForContract(
+            [FromBody] InviteSupplierForContractCommand command)
+        {
+            Guid rfqId = await _mediator.Send(command);
+
+            return Ok(new SuccessResponseDto
+            {
+                Id = rfqId.ToString(),
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Supplier invited for contract successfully."
+            });
         }
 
         /// <summary>

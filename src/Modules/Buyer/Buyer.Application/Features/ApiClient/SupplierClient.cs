@@ -731,5 +731,60 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result ?? new List<BuyerTermsAndConditionStatusDto>();
         }
+
+        public async Task InviteSupplierForContract(
+            Guid rfqId,
+            Guid supplierId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo(
+                $"Inviting supplier for contract. RFQId: {rfqId}, SupplierId: {supplierId}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Put,
+                $"{supplierUrl}/api/v1/supplier/rfq/invite-for-contract");
+
+            var requestDto = new
+            {
+                RFQId = rfqId,
+                SupplierId = supplierId
+            };
+
+            request.Content = JsonContent.Create(requestDto);
+
+            // Get access token from current request cookie
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                _logger.LogInfo("Adding access token to request headers.");
+
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to invite supplier for contract. RFQId: {rfqId}, SupplierId: {supplierId}, " +
+                    $"Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to invite supplier for contract.",
+                    error);
+            }
+
+            _logger.LogInfo(
+                $"Supplier invited for contract successfully. RFQId: {rfqId}, SupplierId: {supplierId}");
+        }
     }
 }
