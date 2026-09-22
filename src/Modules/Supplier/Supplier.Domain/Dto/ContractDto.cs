@@ -11,23 +11,6 @@ namespace Supplier.Domain.Dto
         public string? FileName { get; set; }
     }
 
-    public class ContractApprovalFlowDto
-    {
-        public Guid Id { get; set; }
-
-        public string? ApprovalCode { get; set; }
-
-        public string? ApprovalName { get; set; }
-
-        public Guid ContractId { get; set; }
-
-        public string? Type { get; set; }
-
-        public decimal TotalAmount { get; set; }
-
-        public string? Currency { get; set; }
-    }
-
     public class ContractResponseDto
     {
         public Guid Id { get; set; }
@@ -50,8 +33,7 @@ namespace Supplier.Domain.Dto
 
         public DateTime DateCreated { get; set; }
 
+        // Approval flow/user data is buyer-internal and intentionally not exposed here.
         public List<ContractAttachmentDto> Attachments { get; set; } = new();
-
-        public List<ContractApprovalFlowDto> ApprovalFlows { get; set; } = new();
     }
 }

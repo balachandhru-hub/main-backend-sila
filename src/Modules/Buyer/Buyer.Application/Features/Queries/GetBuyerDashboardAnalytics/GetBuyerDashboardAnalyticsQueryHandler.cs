@@ -108,8 +108,17 @@ namespace Buyer.Application.Features.Queries.GetBuyerDashboardAnalytics
                 .Select(x => new { x.RFQId, x.DateCreated })
                 .ToListAsync(cancellationToken);
 
-            var contracts = await _repository.Contract
-                .FindByCondition(x => x.BuyerId == buyer.Id && rfqIds.Contains(x.RFQId) && x.IsActive)
+            var contractsQuery = _repository.Contract
+                .FindByCondition(x => x.BuyerId == buyer.Id && rfqIds.Contains(x.RFQId) && x.IsActive);
+
+            if (request.RoleId != Common.BUYER_ADMIN_ROLE_ID)
+            {
+                // Same visibility rule as the contract list: admins see every
+                // contract for the buyer, users only the ones they created.
+                contractsQuery = contractsQuery.Where(x => x.CreatedBy == request.UserId);
+            }
+
+            var contracts = await contractsQuery
                 .Select(x => new { x.SupplierId, x.Status })
                 .ToListAsync(cancellationToken);
 

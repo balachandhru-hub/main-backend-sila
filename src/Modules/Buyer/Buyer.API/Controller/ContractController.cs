@@ -91,7 +91,9 @@ namespace Buyer.API.Controllers
             {
                 Index = index,
                 Limit = limit,
-                BuyerId = buyerId
+                BuyerId = buyerId,
+                UserId = GetUserId(),
+                RoleId = GetRoleId()
             });
 
             return Ok(result);

@@ -1,4 +1,5 @@
 using Buyer.Application.Contracts;
+using Buyer.Domain.Common;
 using Buyer.Domain.Dto;
 using Buyer.Domain.Dtos;
 using Buyer.Infrastructure.Contracts.IRepository;
@@ -25,8 +26,17 @@ namespace Buyer.Application.Features.Queries.GetAllContracts
             GetAllContractsQuery request,
             CancellationToken cancellationToken)
         {
-            var contracts = await _repository.Contract
-                .FindByCondition(x => x.IsActive && x.BuyerId == request.BuyerId)
+            var contractsQuery = _repository.Contract
+                .FindByCondition(x => x.IsActive && x.BuyerId == request.BuyerId);
+
+            if (request.RoleId != Common.BUYER_ADMIN_ROLE_ID)
+            {
+                // A regular buyer user only sees the contracts they created;
+                // only the Buyer Admin sees every contract for the buyer.
+                contractsQuery = contractsQuery.Where(x => x.CreatedBy == request.UserId);
+            }
+
+            var contracts = await contractsQuery
                 .Include(x => x.RFQ)
                 .OrderByDescending(x => x.DateCreated)
                 .Skip(request.Index)
