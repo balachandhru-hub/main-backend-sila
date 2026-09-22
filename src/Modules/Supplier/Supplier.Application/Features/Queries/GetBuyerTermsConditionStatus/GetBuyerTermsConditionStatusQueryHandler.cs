@@ -63,7 +63,8 @@ namespace Supplier.Application.Features.Queries.GetBuyerTermsConditionStatus
                 SupplierName = supplierNames.TryGetValue(supplierRFQ.SupplierId, out var name)
                     ? name
                     : null,
-                BuyerTermsAndConditionAccepted = supplierRFQ.BuyerTermsAndConditionAccepted
+                BuyerTermsAndConditionAccepted = supplierRFQ.BuyerTermsAndConditionAccepted,
+                IsSupplierInvitedForContract = supplierRFQ.IsSupplierInvitedForContract
             }).ToList();
 
             _logger.LogInfo(
