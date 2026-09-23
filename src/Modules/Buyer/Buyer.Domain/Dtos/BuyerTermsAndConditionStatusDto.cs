@@ -6,7 +6,7 @@ namespace Buyer.Domain.Dto
 
         public string? SupplierName { get; set; }
 
-        public bool BuyerTermsAndConditionAccepted { get; set; }
+        public string BuyerTermsAndConditionAccepted { get; set; }
 
         /// <summary>
         /// True once the buyer has invited this supplier to contract, for this RFQ.

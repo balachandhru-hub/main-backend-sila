@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
+using Supplier.Domain.Common;
 using Supplier.Domain.Dto;
 using Supplier.Infrastructure.Contracts.IRepository;
 
@@ -63,7 +64,7 @@ namespace Supplier.Application.Features.Queries.GetBuyerTermsConditionStatus
                 SupplierName = supplierNames.TryGetValue(supplierRFQ.SupplierId, out var name)
                     ? name
                     : null,
-                BuyerTermsAndConditionAccepted = supplierRFQ.BuyerTermsAndConditionAccepted,
+                BuyerTermsAndConditionAccepted = supplierRFQ.BuyerTermsAndConditionAccepted ?? Common.PENDING,
                 IsSupplierInvitedForContract = supplierRFQ.IsSupplierInvitedForContract
             }).ToList();
 

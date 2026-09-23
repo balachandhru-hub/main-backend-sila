@@ -53,7 +53,8 @@
                     Currency = request.RFQ.Currency,
                     Status = request.RFQ.Status,
                     DeliveryLocation=request.RFQ.DeliveryLocation,
-                    SessionToken = request.RFQ.SessionToken
+                    SessionToken = request.RFQ.SessionToken,
+                    BuyerTermsAndConditionAccepted = Common.PENDING
                 };
 
                 _repository.SupplierRFQ.Create(supplierRFQ);

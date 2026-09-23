@@ -68,9 +68,7 @@ namespace Buyer.Application.Features.Queries.GetSupplierTermsConditionStatus
             {
                 BuyerId = rfq.BuyerId,
                 BuyerName = buyer?.OrganizationName,
-                Status = rfqSupplierMapping.SupplierTermsAndConditionAccepted
-                    ? Common.ACCEPTED_STATUS
-                    : Common.REJECTED_STATUS
+                Status = rfqSupplierMapping.SupplierTermsAndConditionAccepted ?? Common.PENDING
             };
         }
     }

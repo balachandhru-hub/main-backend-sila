@@ -47,9 +47,9 @@ namespace Supplier.Domain.Dto
 
         public List<AssetDto>? SupplierTermsConditionDocuments { get; set; }
 
-        public bool BuyerTermsAndConditionAccepted { get; set; }
+        public string BuyerTermsAndConditionAccepted { get; set; }
 
-        public bool SupplierTermsAndConditionAccepted { get; set; }
+        public string SupplierTermsAndConditionAccepted { get; set; }
         public List<GetRFQItemDto> Items { get; set; }
         public List<GetSupplierQuotationDto> SupplierQuotation {get;set;}
          public List<SupplierQuotationItemDto> SupplierQuotationItems { get; set; } 

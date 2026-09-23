@@ -53,7 +53,9 @@ namespace Buyer.Application.Features.Commands.RFQAttachment
                     $"No RFQ exists with Id: {request.RFQId} for SupplierId: {request.SupplierId}.");
             }
 
-            rfqSupplierMapping.SupplierTermsAndConditionAccepted = request.Status == Common.APPROVED;
+            rfqSupplierMapping.SupplierTermsAndConditionAccepted = request.Status == Common.APPROVED
+                ? Common.ACCEPTED_STATUS
+                : Common.REJECTED_STATUS;
             _repository.RFQSupplierMapping.Update(rfqSupplierMapping);
             await _repository.SaveAsync();
 

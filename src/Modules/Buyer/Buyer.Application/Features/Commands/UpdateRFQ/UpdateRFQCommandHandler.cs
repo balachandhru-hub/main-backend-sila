@@ -1,4 +1,5 @@
 using Buyer.Domain.Entities;
+using Buyer.Domain.Common;
 using Buyer.Domain.Dto;
 using Buyer.Infrastructure.Contracts.IRepository;
 using Buyer.Application.Contracts;
@@ -422,7 +423,8 @@ namespace Buyer.Application.Features.Commands.UpdateRFQ
                             RFQId = rfq.Id,
                             RFQNumber = rfq.RFQNumber,
                             BuyerId = buyer.Id,
-                            SupplierId = supplierId
+                            SupplierId = supplierId,
+                            SupplierTermsAndConditionAccepted = Common.PENDING
                         });
                 }
             }

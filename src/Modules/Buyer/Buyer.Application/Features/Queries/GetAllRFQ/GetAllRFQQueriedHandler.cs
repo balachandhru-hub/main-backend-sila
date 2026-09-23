@@ -429,7 +429,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 {
                     SupplierId = x.SupplierId,
                     SupplierName = suppliers.FirstOrDefault(s => s.SupplierId == x.SupplierId)?.SupplierName,
-                    SupplierTermsAndConditionAccepted = x.SupplierTermsAndConditionAccepted
+                    SupplierTermsAndConditionAccepted = x.SupplierTermsAndConditionAccepted ?? Common.PENDING
                 })
                 .ToList();
 

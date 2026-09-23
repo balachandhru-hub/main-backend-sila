@@ -10,6 +10,6 @@ namespace Buyer.Domain.Dto
 
         public string? SupplierName { get; set; }
 
-        public bool SupplierTermsAndConditionAccepted { get; set; }
+        public string SupplierTermsAndConditionAccepted { get; set; }
     }
 }

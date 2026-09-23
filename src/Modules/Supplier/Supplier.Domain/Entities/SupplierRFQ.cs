@@ -36,7 +36,8 @@ namespace Supplier.Domain.Entities
 
         public bool TermsAndCondition { get; set; }
 
-        public bool BuyerTermsAndConditionAccepted { get; set; }
+        /// <summary>ACCEPTED, REJECTED or PENDING - see Supplier.Domain.Common.Common.</summary>
+        public string BuyerTermsAndConditionAccepted { get; set; }
 
         public string Status { get; set; }
         public string DeliveryLocation {get;set;}

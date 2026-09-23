@@ -229,7 +229,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             }
 
             _logger.LogInfo($"Fetching Supplier Terms and Condition status for BuyerRFQId: {request.RFQId}");
-            bool supplierTermsAndConditionAccepted;
+            string supplierTermsAndConditionAccepted;
 
             try
             {
@@ -239,13 +239,13 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     cancellationToken);
 
                 supplierTermsAndConditionAccepted =
-                    supplierTermsConditionStatus?.Status == Common.ACCEPTED_STATUS;
+                    supplierTermsConditionStatus?.Status ?? Common.PENDING;
             }
             catch
             {
                 _logger.LogInfo(
                     $"No Supplier Terms and Condition status found for BuyerRFQId: {request.RFQId}");
-                supplierTermsAndConditionAccepted = false;
+                supplierTermsAndConditionAccepted = Common.PENDING;
             }
             // Supplier Quotation Header
             var quotation = await _repositorywrapper.SupplierQuotation
@@ -357,7 +357,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 BuyerESignDocuments = attachmentResponse.ESignDocuments,
                 SupplierTermsAndCondition = rfq.TermsAndCondition,
                 SupplierTermsConditionDocuments = supplierTermsConditionDocuments,
-                BuyerTermsAndConditionAccepted = rfq.BuyerTermsAndConditionAccepted,
+                BuyerTermsAndConditionAccepted = rfq.BuyerTermsAndConditionAccepted ?? Common.PENDING,
                 SupplierTermsAndConditionAccepted = supplierTermsAndConditionAccepted,
                 Status = rfq.Status,
                 ContractStatus = contractStatus,

@@ -300,7 +300,8 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                         RFQId = rfq.Id,
                         RFQNumber = rfq.RFQNumber,
                         BuyerId = buyer.Id,
-                        SupplierId = invite.SupplierId
+                        SupplierId = invite.SupplierId,
+                        SupplierTermsAndConditionAccepted = Common.PENDING
                     });
 
                 if (invite.UserIds != null)
