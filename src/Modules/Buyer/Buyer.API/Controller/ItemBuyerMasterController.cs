@@ -1,4 +1,5 @@
 using Buyer.Application.Features.Queries.ItemBuyerMaster;
+using Buyer.Application.Features.Queries.CheckPredefinedMaterialSimilarity;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel.Attributes;
@@ -77,6 +78,39 @@ namespace Buyer.API.Controller
             var result = await _mediator.Send(new GetItemBuyerMasterByIdQuery(id));
 
             _logger.LogDebug($"Item Buyer Master details retrieved successfully for Id: {id}");
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Checks whether an item similar to the one about to be created
+        /// already exists, matching on Description and Material Group.
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/buyer/item-master/check-similarity")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SIMILAR_ITEM_BUYER_MASTER")]
+        [SwaggerOperation("CheckItemBuyerMasterSimilarity")]
+        [SwaggerResponse(200, type: typeof(List<SimilarPredefinedMaterialDto>), description: "Similar items retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> CheckSimilarity(
+            [FromQuery] string description,
+            [FromQuery] string materialGroup,
+            [FromQuery] Guid? buyerId = null)
+        {
+            _logger.LogDebug(
+                $"Checking Item Master similarity. Description: {description}, MaterialGroup: {materialGroup}");
+
+            var result = await _mediator.Send(
+                new CheckPredefinedMaterialSimilarityQuery
+                {
+                    Description = description,
+                    MaterialGroup = materialGroup,
+                    BuyerId = buyerId
+                });
+
+            _logger.LogDebug($"Item Master similarity check complete. Matches: {result.Count}");
 
             return Ok(result);
         }
