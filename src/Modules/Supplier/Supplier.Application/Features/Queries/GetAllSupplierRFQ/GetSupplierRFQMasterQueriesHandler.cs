@@ -70,7 +70,10 @@ namespace Supplier.Application.Features.Queries.GetAllSupplierRFQ
                 if (status.Equals(Common.RFQ_LIVE_STATUS, StringComparison.OrdinalIgnoreCase))
                 {
                     var now = DateTime.UtcNow;
-                    query = query.Where(x => x.StartDate <= now && x.EndDate >= now);
+                    query = query.Where(x =>
+                        x.StartDate <= now &&
+                        x.EndDate >= now &&
+                        x.Status != Common.RFQ_FREEZING_STATUS);
                 }
                 else
                 {
