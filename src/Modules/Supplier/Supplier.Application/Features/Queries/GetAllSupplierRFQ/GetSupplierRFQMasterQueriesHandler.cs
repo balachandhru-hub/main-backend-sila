@@ -73,7 +73,8 @@ namespace Supplier.Application.Features.Queries.GetAllSupplierRFQ
                     query = query.Where(x =>
                         x.StartDate <= now &&
                         x.EndDate >= now &&
-                        x.Status != Common.RFQ_FREEZING_STATUS);
+                        x.Status != Common.RFQ_FREEZING_STATUS &&
+                        x.Status != Common.AWARDED_STATUS);
                 }
                 else
                 {

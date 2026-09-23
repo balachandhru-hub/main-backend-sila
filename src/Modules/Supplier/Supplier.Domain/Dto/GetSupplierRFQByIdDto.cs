@@ -68,6 +68,7 @@ namespace Supplier.Domain.Dto
         /// Id of this supplier's contract for the RFQ; null until a contract exists.
         /// </summary>
         public Guid? ContractId { get; set; }
+        public string? Currency { get; set; }
 
     }
      public class GetRFQItemDto

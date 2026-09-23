@@ -364,6 +364,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 ContractId = contractId,
                 Items = items,
                 Questions = questions,
+                Currency = rfq.Currency,
                 SupplierQuotation = quotation == null
         ? new List<GetSupplierQuotationDto>()
         : new List<GetSupplierQuotationDto>

@@ -65,7 +65,8 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                     query = query.Where(x =>
                         x.StartDate <= now &&
                         x.EndDate >= now &&
-                        x.Status != Common.RFQ_FREEZING_STATUS);
+                        x.Status != Common.RFQ_FREEZING_STATUS &&
+                        x.Status != Common.RFQ_AWARDED_STATUS);
                 }
                 else
                 {

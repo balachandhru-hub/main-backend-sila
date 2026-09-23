@@ -617,7 +617,7 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 Description = rfq.Description,
                 Department = rfq.Department,
                 Region = rfq.Region,
-                Currency = string.Empty,
+                Currency = rfq.Currency,
                 DeliveryLocation = rfq.DeliveryLocation,
                 StartDate = rfq.StartDate,
                 EndDate = rfq.EndDate,
