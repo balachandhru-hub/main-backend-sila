@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
+using Supplier.Domain.Common;
 using Supplier.Domain.Dto;
 using Supplier.Infrastructure.Contracts.IRepository;
 using SharedKernel.LoggerServices;
@@ -63,10 +64,17 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                     x.SupplierId == supplierId &&
                     x.IsActive)
                 .ToListAsync(cancellationToken);
+            // Ranking must only ever consider quotations that were actually
+            // submitted - every invited supplier gets a DRAFT quotation
+            // automatically when the RFQ is created, and without this
+            // filter those untouched drafts get ranked alongside the real
+            // submissions (and, with a null/zero TotalPrice, can easily
+            // outrank the one supplier who actually bid).
             var allQuotations = await _repository.SupplierQuotation
             .FindByCondition(x =>
                 x.BuyerRFQId == request.RFQId &&
-                x.IsActive)
+                x.IsActive &&
+                x.Status == Common.SUBMITTED)
             .ToListAsync(cancellationToken);
             var quotationRankings = new Dictionary<Guid, string>();
 
@@ -84,7 +92,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
             var lowestQuotation = await _repository.SupplierQuotation
             .FindByCondition(x =>
                 x.BuyerRFQId == request.RFQId &&
-                x.IsActive)
+                x.IsActive &&
+                x.Status == Common.SUBMITTED)
             .OrderBy(x => x.TotalPrice)
             .FirstOrDefaultAsync(cancellationToken);
 
