@@ -368,6 +368,51 @@ namespace Supplier.Infrastructure.ApiClients
             }
         }
 
+        public async Task NotifyQuotationSubmittedAsync(
+            Guid rfqId,
+            Guid supplierId,
+            Guid quotationId,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            if (string.IsNullOrWhiteSpace(buyerUrl))
+            {
+                throw new BadRequestCustomException(
+                    "Buyer service URL is not configured.",
+                    "Please configure the Buyer service base URL.");
+            }
+
+            var url =
+                $"{buyerUrl.TrimEnd('/')}/api/v1/buyer/quotation/internal/notify";
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                url);
+
+            request.Content = JsonContent.Create(new
+            {
+                RFQId = rfqId,
+                SupplierId = supplierId,
+                QuotationId = quotationId
+            });
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseContent =
+                    await response.Content.ReadAsStringAsync(
+                        cancellationToken);
+
+                throw new BadRequestCustomException(
+                    "Failed to notify quotation submission in Buyer service.",
+                    $"StatusCode: {response.StatusCode}, Response: {responseContent}");
+            }
+        }
+
         public async Task<Guid?> GetExternalSupplierIdByEmailAsync(
             string email,
             CancellationToken cancellationToken = default)

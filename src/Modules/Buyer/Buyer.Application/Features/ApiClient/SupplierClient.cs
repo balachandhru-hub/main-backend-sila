@@ -501,6 +501,57 @@ namespace Buyer.Infrastructure.ApiClients
                 $"BuyerRFQId: {requestDto.BuyerRFQId}");
         }
 
+        public async Task ResetSupplierRFQAward(
+            Guid buyerRFQId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo(
+                $"Resetting RFQ award on Supplier service. BuyerRFQId: {buyerRFQId}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Put,
+                $"{supplierUrl}/api/v1/supplier/internal/rfq-award/reset");
+
+            request.Content = JsonContent.Create(new { BuyerRFQId = buyerRFQId });
+
+            // Get access token from current request cookie
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                _logger.LogInfo("Adding access token to request headers.");
+
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to reset RFQ award on Supplier service. " +
+                    $"BuyerRFQId: {buyerRFQId}, Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to reset RFQ award on Supplier service.",
+                    error);
+            }
+
+            _logger.LogInfo(
+                $"RFQ award reset on Supplier service successfully. " +
+                $"BuyerRFQId: {buyerRFQId}");
+        }
+
         public async Task<BidCompareResponseDto> GetBidCompare(
             Guid rfqId,
             CancellationToken cancellationToken = default)

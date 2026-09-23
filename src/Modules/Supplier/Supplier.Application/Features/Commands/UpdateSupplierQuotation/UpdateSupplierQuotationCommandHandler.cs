@@ -518,6 +518,27 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
             await _buyerApiClient.StoreQuotationAuditAsync(
                 audit,
                 cancellationToken);
+
+            try
+            {
+                // Pushes a live "QuotationSubmitted" event to the buyer's
+                // connected clients via the Buyer service's own SignalR hub -
+                // a notification failure must not fail an already-saved
+                // quotation submission.
+                await _buyerApiClient.NotifyQuotationSubmittedAsync(
+                    quotation.BuyerRFQId,
+                    quotation.SupplierId,
+                    quotation.Id,
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    $"Quotation submitted but failed to notify Buyer service " +
+                    $"for live update. QuotationId: {quotation.Id}, " +
+                    $"BuyerRFQId: {quotation.BuyerRFQId}, Error: {ex.Message}");
+            }
+
             return new UpdateSupplierQuotationResultDto
             {
                 QuotationId = quotation.Id,

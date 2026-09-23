@@ -524,6 +524,23 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 SupplierType = Common.EXTERNAL_SUPPLIER
             })
             .ToListAsync(cancellationToken);
+
+            // The Supplier microservice only knows registered suppliers, so
+            // SupplierName comes back null for external-supplier bids
+            // (their SupplierId is a Buyer-side ExternalSupplier.Id, not a
+            // SupplierBusinessProfile.Id). Backfill it from the external
+            // supplier data already fetched above.
+            foreach (var supplierQuote in supplierQuotation.Suppliers)
+            {
+                if (string.IsNullOrWhiteSpace(supplierQuote.SupplierName) &&
+                    externalSupplierIdSet.Contains(supplierQuote.SupplierId))
+                {
+                    supplierQuote.SupplierName = externalSuppliers
+                        .FirstOrDefault(x => x.ExternalSupplierId == supplierQuote.SupplierId)?
+                        .ExternalSupplierName;
+                }
+            }
+
             var verificationTemplateId = await _repositorywrapper.VerificationTemplate
     .FindByCondition(x => x.BuyerId == buyerId)
     .Select(x => x.Id)

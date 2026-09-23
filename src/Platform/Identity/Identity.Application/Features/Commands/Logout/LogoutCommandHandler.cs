@@ -3,9 +3,10 @@ using HashingSystem;
 using Identity.Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
- 
+
 namespace Identity.Application.Features.Commands.Logout
 {
     public class LogoutCommandHandler : IRequestHandler<LogoutCommand, bool>
@@ -14,17 +15,20 @@ namespace Identity.Application.Features.Commands.Logout
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IBcryptHashing _hashing;
         private readonly ILoggerManager _logger;
- 
+        private readonly IConfiguration _configuration;
+
         public LogoutCommandHandler(
             IRepositoryWrapper repository,
             IHttpContextAccessor httpContextAccessor,
             IBcryptHashing hashing,
-            ILoggerManager logger)
+            ILoggerManager logger,
+            IConfiguration configuration)
         {
             _repository = repository;
             _httpContextAccessor = httpContextAccessor;
             _hashing = hashing;
             _logger = logger;
+            _configuration = configuration;
         }
  
         public async Task<bool> Handle(
@@ -91,9 +95,30 @@ namespace Identity.Application.Features.Commands.Logout
  
             await _repository.SaveAsync();
  
-            // Delete cookies
-            httpContext.Response.Cookies.Delete(Common.COOKIE_ACCESS_TOKEN_KEY);
-            httpContext.Response.Cookies.Delete(Common.COOKIE_REFRESH_TOKEN_KEY);
+            // A cookie delete only takes effect in the browser when its
+            // Path/Domain match how the cookie was originally set - /login
+            // sets access_token/refresh_token host-only (no Domain), while
+            // /refresh-token sets them with the configured Domain. Clear
+            // both variants so logout works regardless of which endpoint
+            // last issued the cookies.
+            var cookieDomain = _configuration[Common.DOMAIN_COOKIE_NAME];
+
+            httpContext.Response.Cookies.Delete(
+                Common.COOKIE_ACCESS_TOKEN_KEY,
+                new CookieOptions { Path = "/" });
+            httpContext.Response.Cookies.Delete(
+                Common.COOKIE_REFRESH_TOKEN_KEY,
+                new CookieOptions { Path = "/" });
+
+            if (!string.IsNullOrWhiteSpace(cookieDomain))
+            {
+                httpContext.Response.Cookies.Delete(
+                    Common.COOKIE_ACCESS_TOKEN_KEY,
+                    new CookieOptions { Path = "/", Domain = cookieDomain });
+                httpContext.Response.Cookies.Delete(
+                    Common.COOKIE_REFRESH_TOKEN_KEY,
+                    new CookieOptions { Path = "/", Domain = cookieDomain });
+            }
  
             _logger.LogInfo($"User logged out successfully : {userId}");
  

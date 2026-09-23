@@ -19,4 +19,10 @@ namespace Supplier.Domain.Dto
         [Required]
         public Guid SupplierId { get; set; }
     }
+
+    public class ResetSupplierRFQAwardDto
+    {
+        [Required]
+        public Guid BuyerRFQId { get; set; }
+    }
 }

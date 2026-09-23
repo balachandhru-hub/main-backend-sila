@@ -1,4 +1,5 @@
 using Buyer.Application.Contracts;
+using Buyer.Application.Features.Commands.NotifySupplierAwarded;
 using Buyer.Domain.Common;
 using Buyer.Domain.Dto;
 using Buyer.Domain.Entities;
@@ -15,15 +16,18 @@ namespace Buyer.Application.Features.Commands.SaveRFQAward
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ISupplierApiClient _supplierApiClient;
+        private readonly IMediator _mediator;
         private readonly ILoggerManager _logger;
 
         public SaveRFQAwardCommandHandler(
             IRepositoryWrapper repository,
             ISupplierApiClient supplierApiClient,
+            IMediator mediator,
             ILoggerManager logger)
         {
             _repository = repository;
             _supplierApiClient = supplierApiClient;
+            _mediator = mediator;
             _logger = logger;
         }
 
@@ -152,6 +156,31 @@ namespace Buyer.Application.Features.Commands.SaveRFQAward
                     $"RFQ Award saved for RFQId: {dto.RFQId} but failed to " +
                     $"sync award to the Supplier service. AwardId: {award.Id}, " +
                     $"Error: {ex.Message}");
+            }
+
+            // Congratulate the winning supplier(s). External suppliers with
+            // no portal account get a registration link so the buyer can
+            // move on to contract creation once they've registered. A
+            // notification failure must not fail an already-saved award.
+            var winningSupplierIds = syncItems
+                .Select(x => x.SupplierId)
+                .Distinct();
+
+            foreach (var supplierId in winningSupplierIds)
+            {
+                try
+                {
+                    await _mediator.Send(
+                        new NotifySupplierAwardedCommand(rfq.Id, supplierId),
+                        cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        $"RFQ Award saved for RFQId: {dto.RFQId} but failed to " +
+                        $"notify SupplierId: {supplierId} of the award. " +
+                        $"AwardId: {award.Id}, Error: {ex.Message}");
+                }
             }
 
             _logger.LogInfo(

@@ -31,6 +31,7 @@ using Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId;
 using Supplier.Domain.Dto;
 using Supplier.Application.Features.Commands.RFQ;
 using Supplier.Application.Features.Commands.SaveSupplierRFQAward;
+using Supplier.Application.Features.Commands.ResetSupplierRFQAward;
 using Supplier.Domain.Common;
 using Supplier.Application.Features.Queries.GetSupplierDashboardAnalytics;
 
@@ -516,6 +517,30 @@ namespace Supplier.API.Controllers
             {
                 success = true,
                 message = "Supplier RFQ award saved successfully."
+            });
+        }
+
+        [HttpPut]
+        [Route("api/v1/supplier/internal/rfq-award/reset")]
+        [ValidateModelState]
+        [SwaggerOperation("ResetSupplierRFQAward")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Supplier RFQ award reset successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> ResetSupplierRFQAward(
+            [FromBody] ResetSupplierRFQAwardDto dto)
+        {
+            _logger.LogDebug(
+                $"Resetting supplier RFQ award for BuyerRFQId: {dto.BuyerRFQId}");
+
+            var result = await _mediator.Send(
+                new ResetSupplierRFQAwardCommand(dto));
+
+            return Ok(new
+            {
+                success = true,
+                message = "Supplier RFQ award reset successfully."
             });
         }
 

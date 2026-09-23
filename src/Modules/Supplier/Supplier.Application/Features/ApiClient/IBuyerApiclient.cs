@@ -37,6 +37,12 @@ namespace Supplier.Application.Contracts
             Guid rfqId,
             CancellationToken cancellationToken = default);
 
+        Task NotifyQuotationSubmittedAsync(
+            Guid rfqId,
+            Guid supplierId,
+            Guid quotationId,
+            CancellationToken cancellationToken = default);
+
         Task<Guid?> GetExternalSupplierIdByEmailAsync(
             string email,
             CancellationToken cancellationToken = default);

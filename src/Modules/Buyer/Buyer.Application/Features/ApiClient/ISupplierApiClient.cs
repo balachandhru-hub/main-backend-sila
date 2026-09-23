@@ -33,6 +33,9 @@ CancellationToken cancellationToken = default);
         Task SaveSupplierRFQAward(
             SupplierRFQAwardRequestDto request,
             CancellationToken cancellationToken = default);
+        Task ResetSupplierRFQAward(
+            Guid buyerRFQId,
+            CancellationToken cancellationToken = default);
         Task<BidCompareResponseDto> GetBidCompare(
             Guid rfqId,
             CancellationToken cancellationToken = default);

@@ -1,5 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Buyer.API.Hubs;
 using Swashbuckle.AspNetCore.Annotations;
 using Buyer.Application.Features.Queries.GetOrganizationProfile;
 using SharedKernel.LoggerServices;
@@ -40,14 +42,17 @@ namespace Buyer.API.Controllers
     {
         private readonly IMediator _mediator;
         private readonly ILoggerManager _logger;
-      
+        private readonly IHubContext<MessageHub> _hubContext;
 
 
-        public BuyerController(IMediator mediator, ILoggerManager logger)
+        public BuyerController(
+            IMediator mediator,
+            ILoggerManager logger,
+            IHubContext<MessageHub> hubContext)
         {
             _mediator = mediator;
             _logger = logger;
-        
+            _hubContext = hubContext;
         }
         /// <summary>
         /// Get buyer Profile
@@ -663,6 +668,64 @@ namespace Buyer.API.Controllers
             {
                 success = true,
                 message = "Supplier registration notification processed successfully."
+            });
+        }
+
+        /// <summary>
+        /// Called server-to-server by the Supplier service right after a
+        /// supplier (registered or external) submits a quotation, so the
+        /// buyer's already-connected clients can be pushed a live update
+        /// without needing to refresh or re-poll the bid list.
+        /// </summary>
+        [HttpPost]
+        [Route("api/v1/buyer/quotation/internal/notify")]
+        [ValidateModelState]
+        [SwaggerOperation("NotifyQuotationSubmitted")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Quotation submission broadcast successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> NotifyQuotationSubmitted(
+            [FromBody] QuotationSubmittedNotificationDto dto)
+        {
+            try
+            {
+                IClientProxy group = _hubContext.Clients.Group(
+                    MessageHub.GroupName(dto.RFQId, dto.SupplierId));
+
+                // Buyers are already auto-joined to this group per RFQ+supplier
+                // (same group used for RFQ chat), so no extra join/subscribe
+                // step is needed on the frontend beyond listening for the event.
+                await group.SendAsync("QuotationSubmitted", new
+                {
+                    RFQId = dto.RFQId,
+                    SupplierId = dto.SupplierId,
+                    QuotationId = dto.QuotationId,
+                    Message = "Supplier has submitted the quotation."
+                });
+            }
+            catch (Exception ex)
+            {
+                // The Supplier service that called this endpoint already
+                // treats a failure here as non-fatal to the quotation
+                // submission it just persisted - so this must not throw and
+                // fail that call. Log it instead of letting it vanish, so a
+                // broken broadcast is still visible.
+                _logger.LogError(
+                    $"Failed to broadcast QuotationSubmitted. RFQId: {dto.RFQId}, " +
+                    $"SupplierId: {dto.SupplierId}, QuotationId: {dto.QuotationId}. " +
+                    $"Error: {ex.Message}");
+
+                return Ok(new
+                {
+                    success = false,
+                    message = "Quotation submission recorded, but the live broadcast failed."
+                });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                message = "Quotation submission broadcast successfully."
             });
         }
 
