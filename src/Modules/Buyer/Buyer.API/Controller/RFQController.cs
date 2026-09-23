@@ -229,6 +229,34 @@ namespace Buyer.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Uploads the buyer's Terms and Condition document for an RFQ.
+        /// IsSingletonAsset = true disables every existing active attachment
+        /// for this (BuyerId, RFQId) first, so only this one stays active.
+        /// </summary>
+        [HttpPut]
+        [Route("api/v1/buyer/rfq-terms-condition")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPLOAD_BUYER_TERMS_CONDITION")]
+        [SwaggerOperation("UploadBuyerTermsCondition")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Buyer Terms and Condition uploaded successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "RFQ not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UploadBuyerTermsCondition(
+            [FromBody] UploadBuyerTermsConditionCommand command)
+        {
+            var result = await _mediator.Send(command);
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Buyer Terms and Condition uploaded successfully.",
+                Id = result.ToString()
+            });
+        }
+
         [HttpGet]
         [Route("api/v1/buyer/internal-rfq-questions")]
         [ValidateModelState]
