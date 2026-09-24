@@ -116,7 +116,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                 var allQuotationItems = await _repository.SupplierQuotationItem
                     .FindByCondition(x =>
                         quotationIds.Contains(x.SupplierQuotationId) &&
-                        x.IsActive)
+                        x.IsActive &&
+                        !x.ISLineitemAvailable)
                     .ToListAsync(cancellationToken);
 
                 quotationItemRankings = allQuotationItems
@@ -166,7 +167,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotationBySupplierId
                         QuotedAmount = x.QuotedAmount,
                         SubTotal = x.SubTotal,
                         LineNumber = x.SupplierRFQItem.LineNumber,
-                        IsAwarded = x.SupplierRFQItem.IsAwarded && x.SupplierRFQItem.AwardedSupplierId == supplierId
+                        IsAwarded = x.SupplierRFQItem.IsAwarded && x.SupplierRFQItem.AwardedSupplierId == supplierId,
+                        ISLineitemAvailable = x.ISLineitemAvailable
 
 
                     })

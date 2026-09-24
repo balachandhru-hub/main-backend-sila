@@ -93,7 +93,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
 
                             QuotedAmount = x.QuotedAmount,
                             SubTotal = x.SubTotal,
-                             LineNumber = x.SupplierRFQItem.LineNumber
+                             LineNumber = x.SupplierRFQItem.LineNumber,
+                            ISLineitemAvailable = x.ISLineitemAvailable
                         })
                         .ToListAsync(cancellationToken);
 
@@ -162,6 +163,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierQuotation
 
                 var rankedItems = result.Suppliers
                     .SelectMany(x => x.SupplierQuotationItems)
+                    .Where(x => !x.ISLineitemAvailable)
                     .GroupBy(x => x.BuyerRFQItemId)
                     .SelectMany(group =>
                         group

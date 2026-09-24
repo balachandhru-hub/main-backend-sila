@@ -56,5 +56,6 @@ namespace Buyer.Domain.Dto
             public int LineNumber { get; set; }
              public string? Rank { get; set; }
             public bool IsAwarded { get; set; }
+            public bool ISLineitemAvailable { get; set; }
     }
 }

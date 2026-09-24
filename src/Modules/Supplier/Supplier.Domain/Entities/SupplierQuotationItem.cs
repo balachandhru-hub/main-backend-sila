@@ -45,7 +45,7 @@ namespace Supplier.Domain.Entities
         public string? TaxType { get; set; }
         public decimal QuotedAmount { get; set; }
         public decimal SubTotal { get; set; } 
-
+        public bool ISLineitemAvailable { get; set; }
         public SupplierQuotationItem()
         {
         }
