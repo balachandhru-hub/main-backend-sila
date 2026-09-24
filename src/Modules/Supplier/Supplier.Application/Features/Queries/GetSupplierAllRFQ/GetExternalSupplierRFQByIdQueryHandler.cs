@@ -175,11 +175,23 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             {
                 quotationItems = await _repositorywrapper.SupplierQuotationItem
                     .FindByCondition(x => x.SupplierQuotationId == quotation.Id)
+                    .OrderBy(x => x.SupplierRFQItem.LineNumber)
                     .Select(x => new SupplierQuotationItemDto
                     {
                         ItemQuotationId = x.Id,
                         QuotedPrice = x.QuotedPrice,
+                        SupplierRFQItemId = x.SupplierRFQItemId,
                         BuyerRFQItemId = x.BuyerRFQItemId,
+                        DeliveryCharge = x.DeliveryCharge,
+                        DeliveryType = x.DeliveryType,
+                        Discount = x.Discount,
+                        DiscountType = x.DiscountType,
+                        Tax = x.Tax,
+                        TaxType = x.TaxType,
+                        QuotedAmount = x.QuotedAmount,
+                        SubTotal = x.SubTotal,
+                        LineNumber = x.SupplierRFQItem.LineNumber,
+                        IsAwarded = x.SupplierRFQItem.IsAwarded && x.SupplierRFQItem.AwardedSupplierId == request.SupplierId,
                         ISLineitemAvailable = x.ISLineitemAvailable
                     })
                     .ToListAsync(cancellationToken);
