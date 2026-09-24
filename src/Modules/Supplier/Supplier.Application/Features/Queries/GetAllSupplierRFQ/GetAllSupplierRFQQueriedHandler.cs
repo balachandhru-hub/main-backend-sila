@@ -269,7 +269,9 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     .Select(x => new SupplierQuotationItemDto
                     {
                         ItemQuotationId = x.Id,
-                        QuotedPrice = x.QuotedPrice
+                        QuotedPrice = x.QuotedPrice,
+                        BuyerRFQItemId = x.BuyerRFQItemId,
+                        ISLineitemAvailable = x.ISLineitemAvailable
                     })
                     .ToListAsync(cancellationToken);
             }

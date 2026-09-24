@@ -13,5 +13,12 @@ namespace Supplier.Domain.Dto
 
         public decimal? Tax { get; set; }
         public string? TaxType { get; set; }
+
+        /// <summary>
+        /// True when the supplier does not have this line item's
+        /// product/service to quote for. Set per line item, not per
+        /// quotation.
+        /// </summary>
+        public bool ISLineitemAvailable { get; set; }
     }
 }

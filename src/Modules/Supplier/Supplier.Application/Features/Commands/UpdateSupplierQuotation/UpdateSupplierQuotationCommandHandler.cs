@@ -219,6 +219,13 @@ namespace Supplier.Application.Features.Commands.UpdateSupplierQuotation
                         _repository.SupplierQuotationItem.Update(quotationItem);
                     }
 
+                    // ISLineitemAvailable = true means the supplier does NOT
+                    // have this product/line item to quote for. The frontend
+                    // already sends 0/blank price fields for such items, so
+                    // we just persist the flag and let the normal
+                    // price/amount calculation below run as-is.
+                    quotationItem.ISLineitemAvailable = item.ISLineitemAvailable;
+
                     quotationItem.QuotedPrice = item.QuotedPrice;
                     quotationItem.Discount = item.Discount;
                     quotationItem.DiscountType = item.DiscountType;
