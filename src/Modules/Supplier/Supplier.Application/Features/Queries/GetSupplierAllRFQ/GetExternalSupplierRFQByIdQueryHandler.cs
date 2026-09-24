@@ -1,3 +1,4 @@
+using Supplier.Domain.Common;
 using Supplier.Domain.Dto;
 using Supplier.Infrastructure.Contracts.IRepository;
 using MediatR;
@@ -127,7 +128,8 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             var allQuotations = await _repositorywrapper.SupplierQuotation
                 .FindByCondition(x =>
                     x.BuyerRFQId == request.RFQId &&
-                    x.IsActive)
+                    x.IsActive &&
+                    x.Status == Common.SUBMITTED)
                 .OrderBy(x => x.TotalPrice)
                 .ToListAsync(cancellationToken);
 
