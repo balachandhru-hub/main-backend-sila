@@ -1,7 +1,9 @@
+using Buyer.Domain.Common;
 using Buyer.Domain.Dtos;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.Dto;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
@@ -98,88 +100,161 @@ namespace Buyer.Application.Features.Queries.GetPendingApprovals
                     continue;
                 }
 
-                var predefinedMaterial =
-                    await _repositoryWrapper
-                        .PredefinedMaterial
-                        .FindFirstByConditionAsync(x =>
-                            x.Id == materialApprovalFlowMapping.PredefinedMaterialId &&
-                            x.IsActive);
+                // Excel bulk uploads have ONE approval mapping for the
+                // whole batch, pointing at an ExcelMaterialMaster row
+                // instead of a PredefinedMaterial row - handle both so
+                // Excel approvals still show up here.
+                bool isExcel =
+                    materialApprovalFlowMapping.UploadType ==
+                    Common.UPLOAD_TYPE_EXCEL;
 
-                if (predefinedMaterial == null)
+                PendingApprovalDto? dto = null;
+
+                if (isExcel)
                 {
-                    continue;
-                }
+                    var excelMaterialMaster =
+                        await _repositoryWrapper
+                            .ExcelMaterialMaster
+                            .FindFirstByConditionAsync(x =>
+                                x.Id == materialApprovalFlowMapping.PredefinedMaterialId &&
+                                x.IsActive);
 
-                // -----------------------------------------------------
-                // 5. Apply Search Term Filter
-                // -----------------------------------------------------
-
-                if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-                {
-                    bool matchesSearchTerm =
-                        (predefinedMaterial.MaterialCode?.Contains(
-                            request.SearchTerm,
-                            StringComparison.OrdinalIgnoreCase) ?? false)
-                        ||
-                        (predefinedMaterial.MaterialGroup?.Contains(
-                            request.SearchTerm,
-                            StringComparison.OrdinalIgnoreCase) ?? false)
-                        ||
-                        (predefinedMaterial.ProductType?.Contains(
-                            request.SearchTerm,
-                            StringComparison.OrdinalIgnoreCase) ?? false)
-                        ||
-                        (predefinedMaterial.Description?.Contains(
-                            request.SearchTerm,
-                            StringComparison.OrdinalIgnoreCase) ?? false);
-
-                    // If this material does not match,
-                    // skip it and check the next approval.
-                    if (!matchesSearchTerm)
+                    if (excelMaterialMaster == null)
                     {
                         continue;
                     }
+
+                    // Excel batches have no Description/MaterialCode/etc of
+                    // their own (the actual rows live in the uploaded
+                    // file), so search-term filtering does not apply to
+                    // them - only skip them when a search term is given.
+                    if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+                    {
+                        continue;
+                    }
+
+                    var excelAsset =
+                        await _repositoryWrapper.Asset
+                            .FindFirstByConditionAsync(x =>
+                                x.Id == excelMaterialMaster.AssetId &&
+                                x.IsActive);
+
+                    dto = new ExcelPendingApprovalDto
+                    {
+                        PredefinedMaterialId = excelMaterialMaster.Id,
+
+                        ApprovalId = materialApprovalFlowMapping.ApprovalFlowId,
+
+                        ApprovalFlowPredefinedMaterialId =
+                            approval.ApprovalFlowPredefinedMaterialId,
+
+                        ApprovalMappingId = approval.Id,
+
+                        Order = approval.Order,
+
+                        ApprovalStatus = approval.Status,
+
+                        Title = excelMaterialMaster.Title,
+
+                        Asset = excelAsset == null
+                            ? null
+                            : new AssetDto
+                            {
+                                Id = excelAsset.Id,
+                                AssetName = excelAsset.AssetName,
+                                FileName = excelAsset.FileName
+                            },
+
+                        Status = excelMaterialMaster.Status
+                    };
+                }
+                else
+                {
+                    var predefinedMaterial =
+                        await _repositoryWrapper
+                            .PredefinedMaterial
+                            .FindFirstByConditionAsync(x =>
+                                x.Id == materialApprovalFlowMapping.PredefinedMaterialId &&
+                                x.IsActive);
+
+                    if (predefinedMaterial == null)
+                    {
+                        continue;
+                    }
+
+                    // -----------------------------------------------------
+                    // 5. Apply Search Term Filter
+                    // -----------------------------------------------------
+
+                    if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+                    {
+                        bool matchesSearchTerm =
+                            (predefinedMaterial.MaterialCode?.Contains(
+                                request.SearchTerm,
+                                StringComparison.OrdinalIgnoreCase) ?? false)
+                            ||
+                            (predefinedMaterial.MaterialGroup?.Contains(
+                                request.SearchTerm,
+                                StringComparison.OrdinalIgnoreCase) ?? false)
+                            ||
+                            (predefinedMaterial.ProductType?.Contains(
+                                request.SearchTerm,
+                                StringComparison.OrdinalIgnoreCase) ?? false)
+                            ||
+                            (predefinedMaterial.Description?.Contains(
+                                request.SearchTerm,
+                                StringComparison.OrdinalIgnoreCase) ?? false);
+
+                        // If this material does not match,
+                        // skip it and check the next approval.
+                        if (!matchesSearchTerm)
+                        {
+                            continue;
+                        }
+                    }
+
+                    dto = new ManualPendingApprovalDto
+                    {
+                        PredefinedMaterialId =
+                            predefinedMaterial.Id,
+
+                        ApprovalId =
+                            materialApprovalFlowMapping.ApprovalFlowId,
+
+                        ApprovalFlowPredefinedMaterialId =
+                            approval.ApprovalFlowPredefinedMaterialId,
+
+                        ApprovalMappingId =
+                            approval.Id,
+
+                        Order =
+                            approval.Order,
+
+                        ApprovalStatus =
+                            approval.Status,
+
+                        MaterialCode =
+                            predefinedMaterial.MaterialCode,
+
+                        ProductType =
+                            predefinedMaterial.ProductType,
+
+                        Description =
+                            predefinedMaterial.Description,
+
+                        MaterialGroup =
+                            predefinedMaterial.MaterialGroup,
+
+                        Status =
+                            predefinedMaterial.Status
+                    };
                 }
 
                 // -----------------------------------------------------
                 // 6. Add Matching Approval
                 // -----------------------------------------------------
 
-                result.Add(new PendingApprovalDto
-                {
-                    PredefinedMaterialId =
-                        predefinedMaterial.Id,
-
-                    ApprovalId =
-                        materialApprovalFlowMapping.ApprovalFlowId,
-
-                    ApprovalFlowPredefinedMaterialId =
-                        approval.ApprovalFlowPredefinedMaterialId,
-
-                    ApprovalMappingId =
-                        approval.Id,
-
-                    Order =
-                        approval.Order,
-
-                    ApprovalStatus =
-                        approval.Status,
-
-                    MaterialCode =
-                        predefinedMaterial.MaterialCode,
-
-                    ProductType =
-                        predefinedMaterial.ProductType,
-
-                    Description =
-                        predefinedMaterial.Description,
-
-                    MaterialGroup =
-                        predefinedMaterial.MaterialGroup,
-
-                    Status =
-                        predefinedMaterial.Status
-                });
+                result.Add(dto);
             }
 
             // ---------------------------------------------------------

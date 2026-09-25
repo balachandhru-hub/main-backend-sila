@@ -154,30 +154,23 @@ namespace Buyer.API.Controller
         [ValidateModelState]
         [ApiAuthorization(Name = "UPLOAD_ITEM_BUYER_MASTER")]
         [SwaggerOperation("UploadItemBuyerMaster")]
-        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Item Buyer Master uploaded successfully")]
+        [SwaggerResponse(200, type: typeof(ExcelUploadResultDto), description: "Item Buyer Master uploaded successfully")]
         [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
         [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
-        public async Task<IActionResult> Upload(IFormFile file, [FromQuery] Guid? buyerId)
+        public async Task<IActionResult> Upload(
+            [FromBody] UploadItemBuyerMasterDto dto)
         {
             _logger.LogDebug("Uploading Item Buyer Master Excel.");
 
-            var dto = new UploadItemBuyerMasterDto
-            {
-                File = file,
-                BuyerId = buyerId,
-                OrganizationId = GetOrganizationId()
-            };
+            dto.OrganizationId = GetOrganizationId();
 
             var result = await _mediator.Send(new UploadPredefinedMaterialCommand(dto));
 
-            _logger.LogDebug($"Item Buyer Master uploaded successfully. Records : {result.SuccessfulUploads}");
-            return Ok(new SuccessResponseDto
-            {
-                StatusCode = 200,
-                Message = "Success",
-                Description = $"Uploaded {result.SuccessfulUploads} of {result.TotalRows} records.",
-                Id = result.SuccessfulUploads.ToString()
-            });
+            _logger.LogDebug(
+                $"Item Buyer Master Excel uploaded successfully. " +
+                $"Valid rows : {result.SuccessfulUploads}, ExcelMaterialMasterId : {result.ExcelMaterialMasterId}");
+
+            return Ok(result);
         }
 
 

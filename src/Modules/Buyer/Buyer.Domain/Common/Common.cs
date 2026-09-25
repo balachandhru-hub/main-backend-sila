@@ -79,6 +79,11 @@ namespace Buyer.Domain.Common
                 public const string COMPLETE = "COMPLETE";
                 public const string PROCESSING = "PROCESSING";
 
+                // ---- ApprovalFlowPredefinedMaterialMapping.UploadType: which
+                // table PredefinedMaterialId points to for this approval mapping.
+                public const string UPLOAD_TYPE_MANUAL = "MANUAL";
+                public const string UPLOAD_TYPE_EXCEL = "EXCEL";
+
                 public const string CONTRACT_DRAFT_STATUS = "DRAFT";
                 public const string CONTRACT_OPEN_STATUS = "OPEN";
                 public const string CONTRACT_IN_PROCESS_STATUS = "IN_PROCESS";

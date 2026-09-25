@@ -47,6 +47,7 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IApprovalFlowPredefinedMaterialMappingRepository ApprovalFlowPredefinedMaterialMapping {get;}
         IPredefinedMaterialApprovalFlowUserMappingRepository PredefinedMaterialApprovalFlowUserMapping {get;}
         IMasterApprovalFlowRepository MasterApprovalFlow {get;}
+        IExcelMaterialMasterRepository ExcelMaterialMaster {get;}
         IRFQAwardRepository RFQAward { get; }
         IRFQAwardItemRepository RFQAwardItem { get; }
         IContractRepository Contract { get; }

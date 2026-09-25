@@ -57,6 +57,7 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<ApprovalFlowUserMapping> ApprovalFlowUserMapping {get;set;}
         public DbSet<PredefinedMaterialApprovalFlowUserMapping> PredefinedMaterialApprovalFlowUserMapping {get;set;}
         public DbSet<ApprovalFlowPredefinedMaterialMapping> ApprovalFlowPredefinedMaterialMapping {get;set;}
+        public DbSet<ExcelMaterialMaster> ExcelMaterialMaster {get;set;}
         public DbSet<RFQAward> RFQAward {get;set;}
         public DbSet<RFQAwardItem> RFQAwardItem {get;set;}
         public DbSet<Contract> Contract {get;set;}
@@ -110,6 +111,7 @@ namespace Buyer.Infrastructure.DbContext
             _ =  modelBuilder.Entity<ApprovalFlowUserMapping>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<PredefinedMaterialApprovalFlowUserMapping>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<ApprovalFlowPredefinedMaterialMapping>().HasIndex(a=>a.IsActive);
+            _ =  modelBuilder.Entity<ExcelMaterialMaster>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQAward>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQAwardItem>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<Contract>().HasIndex(a=>a.IsActive);

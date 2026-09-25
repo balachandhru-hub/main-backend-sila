@@ -54,6 +54,7 @@ namespace Buyer.Infrastructure.Repository
         private IApprovalFlowPredefinedMaterialMappingRepository _approvalFlowPredefinedMaterialMappingRepository;
         private IPredefinedMaterialApprovalFlowUserMappingRepository _predefinedMaterialApprovalFlowUserMappingRepository;
         private IMasterApprovalFlowRepository _masterApprovalFlowRepository;
+        private IExcelMaterialMasterRepository _excelMaterialMasterRepository;
         private IRFQAwardRepository _rfqAwardRepository;
         private IRFQAwardItemRepository _rfqAwardItemRepository;
         private IContractRepository _contractRepository;
@@ -515,6 +516,18 @@ namespace Buyer.Infrastructure.Repository
                 }
 
                 return _masterApprovalFlowRepository;
+            }
+        }
+        public IExcelMaterialMasterRepository ExcelMaterialMaster
+        {
+            get
+            {
+                if (_excelMaterialMasterRepository == null)
+                {
+                    _excelMaterialMasterRepository = new ExcelMaterialMasterRepository(_context);
+                }
+
+                return _excelMaterialMasterRepository;
             }
         }
         public IRFQAwardRepository RFQAward

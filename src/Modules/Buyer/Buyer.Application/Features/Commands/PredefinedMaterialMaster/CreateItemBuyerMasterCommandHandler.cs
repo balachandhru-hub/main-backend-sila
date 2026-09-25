@@ -139,7 +139,9 @@ namespace Buyer.Application.Features.Commands.PredefinedMaterialMaster
 
                     ApprovalFlowId = dto.ApprovalFlowId,
 
-                    PredefinedMaterialId = predefinedMaterial.Id
+                    PredefinedMaterialId = predefinedMaterial.Id,
+
+                    UploadType = Common.UPLOAD_TYPE_MANUAL
                 };
 
             await _repository

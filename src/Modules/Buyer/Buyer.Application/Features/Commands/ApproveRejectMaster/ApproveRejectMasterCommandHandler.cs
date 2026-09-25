@@ -1,6 +1,8 @@
+using Buyer.Application.Features.Queries.Asset.GetDocument;
 using Buyer.Domain.Common;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
+using ClosedXML.Excel;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
@@ -13,13 +15,16 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
     {
         private readonly IRepositoryWrapper _repositoryWrapper;
         private readonly ILoggerManager _logger;
+        private readonly IMediator _mediator;
 
         public ApproveRejectMasterCommandHandler(
             IRepositoryWrapper repository,
-            ILoggerManager logger)
+            ILoggerManager logger,
+            IMediator mediator)
         {
             _repositoryWrapper = repository;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task<Guid> Handle(
@@ -51,27 +56,11 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
             }
 
             // ---------------------------------------------------------
-            // 2. Get Predefined Material
-            // ---------------------------------------------------------
-
-            var predefinedMaterial =
-                await _repositoryWrapper.PredefinedMaterial
-                    .FindFirstByConditionAsync(x =>
-                        x.Id == request.PredefinedMaterialId &&
-                        x.IsActive);
-
-            if (predefinedMaterial == null)
-            {
-                _logger.LogError(
-                    $"Predefined material not found. " +
-                    $"PredefinedMaterialId: {request.PredefinedMaterialId}");
-                throw new NotFoundCustomException(
-                    "Predefined material not found.",
-                    $"No predefined material found for Id: {request.PredefinedMaterialId}");
-            }
-
-            // ---------------------------------------------------------
-            // 3. Get Material Approval Flow Mapping
+            // 2. Get Material Approval Flow Mapping
+            //    (PredefinedMaterialId is polymorphic: it points to a
+            //    PredefinedMaterial row for the manual flow, or to an
+            //    ExcelMaterialMaster row - one per whole Excel upload -
+            //    for the bulk Excel flow. UploadType tells us which.)
             // ---------------------------------------------------------
 
             var materialApprovalFlowMapping =
@@ -92,8 +81,56 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
                     "No approval flow is configured for this material.");
             }
 
+            bool isExcel = materialApprovalFlowMapping.UploadType == Common.UPLOAD_TYPE_EXCEL;
+
+            // ---------------------------------------------------------
+            // 3. Get Predefined Material / Excel Material Batch
+            // ---------------------------------------------------------
+
+            PredefinedMaterial predefinedMaterial = null;
+            ExcelMaterialMaster excelMaterialMaster = null;
+
+            if (isExcel)
+            {
+                excelMaterialMaster =
+                    await _repositoryWrapper.ExcelMaterialMaster
+                        .FindFirstByConditionAsync(x =>
+                            x.Id == request.PredefinedMaterialId &&
+                            x.IsActive);
+
+                if (excelMaterialMaster == null)
+                {
+                    _logger.LogError(
+                        $"Excel material batch not found. " +
+                        $"ExcelMaterialMasterId: {request.PredefinedMaterialId}");
+                    throw new NotFoundCustomException(
+                        "Excel material batch not found.",
+                        $"No Excel material batch found for Id: {request.PredefinedMaterialId}");
+                }
+            }
+            else
+            {
+                predefinedMaterial =
+                    await _repositoryWrapper.PredefinedMaterial
+                        .FindFirstByConditionAsync(x =>
+                            x.Id == request.PredefinedMaterialId &&
+                            x.IsActive);
+
+                if (predefinedMaterial == null)
+                {
+                    _logger.LogError(
+                        $"Predefined material not found. " +
+                        $"PredefinedMaterialId: {request.PredefinedMaterialId}");
+                    throw new NotFoundCustomException(
+                        "Predefined material not found.",
+                        $"No predefined material found for Id: {request.PredefinedMaterialId}");
+                }
+            }
+
             // ---------------------------------------------------------
             // 4. Get Material Specific Approval Users
+            //    (One approval CHAIN either way - for Excel this is the
+            //    single chain for the whole batch, not per row.)
             // ---------------------------------------------------------
 
             var approvalUsers =
@@ -203,6 +240,30 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
 
             if (request.Approval.Status == Common.REJECTED)
             {
+                if (isExcel)
+                {
+                    // Same quirk as the manual flow: if the last approver
+                    // is the one rejecting, the approval process itself is
+                    // "done" (COMPLETE), just with nothing created.
+                    excelMaterialMaster.Status =
+                        currentApproval.Order == lastApprovalOrder
+                            ? Common.COMPLETE
+                            : Common.REJECTED;
+
+                    _repositoryWrapper.ExcelMaterialMaster
+                        .Update(excelMaterialMaster);
+
+                    await _repositoryWrapper.SaveAsync();
+
+                    _logger.LogInfo(
+                        $"Excel material batch rejected. " +
+                        $"ExcelMaterialMasterId: {excelMaterialMaster.Id}, " +
+                        $"UserId: {request.UserId}, " +
+                        $"Status: {excelMaterialMaster.Status}");
+
+                    return excelMaterialMaster.Id;
+                }
+
                 // If the last approver rejects,
                 // the approval process is completed.
                 if (currentApproval.Order == lastApprovalOrder)
@@ -256,82 +317,107 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
                         "All approval levels must be approved before creating the item master.");
                 }
 
-                // -----------------------------------------------------
-                // 13. Check Item Buyer Master Already Exists
-                // -----------------------------------------------------
-
-                var existingItemMaster =
-                    await _repositoryWrapper.ItemBuyerMaster
-                        .FindFirstByConditionAsync(x =>
-                            x.MaterialCode ==
-                            predefinedMaterial.MaterialCode &&
-                            x.IsActive);
-
-                // -----------------------------------------------------
-                // 14. Create Item Buyer Master
-                // -----------------------------------------------------
-
-                if (existingItemMaster == null)
+                if (isExcel)
                 {
-                    var itemMaster = new ItemBuyerMaster
-                    {
-                        Id = Guid.NewGuid(),
+                    // ---------------------------------------------------
+                    // Final approval for the batch: re-read the stored
+                    // Excel asset and create every valid row's
+                    // ItemBuyerMaster now. This is the ONLY point where
+                    // Excel rows are ever written to ItemBuyerMaster.
+                    // Everything below (row creation + status update) is
+                    // staged via the repository and committed together in
+                    // one SaveAsync, so a failure here never leaves the
+                    // batch marked COMPLETE without the rows existing.
+                    // ---------------------------------------------------
 
-                        BuyerId =
-                            predefinedMaterial.BuyerId,
+                    await CreateItemBuyerMastersFromExcelAsync(
+                        excelMaterialMaster,
+                        cancellationToken);
 
-                        Description =
-                            predefinedMaterial.Description,
+                    excelMaterialMaster.Status = Common.COMPLETE;
 
-                        MaterialCode =
-                            predefinedMaterial.MaterialCode,
-
-                        MaterialGroup =
-                            predefinedMaterial.MaterialGroup,
-
-                        ProductType =
-                            predefinedMaterial.ProductType,
-
-                        BaseUnitOfMeasure =
-                            predefinedMaterial.BaseUnitOfMeasure,
-
-                        OrderUnitOfMeasure =
-                            predefinedMaterial.OrderUnitOfMeasure,
-
-                        AlternateUnitOfMeasure =
-                            predefinedMaterial.AlternateUnitOfMeasure,
-
-                        ValuationClass =
-                            predefinedMaterial.ValuationClass,
-
-                        UnitOfMeasureMapping =
-                            predefinedMaterial.UnitOfMeasureMapping,
-
-                        SubUnit =
-                            predefinedMaterial.SubUnit,
-
-                        MicroUnit =
-                            predefinedMaterial.MicroUnit
-                    };
-
-                    await _repositoryWrapper.ItemBuyerMaster
-                        .CreateAsync(itemMaster);
-
-                    _logger.LogInfo(
-                        $"Item Buyer Master created successfully. " +
-                        $"MaterialCode: {predefinedMaterial.MaterialCode}");
+                    _repositoryWrapper.ExcelMaterialMaster
+                        .Update(excelMaterialMaster);
                 }
+                else
+                {
+                    // -----------------------------------------------------
+                    // 13. Check Item Buyer Master Already Exists
+                    // -----------------------------------------------------
 
-                // -----------------------------------------------------
-                // 15. Final Approval Completed
-                // -----------------------------------------------------
+                    var existingItemMaster =
+                        await _repositoryWrapper.ItemBuyerMaster
+                            .FindFirstByConditionAsync(x =>
+                                x.MaterialCode ==
+                                predefinedMaterial.MaterialCode &&
+                                x.IsActive);
 
-                predefinedMaterial.Status =
-                    Common.COMPLETE;
+                    // -----------------------------------------------------
+                    // 14. Create Item Buyer Master
+                    // -----------------------------------------------------
 
-                _repositoryWrapper
-                    .PredefinedMaterial
-                    .Update(predefinedMaterial);
+                    if (existingItemMaster == null)
+                    {
+                        var itemMaster = new ItemBuyerMaster
+                        {
+                            Id = Guid.NewGuid(),
+
+                            BuyerId =
+                                predefinedMaterial.BuyerId,
+
+                            Description =
+                                predefinedMaterial.Description,
+
+                            MaterialCode =
+                                predefinedMaterial.MaterialCode,
+
+                            MaterialGroup =
+                                predefinedMaterial.MaterialGroup,
+
+                            ProductType =
+                                predefinedMaterial.ProductType,
+
+                            BaseUnitOfMeasure =
+                                predefinedMaterial.BaseUnitOfMeasure,
+
+                            OrderUnitOfMeasure =
+                                predefinedMaterial.OrderUnitOfMeasure,
+
+                            AlternateUnitOfMeasure =
+                                predefinedMaterial.AlternateUnitOfMeasure,
+
+                            ValuationClass =
+                                predefinedMaterial.ValuationClass,
+
+                            UnitOfMeasureMapping =
+                                predefinedMaterial.UnitOfMeasureMapping,
+
+                            SubUnit =
+                                predefinedMaterial.SubUnit,
+
+                            MicroUnit =
+                                predefinedMaterial.MicroUnit
+                        };
+
+                        await _repositoryWrapper.ItemBuyerMaster
+                            .CreateAsync(itemMaster);
+
+                        _logger.LogInfo(
+                            $"Item Buyer Master created successfully. " +
+                            $"MaterialCode: {predefinedMaterial.MaterialCode}");
+                    }
+
+                    // -----------------------------------------------------
+                    // 15. Final Approval Completed
+                    // -----------------------------------------------------
+
+                    predefinedMaterial.Status =
+                        Common.COMPLETE;
+
+                    _repositoryWrapper
+                        .PredefinedMaterial
+                        .Update(predefinedMaterial);
+                }
             }
             else
             {
@@ -339,12 +425,22 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
                 // 16. Approval Is Still In Progress
                 // -----------------------------------------------------
 
-                predefinedMaterial.Status =
-                    Common.PROCESSING;
+                if (isExcel)
+                {
+                    excelMaterialMaster.Status = Common.PROCESSING;
 
-                _repositoryWrapper
-                    .PredefinedMaterial
-                    .Update(predefinedMaterial);
+                    _repositoryWrapper.ExcelMaterialMaster
+                        .Update(excelMaterialMaster);
+                }
+                else
+                {
+                    predefinedMaterial.Status =
+                        Common.PROCESSING;
+
+                    _repositoryWrapper
+                        .PredefinedMaterial
+                        .Update(predefinedMaterial);
+                }
             }
 
             // ---------------------------------------------------------
@@ -353,14 +449,103 @@ namespace Buyer.Application.Features.Commands.ApproveRejectMaster
 
             await _repositoryWrapper.SaveAsync();
 
+            var resultId = isExcel ? excelMaterialMaster.Id : predefinedMaterial.Id;
+            var resultStatus = isExcel ? excelMaterialMaster.Status : predefinedMaterial.Status;
+
             _logger.LogInfo(
                 $"Material approval processed successfully. " +
-                $"PredefinedMaterialId: {predefinedMaterial.Id}, " +
+                $"PredefinedMaterialId: {resultId}, " +
                 $"UserId: {request.UserId}, " +
                 $"Status: {request.Approval.Status}, " +
-                $"MaterialStatus: {predefinedMaterial.Status}");
+                $"MaterialStatus: {resultStatus}");
 
-            return predefinedMaterial.Id;
+            return resultId;
+        }
+
+        /// <summary>
+        /// Re-reads the Excel batch's stored Asset and creates an
+        /// ItemBuyerMaster row for every valid, non-duplicate row - the
+        /// same 11 columns the upload endpoint validates. Existing
+        /// MaterialCode values are skipped (not duplicated), same as the
+        /// manual flow.
+        /// </summary>
+        private async Task CreateItemBuyerMastersFromExcelAsync(
+            ExcelMaterialMaster excelMaterialMaster,
+            CancellationToken cancellationToken)
+        {
+            var document = await _mediator.Send(
+                new GetDocumentQuery(excelMaterialMaster.AssetId),
+                cancellationToken);
+
+            using var workbook = new XLWorkbook(new MemoryStream(document.FileBytes));
+            var worksheet = workbook.Worksheet(1);
+
+            var existingMaterialCodes = (await _repositoryWrapper.ItemBuyerMaster
+                    .FindByCondition(x => x.IsActive)
+                    .Select(x => x.MaterialCode)
+                    .ToListAsync(cancellationToken))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var newItems = new List<ItemBuyerMaster>();
+            int skippedDuplicates = 0;
+            int skippedBlankMaterialCode = 0;
+
+            foreach (var row in worksheet.RowsUsed().Skip(1))
+            {
+                var materialCode = row.Cell(2).GetString().Trim();
+
+                if (string.IsNullOrWhiteSpace(materialCode))
+                {
+                    skippedBlankMaterialCode++;
+                    continue;
+                }
+
+                if (existingMaterialCodes.Contains(materialCode))
+                {
+                    skippedDuplicates++;
+                    continue;
+                }
+
+                newItems.Add(new ItemBuyerMaster
+                {
+                    Id = Guid.NewGuid(),
+                    BuyerId = excelMaterialMaster.BuyerId,
+                    Description = row.Cell(1).GetString().Trim(),
+                    MaterialCode = materialCode,
+                    MaterialGroup = row.Cell(3).GetString().Trim(),
+                    ProductType = row.Cell(4).GetString().Trim(),
+                    BaseUnitOfMeasure = row.Cell(5).GetString().Trim(),
+                    OrderUnitOfMeasure = row.Cell(6).GetString().Trim(),
+                    AlternateUnitOfMeasure = row.Cell(7).GetString().Trim(),
+                    ValuationClass = row.Cell(8).GetString().Trim(),
+                    UnitOfMeasureMapping = row.Cell(9).GetString().Trim(),
+                    SubUnit = string.IsNullOrWhiteSpace(row.Cell(10).GetString())
+                        ? null : row.Cell(10).GetString().Trim(),
+                    MicroUnit = string.IsNullOrWhiteSpace(row.Cell(11).GetString())
+                        ? null : row.Cell(11).GetString().Trim()
+                });
+
+                // Guard against duplicate MaterialCode values within the
+                // same file.
+                existingMaterialCodes.Add(materialCode);
+            }
+
+            if (newItems.Any())
+            {
+                await _repositoryWrapper.ItemBuyerMaster
+                    .CreateRangeAsync(newItems);
+            }
+
+            // Always log the outcome - including when nothing new gets
+            // created - so a batch reaching COMPLETE with zero new rows
+            // (e.g. every MaterialCode already existed) is visible instead
+            // of silent.
+            _logger.LogInfo(
+                $"Excel batch final approval processed. " +
+                $"ExcelMaterialMasterId: {excelMaterialMaster.Id}, " +
+                $"Created: {newItems.Count}, " +
+                $"SkippedDuplicateMaterialCode: {skippedDuplicates}, " +
+                $"SkippedBlankMaterialCode: {skippedBlankMaterialCode}");
         }
     }
 }
