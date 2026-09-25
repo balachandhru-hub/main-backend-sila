@@ -44,6 +44,46 @@ namespace Buyer.Application.Features.Queries.GetBidCompare
                 request.RFQId,
                 cancellationToken);
 
+            // The Supplier microservice only knows registered suppliers, so
+            // SupplierName comes back null for external-supplier bids
+            // (their SupplierId is a Buyer-side ExternalSupplier.Id, not a
+            // SupplierBusinessProfile.Id). Backfill it from Buyer's own
+            // ExternalSupplier data.
+            var suppliersMissingName = result.Suppliers
+                .Where(x => string.IsNullOrWhiteSpace(x.SupplierName))
+                .Select(x => x.SupplierId)
+                .Distinct()
+                .ToList();
+
+            if (suppliersMissingName.Any())
+            {
+                var externalSupplierIds = await _repositorywrapper.RFQExternalSupplier
+                    .FindByCondition(x =>
+                        x.RFQId == request.RFQId &&
+                        x.IsActive &&
+                        suppliersMissingName.Contains(x.ExternalSupplierId))
+                    .Select(x => x.ExternalSupplierId)
+                    .ToListAsync(cancellationToken);
+
+                var externalSupplierNames = await _repositorywrapper.ExternalSupplier
+                    .FindByCondition(x =>
+                        externalSupplierIds.Contains(x.Id) &&
+                        x.IsActive)
+                    .ToDictionaryAsync(
+                        x => x.Id,
+                        x => x.SupplierName,
+                        cancellationToken);
+
+                foreach (var supplier in result.Suppliers)
+                {
+                    if (string.IsNullOrWhiteSpace(supplier.SupplierName) &&
+                        externalSupplierNames.TryGetValue(supplier.SupplierId, out var externalSupplierName))
+                    {
+                        supplier.SupplierName = externalSupplierName;
+                    }
+                }
+            }
+
             // For lot-wise RFQ, Supplier does not have
             // SupplierQuotationItemHistory.
             // Get the original RFQ items from Buyer DB.
