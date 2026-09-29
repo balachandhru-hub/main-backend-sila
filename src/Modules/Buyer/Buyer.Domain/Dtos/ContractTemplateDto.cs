@@ -16,13 +16,14 @@ namespace Buyer.Domain.Dto
         public AssetUploadDto Attachment { get; set; }
     }
 
+    // All fields are optional; only the ones supplied are updated.
     public class UpdateContractTemplateDto
     {
-        [Required]
-        [MaxLength(200)]
-        public string TemplateName { get; set; }
+        public long? SegmentId { get; set; }
 
-        // Optional: when supplied, replaces the existing attachment.
+        [MaxLength(200)]
+        public string? TemplateName { get; set; }
+
         public AssetUploadDto? Attachment { get; set; }
     }
 }

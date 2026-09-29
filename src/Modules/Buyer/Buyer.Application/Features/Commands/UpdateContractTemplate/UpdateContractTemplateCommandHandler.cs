@@ -48,7 +48,32 @@ namespace Buyer.Application.Features.Commands.UpdateContractTemplate
                     $"No contract template was found with Id: {request.Id}");
             }
 
-            contractTemplate.TemplateName = dto.TemplateName;
+            if (dto.SegmentId.HasValue && dto.SegmentId.Value != contractTemplate.SegmentId)
+            {
+                bool duplicate = _repository.ContractTemplate
+                    .FindByCondition(x =>
+                        x.Id != request.Id &&
+                        x.BuyerId == request.BuyerId &&
+                        x.SegmentId == dto.SegmentId.Value &&
+                        x.IsActive)
+                    .Any();
+
+                if (duplicate)
+                {
+                    _logger.LogError(
+                        $"Duplicate contract template. SegmentId: {dto.SegmentId} already has an attachment for BuyerId: {request.BuyerId}");
+                    throw new ConflictCustomException(
+                        "Duplicate segment attachment.",
+                        "An attachment has already been uploaded for this segment.");
+                }
+
+                contractTemplate.SegmentId = dto.SegmentId.Value;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.TemplateName))
+            {
+                contractTemplate.TemplateName = dto.TemplateName;
+            }
 
             if (dto.Attachment != null)
             {
