@@ -48,7 +48,7 @@ namespace Buyer.Infrastructure.Migrations
                         principalSchema: "buyersystem",
                         principalTable: "buyer_business_profile",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.NoAction);
                     table.ForeignKey(
                         name: "fk_contract_details_predefined_contract_predefined_contract_id",
                         column: x => x.predefined_contract_id,

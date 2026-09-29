@@ -3389,7 +3389,7 @@ namespace Buyer.Infrastructure.Migrations
                     b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
                         .WithMany()
                         .HasForeignKey("BuyerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
                         .HasConstraintName("fk_contract_details_buyer_business_profile_buyer_id");
 
@@ -3510,7 +3510,7 @@ namespace Buyer.Infrastructure.Migrations
                     b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
                         .WithMany()
                         .HasForeignKey("BuyerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
                         .HasConstraintName("fk_predefined_contract_buyer_business_profile_buyer_id");
 

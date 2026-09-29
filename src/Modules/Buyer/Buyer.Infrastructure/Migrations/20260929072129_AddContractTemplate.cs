@@ -64,7 +64,7 @@ namespace Buyer.Infrastructure.Migrations
                 principalSchema: "buyersystem",
                 principalTable: "buyer_business_profile",
                 principalColumn: "id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.NoAction);
         }
 
         /// <inheritdoc />

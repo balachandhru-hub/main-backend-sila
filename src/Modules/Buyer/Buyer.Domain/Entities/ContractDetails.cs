@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 using SharedKernel.Models;
 
 namespace Buyer.Domain.Entities
@@ -23,6 +24,7 @@ namespace Buyer.Domain.Entities
         [Required]
         [ForeignKey("BuyerBusinessProfile")]
         public Guid BuyerId { get; set; }
+        [DeleteBehavior(DeleteBehavior.NoAction)]
         public BuyerBusinessProfile BuyerBusinessProfile { get; set; }
 
         public Guid SupplierId { get; set; }

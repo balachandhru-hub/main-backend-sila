@@ -23,6 +23,7 @@ namespace Buyer.Domain.Entities
         [ForeignKey("BuyerBusinessProfile")]
         public Guid BuyerId { get; set; }
       
+        [DeleteBehavior(DeleteBehavior.NoAction)]
         public BuyerBusinessProfile BuyerBusinessProfile { get; set; }
 
         [Required]
