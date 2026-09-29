@@ -37,6 +37,7 @@ namespace Buyer.Application.Features.Queries.GetAllContractTemplates
                 Id = x.Id,
                 SegmentId = x.SegmentId,
                 SegmentTitle = x.SegmentTitle,
+                TemplateName = x.TemplateName,
                 BuyerId = x.BuyerId,
                 AssetId = x.AssetId,
                 FileName = assetFileNamesById.TryGetValue(x.AssetId, out var fileName) ? fileName : null,

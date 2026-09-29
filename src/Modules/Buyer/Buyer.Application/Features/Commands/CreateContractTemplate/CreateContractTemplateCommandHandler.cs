@@ -56,6 +56,7 @@ namespace Buyer.Application.Features.Commands.CreateContractTemplate
             {
                 Id = Guid.NewGuid(),
                 SegmentId = dto.SegmentId,
+                TemplateName = dto.TemplateName,
                 BuyerId = request.BuyerId,
                 AssetId = assetId
             };

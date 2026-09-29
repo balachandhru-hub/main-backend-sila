@@ -1,4 +1,5 @@
 using Buyer.Application.Features.Commands.CreateContractTemplate;
+using Buyer.Application.Features.Commands.UpdateContractTemplate;
 using Buyer.Application.Features.Profile.Queries.GetBuyerId;
 using Buyer.Application.Features.Queries.GetAllContractTemplates;
 using Buyer.Domain.Dto;
@@ -53,6 +54,36 @@ namespace Buyer.API.Controllers
                 StatusCode = 200,
                 Message = "Success",
                 Description = "Contract template attachment uploaded successfully."
+            });
+        }
+
+        [HttpPut]
+        [Route("api/v1/buyer/contract-template/{contractTemplateId}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "CREATE_CONTRACT")]
+        [SwaggerOperation("UpdateContractTemplate")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Contract template updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Contract template not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateContractTemplate(
+            [FromRoute] Guid contractTemplateId,
+            [FromBody] UpdateContractTemplateDto request)
+        {
+            _logger.LogDebug($"Updating contract template Id: {contractTemplateId}");
+
+            Guid buyerId = await _mediator.Send(
+                new GetBuyerIdQuery(GetOrganizationId()));
+
+            Guid id = await _mediator.Send(
+                new UpdateContractTemplateCommand(contractTemplateId, request, buyerId));
+
+            return Ok(new SuccessResponseDto
+            {
+                Id = id.ToString(),
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Contract template updated successfully."
             });
         }
 

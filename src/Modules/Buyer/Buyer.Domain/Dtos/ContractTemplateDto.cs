@@ -8,10 +8,22 @@ namespace Buyer.Domain.Dto
         [Required]
         public long SegmentId { get; set; }
 
-      
+        [Required]
+        [MaxLength(200)]
+        public string TemplateName { get; set; }
 
         [Required]
         public AssetUploadDto Attachment { get; set; }
+    }
+
+    public class UpdateContractTemplateDto
+    {
+        [Required]
+        [MaxLength(200)]
+        public string TemplateName { get; set; }
+
+        // Optional: when supplied, replaces the existing attachment.
+        public AssetUploadDto? Attachment { get; set; }
     }
 }
 
@@ -24,6 +36,8 @@ namespace Buyer.Domain.Dtos
         public long SegmentId { get; set; }
 
         public string? SegmentTitle { get; set; }
+
+        public string? TemplateName { get; set; }
 
         public Guid BuyerId { get; set; }
 

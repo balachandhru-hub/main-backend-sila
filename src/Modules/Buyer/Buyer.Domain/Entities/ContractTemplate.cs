@@ -15,6 +15,8 @@ namespace Buyer.Domain.Entities
 
         public string? SegmentTitle { get; set; }
 
+        public string? TemplateName { get; set; }
+
         [Required]
         [ForeignKey("BuyerBusinessProfile")]
         public Guid BuyerId { get; set; }
