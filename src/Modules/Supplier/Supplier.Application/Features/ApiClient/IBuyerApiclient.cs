@@ -90,13 +90,17 @@ CancellationToken cancellationToken = default);
             Guid supplierId,
             CancellationToken cancellationToken = default);
 
-        Task<ContractResponseDto> GetContract(
+        Task<PredefinedContractResponseDto> GetPredefinedContract(
             Guid contractId,
             CancellationToken cancellationToken = default);
 
-        Task<SupplierContractStatusDto> GetSupplierContractStatus(
+        Task<SupplierPredefinedContractStatusDto> GetSupplierPredefinedContractStatus(
             Guid rfqId,
             Guid supplierId,
+            CancellationToken cancellationToken = default);
+
+        Task<ContractDetailsResponseDto> GetContractDetails(
+            Guid id,
             CancellationToken cancellationToken = default);
     }
 

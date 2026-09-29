@@ -97,7 +97,7 @@ namespace Buyer.Domain.Common
                 public const string CONTRACT_ASSET_SUPPLIER_ESIGN = "SUPPLIER_ESIGN";
                 public const string CONTRACT_ASSET_SIGNED_CONTRACT = "SIGNED_CONTRACT";
 
-                public const string CONTRACT_NUMBER_SEQUENCE = "ContractSNSequence";
+                public const string PREDEFINED_CONTRACT_NUMBER_SEQUENCE = "PredefinedContractSNSequence";
                 public static readonly string CONTRACT_ATTACHMENT = "CONTRACT_ATTACHMENT";
 
                 // ---- RFQ status written by the Freeze Bid action (PUT api/v1/buyer/rfq-status).

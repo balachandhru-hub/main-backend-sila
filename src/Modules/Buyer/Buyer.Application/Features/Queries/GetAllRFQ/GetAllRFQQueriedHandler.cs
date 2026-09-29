@@ -598,18 +598,44 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 }
             }
 
-            var contracts = await _repositorywrapper.Contract
+            var contracts = await _repositorywrapper.PredefinedContract
                 .FindByCondition(x =>
                     x.RFQId == request.RFQId &&
                     x.BuyerId == buyerId &&
                     x.IsActive)
-                .Select(x => new RFQContractDto
+                .Select(x => new RFQPredefinedContractDto
                 {
                     ContractId = x.Id,
                     ContractNumber = x.ContractNumber,
                     SupplierId = x.SupplierId
                 })
                 .ToListAsync(cancellationToken);
+
+            // RFQ's SegmentId -> the buyer's ContractTemplate for that segment -> its asset.
+            var contractTemplateAssets = await (
+                from template in _repositorywrapper.ContractTemplate.FindByCondition(x =>
+                    x.BuyerId == buyerId &&
+                    x.SegmentId == rfq.SegmentId &&
+                    x.IsActive)
+
+                join asset in _repositorywrapper.Asset.FindByCondition(x => x.IsActive)
+                    on template.AssetId equals asset.Id
+
+                select asset
+            ).ToListAsync(cancellationToken);
+
+            var contractTemplateDocuments = contractTemplateAssets.Select(asset => new AssetDto
+            {
+                Id = asset.Id,
+                AssetType = metadataList!.FirstOrDefault(x =>
+                                x.Type == Common.ASSET_TYPE &&
+                                x.Id == asset.AssetType)?.Key ?? string.Empty,
+                AssetName = asset.AssetName,
+                FileType = metadataList.FirstOrDefault(x =>
+                                x.Type == Common.FILE_TYPE &&
+                                x.Id == asset.FileType)?.Key ?? string.Empty,
+                FileName = asset.FileName
+            }).ToList();
 
             return new GetRFQByIdDto
             {
@@ -642,7 +668,11 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 SupplierESigns = supplierESigns,
                 SupplierTermsAndConditionAccepted = supplierTermsAndConditionAccepted,
                 BuyerTermsAndConditionStatuses = buyerTermsConditionStatuses,
-                Contracts = contracts
+                Contracts = contracts,
+                ContractTemplateDocuments = contractTemplateDocuments,
+                SegmentId = rfq.SegmentId,
+                SegmentTitel=rfq.SegmentTitle,
+                FamilyId=rfq.FamilyId
             };
         }
     }

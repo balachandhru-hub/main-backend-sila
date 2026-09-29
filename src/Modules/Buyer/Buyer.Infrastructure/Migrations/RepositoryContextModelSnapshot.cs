@@ -23,7 +23,7 @@ namespace Buyer.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.HasSequence("ContractSNSequence", "buyersystem");
+            modelBuilder.HasSequence("PredefinedContractSNSequence", "buyersystem");
 
             modelBuilder.Entity("Buyer.Domain.Entities.ApprovalFlowPredefinedMaterialMapping", b =>
                 {
@@ -774,7 +774,54 @@ namespace Buyer.Infrastructure.Migrations
                     b.ToTable("buyer_supplier_mapping", "buyersystem");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.Contract", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.ContractAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("asset_id");
+
+                    b.Property<Guid>("ContractDetailsId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("contract_details_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_contract_attachment");
+
+                    b.HasIndex("ContractDetailsId")
+                        .HasDatabaseName("ix_contract_attachment_contract_details_id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_contract_attachment_is_active");
+
+                    b.ToTable("contract_attachment", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.ContractDetails", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -790,12 +837,10 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnName("buyer_id");
 
                     b.Property<string>("ContractName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("contract_name");
 
                     b.Property<string>("ContractNumber")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("contract_number");
 
@@ -823,6 +868,10 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
+                    b.Property<Guid>("PredefinedContractId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("predefined_contract_id");
+
                     b.Property<Guid>("RFQId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("rfqid");
@@ -832,7 +881,6 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnName("start_date");
 
                     b.Property<string>("Status")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
 
@@ -845,149 +893,21 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_contract");
+                        .HasName("pk_contract_details");
 
                     b.HasIndex("BuyerId")
-                        .HasDatabaseName("ix_contract_buyer_id");
+                        .HasDatabaseName("ix_contract_details_buyer_id");
 
                     b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_contract_is_active");
+                        .HasDatabaseName("ix_contract_details_is_active");
 
-                    b.HasIndex("RFQId")
-                        .HasDatabaseName("ix_contract_rfqid");
+                    b.HasIndex("PredefinedContractId")
+                        .HasDatabaseName("ix_contract_details_predefined_contract_id");
 
-                    b.ToTable("contract", "buyersystem");
+                    b.ToTable("contract_details", "buyersystem");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.ContractApprovalFlow", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<string>("ApprovalCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("approval_code");
-
-                    b.Property<string>("ApprovalName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("approval_name");
-
-                    b.Property<Guid>("ContractId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("contract_id");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("created_by");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("currency");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_created");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_updated");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("total_amount");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("type");
-
-                    b.Property<Guid>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_contract_approval_flow");
-
-                    b.HasIndex("ContractId")
-                        .HasDatabaseName("ix_contract_approval_flow_contract_id");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_contract_approval_flow_is_active");
-
-                    b.ToTable("contract_approval_flow", "buyersystem");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.ContractApprovalUserMapping", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("comment");
-
-                    b.Property<Guid>("ContractApprovalFlowId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("contract_approval_flow_id");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_created");
-
-                    b.Property<DateTime>("DateUpdated")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("date_updated");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_active");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("int")
-                        .HasColumnName("order");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("status");
-
-                    b.Property<Guid>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("updated_by");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_contract_approval_user_mapping");
-
-                    b.HasIndex("ContractApprovalFlowId")
-                        .HasDatabaseName("ix_contract_approval_user_mapping_contract_approval_flow_id");
-
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_contract_approval_user_mapping_is_active");
-
-                    b.ToTable("contract_approval_user_mapping", "buyersystem");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.ContractAttachment", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.ContractTemplate", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -998,9 +918,9 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("asset_id");
 
-                    b.Property<Guid>("ContractId")
+                    b.Property<Guid>("BuyerId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("contract_id");
+                        .HasColumnName("buyer_id");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
@@ -1018,24 +938,28 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
-                    b.Property<string>("Type")
+                    b.Property<long>("SegmentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("segment_id");
+
+                    b.Property<string>("SegmentTitle")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("type");
+                        .HasColumnName("segment_title");
 
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_contract_attachment");
+                        .HasName("pk_contract_template");
 
-                    b.HasIndex("ContractId")
-                        .HasDatabaseName("ix_contract_attachment_contract_id");
+                    b.HasIndex("BuyerId")
+                        .HasDatabaseName("ix_contract_template_buyer_id");
 
                     b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_contract_attachment_is_active");
+                        .HasDatabaseName("ix_contract_template_is_active");
 
-                    b.ToTable("contract_attachment", "buyersystem");
+                    b.ToTable("contract_template", "buyersystem");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.DefaultVerificationTemplate", b =>
@@ -1630,6 +1554,287 @@ namespace Buyer.Infrastructure.Migrations
                     b.ToTable("message_thread", "buyersystem");
                 });
 
+            modelBuilder.Entity("Buyer.Domain.Entities.PredefinedContract", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<Guid>("BuyerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("buyer_id");
+
+                    b.Property<string>("ContractName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("contract_name");
+
+                    b.Property<string>("ContractNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("contract_number");
+
+                    b.Property<string>("ContractStatus")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("contract_status");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("end_date");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("RFQId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("rfqid");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("start_date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_id");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_predefined_contract");
+
+                    b.HasIndex("BuyerId")
+                        .HasDatabaseName("ix_predefined_contract_buyer_id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_predefined_contract_is_active");
+
+                    b.HasIndex("RFQId")
+                        .HasDatabaseName("ix_predefined_contract_rfqid");
+
+                    b.ToTable("predefined_contract", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PredefinedContractApprovalFlow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ApprovalCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("approval_code");
+
+                    b.Property<string>("ApprovalName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("approval_name");
+
+                    b.Property<Guid>("ContractId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("contract_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("currency");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("total_amount");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_predefined_contract_approval_flow");
+
+                    b.HasIndex("ContractId")
+                        .HasDatabaseName("ix_predefined_contract_approval_flow_contract_id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_predefined_contract_approval_flow_is_active");
+
+                    b.ToTable("predefined_contract_approval_flow", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PredefinedContractApprovalUserMapping", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("comment");
+
+                    b.Property<Guid>("ContractApprovalFlowId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("contract_approval_flow_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int")
+                        .HasColumnName("order");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_predefined_contract_approval_user_mapping");
+
+                    b.HasIndex("ContractApprovalFlowId")
+                        .HasDatabaseName("ix_predefined_contract_approval_user_mapping_contract_approval_flow_id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_predefined_contract_approval_user_mapping_is_active");
+
+                    b.ToTable("predefined_contract_approval_user_mapping", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PredefinedContractAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("asset_id");
+
+                    b.Property<Guid>("ContractId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("contract_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<long?>("SegmentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("segment_id");
+
+                    b.Property<string>("SegmentTitle")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("segment_title");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid?>("UnspscId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("unspsc_id");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_predefined_contract_attachment");
+
+                    b.HasIndex("ContractId")
+                        .HasDatabaseName("ix_predefined_contract_attachment_contract_id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_predefined_contract_attachment_is_active");
+
+                    b.ToTable("predefined_contract_attachment", "buyersystem");
+                });
+
             modelBuilder.Entity("Buyer.Domain.Entities.PredefinedMaterial", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1863,6 +2068,14 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("end_date");
 
+                    b.Property<long?>("FamilyId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("family_id");
+
+                    b.Property<string>("FamilyTitle")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("family_title");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
@@ -1875,6 +2088,14 @@ namespace Buyer.Infrastructure.Migrations
                     b.Property<string>("Region")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("region");
+
+                    b.Property<long?>("SegmentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("segment_id");
+
+                    b.Property<string>("SegmentTitle")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("segment_title");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2")
@@ -3151,61 +3372,49 @@ namespace Buyer.Infrastructure.Migrations
                     b.Navigation("BuyerBusinessProfile");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.Contract", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.ContractAttachment", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.ContractDetails", "ContractDetails")
+                        .WithMany()
+                        .HasForeignKey("ContractDetailsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_contract_attachment_contract_details_contract_details_id");
+
+                    b.Navigation("ContractDetails");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.ContractDetails", b =>
                 {
                     b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
                         .WithMany()
                         .HasForeignKey("BuyerId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("fk_contract_buyer_business_profile_buyer_id");
-
-                    b.HasOne("Buyer.Domain.Entities.RFQ", "RFQ")
-                        .WithMany()
-                        .HasForeignKey("RFQId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_contract_rfq_rfqid");
+                        .HasConstraintName("fk_contract_details_buyer_business_profile_buyer_id");
+
+                    b.HasOne("Buyer.Domain.Entities.PredefinedContract", "PredefinedContract")
+                        .WithMany()
+                        .HasForeignKey("PredefinedContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_contract_details_predefined_contract_predefined_contract_id");
 
                     b.Navigation("BuyerBusinessProfile");
 
-                    b.Navigation("RFQ");
+                    b.Navigation("PredefinedContract");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.ContractApprovalFlow", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.ContractTemplate", b =>
                 {
-                    b.HasOne("Buyer.Domain.Entities.Contract", "Contract")
+                    b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
                         .WithMany()
-                        .HasForeignKey("ContractId")
+                        .HasForeignKey("BuyerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_contract_approval_flow_contract_contract_id");
+                        .HasConstraintName("fk_contract_template_buyer_business_profile_buyer_id");
 
-                    b.Navigation("Contract");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.ContractApprovalUserMapping", b =>
-                {
-                    b.HasOne("Buyer.Domain.Entities.ContractApprovalFlow", "ContractApprovalFlow")
-                        .WithMany()
-                        .HasForeignKey("ContractApprovalFlowId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_contract_approval_user_mapping_contract_approval_flow_contract_approval_flow_id");
-
-                    b.Navigation("ContractApprovalFlow");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.ContractAttachment", b =>
-                {
-                    b.HasOne("Buyer.Domain.Entities.Contract", "Contract")
-                        .WithMany()
-                        .HasForeignKey("ContractId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_contract_attachment_contract_contract_id");
-
-                    b.Navigation("Contract");
+                    b.Navigation("BuyerBusinessProfile");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.ExcelMaterialMaster", b =>
@@ -3294,6 +3503,63 @@ namespace Buyer.Infrastructure.Migrations
                     b.Navigation("ExternalSupplier");
 
                     b.Navigation("RFQ");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PredefinedContract", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
+                        .WithMany()
+                        .HasForeignKey("BuyerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_predefined_contract_buyer_business_profile_buyer_id");
+
+                    b.HasOne("Buyer.Domain.Entities.RFQ", "RFQ")
+                        .WithMany()
+                        .HasForeignKey("RFQId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_predefined_contract_rfq_rfqid");
+
+                    b.Navigation("BuyerBusinessProfile");
+
+                    b.Navigation("RFQ");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PredefinedContractApprovalFlow", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.PredefinedContract", "Contract")
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_predefined_contract_approval_flow_predefined_contract_contract_id");
+
+                    b.Navigation("Contract");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PredefinedContractApprovalUserMapping", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.PredefinedContractApprovalFlow", "ContractApprovalFlow")
+                        .WithMany()
+                        .HasForeignKey("ContractApprovalFlowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_predefined_contract_approval_user_mapping_predefined_contract_approval_flow_contract_approval_flow_id");
+
+                    b.Navigation("ContractApprovalFlow");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PredefinedContractAttachment", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.PredefinedContract", "Contract")
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_predefined_contract_attachment_predefined_contract_contract_id");
+
+                    b.Navigation("Contract");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.PredefinedMaterial", b =>

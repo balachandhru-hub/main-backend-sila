@@ -863,7 +863,7 @@ namespace Supplier.Infrastructure.ApiClients
             return result ?? new SupplierTermsAndConditionStatusDto();
         }
 
-        public async Task<ContractResponseDto> GetContract(
+        public async Task<PredefinedContractResponseDto> GetPredefinedContract(
             Guid contractId,
             CancellationToken cancellationToken = default)
         {
@@ -886,13 +886,13 @@ namespace Supplier.Infrastructure.ApiClients
                     error);
             }
 
-            var result = await response.Content.ReadFromJsonAsync<ContractResponseDto>(
+            var result = await response.Content.ReadFromJsonAsync<PredefinedContractResponseDto>(
                 cancellationToken: cancellationToken);
 
-            return result ?? new ContractResponseDto();
+            return result ?? new PredefinedContractResponseDto();
         }
 
-        public async Task<SupplierContractStatusDto> GetSupplierContractStatus(
+        public async Task<SupplierPredefinedContractStatusDto> GetSupplierPredefinedContractStatus(
             Guid rfqId,
             Guid supplierId,
             CancellationToken cancellationToken = default)
@@ -916,10 +916,39 @@ namespace Supplier.Infrastructure.ApiClients
                     error);
             }
 
-            var result = await response.Content.ReadFromJsonAsync<SupplierContractStatusDto>(
+            var result = await response.Content.ReadFromJsonAsync<SupplierPredefinedContractStatusDto>(
                 cancellationToken: cancellationToken);
 
-            return result ?? new SupplierContractStatusDto();
+            return result ?? new SupplierPredefinedContractStatusDto();
+        }
+
+        public async Task<ContractDetailsResponseDto> GetContractDetails(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            var buyerUrl = _configuration[Common.BUYER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{buyerUrl}/api/v1/buyer/contract-details/{id}");
+
+            AddAccessTokenCookie(request);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch contract details.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ContractDetailsResponseDto>(
+                cancellationToken: cancellationToken);
+
+            return result ?? new ContractDetailsResponseDto();
         }
 
     }

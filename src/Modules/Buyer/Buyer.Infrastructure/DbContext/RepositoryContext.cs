@@ -60,12 +60,13 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<ExcelMaterialMaster> ExcelMaterialMaster {get;set;}
         public DbSet<RFQAward> RFQAward {get;set;}
         public DbSet<RFQAwardItem> RFQAwardItem {get;set;}
-        public DbSet<Contract> Contract {get;set;}
+        public DbSet<PredefinedContract> PredefinedContract {get;set;}
+        public DbSet<PredefinedContractAttachment> PredefinedContractAttachment {get;set;}
+        public DbSet<PredefinedContractApprovalFlow> PredefinedContractApprovalFlow {get;set;}
+        public DbSet<PredefinedContractApprovalUserMapping> PredefinedContractApprovalUserMapping {get;set;}
+        public DbSet<ContractTemplate> ContractTemplate {get;set;}
+        public DbSet<ContractDetails> ContractDetails {get;set;}
         public DbSet<ContractAttachment> ContractAttachment {get;set;}
-        public DbSet<ContractApprovalFlow> ContractApprovalFlow {get;set;}
-        public DbSet<ContractApprovalUserMapping> ContractApprovalUserMapping {get;set;}
-
-
 
 
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
@@ -114,12 +115,16 @@ namespace Buyer.Infrastructure.DbContext
             _ =  modelBuilder.Entity<ExcelMaterialMaster>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQAward>().HasIndex(a=>a.IsActive);
             _ =  modelBuilder.Entity<RFQAwardItem>().HasIndex(a=>a.IsActive);
-            _ = modelBuilder.Entity<Contract>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<PredefinedContract>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<PredefinedContractAttachment>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<PredefinedContractApprovalFlow>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<PredefinedContractApprovalUserMapping>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<ContractTemplate>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<ContractDetails>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<ContractAttachment>().HasIndex(a=>a.IsActive);
-            _ = modelBuilder.Entity<ContractApprovalFlow>().HasIndex(a=>a.IsActive);
-            _ = modelBuilder.Entity<ContractApprovalUserMapping>().HasIndex(a=>a.IsActive);
+
             _ = modelBuilder.HasSequence<long>(
-                Common.CONTRACT_NUMBER_SEQUENCE,
+                Common.PREDEFINED_CONTRACT_NUMBER_SEQUENCE,
                 _configuration[Common.APPLICATION_SCHEMA]!);
 
 

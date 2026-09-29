@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using SharedKernel.Models;
+
 namespace Buyer.Domain.Entities
 {
     public class ContractAttachment : BaseModel
@@ -8,15 +9,15 @@ namespace Buyer.Domain.Entities
         [Key]
         [Required]
         public Guid Id { get; set; }
+
         [Required]
-        [ForeignKey("Contract")]
-        public Guid ContractId { get; set; }
-        public Contract Contract { get; set; }
+        [ForeignKey("ContractDetails")]
+        public Guid ContractDetailsId { get; set; }
+        public ContractDetails ContractDetails { get; set; }
 
         public Guid AssetId { get; set; }
-        public string? Type { get; set; }
+    
+
         public ContractAttachment() { }
-
-
     }
 }

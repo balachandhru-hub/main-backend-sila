@@ -285,7 +285,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             {
                 try
                 {
-                    var contract = await _buyerApiClient.GetSupplierContractStatus(
+                    var contract = await _buyerApiClient.GetSupplierPredefinedContractStatus(
                         request.RFQId,
                         supplier.Id,
                         cancellationToken);

@@ -48,6 +48,15 @@ namespace Buyer.Domain.Entities
         public decimal? DeliveryCharge { get; set; }
         public string Currency { get; set; }
 
+        // UNSPSC hierarchy, sent by the front end at RFQ creation
+        public long? SegmentId { get; set; }
+
+        public string? SegmentTitle { get; set; }
+
+        public long? FamilyId { get; set; }
+
+        public string? FamilyTitle { get; set; }
+
         public RFQ() { }
 
     }

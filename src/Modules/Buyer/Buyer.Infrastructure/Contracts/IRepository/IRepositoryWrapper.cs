@@ -50,10 +50,13 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IExcelMaterialMasterRepository ExcelMaterialMaster {get;}
         IRFQAwardRepository RFQAward { get; }
         IRFQAwardItemRepository RFQAwardItem { get; }
-        IContractRepository Contract { get; }
+        IPredefinedContractRepository PredefinedContract { get; }
+        IPredefinedContractAttachmentRepository PredefinedContractAttachment { get; }
+        IPredefinedContractApprovalFlowRepository PredefinedContractApprovalFlow { get; }
+        IPredefinedContractApprovalUserMappingRepository PredefinedContractApprovalUserMapping { get; }
+        IContractTemplateRepository ContractTemplate { get; }
+        IContractDetailsRepository ContractDetails { get; }
         IContractAttachmentRepository ContractAttachment { get; }
-        IContractApprovalFlowRepository ContractApprovalFlow { get; }
-        IContractApprovalUserMappingRepository ContractApprovalUserMapping { get; }
         bool Save();
         Task<bool> SaveAsync();
     }

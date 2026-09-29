@@ -92,7 +92,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierInvitedRFQs
                 // never see another supplier's contract for the same RFQ.
                 try
                 {
-                    var contract = await _buyerApiClient.GetSupplierContractStatus(
+                    var contract = await _buyerApiClient.GetSupplierPredefinedContractStatus(
                         rfq.BuyerRFQId,
                         supplier.Id,
                         cancellationToken);

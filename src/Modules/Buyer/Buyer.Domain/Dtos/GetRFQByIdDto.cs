@@ -53,12 +53,18 @@ namespace Buyer.Domain.Dtos
         /// <summary>
         /// Contracts created for this RFQ (one per supplier), empty until a contract exists.
         /// </summary>
-        public List<RFQContractDto> Contracts { get; set; } = new();
+        public List<RFQPredefinedContractDto> Contracts { get; set; } = new();
 
-
+        /// <summary>
+        /// Template documents for the RFQ's segment.
+        /// </summary>
+        public List<AssetDto> ContractTemplateDocuments { get; set; } = new();
+        public long? SegmentId { get; set; }
+        public string? SegmentTitel { get; set; }
+        public long? FamilyId { get; set; }
     }
 
-    public class RFQContractDto
+    public class RFQPredefinedContractDto
     {
         public Guid ContractId { get; set; }
 

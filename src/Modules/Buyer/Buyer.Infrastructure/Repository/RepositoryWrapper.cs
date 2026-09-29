@@ -57,10 +57,13 @@ namespace Buyer.Infrastructure.Repository
         private IExcelMaterialMasterRepository _excelMaterialMasterRepository;
         private IRFQAwardRepository _rfqAwardRepository;
         private IRFQAwardItemRepository _rfqAwardItemRepository;
-        private IContractRepository _contractRepository;
+        private IPredefinedContractRepository _predefinedContractRepository;
+        private IPredefinedContractAttachmentRepository _predefinedContractAttachmentRepository;
+        private IPredefinedContractApprovalFlowRepository _predefinedContractApprovalFlowRepository;
+        private IPredefinedContractApprovalUserMappingRepository _predefinedContractApprovalUserMappingRepository;
+        private IContractTemplateRepository _contractTemplateRepository;
+        private IContractDetailsRepository _contractDetailsRepository;
         private IContractAttachmentRepository _contractAttachmentRepository;
-        private IContractApprovalFlowRepository _contractApprovalFlowRepository;
-        private IContractApprovalUserMappingRepository _contractApprovalUserMappingRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -552,15 +555,70 @@ namespace Buyer.Infrastructure.Repository
                 return _rfqAwardItemRepository;
             }
         }
-        public IContractRepository Contract
+        public IPredefinedContractRepository PredefinedContract
         {
             get
             {
-                if (_contractRepository == null)
+                if (_predefinedContractRepository == null)
                 {
-                    _contractRepository = new ContractRepository(_context);
+                    _predefinedContractRepository = new PredefinedContractRepository(_context);
                 }
-                return _contractRepository;
+                return _predefinedContractRepository;
+            }
+        }
+        public IPredefinedContractAttachmentRepository PredefinedContractAttachment
+        {
+            get
+            {
+                if (_predefinedContractAttachmentRepository == null)
+                {
+                    _predefinedContractAttachmentRepository = new PredefinedContractAttachmentRepository(_context);
+                }
+                return _predefinedContractAttachmentRepository;
+            }
+        }
+        public IPredefinedContractApprovalFlowRepository PredefinedContractApprovalFlow
+        {
+            get
+            {
+                if (_predefinedContractApprovalFlowRepository == null)
+                {
+                    _predefinedContractApprovalFlowRepository = new PredefinedContractApprovalFlowRepository(_context);
+                }
+                return _predefinedContractApprovalFlowRepository;
+            }
+        }
+        public IPredefinedContractApprovalUserMappingRepository PredefinedContractApprovalUserMapping
+        {
+            get
+            {
+                if (_predefinedContractApprovalUserMappingRepository == null)
+                {
+                    _predefinedContractApprovalUserMappingRepository = new PredefinedContractApprovalUserMappingRepository(_context);
+                }
+                return _predefinedContractApprovalUserMappingRepository;
+            }
+        }
+        public IContractTemplateRepository ContractTemplate
+        {
+            get
+            {
+                if (_contractTemplateRepository == null)
+                {
+                    _contractTemplateRepository = new ContractTemplateRepository(_context);
+                }
+                return _contractTemplateRepository;
+            }
+        }
+        public IContractDetailsRepository ContractDetails
+        {
+            get
+            {
+                if (_contractDetailsRepository == null)
+                {
+                    _contractDetailsRepository = new ContractDetailsRepository(_context);
+                }
+                return _contractDetailsRepository;
             }
         }
         public IContractAttachmentRepository ContractAttachment
@@ -572,28 +630,6 @@ namespace Buyer.Infrastructure.Repository
                     _contractAttachmentRepository = new ContractAttachmentRepository(_context);
                 }
                 return _contractAttachmentRepository;
-            }
-        }
-        public IContractApprovalFlowRepository ContractApprovalFlow
-        {
-            get
-            {
-                if (_contractApprovalFlowRepository == null)
-                {
-                    _contractApprovalFlowRepository = new ContractApprovalFlowRepository(_context);
-                }
-                return _contractApprovalFlowRepository;
-            }
-        }
-        public IContractApprovalUserMappingRepository ContractApprovalUserMapping
-        {
-            get
-            {
-                if (_contractApprovalUserMappingRepository == null)
-                {
-                    _contractApprovalUserMappingRepository = new ContractApprovalUserMappingRepository(_context);
-                }
-                return _contractApprovalUserMappingRepository;
             }
         }
         public bool Save()

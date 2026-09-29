@@ -26,6 +26,14 @@ namespace Buyer.Domain.Dto
         public decimal Budget { get; set; }
 
         public bool AddLotOption { get; set; }
+
+        public long? SegmentId { get; set; }
+
+        public string? SegmentTitle { get; set; }
+
+        public long? FamilyId { get; set; }
+
+        public string? FamilyTitle { get; set; }
         
 
         // Hardcoded template for now

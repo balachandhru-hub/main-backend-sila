@@ -85,6 +85,10 @@ namespace Buyer.Application.Features.Commands.CreateRFQ
                 Budget = request.RFQ.Budget,
                 AddLotOption = request.RFQ.AddLotOption,
                 Currency = request.RFQ.Currency,
+                SegmentId = request.RFQ.SegmentId,
+                SegmentTitle = request.RFQ.SegmentTitle,
+                FamilyId = request.RFQ.FamilyId,
+                FamilyTitle = request.RFQ.FamilyTitle,
                 Status = Common.RFQ_OPEN_STATUS,
 
 
