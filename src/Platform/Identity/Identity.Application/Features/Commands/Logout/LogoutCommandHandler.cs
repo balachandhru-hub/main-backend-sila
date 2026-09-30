@@ -102,22 +102,28 @@ namespace Identity.Application.Features.Commands.Logout
             // both variants so logout works regardless of which endpoint
             // last issued the cookies.
             var cookieDomain = _configuration[Common.DOMAIN_COOKIE_NAME];
+            bool secure = httpContext.Request.IsHttps;
+            var hostOnly = new CookieOptions
+            {
+                Path = "/",
+                Secure = secure,
+                SameSite = secure ? SameSiteMode.None : SameSiteMode.Lax
+            };
 
-            httpContext.Response.Cookies.Delete(
-                Common.COOKIE_ACCESS_TOKEN_KEY,
-                new CookieOptions { Path = "/" });
-            httpContext.Response.Cookies.Delete(
-                Common.COOKIE_REFRESH_TOKEN_KEY,
-                new CookieOptions { Path = "/" });
+            httpContext.Response.Cookies.Delete(Common.COOKIE_ACCESS_TOKEN_KEY, hostOnly);
+            httpContext.Response.Cookies.Delete(Common.COOKIE_REFRESH_TOKEN_KEY, hostOnly);
 
             if (!string.IsNullOrWhiteSpace(cookieDomain))
             {
-                httpContext.Response.Cookies.Delete(
-                    Common.COOKIE_ACCESS_TOKEN_KEY,
-                    new CookieOptions { Path = "/", Domain = cookieDomain });
-                httpContext.Response.Cookies.Delete(
-                    Common.COOKIE_REFRESH_TOKEN_KEY,
-                    new CookieOptions { Path = "/", Domain = cookieDomain });
+                var withDomain = new CookieOptions
+                {
+                    Path = "/",
+                    Domain = cookieDomain,
+                    Secure = secure,
+                    SameSite = secure ? SameSiteMode.None : SameSiteMode.Lax
+                };
+                httpContext.Response.Cookies.Delete(Common.COOKIE_ACCESS_TOKEN_KEY, withDomain);
+                httpContext.Response.Cookies.Delete(Common.COOKIE_REFRESH_TOKEN_KEY, withDomain);
             }
  
             _logger.LogInfo($"User logged out successfully : {userId}");
