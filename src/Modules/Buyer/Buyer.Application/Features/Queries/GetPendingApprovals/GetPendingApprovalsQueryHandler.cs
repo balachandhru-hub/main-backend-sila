@@ -37,7 +37,8 @@ namespace Buyer.Application.Features.Queries.GetPendingApprovals
                 $"Fetching approvals for user. " +
                 $"UserId: {request.UserId}, " +
                 $"Status: {request.Status}, " +
-                $"SearchTerm: {request.SearchTerm}");
+                $"SearchTerm: {request.SearchTerm}, " +
+                $"Index: {request.Index}, Limit: {request.Limit}");
 
             bool filterByStatus =
                 !string.IsNullOrWhiteSpace(request.Status) &&
@@ -63,6 +64,8 @@ namespace Buyer.Application.Features.Queries.GetPendingApprovals
             var approvals =
                 await query
                     .OrderBy(x => x.Order)
+                    .Skip(request.Index)
+                    .Take(request.Limit)
                     .ToListAsync(cancellationToken);
 
             // ---------------------------------------------------------
