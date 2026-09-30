@@ -71,6 +71,14 @@ namespace Buyer.Domain.Dtos
         public string? ContractNumber { get; set; }
 
         public Guid SupplierId { get; set; }
+
+        public string? Status { get; set; }
+
+        /// <summary>
+        /// Every approver of this contract with their id, name and decision
+        /// (PENDING, APPROVE or REJECT), in approval order.
+        /// </summary>
+        public List<PredefinedContractApprovalUserDto> ApprovalUsers { get; set; } = new();
     }
 
     public class GetRFQItemDto

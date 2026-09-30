@@ -43,6 +43,11 @@ namespace Supplier.Domain.Dto
         /// <summary>The buyer's e-sign for the RFQ.</summary>
         public List<AssetDto>? BuyerESignDocuments { get; set; }
 
+        /// <summary>
+        /// The buyer's contract template documents for the RFQ's segment.
+        /// </summary>
+        public List<AssetDto> ContractTemplateDocuments { get; set; } = new();
+
         public bool SupplierTermsAndCondition { get; set; }
 
         public List<AssetDto>? SupplierTermsConditionDocuments { get; set; }
@@ -68,6 +73,12 @@ namespace Supplier.Domain.Dto
         /// Id of this supplier's contract for the RFQ; null until a contract exists.
         /// </summary>
         public Guid? ContractId { get; set; }
+
+        /// <summary>
+        /// Approvers of this supplier's contract (id, name, order and PENDING/APPROVE/REJECT status);
+        /// empty until a contract exists.
+        /// </summary>
+        public List<PredefinedContractApprovalUserDto> ApprovalUsers { get; set; } = new();
         public string? Currency { get; set; }
 
     }

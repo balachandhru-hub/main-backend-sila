@@ -33,7 +33,23 @@ namespace Supplier.Domain.Dto
 
         public DateTime DateCreated { get; set; }
 
-        // Approval flow/user data is buyer-internal and intentionally not exposed here.
+        public string? Status { get; set; }
+
         public List<PredefinedContractAttachmentDto> Attachments { get; set; } = new();
+
+        // Only id, name, order and decision status are exposed to suppliers; approver emails and
+        // the rest of the buyer-internal approval flow stay out of this DTO.
+        public List<PredefinedContractApprovalUserDto> ApprovalUsers { get; set; } = new();
+    }
+
+    public class PredefinedContractApprovalUserDto
+    {
+        public Guid UserId { get; set; }
+
+        public string? UserName { get; set; }
+
+        public int Order { get; set; }
+
+        public string? Status { get; set; }
     }
 }

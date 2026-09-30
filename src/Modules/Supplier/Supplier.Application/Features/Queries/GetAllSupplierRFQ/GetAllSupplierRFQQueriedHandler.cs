@@ -280,6 +280,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
             // Contract table (Buyer service). It stays null until a contract exists.
             string? contractStatus = null;
             Guid? contractId = null;
+            var approvalUsers = new List<PredefinedContractApprovalUserDto>();
 
             if (rfq.Status == Common.AWARDED_STATUS)
             {
@@ -294,6 +295,14 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     {
                         contractStatus = contract.ContractStatus;
                         contractId = contract.ContractId;
+
+                        if (contractId.HasValue)
+                        {
+                            var contractDetail = await _buyerApiClient.GetPredefinedContract(
+                                contractId.Value,
+                                cancellationToken);
+                            approvalUsers = contractDetail.ApprovalUsers;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -357,6 +366,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 TermsConditionDocuments = termsDocuments,
                 ESignDocuments = esignDocuments,
                 BuyerESignDocuments = attachmentResponse.ESignDocuments,
+                ContractTemplateDocuments = attachmentResponse.ContractTemplateDocuments,
                 SupplierTermsAndCondition = rfq.TermsAndCondition,
                 SupplierTermsConditionDocuments = supplierTermsConditionDocuments,
                 BuyerTermsAndConditionAccepted = rfq.BuyerTermsAndConditionAccepted ?? Common.PENDING,
@@ -364,6 +374,7 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                 Status = rfq.Status,
                 ContractStatus = contractStatus,
                 ContractId = contractId,
+                ApprovalUsers = approvalUsers,
                 Items = items,
                 Questions = questions,
                 Currency = rfq.Currency,

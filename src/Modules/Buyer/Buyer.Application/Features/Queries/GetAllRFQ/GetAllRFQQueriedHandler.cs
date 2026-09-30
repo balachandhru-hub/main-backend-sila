@@ -607,9 +607,51 @@ namespace Buyer.Application.Features.Queries.GetAllRFQ
                 {
                     ContractId = x.Id,
                     ContractNumber = x.ContractNumber,
-                    SupplierId = x.SupplierId
+                    SupplierId = x.SupplierId,
+                    Status = x.Status
                 })
                 .ToListAsync(cancellationToken);
+
+            if (contracts.Any())
+            {
+                var contractIds = contracts.Select(c => c.ContractId).ToList();
+
+                var approvalRows = await (
+                    from mapping in _repositorywrapper.PredefinedContractApprovalUserMapping
+                        .FindByCondition(m => m.IsActive)
+                    join flow in _repositorywrapper.PredefinedContractApprovalFlow
+                        .FindByCondition(f => contractIds.Contains(f.ContractId) && f.IsActive)
+                        on mapping.ContractApprovalFlowId equals flow.Id
+                    orderby mapping.Order
+                    select new
+                    {
+                        flow.ContractId,
+                        mapping.UserId,
+                        mapping.Order,
+                        mapping.Status
+                    })
+                    .ToListAsync(cancellationToken);
+
+                if (approvalRows.Any())
+                {
+                    var approverIds = approvalRows.Select(r => r.UserId).Distinct().ToList();
+                    var approverIdentities = await _identityApiClient.GetUsersByIds(approverIds, cancellationToken);
+
+                    foreach (var contract in contracts)
+                    {
+                        contract.ApprovalUsers = approvalRows
+                            .Where(r => r.ContractId == contract.ContractId)
+                            .Select(r => new PredefinedContractApprovalUserDto
+                            {
+                                UserId = r.UserId,
+                                UserName = approverIdentities.FirstOrDefault(u => u.UserId == r.UserId)?.UserName,
+                                Order = r.Order,
+                                Status = r.Status
+                            })
+                            .ToList();
+                    }
+                }
+            }
 
             // RFQ's SegmentId -> the buyer's ContractTemplate for that segment -> its asset.
             var contractTemplateAssets = await (
