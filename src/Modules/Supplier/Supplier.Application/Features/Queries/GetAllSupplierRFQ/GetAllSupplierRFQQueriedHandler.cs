@@ -141,10 +141,10 @@ namespace Supplier.Application.Features.Queries.GetSupplierAllRFQ
                     SupplierRFQId = item.SupplierRFQId,
                     BuyerRFQItemId = item.BuyerRFQItemId,
                     LineNumber = item.LineNumber,
-                    IsAwarded = item.IsAwarded,
+                    // The award is flagged on every invited supplier's copy of the item, so only
+                    // report it as awarded when this supplier is the one who won the line.
+                    IsAwarded = item.IsAwarded && item.AwardedSupplierId == supplier.Id,
                     AwardedSupplierId = item.AwardedSupplierId
-
-
                 });
             }
 
