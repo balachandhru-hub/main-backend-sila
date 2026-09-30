@@ -221,18 +221,19 @@ namespace Buyer.API.Controller
             [FromQuery] string? status ,
             [FromQuery] string? searchTerm,
             [FromQuery] int index = 0,
-            [FromQuery] int limit = 10)
+            [FromQuery] int limit = 10,
+            [FromQuery] string? type = null)
         {
             Guid userId = GetUserId();
 
             _logger.LogDebug(
                 $"Getting approvals for UserId: {userId}, " +
                 $"Status: {status}, SearchTerm: {searchTerm}, " +
-                $"Index: {index}, Limit: {limit}");
+                $"Index: {index}, Limit: {limit}, Type: {type}");
 
             var result =
                 await _mediator.Send(
-                    new GetPendingApprovalsQuery(userId, status, searchTerm, index, limit));
+                    new GetPendingApprovalsQuery(userId, status, searchTerm, index, limit, type));
 
             return Ok(result);
         }

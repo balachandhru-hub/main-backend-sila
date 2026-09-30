@@ -111,6 +111,19 @@ namespace Buyer.Application.Features.Queries.GetPendingApprovals
                     materialApprovalFlowMapping.UploadType ==
                     Common.UPLOAD_TYPE_EXCEL;
 
+                // ---------------------------------------------------------
+                // Optional Type filter (MANUAL / EXCEL) - skip items that
+                // don't match the requested type.
+                // ---------------------------------------------------------
+
+                if (!string.IsNullOrWhiteSpace(request.Type) &&
+                    !materialApprovalFlowMapping.UploadType.Equals(
+                        request.Type,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
                 PendingApprovalDto? dto = null;
 
                 if (isExcel)

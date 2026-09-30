@@ -8,6 +8,8 @@ namespace Buyer.Application.Features.Queries.GetPendingApprovals
         string? Status ,
         string? SearchTerm,
         int Index = 0,
-        int Limit = 10
+        int Limit = 10,
+        // Optional "MANUAL" or "EXCEL" filter - Common.UPLOAD_TYPE_MANUAL/UPLOAD_TYPE_EXCEL. Null/empty returns both.
+        string? Type = null
     ) : IRequest<List<PendingApprovalDto>>;
 }
