@@ -64,6 +64,7 @@ namespace Buyer.Infrastructure.Repository
         private IContractTemplateRepository _contractTemplateRepository;
         private IContractDetailsRepository _contractDetailsRepository;
         private IContractAttachmentRepository _contractAttachmentRepository;
+        private IWishlistRepository _wishlistRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -632,6 +633,18 @@ namespace Buyer.Infrastructure.Repository
                 return _contractAttachmentRepository;
             }
         }
+        public IWishlistRepository Wishlist
+        {
+            get
+            {
+                if (_wishlistRepository == null)
+                {
+                    _wishlistRepository = new WishlistRepository(_context);
+                }
+                return _wishlistRepository;
+            }
+        }
+
         public bool Save()
         {
             _context.OnBeforeSaving(_userIdentityService.GetCurrentUser());

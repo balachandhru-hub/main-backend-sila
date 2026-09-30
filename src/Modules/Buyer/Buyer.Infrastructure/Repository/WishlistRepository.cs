@@ -1,0 +1,149 @@
+using Buyer.Domain.Common;
+using Buyer.Domain.Entities;
+using Buyer.Infrastructure.Contracts.IRepository;
+using Buyer.Infrastructure.DbContext;
+using Microsoft.EntityFrameworkCore;
+
+namespace Buyer.Infrastructure.Repository
+{
+    public class WishlistRepository : RepositoryBase<Wishlist>, IWishlistRepository
+    {
+        public WishlistRepository(RepositoryContext repositoryContext) : base(repositoryContext)
+        {
+        }
+
+        public Task<Wishlist?> GetTrackedAsync(Guid wishlistId, Guid buyerId, CancellationToken cancellationToken)
+        {
+            return RepositoryContext.Wishlist
+                .FirstOrDefaultAsync(x => x.Id == wishlistId && x.BuyerId == buyerId && x.IsActive, cancellationToken);
+        }
+
+        public Task<Wishlist?> GetTrackedByIdAsync(Guid wishlistId, CancellationToken cancellationToken)
+        {
+            return RepositoryContext.Wishlist
+                .FirstOrDefaultAsync(x => x.Id == wishlistId && x.IsActive, cancellationToken);
+        }
+
+        public Task<List<WishlistItem>> GetItemsAsync(Guid wishlistId, CancellationToken cancellationToken)
+        {
+            return RepositoryContext.WishlistItem
+                .Where(x => x.WishlistId == wishlistId && x.IsActive)
+                .OrderBy(x => x.DateCreated)
+                .ToListAsync(cancellationToken);
+        }
+
+        public Task<BuyerOutlet?> GetOutletAsync(Guid outletId, Guid buyerId, CancellationToken cancellationToken)
+        {
+            return RepositoryContext.BuyerOutlet
+                .FirstOrDefaultAsync(x => x.Id == outletId && x.BuyerId == buyerId && x.IsActive, cancellationToken);
+        }
+
+        public Task<List<BuyerOutlet>> ListOutletsAsync(Guid buyerId, CancellationToken cancellationToken)
+        {
+            return RepositoryContext.BuyerOutlet
+                .AsNoTracking()
+                .Where(x => x.BuyerId == buyerId && x.IsActive)
+                .OrderBy(x => x.OutletName)
+                .ToListAsync(cancellationToken);
+        }
+
+        public Task<ErpIntegrationConfiguration?> GetErpConfigurationAsync(Guid buyerId, CancellationToken cancellationToken)
+        {
+            return RepositoryContext.ErpIntegrationConfiguration
+                .Where(x => x.BuyerId == buyerId)
+                .OrderByDescending(x => x.Version)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public Task<ErpIntegrationConfiguration?> GetErpConfigurationByIdAsync(Guid configurationId, CancellationToken cancellationToken)
+        {
+            return RepositoryContext.ErpIntegrationConfiguration
+                .FirstOrDefaultAsync(x => x.Id == configurationId, cancellationToken);
+        }
+
+        public Task<List<PurchaseDocumentIntegration>> GetIntegrationsAsync(Guid wishlistId, CancellationToken cancellationToken)
+        {
+            return RepositoryContext.PurchaseDocumentIntegration
+                .Where(x => x.WishlistId == wishlistId && x.IsActive)
+                .OrderBy(x => x.DateCreated)
+                .ToListAsync(cancellationToken);
+        }
+
+        public Task<PurchaseDocumentIntegration?> GetIntegrationAsync(
+            Guid wishlistId,
+            string integrationType,
+            Guid supplierOrganizationId,
+            CancellationToken cancellationToken)
+        {
+            return RepositoryContext.PurchaseDocumentIntegration
+                .FirstOrDefaultAsync(
+                    x => x.WishlistId == wishlistId
+                         && x.IntegrationType == integrationType
+                         && x.SupplierOrganizationId == supplierOrganizationId
+                         && x.IsActive,
+                    cancellationToken);
+        }
+
+        public Task<WishlistApprovalFlow?> GetApprovalFlowAsync(Guid wishlistId, CancellationToken cancellationToken)
+        {
+            return RepositoryContext.WishlistApprovalFlow
+                .FirstOrDefaultAsync(x => x.WishlistId == wishlistId && x.IsActive, cancellationToken);
+        }
+
+        public Task<List<WishlistApprovalUserMapping>> GetApprovalUsersAsync(Guid approvalFlowId, CancellationToken cancellationToken)
+        {
+            return RepositoryContext.WishlistApprovalUserMapping
+                .Where(x => x.WishlistApprovalFlowId == approvalFlowId && x.IsActive)
+                .OrderBy(x => x.Order)
+                .ToListAsync(cancellationToken);
+        }
+
+        public Task<List<WishlistAudit>> GetAuditAsync(Guid wishlistId, CancellationToken cancellationToken)
+        {
+            return RepositoryContext.WishlistAudit
+                .AsNoTracking()
+                .Where(x => x.WishlistId == wishlistId && x.IsActive)
+                .OrderBy(x => x.DateCreated)
+                .ToListAsync(cancellationToken);
+        }
+
+        public Task<List<Guid>> GetDueWishlistIdsAsync(DateTime utcNow, CancellationToken cancellationToken)
+        {
+            string[] activeStatuses =
+            {
+                Common.WISHLIST_ERP_PROCESSING,
+                Common.WISHLIST_SUPPLIER_PO_PROCESSING
+            };
+            string[] retryStatuses =
+            {
+                Common.WISHLIST_ERP_FAILED,
+                Common.WISHLIST_SUPPLIER_PO_FAILED
+            };
+
+            return RepositoryContext.Wishlist
+                .AsNoTracking()
+                .Where(x => x.IsActive && (
+                    activeStatuses.Contains(x.Status)
+                    || (retryStatuses.Contains(x.Status)
+                        && RepositoryContext.PurchaseDocumentIntegration.Any(i =>
+                            i.WishlistId == x.Id
+                            && i.IsActive
+                            && i.NextAttemptOn != null
+                            && i.NextAttemptOn <= utcNow
+                            && !i.OutcomeUnknown
+                            && i.Status == Common.INTEGRATION_FAILED))))
+                .Select(x => x.Id)
+                .ToListAsync(cancellationToken);
+        }
+
+        public void Add<T>(T entity) where T : class
+        {
+            RepositoryContext.Set<T>().Add(entity);
+        }
+
+        public void RemoveRange<T>(IEnumerable<T> entities) where T : class
+        {
+            RepositoryContext.Set<T>().RemoveRange(entities);
+        }
+    }
+}

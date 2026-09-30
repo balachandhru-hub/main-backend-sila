@@ -67,6 +67,14 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<ContractTemplate> ContractTemplate {get;set;}
         public DbSet<ContractDetails> ContractDetails {get;set;}
         public DbSet<ContractAttachment> ContractAttachment {get;set;}
+        public DbSet<BuyerOutlet> BuyerOutlet { get; set; }
+        public DbSet<Wishlist> Wishlist { get; set; }
+        public DbSet<WishlistItem> WishlistItem { get; set; }
+        public DbSet<WishlistApprovalFlow> WishlistApprovalFlow { get; set; }
+        public DbSet<WishlistApprovalUserMapping> WishlistApprovalUserMapping { get; set; }
+        public DbSet<WishlistAudit> WishlistAudit { get; set; }
+        public DbSet<ErpIntegrationConfiguration> ErpIntegrationConfiguration { get; set; }
+        public DbSet<PurchaseDocumentIntegration> PurchaseDocumentIntegration { get; set; }
 
 
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
@@ -122,6 +130,27 @@ namespace Buyer.Infrastructure.DbContext
             _ = modelBuilder.Entity<ContractTemplate>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<ContractDetails>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<ContractAttachment>().HasIndex(a=>a.IsActive);
+            _ = modelBuilder.Entity<BuyerOutlet>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<Wishlist>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<WishlistItem>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<WishlistApprovalFlow>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<WishlistApprovalUserMapping>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<WishlistAudit>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<ErpIntegrationConfiguration>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<PurchaseDocumentIntegration>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<PurchaseDocumentIntegration>()
+                .HasIndex(a => new { a.WishlistId, a.IntegrationType, a.SupplierOrganizationId })
+                .IsUnique();
+            _ = modelBuilder.Entity<WishlistItem>()
+                .HasOne(x => x.Wishlist)
+                .WithMany(x => x.Items)
+                .HasForeignKey(x => x.WishlistId)
+                .OnDelete(DeleteBehavior.NoAction);
+            _ = modelBuilder.Entity<Wishlist>()
+                .HasOne(x => x.Outlet)
+                .WithMany()
+                .HasForeignKey(x => x.OutletId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             _ = modelBuilder.HasSequence<long>(
                 Common.PREDEFINED_CONTRACT_NUMBER_SEQUENCE,

@@ -57,6 +57,7 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IContractTemplateRepository ContractTemplate { get; }
         IContractDetailsRepository ContractDetails { get; }
         IContractAttachmentRepository ContractAttachment { get; }
+        IWishlistRepository Wishlist { get; }
         bool Save();
         Task<bool> SaveAsync();
     }

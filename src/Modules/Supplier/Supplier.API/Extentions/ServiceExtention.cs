@@ -96,6 +96,7 @@ namespace Supplier.API.Extensions
         public static void ConfigureRepositoryWrapper(this IServiceCollection services)
         {
             _ = services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
+            _ = services.AddScoped<Supplier.Application.Services.ISupplierPurchaseOrderService, Supplier.Application.Services.SupplierPurchaseOrderService>();
         }
         public static void ConfigureAuthentication(
                this IServiceCollection services

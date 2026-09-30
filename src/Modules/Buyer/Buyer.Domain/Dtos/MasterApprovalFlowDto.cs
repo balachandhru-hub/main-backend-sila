@@ -9,5 +9,7 @@ namespace Buyer.Domain.Dtos
         public string ApprovalName { get; set; }
 
         public Guid BuyerId { get; set; }
+
+        public string? Type { get; set; }
     }
 }

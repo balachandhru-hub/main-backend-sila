@@ -33,6 +33,7 @@ public interface IRepositoryWrapper
     ISupplierQuotationHistoryRepository SupplierQuotationHistory { get; }
     ISupplierQuotationItemHistoryRepository SupplierQuotationItemHistory { get; }
     IRFQAttachmentMappingRepository RFQAttachmentMapping { get; }
+    ISupplierErpRepository SupplierErp { get; }
 
     bool Save();
     Task<bool> SaveAsync();
