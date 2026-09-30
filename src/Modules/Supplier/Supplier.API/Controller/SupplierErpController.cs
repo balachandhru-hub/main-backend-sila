@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using SharedKernel.Attributes;
 using SharedKernel.Controllers;
 using SharedKernel.Dto;
-using Supplier.API.Attribute;
-using Supplier.Application.Features.SupplierErp;
+using Supplier.Application.Features.Commands.SaveSupplierErpConfiguration;
+using Supplier.Application.Features.Queries.GetSupplierErpConfiguration;
 using Supplier.Domain.Dto;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -18,16 +18,6 @@ namespace Supplier.API.Controller
         public SupplierErpController(IMediator mediator)
         {
             _mediator = mediator;
-        }
-
-        [HttpPost]
-        [Route("api/v1/supplier/internal/purchase-orders")]
-        [InternalApiKeyAuthorization]
-        [SwaggerOperation("CreateSupplierPurchaseOrder")]
-        public async Task<IActionResult> CreatePurchaseOrder([FromBody] SupplierPurchaseOrderRequestDto request)
-        {
-            SupplierPurchaseOrderResponseDto result = await _mediator.Send(new CreateSupplierPurchaseOrderCommand(request));
-            return Ok(result);
         }
 
         [HttpGet]

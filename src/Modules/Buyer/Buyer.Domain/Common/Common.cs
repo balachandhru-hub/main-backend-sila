@@ -160,7 +160,10 @@ namespace Buyer.Domain.Common
                 public const string ERP_DOCUMENT_PR = "PR";
                 public const string ERP_TYPE_SAP_S4 = "SAP_S4";
                 public const string ERP_TYPE_ARIBA = "ARIBA";
+                public const string ERP_TYPE_ANE_DCI = "ANE_DCI";
                 public const string ERP_TYPE_GENERIC = "GENERIC";
+                public const string PAYLOAD_JSON = "JSON";
+                public const string PAYLOAD_CXML = "CXML";
 
                 public const string AUTH_NONE = "NONE";
                 public const string AUTH_BASIC = "BASIC";
@@ -182,9 +185,6 @@ namespace Buyer.Domain.Common
                 public const string AUDIT_SUPPLIER_FAILED = "SUPPLIER_INTEGRATION_FAILED";
                 public const string AUDIT_RETRY = "RETRY";
                 public const string AUDIT_CANCELLED = "CANCELLED";
-
-                public const string INTERNAL_API_KEY = "InterCallService:InternalApiKey";
-                public const string SUPPLIER_PURCHASE_ORDER_PATH = "/api/v1/supplier/internal/purchase-orders";
                 public const string IDEMPOTENCY_HEADER = "Idempotency-Key";
         }
 }

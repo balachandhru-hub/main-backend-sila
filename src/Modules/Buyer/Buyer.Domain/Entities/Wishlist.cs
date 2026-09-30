@@ -65,7 +65,5 @@ namespace Buyer.Domain.Entities
         public DateTime? RequiredDate { get; set; }
 
         public string? LastError { get; set; }
-
-        public ICollection<WishlistItem> Items { get; set; } = new List<WishlistItem>();
     }
 }

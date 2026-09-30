@@ -1240,9 +1240,18 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("password");
 
+                    b.Property<string>("PayloadFormat")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("payload_format");
+
                     b.Property<string>("Scope")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("scope");
+
+                    b.Property<Guid?>("SupplierOrganizationId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_organization_id");
 
                     b.Property<int>("TimeoutSeconds")
                         .HasColumnType("int")
@@ -4559,18 +4568,13 @@ namespace Buyer.Infrastructure.Migrations
             modelBuilder.Entity("Buyer.Domain.Entities.WishlistItem", b =>
                 {
                     b.HasOne("Buyer.Domain.Entities.Wishlist", "Wishlist")
-                        .WithMany("Items")
+                        .WithMany()
                         .HasForeignKey("WishlistId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
                         .HasConstraintName("fk_wishlist_item_wishlist_wishlist_id");
 
                     b.Navigation("Wishlist");
-                });
-
-            modelBuilder.Entity("Buyer.Domain.Entities.Wishlist", b =>
-                {
-                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

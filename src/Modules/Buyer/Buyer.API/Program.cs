@@ -83,7 +83,6 @@ namespace Buyer.API
     c.IncludeXmlComments(xmlPath);
 });
             builder.Services.ConfigureScheduler();
-            builder.Services.AddHostedService<Buyer.Application.Services.WishlistIntegrationWorker>();
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())

@@ -15,6 +15,8 @@ namespace Supplier.Domain.Entities
         [Required]
         public string ErpType { get; set; } = string.Empty;
 
+        public string PayloadFormat { get; set; } = "JSON";
+
         [Required]
         public string BaseUrl { get; set; } = string.Empty;
 

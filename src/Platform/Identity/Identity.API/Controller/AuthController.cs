@@ -93,10 +93,17 @@ namespace Identity.API.Controllers
 
             var result = await _mediator.Send(command);
 
-            Response.Cookies.Append(
-                Common.VERIFICATION_TOKEN_COOKIE_NAME,
-                result.TemporaryVerificationToken!,
-                AuthCookieOptions(DateTimeOffset.UtcNow.AddMinutes(30)));
+            Response.Cookies.Append(Common.VERIFICATION_TOKEN_COOKIE_NAME, result.TemporaryVerificationToken!,
+            new CookieOptions
+            {
+                Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                Path = "/",
+                HttpOnly = true,
+                Secure = true,          // Use true in HTTPS
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(30),
+                IsEssential = true
+            });
 
             return Ok(new SuccessResponseDto
             {
@@ -123,14 +130,30 @@ namespace Identity.API.Controllers
             _logger.LogDebug($"Login request received for {command.UserName}");
 
             var result = await _mediator.Send(command);
-            Response.Cookies.Append(
-                Common.COOKIE_ACCESS_TOKEN_KEY,
-                result.Token!,
-                AuthCookieOptions(DateTimeOffset.UtcNow.AddHours(1)));
+            Response.Cookies.Append(Common.COOKIE_ACCESS_TOKEN_KEY, result.Token!,
+                new CookieOptions
+                {
+                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = true,          // false for local HTTP, true for HTTPS
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTimeOffset.UtcNow.AddHours(1),
+                    IsEssential = true
+                });
             Response.Cookies.Append(
                 Common.COOKIE_REFRESH_TOKEN_KEY,
                 result.RefreshToken.ToString(),
-                AuthCookieOptions(DateTimeOffset.UtcNow.AddDays(_configuration.GetValue<int>(Common.REFRESH_TOKEN_EXPIRATION_TIME))));
+                new CookieOptions
+                {
+                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTimeOffset.UtcNow.AddDays(_configuration.GetValue<int>(Common.REFRESH_TOKEN_EXPIRATION_TIME)),
+                    IsEssential = true
+                });
 
             return Ok(new SuccessResponseDto { StatusCode = 200, Message = "Token Generated Successfully", Description = "Successfully Created Token and Refresh Token" });
 
@@ -190,12 +213,30 @@ namespace Identity.API.Controllers
             Response.Cookies.Append(
                 Common.COOKIE_ACCESS_TOKEN_KEY,
                 result.Token!,
-                AuthCookieOptions(DateTimeOffset.UtcNow.AddHours(1)));
+                new CookieOptions
+                {
+                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTimeOffset.UtcNow.AddHours(1),
+                    IsEssential = true
+                });
 
             Response.Cookies.Append(
                 Common.COOKIE_REFRESH_TOKEN_KEY,
                 result.RefreshToken.ToString(),
-                AuthCookieOptions(DateTimeOffset.UtcNow.AddDays(_configuration.GetValue<int>(Common.REFRESH_TOKEN_EXPIRATION_TIME))));
+                new CookieOptions
+                {
+                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTimeOffset.UtcNow.AddDays(_configuration.GetValue<int>(Common.REFRESH_TOKEN_EXPIRATION_TIME)),
+                    IsEssential = true
+                });
 
             return Ok(new SuccessResponseDto { StatusCode = 200, Message = "Token Generated Successfully", Description = "Successfully Created Token and Refresh Token" });
         }
@@ -283,48 +324,6 @@ namespace Identity.API.Controllers
                 Message = "Logged out successfully.",
                 Description = "User logged out successfully."
             });
-        }
-
-        /// <summary>
-        /// Cookie flags that work on the deployed site and on localhost.
-        /// The configured parent domain is applied only when the request host
-        /// is that domain. Localhost otherwise gets a host-only cookie, and
-        /// Secure / SameSite follow the request scheme so an HTTP dev server
-        /// can store the session.
-        /// </summary>
-        private CookieOptions AuthCookieOptions(DateTimeOffset expires)
-        {
-            bool secure = Request.IsHttps;
-            var options = new CookieOptions
-            {
-                Path = "/",
-                HttpOnly = true,
-                Secure = secure,
-                SameSite = secure ? SameSiteMode.None : SameSiteMode.Lax,
-                Expires = expires,
-                IsEssential = true
-            };
-
-            string? domain = _configuration[Common.DOMAIN_COOKIE_NAME];
-            if (CookieDomainMatchesHost(domain))
-            {
-                options.Domain = domain;
-            }
-
-            return options;
-        }
-
-        private bool CookieDomainMatchesHost(string? domain)
-        {
-            if (string.IsNullOrWhiteSpace(domain))
-            {
-                return false;
-            }
-
-            string host = Request.Host.Host;
-            string normalized = domain.Trim().TrimStart('.');
-            return host.Equals(normalized, StringComparison.OrdinalIgnoreCase)
-                || host.EndsWith("." + normalized, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

@@ -145,11 +145,6 @@ namespace Buyer.API.Extensions
             _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
             _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
             _ = services.AddScoped<ISupplierApiClient, SupplierApiClient>();
-            _ = services.AddScoped<Buyer.Application.Services.IWishlistWorkflow, Buyer.Application.Services.WishlistWorkflow>();
-            _ = services.AddScoped<Buyer.Application.Services.IWishlistIntegrationProcessor, Buyer.Application.Services.WishlistIntegrationProcessor>();
-            _ = services.AddScoped<Buyer.Application.Services.Integration.IBuyerPurchaseDocumentGateway, Buyer.Application.Services.Integration.BuyerPurchaseDocumentGateway>();
-            _ = services.AddScoped<Buyer.Application.Services.Integration.ISupplierPurchaseOrderGateway, Buyer.Application.Services.Integration.SupplierPurchaseOrderGateway>();
-       
             _ = services.AddScoped<IAesEncryption, AesEncryption>();
             _ = services.AddControllers();
 
@@ -165,8 +160,11 @@ namespace Buyer.API.Extensions
 
         public static void ConfigureScheduler(this IServiceCollection services)
         {
-
-
+            services.AddSingleton<Buyer.Application.Services.SchedulerService>();
+            services.AddSingleton<Buyer.Application.Services.ISchedulerService>(
+                provider => provider.GetRequiredService<Buyer.Application.Services.SchedulerService>());
+            services.AddHostedService(
+                provider => provider.GetRequiredService<Buyer.Application.Services.SchedulerService>());
         }
 
         /// <summary>

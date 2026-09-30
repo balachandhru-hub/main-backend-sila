@@ -143,7 +143,7 @@ namespace Buyer.Infrastructure.DbContext
                 .IsUnique();
             _ = modelBuilder.Entity<WishlistItem>()
                 .HasOne(x => x.Wishlist)
-                .WithMany(x => x.Items)
+                .WithMany()
                 .HasForeignKey(x => x.WishlistId)
                 .OnDelete(DeleteBehavior.NoAction);
             _ = modelBuilder.Entity<Wishlist>()

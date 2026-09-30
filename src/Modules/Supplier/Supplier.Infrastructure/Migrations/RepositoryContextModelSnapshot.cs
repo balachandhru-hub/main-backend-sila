@@ -980,6 +980,11 @@ namespace Supplier.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("password");
 
+                    b.Property<string>("PayloadFormat")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("payload_format");
+
                     b.Property<string>("Scope")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("scope");

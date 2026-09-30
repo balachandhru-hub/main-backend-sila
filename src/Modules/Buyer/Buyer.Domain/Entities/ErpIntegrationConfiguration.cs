@@ -25,6 +25,17 @@ namespace Buyer.Domain.Entities
         [Required]
         public string ErpType { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Null for the buyer ERP (Ariba, S/4, or another system).
+        /// Set when this row is the destination for one supplier, because each supplier has its own URL.
+        /// </summary>
+        public Guid? SupplierOrganizationId { get; set; }
+
+        /// <summary>
+        /// JSON or CXML. Ariba and S/4 use CXML. Other systems use JSON unless this is set.
+        /// </summary>
+        public string PayloadFormat { get; set; } = "JSON";
+
         [Required]
         public string DocumentType { get; set; } = string.Empty;
 

@@ -7,29 +7,21 @@ using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Services
 {
-    public interface IWishlistIntegrationProcessor
-    {
-        Task ProcessAsync(CancellationToken cancellationToken);
-    }
-
-    public class WishlistIntegrationProcessor : IWishlistIntegrationProcessor
+    public class WishlistIntegrationProcessor
     {
         private readonly IRepositoryWrapper _repository;
         private readonly IBuyerPurchaseDocumentGateway _buyerGateway;
-        private readonly ISupplierPurchaseOrderGateway _supplierGateway;
         private readonly IUserContext _userContext;
         private readonly ILoggerManager _logger;
 
         public WishlistIntegrationProcessor(
             IRepositoryWrapper repository,
             IBuyerPurchaseDocumentGateway buyerGateway,
-            ISupplierPurchaseOrderGateway supplierGateway,
             IUserContext userContext,
             ILoggerManager logger)
         {
             _repository = repository;
             _buyerGateway = buyerGateway;
-            _supplierGateway = supplierGateway;
             _userContext = userContext;
             _logger = logger;
         }
@@ -214,38 +206,63 @@ namespace Buyer.Application.Services
                 return;
             }
 
+            ErpIntegrationConfiguration? destination = await _repository.Wishlist.GetSupplierErpConfigurationAsync(
+                wishlist.BuyerId,
+                wishlist.SupplierOrganizationId.Value,
+                cancellationToken);
+            if (destination == null)
+            {
+                wishlist.Status = Common.WISHLIST_SUPPLIER_PO_FAILED;
+                wishlist.LastError = "No ERP endpoint is configured for this supplier. Each supplier needs its own URL, authentication, and payload format.";
+                AddAudit(wishlist, Common.AUDIT_SUPPLIER_FAILED, wishlist.LastError);
+                await _repository.SaveAsync();
+                return;
+            }
+
+            PinConfiguration(integration, destination);
             string correlationId = Guid.NewGuid().ToString("N");
             integration.Status = Common.INTEGRATION_PROCESSING;
             integration.CorrelationId = correlationId;
             integration.LastAttemptOn = DateTime.UtcNow;
-            integration.DocumentType = Common.ERP_DOCUMENT_PO;
+            integration.DocumentType = string.IsNullOrWhiteSpace(destination.DocumentType)
+                ? Common.ERP_DOCUMENT_PO
+                : destination.DocumentType;
             await _repository.SaveAsync();
 
             BuyerOutlet? outlet = await _repository.Wishlist.GetOutletAsync(wishlist.OutletId, wishlist.BuyerId, cancellationToken);
             List<WishlistItem> items = await _repository.Wishlist.GetItemsAsync(wishlist.Id, cancellationToken);
-            SupplierPurchaseOrderRequest request = new SupplierPurchaseOrderRequest
+            BuyerPurchaseDocumentRequest request = new BuyerPurchaseDocumentRequest
             {
+                IdempotencyKey = integration.IdempotencyKey,
                 WishlistId = wishlist.Id,
                 BuyerOrganizationId = wishlist.BuyerOrganizationId,
-                SupplierOrganizationId = wishlist.SupplierOrganizationId.Value,
-                IdempotencyKey = integration.IdempotencyKey,
-                BuyerDocumentType = wishlist.BuyerErpDocumentType ?? Common.ERP_DOCUMENT_PO,
+                DocumentType = integration.DocumentType ?? Common.ERP_DOCUMENT_PO,
                 BuyerDocumentNumber = wishlist.BuyerErpDocumentNumber,
                 ShipTo = outlet?.ExternalShipTo,
+                OutletCode = outlet?.OutletCode,
+                OutletName = outlet?.OutletName,
+                Currency = wishlist.Currency,
                 DeliveryInstruction = wishlist.DeliveryInstruction,
                 RequiredDate = wishlist.RequiredDate,
-                Currency = wishlist.Currency,
                 CorrelationId = correlationId,
-                Lines = items.Select(item => new SupplierPurchaseLine
+                Lines = items.Select(item => new BuyerPurchaseLine
                 {
-                    Sku = item.MaterialCode,
+                    MaterialCode = item.MaterialCode,
+                    MaterialName = item.MaterialName,
                     Quantity = item.Quantity,
                     UnitOfMeasure = item.UnitOfMeasure,
-                    UnitPrice = item.UnitPrice
+                    UnitPrice = item.UnitPrice,
+                    Currency = item.Currency ?? wishlist.Currency
                 }).ToList()
             };
 
-            ExternalCallResult result = await _supplierGateway.CreateSupplierPurchaseOrderAsync(request, cancellationToken);
+            ExternalCallResult result = await _buyerGateway.CreateBuyerPurchaseDocumentAsync(
+                destination,
+                integration.ResolvedBaseUrl!,
+                integration.ResolvedPath!,
+                integration.ResolvedHttpMethod!,
+                request,
+                cancellationToken);
             if (result.Succeeded && !string.IsNullOrWhiteSpace(result.DocumentNumber))
             {
                 integration.Status = Common.INTEGRATION_SUCCEEDED;
@@ -266,10 +283,7 @@ namespace Buyer.Application.Services
                 return;
             }
 
-            ErpIntegrationConfiguration? buyerConfiguration = integration.ConfigurationId.HasValue
-                ? null
-                : await _repository.Wishlist.GetErpConfigurationAsync(wishlist.BuyerId, cancellationToken);
-            int maxRetry = buyerConfiguration?.MaxRetryCount ?? 3;
+            int maxRetry = destination.MaxRetryCount < 0 ? 0 : destination.MaxRetryCount;
             await FailAsync(
                 wishlist,
                 integration,

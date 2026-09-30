@@ -88,6 +88,9 @@ namespace Supplier.Domain.Common
         };
 
         public const string ERP_TYPE_ANE_DCI = "ANE_DCI";
+        public const string ERP_TYPE_ARIBA = "ARIBA";
+        public const string ERP_TYPE_SAP_S4 = "SAP_S4";
+        public const string PAYLOAD_CXML = "CXML";
         public const string AUTH_DCI_PASSWORD = "DCI_PASSWORD";
         public const string AUTH_NONE = "NONE";
         public const string AUTH_BASIC = "BASIC";
@@ -98,6 +101,5 @@ namespace Supplier.Domain.Common
         public const string INTEGRATION_FAILED = "FAILED";
         public const string INTEGRATION_UNKNOWN = "UNKNOWN";
         public const string ERP_DOCUMENT_PO = "PO";
-        public const string INTERNAL_API_KEY = "InterCallService:InternalApiKey";
     }
 }

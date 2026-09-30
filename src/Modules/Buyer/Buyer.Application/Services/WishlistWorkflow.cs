@@ -8,23 +8,7 @@ using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Services
 {
-    public interface IWishlistWorkflow
-    {
-        Task<Guid> CreateAsync(Guid organizationId, Guid userId, WishlistWriteDto request, CancellationToken cancellationToken);
-        Task UpdateAsync(Guid organizationId, Guid userId, Guid wishlistId, WishlistWriteDto request, CancellationToken cancellationToken);
-        Task<WishlistResponseDto> GetAsync(Guid organizationId, Guid wishlistId, CancellationToken cancellationToken);
-        Task<List<WishlistListItemDto>> ListAsync(Guid organizationId, int index, int limit, CancellationToken cancellationToken);
-        Task SubmitAsync(Guid organizationId, Guid userId, Guid wishlistId, CancellationToken cancellationToken);
-        Task DecideAsync(Guid organizationId, Guid userId, Guid wishlistId, WishlistDecisionDto decision, CancellationToken cancellationToken);
-        Task CancelAsync(Guid organizationId, Guid userId, Guid wishlistId, CancellationToken cancellationToken);
-        Task RetryAsync(Guid organizationId, Guid userId, Guid wishlistId, CancellationToken cancellationToken);
-        Task<Guid> CreateOutletAsync(Guid organizationId, OutletWriteDto request, CancellationToken cancellationToken);
-        Task<List<OutletResponseDto>> ListOutletsAsync(Guid organizationId, CancellationToken cancellationToken);
-        Task<ErpIntegrationResponseDto?> GetErpConfigurationAsync(Guid organizationId, CancellationToken cancellationToken);
-        Task<Guid> SaveErpConfigurationAsync(Guid organizationId, ErpIntegrationWriteDto request, CancellationToken cancellationToken);
-    }
-
-    public class WishlistWorkflow : IWishlistWorkflow
+    public class WishlistWorkflow
     {
         private static readonly HashSet<string> EditableStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -391,7 +375,9 @@ namespace Buyer.Application.Services
         {
             BuyerBusinessProfile buyer = await GetBuyerAsync(organizationId);
             ValidateConfiguration(request);
-            ErpIntegrationConfiguration? existing = await _repository.Wishlist.GetErpConfigurationAsync(buyer.Id, cancellationToken);
+            ErpIntegrationConfiguration? existing = request.SupplierOrganizationId.HasValue
+                ? await _repository.Wishlist.GetSupplierErpConfigurationAsync(buyer.Id, request.SupplierOrganizationId.Value, cancellationToken)
+                : await _repository.Wishlist.GetErpConfigurationAsync(buyer.Id, cancellationToken);
             if (existing == null)
             {
                 ErpIntegrationConfiguration created = new ErpIntegrationConfiguration
@@ -654,6 +640,8 @@ namespace Buyer.Application.Services
         private static void ApplyConfiguration(ErpIntegrationConfiguration target, ErpIntegrationWriteDto request, bool keepSecrets)
         {
             target.ErpType = request.ErpType.Trim();
+            target.SupplierOrganizationId = request.SupplierOrganizationId;
+            target.PayloadFormat = string.IsNullOrWhiteSpace(request.PayloadFormat) ? Common.PAYLOAD_JSON : request.PayloadFormat.Trim();
             target.DocumentType = request.DocumentType.Trim();
             target.BaseUrl = request.BaseUrl.Trim();
             target.CreateDocumentPath = request.CreateDocumentPath.Trim();
@@ -690,6 +678,8 @@ namespace Buyer.Application.Services
             {
                 Id = configuration.Id,
                 ErpType = configuration.ErpType,
+                SupplierOrganizationId = configuration.SupplierOrganizationId,
+                PayloadFormat = configuration.PayloadFormat,
                 DocumentType = configuration.DocumentType,
                 BaseUrl = configuration.BaseUrl,
                 CreateDocumentPath = configuration.CreateDocumentPath,

@@ -27,6 +27,8 @@ namespace Buyer.Application.Services.Integration
         public Guid WishlistId { get; set; }
         public Guid BuyerOrganizationId { get; set; }
         public string DocumentType { get; set; } = string.Empty;
+        public string? BuyerDocumentNumber { get; set; }
+        public string? ShipTo { get; set; }
         public string? OutletCode { get; set; }
         public string? OutletName { get; set; }
         public string? Currency { get; set; }
@@ -34,29 +36,5 @@ namespace Buyer.Application.Services.Integration
         public DateTime? RequiredDate { get; set; }
         public string CorrelationId { get; set; } = string.Empty;
         public List<BuyerPurchaseLine> Lines { get; set; } = new();
-    }
-
-    public sealed class SupplierPurchaseLine
-    {
-        public string Sku { get; set; } = string.Empty;
-        public decimal Quantity { get; set; }
-        public string? UnitOfMeasure { get; set; }
-        public decimal? UnitPrice { get; set; }
-    }
-
-    public sealed class SupplierPurchaseOrderRequest
-    {
-        public Guid WishlistId { get; set; }
-        public Guid BuyerOrganizationId { get; set; }
-        public Guid SupplierOrganizationId { get; set; }
-        public string IdempotencyKey { get; set; } = string.Empty;
-        public string BuyerDocumentType { get; set; } = string.Empty;
-        public string BuyerDocumentNumber { get; set; } = string.Empty;
-        public string? ShipTo { get; set; }
-        public string? DeliveryInstruction { get; set; }
-        public DateTime? RequiredDate { get; set; }
-        public string? Currency { get; set; }
-        public string CorrelationId { get; set; } = string.Empty;
-        public List<SupplierPurchaseLine> Lines { get; set; } = new();
     }
 }

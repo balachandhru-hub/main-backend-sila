@@ -51,28 +51,9 @@ namespace Buyer.Application.Services.Integration
             message.Headers.TryAddWithoutValidation("X-Correlation-Id", request.CorrelationId);
             ApplyExtraHeaders(message, configuration.HeadersJson);
 
-            var payload = new
-            {
-                documentType = request.DocumentType,
-                externalReference = request.WishlistId,
-                idempotencyKey = request.IdempotencyKey,
-                buyerOrganizationId = request.BuyerOrganizationId,
-                outletCode = request.OutletCode,
-                outletName = request.OutletName,
-                currency = request.Currency,
-                deliveryInstruction = request.DeliveryInstruction,
-                requiredDate = request.RequiredDate,
-                lines = request.Lines.Select(line => new
-                {
-                    materialCode = line.MaterialCode,
-                    materialName = line.MaterialName,
-                    quantity = line.Quantity,
-                    unitOfMeasure = line.UnitOfMeasure,
-                    unitPrice = line.UnitPrice,
-                    currency = line.Currency
-                })
-            };
-            message.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            string payload = BuildPayload(configuration, request);
+            string mediaType = UsesCxml(configuration) ? "application/xml" : "application/json";
+            message.Content = new StringContent(payload, Encoding.UTF8, mediaType);
 
             ExternalCallResult authFailure = await ApplyAuthenticationAsync(client, message, configuration, cancellationToken);
             if (!authFailure.Succeeded && authFailure.StatusCode != 0)
@@ -250,6 +231,109 @@ namespace Buyer.Application.Services.Integration
             catch (JsonException)
             {
             }
+        }
+
+        private static bool UsesCxml(ErpIntegrationConfiguration configuration)
+        {
+            if (string.Equals(configuration.PayloadFormat, Common.PAYLOAD_CXML, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return string.Equals(configuration.ErpType, Common.ERP_TYPE_ARIBA, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(configuration.ErpType, Common.ERP_TYPE_SAP_S4, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool UsesAneJson(ErpIntegrationConfiguration configuration)
+        {
+            return string.Equals(configuration.ErpType, Common.ERP_TYPE_ANE_DCI, StringComparison.OrdinalIgnoreCase)
+                && !UsesCxml(configuration);
+        }
+
+        private static string BuildPayload(ErpIntegrationConfiguration configuration, BuyerPurchaseDocumentRequest request)
+        {
+            if (UsesCxml(configuration))
+            {
+                return BuildCxml(request);
+            }
+
+            if (UsesAneJson(configuration))
+            {
+                return JsonSerializer.Serialize(new
+                {
+                    shipTo = request.ShipTo ?? string.Empty,
+                    orderDate = (request.RequiredDate ?? DateTime.UtcNow).ToString("dd/MM/yyyy"),
+                    purchaseOrderNo = request.BuyerDocumentNumber,
+                    deliveryInstruction = request.DeliveryInstruction ?? string.Empty,
+                    extOrderNo = request.WishlistId,
+                    entries = request.Lines.Select(line => new
+                    {
+                        qty = line.Quantity,
+                        sku = line.MaterialCode,
+                        uom = line.UnitOfMeasure,
+                        unitPrice = line.UnitPrice
+                    })
+                });
+            }
+
+            return JsonSerializer.Serialize(new
+            {
+                documentType = request.DocumentType,
+                externalReference = request.WishlistId,
+                idempotencyKey = request.IdempotencyKey,
+                buyerOrganizationId = request.BuyerOrganizationId,
+                buyerDocumentNumber = request.BuyerDocumentNumber,
+                shipTo = request.ShipTo,
+                outletCode = request.OutletCode,
+                outletName = request.OutletName,
+                currency = request.Currency,
+                deliveryInstruction = request.DeliveryInstruction,
+                requiredDate = request.RequiredDate,
+                lines = request.Lines.Select(line => new
+                {
+                    materialCode = line.MaterialCode,
+                    materialName = line.MaterialName,
+                    quantity = line.Quantity,
+                    unitOfMeasure = line.UnitOfMeasure,
+                    unitPrice = line.UnitPrice,
+                    currency = line.Currency
+                })
+            });
+        }
+
+        private static string BuildCxml(BuyerPurchaseDocumentRequest request)
+        {
+            string currency = string.IsNullOrWhiteSpace(request.Currency) ? "INR" : request.Currency;
+            decimal total = request.Lines.Sum(line => line.Quantity * (line.UnitPrice ?? 0));
+            StringBuilder xml = new StringBuilder();
+            xml.Append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+            xml.Append("<cXML xml:lang=\"en-US\"><Request><OrderRequest>");
+            xml.Append("<OrderRequestHeader orderID=\"").Append(Escape(request.BuyerDocumentNumber ?? request.WishlistId.ToString())).Append("\" type=\"new\">");
+            xml.Append("<Total><Money currency=\"").Append(Escape(currency)).Append("\">").Append(total).Append("</Money></Total>");
+            if (!string.IsNullOrWhiteSpace(request.ShipTo))
+            {
+                xml.Append("<ShipTo><Address><Name xml:lang=\"en\">").Append(Escape(request.ShipTo)).Append("</Name></Address></ShipTo>");
+            }
+            xml.Append("</OrderRequestHeader>");
+            int lineNumber = 1;
+            foreach (BuyerPurchaseLine line in request.Lines)
+            {
+                xml.Append("<ItemOut quantity=\"").Append(line.Quantity).Append("\" lineNumber=\"").Append(lineNumber).Append("\">");
+                xml.Append("<ItemID><SupplierPartID>").Append(Escape(line.MaterialCode)).Append("</SupplierPartID></ItemID>");
+                xml.Append("<ItemDetail><UnitPrice><Money currency=\"").Append(Escape(line.Currency ?? currency)).Append("\">")
+                    .Append(line.UnitPrice ?? 0).Append("</Money></UnitPrice>");
+                xml.Append("<Description xml:lang=\"en\">").Append(Escape(line.MaterialName)).Append("</Description>");
+                xml.Append("<UnitOfMeasure>").Append(Escape(line.UnitOfMeasure ?? string.Empty)).Append("</UnitOfMeasure>");
+                xml.Append("</ItemDetail></ItemOut>");
+                lineNumber++;
+            }
+            xml.Append("</OrderRequest></Request></cXML>");
+            return xml.ToString();
+        }
+
+        private static string Escape(string value)
+        {
+            return System.Security.SecurityElement.Escape(value) ?? string.Empty;
         }
 
         private static string Combine(string baseUrl, string path)

@@ -1,4 +1,15 @@
-using Buyer.Application.Features.Wishlist;
+using Buyer.Application.Features.Commands.CancelWishlist;
+using Buyer.Application.Features.Commands.CreateOutlet;
+using Buyer.Application.Features.Commands.CreateWishlist;
+using Buyer.Application.Features.Commands.DecideWishlist;
+using Buyer.Application.Features.Commands.RetryWishlistIntegration;
+using Buyer.Application.Features.Commands.SaveErpIntegration;
+using Buyer.Application.Features.Commands.SubmitWishlist;
+using Buyer.Application.Features.Commands.UpdateWishlist;
+using Buyer.Application.Features.Queries.GetErpIntegration;
+using Buyer.Application.Features.Queries.GetOutlets;
+using Buyer.Application.Features.Queries.GetWishlist;
+using Buyer.Application.Features.Queries.GetWishlists;
 using Buyer.Domain.Dtos;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

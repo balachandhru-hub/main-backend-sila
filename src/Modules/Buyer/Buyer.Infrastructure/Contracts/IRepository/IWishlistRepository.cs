@@ -10,6 +10,7 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         Task<BuyerOutlet?> GetOutletAsync(Guid outletId, Guid buyerId, CancellationToken cancellationToken);
         Task<List<BuyerOutlet>> ListOutletsAsync(Guid buyerId, CancellationToken cancellationToken);
         Task<ErpIntegrationConfiguration?> GetErpConfigurationAsync(Guid buyerId, CancellationToken cancellationToken);
+        Task<ErpIntegrationConfiguration?> GetSupplierErpConfigurationAsync(Guid buyerId, Guid supplierOrganizationId, CancellationToken cancellationToken);
         Task<ErpIntegrationConfiguration?> GetErpConfigurationByIdAsync(Guid configurationId, CancellationToken cancellationToken);
         Task<List<PurchaseDocumentIntegration>> GetIntegrationsAsync(Guid wishlistId, CancellationToken cancellationToken);
         Task<PurchaseDocumentIntegration?> GetIntegrationAsync(Guid wishlistId, string integrationType, Guid supplierOrganizationId, CancellationToken cancellationToken);

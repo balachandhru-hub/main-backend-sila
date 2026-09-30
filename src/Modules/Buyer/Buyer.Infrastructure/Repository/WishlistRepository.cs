@@ -50,7 +50,18 @@ namespace Buyer.Infrastructure.Repository
         public Task<ErpIntegrationConfiguration?> GetErpConfigurationAsync(Guid buyerId, CancellationToken cancellationToken)
         {
             return RepositoryContext.ErpIntegrationConfiguration
-                .Where(x => x.BuyerId == buyerId)
+                .Where(x => x.BuyerId == buyerId && x.SupplierOrganizationId == null)
+                .OrderByDescending(x => x.Version)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public Task<ErpIntegrationConfiguration?> GetSupplierErpConfigurationAsync(
+            Guid buyerId,
+            Guid supplierOrganizationId,
+            CancellationToken cancellationToken)
+        {
+            return RepositoryContext.ErpIntegrationConfiguration
+                .Where(x => x.BuyerId == buyerId && x.SupplierOrganizationId == supplierOrganizationId && x.IsActive)
                 .OrderByDescending(x => x.Version)
                 .FirstOrDefaultAsync(cancellationToken);
         }
