@@ -1,0 +1,31 @@
+using SharedKernel.Dto;
+
+public class GetSupplierCatalogDto
+{
+    public Guid Id { get; set; }
+
+    public string CatalogName { get; set; }
+
+    public string Description { get; set; }
+
+    public decimal? Price { get; set; }
+    public string Currency { get; set; }
+
+    public string UnitOfMeasure { get; set; }
+    public long? Segment {get;set;}
+    public string? SegmentTitle {get;set;}
+    public long? Family {get;set;}
+    public string? FamilyTitle {get;set;}
+    public long? Commodity {get;set;}
+    public string? CommodityTitle {get;set;}
+    public long? Class {get;set;}
+    public string? ClassTitle {get;set;}
+
+    public string CatalogType { get; set; }
+
+    public bool IsPunchOut { get; set; }
+
+    public string? PunchOutUrl { get; set; }
+
+    public List<AssetDto> Assets { get; set; } = new();
+}

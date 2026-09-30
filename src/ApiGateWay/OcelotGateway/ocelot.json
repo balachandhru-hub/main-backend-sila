@@ -1,0 +1,95 @@
+{
+  "Routes": [
+    {
+      "Key": "identity",
+      "SwaggerKey": "identity",
+      "UpstreamPathTemplate": "/api/v1/identity/{everything}",
+      "DownstreamPathTemplate": "/api/v1/identity/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8001
+        }
+      ]
+    },
+    
+    {
+      "Key": "masterdata",
+      "SwaggerKey": "masterdata",
+      "UpstreamPathTemplate": "/api/v1/masterdata/{everything}",
+      "DownstreamPathTemplate": "/api/v1/masterdata/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8002
+        }
+      ],
+      "Timeout": 600
+    } ,
+    {
+      "Key": "supplier",
+      "SwaggerKey": "supplier",
+      "UpstreamPathTemplate": "/api/v1/supplier/{everything}",
+      "DownstreamPathTemplate": "/api/v1/supplier/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8003
+        }
+      ]
+    },
+    {
+      "Key": "buyer",
+      "SwaggerKey": "buyer",
+      "UpstreamPathTemplate": "/api/v1/buyer/{everything}",
+      "DownstreamPathTemplate": "/api/v1/buyer/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8004
+        }
+      ]
+    },
+    {
+      "Key": "buyer-messagehub-ws",
+      "UpstreamPathTemplate": "/buyermessageHub/{everything}",
+      "DownstreamPathTemplate": "/buyermessageHub/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST" ,"OPTIONS"],
+      "DownstreamScheme": "ws",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8004
+        }
+      ]
+    },
+    {
+      "Key": "supplier-messagehub-ws",
+      "UpstreamPathTemplate": "/suppliermessageHub/{everything}",
+      "DownstreamPathTemplate": "/suppliermessageHub/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST","OPTIONS" ],
+      "DownstreamScheme": "ws",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8003
+        }
+      ]
+    }
+  ],
+  
+  
+  
+
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:8000"
+  }
+}

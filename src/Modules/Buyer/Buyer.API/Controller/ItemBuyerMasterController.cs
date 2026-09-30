@@ -1,0 +1,240 @@
+using Buyer.Application.Features.Queries.ItemBuyerMaster;
+using Buyer.Application.Features.Queries.CheckPredefinedMaterialSimilarity;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Attributes;
+using SharedKernel.Dto;
+using SharedKernel.LoggerServices;
+using Swashbuckle.AspNetCore.Annotations;
+using Buyer.Application.Features.Commands.PredefinedMaterialMaster;
+using Buyer.Domain.Dtos;
+using SharedKernel.Controllers;
+
+namespace Buyer.API.Controller
+{
+    [ApiController]
+    public class ItemBuyerMasterController : BaseController
+    {
+        private readonly IMediator _mediator;
+        private readonly ILoggerManager _logger;
+
+        public ItemBuyerMasterController(
+            IMediator mediator,
+            ILoggerManager logger)
+        {
+            _mediator = mediator;
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Get Item Buyer Master
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/buyer/item-master")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_ITEM_BUYER_MASTER")]
+        [SwaggerOperation("GetItemBuyerMaster")]
+        [SwaggerResponse(200, type: typeof(ItemBuyerMasterDto), description: "Item Buyer Master retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> Get(
+            [FromQuery] int index = 0,
+            [FromQuery] int limit = 10,
+            [FromQuery] Guid? buyerId = null,
+            [FromQuery] string? searchTerm = null)
+        {
+            _logger.LogDebug("Fetching Item Buyer Master.");
+
+            var result = await _mediator.Send(
+                new GetItemBuyerMasterQuery
+                {
+                    Index = index,
+                    Limit = limit,
+                    BuyerId = buyerId,
+                    SearchTerm = searchTerm
+                });
+
+            _logger.LogDebug("Item Buyer Master retrieved successfully.");
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get Item Buyer Master By Id
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/buyer/item-master/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_ITEM_BUYER_MASTER_BY_ID")]
+        [SwaggerOperation("GetItemBuyerMasterById")]
+        [SwaggerResponse(200, type: typeof(ItemBuyerMasterDetailDto), description: "Item Buyer Master retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Item Buyer Master not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            _logger.LogDebug($"Fetching Item Buyer Master details for Id: {id}");
+
+            var result = await _mediator.Send(new GetItemBuyerMasterByIdQuery(id));
+
+            _logger.LogDebug($"Item Buyer Master details retrieved successfully for Id: {id}");
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Checks whether an item similar to the one about to be created
+        /// already exists, matching on Description and Material Group.
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/buyer/item-master/check-similarity")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_SIMILAR_ITEM_BUYER_MASTER")]
+        [SwaggerOperation("CheckItemBuyerMasterSimilarity")]
+        [SwaggerResponse(200, type: typeof(List<SimilarPredefinedMaterialDto>), description: "Similar items retrieved successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> CheckSimilarity(
+            [FromQuery] string description,
+            [FromQuery] string materialGroup,
+            [FromQuery] Guid? buyerId = null)
+        {
+            _logger.LogDebug(
+                $"Checking Item Master similarity. Description: {description}, MaterialGroup: {materialGroup}");
+
+            var result = await _mediator.Send(
+                new CheckPredefinedMaterialSimilarityQuery
+                {
+                    Description = description,
+                    MaterialGroup = materialGroup,
+                    BuyerId = buyerId
+                });
+
+            _logger.LogDebug($"Item Master similarity check complete. Matches: {result.Count}");
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Create Item Buyer Master
+        /// </summary>
+        [HttpPost]
+        [Route("api/v1/buyer/item-master")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "CREATE_ITEM_BUYER_MASTER")]
+        [SwaggerOperation("CreateItemBuyerMaster")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Item Buyer Master created successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> Create(
+            [FromBody] CreateItemBuyerMasterDto dto)
+        {
+            _logger.LogDebug($"Creating Item Buyer Master. MaterialCode : {dto.MaterialCode}");
+
+            var result = await _mediator.Send(
+                new CreatePredefinedMaterialCommand(dto, GetOrganizationId()));
+
+            _logger.LogDebug($"Predefined Material created successfully : {result}");
+
+            return Ok(new SuccessResponseDto
+            {
+                Id = result.ToString(),
+                Message = "Predefined Material created successfully",
+                Description = "Predefined Material created successfully",
+                StatusCode = 201
+            });
+        }
+
+
+        /// <summary>
+        /// Upload Item Buyer Master Excel
+        /// </summary>
+        [HttpPost]
+        [Route("api/v1/buyer/item-master/upload")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPLOAD_ITEM_BUYER_MASTER")]
+        [SwaggerOperation("UploadItemBuyerMaster")]
+        [SwaggerResponse(200, type: typeof(ExcelUploadResultDto), description: "Item Buyer Master uploaded successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> Upload(
+            [FromBody] UploadItemBuyerMasterDto dto)
+        {
+            _logger.LogDebug("Uploading Item Buyer Master Excel.");
+
+            dto.OrganizationId = GetOrganizationId();
+
+            var result = await _mediator.Send(new UploadPredefinedMaterialCommand(dto));
+
+            _logger.LogDebug(
+                $"Item Buyer Master Excel uploaded successfully. " +
+                $"Valid rows : {result.SuccessfulUploads}, ExcelMaterialMasterId : {result.ExcelMaterialMasterId}");
+
+            return Ok(result);
+        }
+
+
+
+        /// <summary>
+        /// Update Item Buyer Master
+        /// </summary>
+        [HttpPut]
+        [Route("api/v1/buyer/item-master/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_ITEM_BUYER_MASTER")]
+        [SwaggerOperation("UpdateItemBuyerMaster")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Item Buyer Master updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Item Buyer Master not found")]
+        public async Task<IActionResult> Update(
+            Guid id,
+            [FromBody] UpdateItemBuyerMasterDto dto)
+        {
+            _logger.LogDebug($"Updating Item Buyer Master : {id}");
+
+            var result = await _mediator.Send(
+                new UpdatePredefinedMaterialCommand(
+                    id,
+                    GetOrganizationId(),
+                    dto));
+
+            _logger.LogDebug($"Item Buyer Master updated successfully : {result}");
+
+            return Ok(new SuccessResponseDto
+            {
+                Id = result.ToString(),
+                Message = "Item Buyer Master updated successfully",
+                Description = "Item Buyer Master updated successfully",
+                StatusCode = 200
+            });
+        }
+
+        /// <summary>
+        /// Delete Item Buyer Master
+        /// </summary>
+        [HttpDelete]
+        [Route("api/v1/buyer/item-master/{id}")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "DELETE_ITEM_BUYER_MASTER")]
+        [SwaggerOperation("DeleteItemBuyerMaster")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Item Buyer Master deleted successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Item Buyer Master not found")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            _logger.LogDebug($"Deleting Item Buyer Master : {id}");
+
+            await _mediator.Send(new DeletePredefinedMaterialCommand(id));
+
+            _logger.LogDebug($"Item Buyer Master deleted successfully : {id}");
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Item Buyer Master deleted successfully.",
+                Id = id.ToString()
+            });
+        }
+    }
+}

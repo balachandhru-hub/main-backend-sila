@@ -1,0 +1,94 @@
+using Contracts.IRepository;
+using MediatR;
+using HashingSystem;
+using Microsoft.EntityFrameworkCore;
+
+namespace Identity.Application.Features.Auth.Commands.VerifyOtp
+{
+    public class VerifyOtpCommandHandler
+        : IRequestHandler<VerifyOtpCommand, VerifyOtpResponse>
+    {
+        private readonly IRepositoryWrapper _repository;
+        private readonly IBcryptHashing _hashing;
+
+        public VerifyOtpCommandHandler(IRepositoryWrapper repository, IBcryptHashing hashing)
+        {
+            _repository = repository;
+            _hashing = hashing;
+        }
+
+        public async Task<VerifyOtpResponse> Handle(
+            VerifyOtpCommand request,
+            CancellationToken cancellationToken)
+        {
+            var otp = await _repository.EmailVerification
+           .FindByConditionAsync(x => x.Email == request.Email && x.IsActive)
+           .FirstOrDefaultAsync(cancellationToken);
+
+            if (otp == null)
+            {
+                return new VerifyOtpResponse
+                {
+                    Success = false,
+                    Message = "OTP not found."
+                };
+            }
+
+            // OTP does not match
+            if (!_hashing.VerifyHash(request.Otp, otp.OtpHash))
+            {
+                if (otp.ExpiresOn <= DateTime.UtcNow)
+                {
+                    otp.IsActive = false;
+
+                    _repository.EmailVerification.Update(otp);
+                    await _repository.SaveAsync();
+
+                    return new VerifyOtpResponse
+                    {
+                        Success = false,
+                        Message = "OTP has expired."
+                    };
+                }
+
+                return new VerifyOtpResponse
+                {
+                    Success = false,
+                    Message = "Invalid OTP."
+                };
+            }
+
+            // OTP matches but expired
+            if (otp.ExpiresOn <= DateTime.UtcNow)
+            {
+                otp.IsActive = false;
+
+                _repository.EmailVerification.Update(otp);
+                await _repository.SaveAsync();
+
+                return new VerifyOtpResponse
+                {
+                    Success = false,
+                    Message = "OTP has expired."
+                };
+            }
+
+            // OTP verified successfully
+            otp.IsVerified = true;
+            otp.AttemptCount += 1;
+            otp.TemporaryVerificationToken = Guid.NewGuid().ToString();
+            otp.TemporaryVerificationTokenExpiresOn = DateTime.UtcNow.AddMinutes(30);
+
+            _repository.EmailVerification.Update(otp);
+
+            await _repository.SaveAsync();
+
+            return new VerifyOtpResponse
+            {
+                Success = true,
+                Message = "OTP verified successfully.",
+                TemporaryVerificationToken = otp.TemporaryVerificationToken
+            };
+        }
+    }
+}

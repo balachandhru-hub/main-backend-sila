@@ -1,0 +1,48 @@
+{
+  "SwaggerEndPoints": [
+    {
+      "Key": "identity",
+      "TransformByOcelotConfig": false,
+      "Config": [
+        {
+          "Name": "Identity API",
+          "Version": "v1",
+          "Url": "http://localhost:8001/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "masterdata",
+      "TransformByOcelotConfig": false,
+      "Config": [
+        {
+          "Name": "Master Data API",
+          "Version": "v1",
+          "Url": "http://localhost:8002/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "supplier",
+      "TransformByOcelotConfig": false,
+      "Config": [
+        {
+          "Name": "Supplier Data API",
+          "Version": "v1",
+          "Url": "http://localhost:8003/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "buyer",
+      "TransformByOcelotConfig": false,
+      "Config": [
+        {
+          "Name": "Buyer API",
+          "Version": "v1",
+          "Url": "http://localhost:8004/swagger/v1/swagger.json"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MasterData.Domain\MasterData.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
+    <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
+    <PackageReference Include="EFCore.BulkExtensions" Version="8.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.17" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.17" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.17">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.17">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\ApiConfig.csv" />
+    <EmbeddedResource Include="Migrations\EmailContent.csv" />
+  </ItemGroup>
+  <ItemGroup>
+
+    <Content Include="Migrations\ApiConfig.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MasterData.Infrastructure\Migrations\ApiConfig.csv</Link>
+    </Content>
+
+
+    <Content Include="Migrations\EmailContent.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MasterData.Infrastructure\Migrations\EmailContent.csv</Link>
+    </Content>
+
+    <Content Include="Migrations\Metadata.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MasterData.Infrastructure\Migrations\Metadata.csv</Link>
+    </Content>
+    <Content Include="Migrations\CountryList.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MasterData.Infrastructure\Migrations\CountryList.csv</Link>
+    </Content>
+    <Content Include="Migrations\Currency.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MasterData.Infrastructure\Migrations\Currency.csv</Link>
+    </Content>
+    <Content Include="Migrations\Unit.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MasterData.Infrastructure\Migrations\Unit.csv</Link>
+    </Content>
+
+  </ItemGroup>
+
+</Project>

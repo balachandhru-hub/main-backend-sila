@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+   <ItemGroup>
+   
+    <ProjectReference Include="..\Buyer.Domain\Buyer.Domain.csproj" />
+    <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
+    
+  </ItemGroup>
+   <ItemGroup>
+    <PackageReference Include="EFCore.BulkExtensions" Version="8.1.3" />
+     <PackageReference Include="CsvHelper" Version="30.0.1" />
+     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.17" />
+     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.17">
+       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+       <PrivateAssets>all</PrivateAssets>
+     </PackageReference>
+     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.17" />
+     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.17">
+       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+       <PrivateAssets>all</PrivateAssets>
+     </PackageReference>
+   </ItemGroup>
+
+   <ItemGroup>
+    <EmbeddedResource Include="Migrations\DefaultVerificationTemplate.csv" />
+    <EmbeddedResource Include="Migrations\DefaultVerificationTemplateQuestion.csv" />
+ 
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Migrations/DefaultVerificationTemplate.csv" >
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Buyer.Infrastructure\Migrations\DefaultVerificationTemplate.csv</Link>
+    </Content>
+     <Content Include="Migrations/DefaultVerificationTemplateQuestion.csv" >
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Buyer.Infrastructure\Migrations\DefaultVerificationTemplateQuestion.csv</Link>
+    </Content>
+ </ItemGroup>
+
+</Project>
