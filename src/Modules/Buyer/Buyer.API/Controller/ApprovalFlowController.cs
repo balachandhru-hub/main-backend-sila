@@ -219,17 +219,20 @@ namespace Buyer.API.Controller
         [SwaggerResponse(500,type: typeof(ErrorResponseDto),description: "Internal Server Error")]
         public async Task<IActionResult> GetPendingApprovals(
             [FromQuery] string? status ,
-            [FromQuery] string? searchTerm )
+            [FromQuery] string? searchTerm,
+            [FromQuery] int index = 0,
+            [FromQuery] int limit = 10)
         {
             Guid userId = GetUserId();
 
             _logger.LogDebug(
                 $"Getting approvals for UserId: {userId}, " +
-                $"Status: {status}, SearchTerm: {searchTerm}");
+                $"Status: {status}, SearchTerm: {searchTerm}, " +
+                $"Index: {index}, Limit: {limit}");
 
             var result =
                 await _mediator.Send(
-                    new GetPendingApprovalsQuery(userId, status, searchTerm));
+                    new GetPendingApprovalsQuery(userId, status, searchTerm, index, limit));
 
             return Ok(result);
         }
