@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const apiTarget = process.env.SILA_API_TARGET || 'https://sila-api.chervicaon.com'
+/** The one SILA gateway (Identity, Buyer, Supplier, Master Data, Operations).
+ *  The other environment brings this up on port 8000. Do not point at
+ *  https://sila-api.chervicaon.com — that host is a different deployment. */
+const apiTarget = process.env.SILA_API_TARGET || 'http://127.0.0.1:8000'
 
-/** Dev server proxies the SILA gateway and rewrites auth cookies so a local
- *  origin can hold the session the API sets for .chervicaon.com. */
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -14,7 +15,7 @@ export default defineConfig({
       '/api': {
         target: apiTarget,
         changeOrigin: true,
-        secure: true,
+        secure: false,
         configure: (proxy) => {
           proxy.on('proxyRes', (proxyRes) => {
             const raw = proxyRes.headers['set-cookie']

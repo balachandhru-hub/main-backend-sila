@@ -28,12 +28,7 @@ function toSession(claims: TokenClaims): Session {
   const known = ROLE_LABELS[claims.roleId]
   const buyerId = claims.buyerId || undefined
   const supplierId = claims.supplierId || undefined
-  const fallback: { role: AppRole; label: string } = buyerId
-    ? { role: 'buyer', label: 'Buyer' }
-    : supplierId
-      ? { role: 'supplier', label: 'Supplier' }
-      : { role: 'platform', label: 'Platform' }
-  const resolved = known ?? fallback
+  const resolved = known ?? { role: 'platform' as AppRole, label: 'SILA user' }
   return {
     userId: claims.userId,
     personId: claims.personId,

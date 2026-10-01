@@ -1,34 +1,16 @@
-# SILA Mobile
+# SILA Store mobile
 
-Phone layout for the SILA procurement portal. Buyers and suppliers sign in with the same accounts as the desktop app and use this system's API (`https://sila-api.chervicaon.com`, the `main-backend-sila` gateway).
+Phone view of the Silame store work that this backend actually serves: invoice upload, invoice review, purchase orders, and goods receipt (GRN).
 
-This history is an orphan branch, `cursor/sila-mobile-9098`, on `balachandhru-hub/main-backend-sila`. It does not share files with the .NET backend. To give it a repository of its own:
-
-```bash
-git clone -b cursor/sila-mobile-9098 --single-branch https://github.com/balachandhru-hub/main-backend-sila.git sila-mobile
-cd sila-mobile
-gh repo create balachandhru-hub/sila-mobile --public --source=. --remote=origin --push
-```
-
-## What you can do
-
-- Sign in and keep the session with the identity cookies
-- Buyer home: live RFQs, deadlines, awards, contracts
-- Supplier home: open bids, quotes, wins
-- RFQ list and detail, including supplier quotations
-- Submit a supplier quotation (email code, then prices)
-- Search the buyer catalog, or review the supplier catalog
-- Read the organization profile
-
-Administrators can sign in and see their account. User admin, approvals and contract setup stay on the desktop portal.
-
-## Run
+It talks only to the SILA gateway in this system (`http://127.0.0.1:8000` by default). It does not call `https://sila-api.chervicaon.com`.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The dev server proxies `/api` to the SILA gateway and rewrites the auth cookie so the phone session works on localhost.
+Open `http://localhost:5173` after the gateway is up. The dev server proxies `/api` and rewrites the auth cookie so the session stays on this origin.
 
-`VITE_API_KEY` is the same public client key the desktop portal already sends. Copy `.env.example` to `.env` if it is missing.
+Override the gateway with `SILA_API_TARGET` if it is not on port 8000.
+
+Stock transfer, goods issue, and inventory count exist on the older Silame store client. This .NET operations API does not expose those routes, so they are not in this app.

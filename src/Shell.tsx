@@ -4,9 +4,9 @@ import { IconDoc, IconGrid, IconHome, IconUser } from './icons'
 
 const links = [
   { to: '/home', label: 'Home', icon: <IconHome /> },
-  { to: '/rfqs', label: 'RFQs', icon: <IconDoc /> },
-  { to: '/catalog', label: 'Catalog', icon: <IconGrid /> },
-  { to: '/profile', label: 'Profile', icon: <IconUser /> },
+  { to: '/invoices', label: 'Invoices', icon: <IconDoc /> },
+  { to: '/receive', label: 'GRN', icon: <IconGrid /> },
+  { to: '/orders', label: 'POs', icon: <IconUser /> },
 ]
 
 export default function Shell() {
@@ -14,20 +14,17 @@ export default function Shell() {
   if (!ready) {
     return (
       <div className="app-frame">
-        <div className="loading"><div className="spinner" />Checking your session…</div>
+        <div className="loading"><div className="spinner" />Checking the SILA gateway…</div>
       </div>
     )
   }
   if (!session) return <Navigate to="/" replace />
 
-  const showWork = session.role === 'buyer' || session.role === 'supplier'
-  const items = showWork ? links : links.filter((link) => link.to === '/home' || link.to === '/profile')
-
   return (
     <div className="app-frame">
       <Outlet />
-      <nav className="nav" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
-        {items.map((link) => (
+      <nav className="nav">
+        {links.map((link) => (
           <NavLink key={link.to} to={link.to} className={({ isActive }) => (isActive ? 'active' : undefined)}>
             {link.icon}
             {link.label}

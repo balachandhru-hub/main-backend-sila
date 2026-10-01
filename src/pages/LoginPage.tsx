@@ -37,13 +37,13 @@ export default function LoginPage() {
           <img src="/sila-logo.png" alt="SILA" />
         </div>
         <section className="hero">
-          <div className="kicker">SILA Strategic Procurement Suite</div>
-          <h1 style={{ color: 'white', marginTop: '0.45rem' }}>Sourcing, on your phone</h1>
-          <p>The same buyer and supplier portal, laid out for a small screen. Sign in with your SILA account.</p>
+          <div className="kicker">SILA Store</div>
+          <h1 style={{ color: 'white', marginTop: '0.45rem' }}>Invoice and goods receipt</h1>
+          <p>Sign in with an account on this SILA gateway. The app calls port 8000 on this system, not the public procurement host.</p>
         </section>
         <form className="card" onSubmit={onSubmit}>
           <h2>Sign in</h2>
-          <p className="sub" style={{ marginBottom: '1rem' }}>Use the username from the desktop portal.</p>
+          <p className="sub" style={{ marginBottom: '1rem' }}>Same identity service as the rest of this backend.</p>
           {error && <div className="alert">{error}</div>}
           <div className="field">
             <label htmlFor="user">Username</label>
