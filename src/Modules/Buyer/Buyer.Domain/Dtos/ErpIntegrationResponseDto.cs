@@ -4,6 +4,7 @@ namespace Buyer.Domain.Dtos
     {
         public Guid Id { get; set; }
         public string ApiName { get; set; } = string.Empty;
+        public string Process { get; set; } = string.Empty;
         public string ErpType { get; set; } = string.Empty;
         public Guid? SupplierOrganizationId { get; set; }
         public string PayloadFormat { get; set; } = "JSON";

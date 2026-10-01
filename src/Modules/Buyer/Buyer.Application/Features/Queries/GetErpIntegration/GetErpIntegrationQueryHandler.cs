@@ -7,7 +7,7 @@ using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Features.Queries.GetErpIntegration
 {
-    public class GetErpIntegrationQueryHandler : IRequestHandler<GetErpIntegrationQuery, ErpIntegrationResponseDto?>
+    public class GetErpIntegrationQueryHandler : IRequestHandler<GetErpIntegrationQuery, List<ErpIntegrationResponseDto>>
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
@@ -18,9 +18,9 @@ namespace Buyer.Application.Features.Queries.GetErpIntegration
             _logger = logger;
         }
 
-        public async Task<ErpIntegrationResponseDto?> Handle(GetErpIntegrationQuery request, CancellationToken cancellationToken)
+        public async Task<List<ErpIntegrationResponseDto>> Handle(GetErpIntegrationQuery request, CancellationToken cancellationToken)
         {
-            _logger.LogInfo($"Fetching ERP API configuration. OrganizationId: {request.OrganizationId}");
+            _logger.LogInfo($"Fetching ERP API configurations. OrganizationId: {request.OrganizationId}");
 
             BuyerBusinessProfile? buyer = _repository.BuyerBusinessProfile.FindFirstByCondition(
                 x => x.OrganizationId == request.OrganizationId && x.IsActive);
@@ -30,17 +30,18 @@ namespace Buyer.Application.Features.Queries.GetErpIntegration
                 throw new NotFoundCustomException("Buyer not found.", "The signed-in organization does not have a buyer profile.");
             }
 
-            ErpIntegrationConfiguration? configuration = await _repository.Wishlist.GetErpConfigurationAsync(buyer.Id, cancellationToken);
-            if (configuration == null)
-            {
-                _logger.LogInfo($"No ERP API configuration stored. BuyerId: {buyer.Id}");
-                return null;
-            }
+            List<ErpIntegrationConfiguration> rows = await _repository.ErpIntegration.ListAsync(buyer.Id, cancellationToken);
+            _logger.LogInfo($"ERP API configurations fetched. Count: {rows.Count}, BuyerId: {buyer.Id}");
+            return rows.Select(Map).ToList();
+        }
 
+        private static ErpIntegrationResponseDto Map(ErpIntegrationConfiguration configuration)
+        {
             return new ErpIntegrationResponseDto
             {
                 Id = configuration.Id,
                 ApiName = configuration.ApiName,
+                Process = configuration.Process,
                 ErpType = configuration.ErpType,
                 SupplierOrganizationId = configuration.SupplierOrganizationId,
                 PayloadFormat = configuration.PayloadFormat,

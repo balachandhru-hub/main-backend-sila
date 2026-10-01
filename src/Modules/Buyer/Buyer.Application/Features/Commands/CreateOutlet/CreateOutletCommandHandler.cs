@@ -47,7 +47,7 @@ namespace Buyer.Application.Features.Commands.CreateOutlet
                 City = request.Request.City,
                 Country = request.Request.Country
             };
-            _repository.Wishlist.Add(outlet);
+            _repository.BuyerOutlet.Create(outlet);
             await _repository.SaveAsync();
 
             _logger.LogInfo($"Outlet created. OutletId: {outlet.Id}, BuyerId: {buyer.Id}");

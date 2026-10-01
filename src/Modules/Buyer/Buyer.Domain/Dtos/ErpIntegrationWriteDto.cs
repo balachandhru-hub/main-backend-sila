@@ -3,6 +3,7 @@ namespace Buyer.Domain.Dtos
     public class ErpIntegrationWriteDto
     {
         public string ApiName { get; set; } = string.Empty;
+        public string Process { get; set; } = string.Empty;
         public string ErpType { get; set; } = string.Empty;
         public Guid? SupplierOrganizationId { get; set; }
         public string? PayloadFormat { get; set; }

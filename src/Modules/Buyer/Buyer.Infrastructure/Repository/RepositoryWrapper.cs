@@ -65,6 +65,13 @@ namespace Buyer.Infrastructure.Repository
         private IContractDetailsRepository _contractDetailsRepository;
         private IContractAttachmentRepository _contractAttachmentRepository;
         private IWishlistRepository _wishlistRepository;
+        private IWishlistItemRepository _wishlistItemRepository;
+        private IWishlistApprovalFlowRepository _wishlistApprovalFlowRepository;
+        private IWishlistApprovalUserMappingRepository _wishlistApprovalUserMappingRepository;
+        private IWishlistAuditRepository _wishlistAuditRepository;
+        private IBuyerOutletRepository _buyerOutletRepository;
+        private IErpIntegrationRepository _erpIntegrationRepository;
+        private IPurchaseDocumentIntegrationRepository _purchaseDocumentIntegrationRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -642,6 +649,83 @@ namespace Buyer.Infrastructure.Repository
                     _wishlistRepository = new WishlistRepository(_context);
                 }
                 return _wishlistRepository;
+            }
+        }
+        public IWishlistItemRepository WishlistItem
+        {
+            get
+            {
+                if (_wishlistItemRepository == null)
+                {
+                    _wishlistItemRepository = new WishlistItemRepository(_context);
+                }
+                return _wishlistItemRepository;
+            }
+        }
+        public IWishlistApprovalFlowRepository WishlistApprovalFlow
+        {
+            get
+            {
+                if (_wishlistApprovalFlowRepository == null)
+                {
+                    _wishlistApprovalFlowRepository = new WishlistApprovalFlowRepository(_context);
+                }
+                return _wishlistApprovalFlowRepository;
+            }
+        }
+        public IWishlistApprovalUserMappingRepository WishlistApprovalUserMapping
+        {
+            get
+            {
+                if (_wishlistApprovalUserMappingRepository == null)
+                {
+                    _wishlistApprovalUserMappingRepository = new WishlistApprovalUserMappingRepository(_context);
+                }
+                return _wishlistApprovalUserMappingRepository;
+            }
+        }
+        public IWishlistAuditRepository WishlistAudit
+        {
+            get
+            {
+                if (_wishlistAuditRepository == null)
+                {
+                    _wishlistAuditRepository = new WishlistAuditRepository(_context);
+                }
+                return _wishlistAuditRepository;
+            }
+        }
+        public IBuyerOutletRepository BuyerOutlet
+        {
+            get
+            {
+                if (_buyerOutletRepository == null)
+                {
+                    _buyerOutletRepository = new BuyerOutletRepository(_context);
+                }
+                return _buyerOutletRepository;
+            }
+        }
+        public IErpIntegrationRepository ErpIntegration
+        {
+            get
+            {
+                if (_erpIntegrationRepository == null)
+                {
+                    _erpIntegrationRepository = new ErpIntegrationRepository(_context);
+                }
+                return _erpIntegrationRepository;
+            }
+        }
+        public IPurchaseDocumentIntegrationRepository PurchaseDocumentIntegration
+        {
+            get
+            {
+                if (_purchaseDocumentIntegrationRepository == null)
+                {
+                    _purchaseDocumentIntegrationRepository = new PurchaseDocumentIntegrationRepository(_context);
+                }
+                return _purchaseDocumentIntegrationRepository;
             }
         }
 

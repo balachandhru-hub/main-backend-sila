@@ -156,6 +156,9 @@ namespace Buyer.Domain.Common
                 public const string INTEGRATION_FAILED = "FAILED";
                 public const string INTEGRATION_UNKNOWN = "UNKNOWN";
 
+                public const string ERP_PROCESS_WISHLIST = "WISHLIST";
+                public const string ERP_PROCESS_CONTRACT = "CONTRACT";
+                public const string ERP_PROCESS_ITEM_MASTER = "ITEM_MASTER";
                 public const string ERP_DOCUMENT_PO = "PO";
                 public const string ERP_DOCUMENT_PR = "PR";
                 public const string ERP_TYPE_SAP_S4 = "SAP_S4";

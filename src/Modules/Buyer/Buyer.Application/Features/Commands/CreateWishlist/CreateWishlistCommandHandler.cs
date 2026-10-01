@@ -90,7 +90,7 @@ namespace Buyer.Application.Features.Commands.CreateWishlist
             foreach (WishlistItem item in items)
             {
                 item.WishlistId = wishlist.Id;
-                _repository.Wishlist.Add(item);
+                _repository.WishlistItem.Create(item);
             }
 
             await CopyApprovalUsersAsync(wishlist, flow, cancellationToken);
@@ -159,11 +159,11 @@ namespace Buyer.Application.Features.Commands.CreateWishlist
                 TotalAmount = flow.TotalAmount,
                 Currency = flow.Currency
             };
-            _repository.Wishlist.Add(instance);
+            _repository.WishlistApprovalFlow.Create(instance);
 
             foreach (ApprovalFlowUserMapping templateUser in templateUsers)
             {
-                _repository.Wishlist.Add(new WishlistApprovalUserMapping
+                _repository.WishlistApprovalUserMapping.Create(new WishlistApprovalUserMapping
                 {
                     Id = Guid.NewGuid(),
                     WishlistApprovalFlowId = instance.Id,
@@ -189,7 +189,7 @@ namespace Buyer.Application.Features.Commands.CreateWishlist
 
         private void AddAudit(Guid wishlistId, Guid userId, string action, string? detail)
         {
-            _repository.Wishlist.Add(new WishlistAudit
+            _repository.WishlistAudit.Create(new WishlistAudit
             {
                 Id = Guid.NewGuid(),
                 WishlistId = wishlistId,

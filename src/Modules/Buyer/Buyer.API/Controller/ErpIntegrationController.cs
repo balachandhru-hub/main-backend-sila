@@ -1,4 +1,5 @@
-using Buyer.Application.Features.Commands.SaveErpIntegration;
+using Buyer.Application.Features.Commands.CreateErpIntegration;
+using Buyer.Application.Features.Commands.UpdateErpIntegration;
 using Buyer.Application.Features.Queries.GetErpIntegration;
 using Buyer.Domain.Dtos;
 using MediatR;
@@ -26,38 +27,62 @@ namespace Buyer.API.Controllers
         [HttpGet]
         [Route("api/v1/buyer/erp-integration")]
         [ApiAuthorization(Name = "MANAGE_BUYER_ERP_INTEGRATION")]
-        [SwaggerOperation("GetBuyerErpIntegration")]
-        [SwaggerResponse(200, type: typeof(ErpIntegrationResponseDto))]
+        [SwaggerOperation("GetBuyerErpIntegrations")]
+        [SwaggerResponse(200, type: typeof(List<ErpIntegrationResponseDto>))]
         public async Task<IActionResult> Get()
         {
-            _logger.LogDebug("Fetching ERP API configuration.");
-            ErpIntegrationResponseDto? result = await _mediator.Send(new GetErpIntegrationQuery
+            _logger.LogDebug("Fetching ERP API configurations.");
+            List<ErpIntegrationResponseDto> result = await _mediator.Send(new GetErpIntegrationQuery
             {
                 OrganizationId = GetOrganizationId()
             });
             return Ok(result);
         }
 
-        [HttpPut]
+        [HttpPost]
         [Route("api/v1/buyer/erp-integration")]
         [ApiAuthorization(Name = "MANAGE_BUYER_ERP_INTEGRATION")]
-        [SwaggerOperation("SaveBuyerErpIntegration")]
+        [SwaggerOperation("CreateBuyerErpIntegration")]
         [SwaggerResponse(200, type: typeof(SuccessResponseDto))]
-        public async Task<IActionResult> Save([FromBody] ErpIntegrationWriteDto request)
+        public async Task<IActionResult> Create([FromBody] ErpIntegrationWriteDto request)
         {
-            _logger.LogDebug($"Saving ERP API configuration. ApiName: {request.ApiName}, ErpType: {request.ErpType}");
-            Guid id = await _mediator.Send(new SaveErpIntegrationCommand
+            _logger.LogDebug($"Creating ERP API configuration. ApiName: {request.ApiName}, Process: {request.Process}, ErpType: {request.ErpType}");
+            Guid id = await _mediator.Send(new CreateErpIntegrationCommand
             {
                 OrganizationId = GetOrganizationId(),
                 Request = request
             });
-            _logger.LogDebug($"ERP API configuration saved. ConfigurationId: {id}");
+            _logger.LogDebug($"ERP API configuration created. ConfigurationId: {id}");
             return Ok(new SuccessResponseDto
             {
                 Id = id.ToString(),
                 StatusCode = 200,
                 Message = "Success",
-                Description = "API configuration saved."
+                Description = "API configuration created."
+            });
+        }
+
+        [HttpPut]
+        [Route("api/v1/buyer/erp-integration/{configurationId}")]
+        [ApiAuthorization(Name = "MANAGE_BUYER_ERP_INTEGRATION")]
+        [SwaggerOperation("UpdateBuyerErpIntegration")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto))]
+        public async Task<IActionResult> Update([FromRoute] Guid configurationId, [FromBody] ErpIntegrationWriteDto request)
+        {
+            _logger.LogDebug($"Updating ERP API configuration. ConfigurationId: {configurationId}");
+            Guid id = await _mediator.Send(new UpdateErpIntegrationCommand
+            {
+                OrganizationId = GetOrganizationId(),
+                ConfigurationId = configurationId,
+                Request = request
+            });
+            _logger.LogDebug($"ERP API configuration updated. ConfigurationId: {id}");
+            return Ok(new SuccessResponseDto
+            {
+                Id = id.ToString(),
+                StatusCode = 200,
+                Message = "Success",
+                Description = "API configuration updated."
             });
         }
     }

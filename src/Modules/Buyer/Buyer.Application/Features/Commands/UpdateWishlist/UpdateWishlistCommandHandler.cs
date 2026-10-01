@@ -104,10 +104,10 @@ namespace Buyer.Application.Features.Commands.UpdateWishlist
             wishlist.LastError = null;
 
             List<WishlistItem> existing = await _repository.Wishlist.GetItemsAsync(wishlist.Id, cancellationToken);
-            _repository.Wishlist.RemoveRange(existing);
+            _repository.WishlistItem.DeleteRange(existing);
             foreach (WishlistItem item in items)
             {
-                _repository.Wishlist.Add(item);
+                _repository.WishlistItem.Create(item);
             }
 
             await CopyApprovalUsersAsync(wishlist, flow, cancellationToken);
@@ -184,7 +184,7 @@ namespace Buyer.Application.Features.Commands.UpdateWishlist
                     TotalAmount = flow.TotalAmount,
                     Currency = flow.Currency
                 };
-                _repository.Wishlist.Add(instance);
+                _repository.WishlistApprovalFlow.Create(instance);
             }
             else
             {
@@ -195,12 +195,12 @@ namespace Buyer.Application.Features.Commands.UpdateWishlist
                 instance.TotalAmount = flow.TotalAmount;
                 instance.Currency = flow.Currency;
                 List<WishlistApprovalUserMapping> previous = await _repository.Wishlist.GetApprovalUsersAsync(instance.Id, cancellationToken);
-                _repository.Wishlist.RemoveRange(previous);
+                _repository.WishlistApprovalUserMapping.DeleteRange(previous);
             }
 
             foreach (ApprovalFlowUserMapping templateUser in templateUsers)
             {
-                _repository.Wishlist.Add(new WishlistApprovalUserMapping
+                _repository.WishlistApprovalUserMapping.Create(new WishlistApprovalUserMapping
                 {
                     Id = Guid.NewGuid(),
                     WishlistApprovalFlowId = instance.Id,
@@ -226,7 +226,7 @@ namespace Buyer.Application.Features.Commands.UpdateWishlist
 
         private void AddAudit(Guid wishlistId, Guid userId, string action, string? detail)
         {
-            _repository.Wishlist.Add(new WishlistAudit
+            _repository.WishlistAudit.Create(new WishlistAudit
             {
                 Id = Guid.NewGuid(),
                 WishlistId = wishlistId,

@@ -113,7 +113,7 @@ namespace Buyer.Application.Features.Commands.DecideWishlist
 
         private void AddAudit(Guid wishlistId, Guid userId, string action, string? detail)
         {
-            _repository.Wishlist.Add(new WishlistAudit
+            _repository.WishlistAudit.Create(new WishlistAudit
             {
                 Id = Guid.NewGuid(),
                 WishlistId = wishlistId,

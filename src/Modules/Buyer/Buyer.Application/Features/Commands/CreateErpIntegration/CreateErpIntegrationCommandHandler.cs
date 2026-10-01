@@ -6,9 +6,9 @@ using MediatR;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
-namespace Buyer.Application.Features.Commands.SaveErpIntegration
+namespace Buyer.Application.Features.Commands.CreateErpIntegration
 {
-    public class SaveErpIntegrationCommandHandler : IRequestHandler<SaveErpIntegrationCommand, Guid>
+    public class CreateErpIntegrationCommandHandler : IRequestHandler<CreateErpIntegrationCommand, Guid>
     {
         private static readonly HashSet<string> AuthTypes = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -22,18 +22,38 @@ namespace Buyer.Application.Features.Commands.SaveErpIntegration
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
 
-        public SaveErpIntegrationCommandHandler(IRepositoryWrapper repository, ILoggerManager logger)
+        public CreateErpIntegrationCommandHandler(IRepositoryWrapper repository, ILoggerManager logger)
         {
             _repository = repository;
             _logger = logger;
         }
 
-        public async Task<Guid> Handle(SaveErpIntegrationCommand request, CancellationToken cancellationToken)
+        public async Task<Guid> Handle(CreateErpIntegrationCommand request, CancellationToken cancellationToken)
         {
-            _logger.LogInfo($"Saving ERP API configuration. OrganizationId: {request.OrganizationId}");
-
+            _logger.LogInfo($"Creating ERP API configuration. OrganizationId: {request.OrganizationId}");
             ErpIntegrationWriteDto dto = request.Request;
+            Validate(dto);
+
+            BuyerBusinessProfile buyer = GetBuyer(request.OrganizationId);
+            ErpIntegrationConfiguration created = new ErpIntegrationConfiguration
+            {
+                Id = Guid.NewGuid(),
+                BuyerOrganizationId = request.OrganizationId,
+                BuyerId = buyer.Id,
+                Version = 1
+            };
+            Apply(created, dto, keepSecrets: false);
+            _repository.ErpIntegration.Create(created);
+            await _repository.SaveAsync();
+
+            _logger.LogInfo($"ERP API configuration created. ConfigurationId: {created.Id}, Process: {created.Process}, ErpType: {created.ErpType}");
+            return created.Id;
+        }
+
+        internal static void Validate(ErpIntegrationWriteDto dto)
+        {
             if (string.IsNullOrWhiteSpace(dto.ApiName)
+                || string.IsNullOrWhiteSpace(dto.Process)
                 || string.IsNullOrWhiteSpace(dto.ErpType)
                 || string.IsNullOrWhiteSpace(dto.BaseUrl)
                 || string.IsNullOrWhiteSpace(dto.CreateDocumentPath)
@@ -42,7 +62,7 @@ namespace Buyer.Application.Features.Commands.SaveErpIntegration
             {
                 throw new BadRequestCustomException(
                     "API configuration is incomplete.",
-                    "API name, system, document type, base URL, path, and authentication are required.");
+                    "API name, process, system, document type, base URL, path, and authentication are required.");
             }
 
             if (!dto.BaseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
@@ -62,45 +82,12 @@ namespace Buyer.Application.Features.Commands.SaveErpIntegration
             {
                 throw new BadRequestCustomException("Document type is invalid.", "Use PO or PR.");
             }
-
-            BuyerBusinessProfile? buyer = _repository.BuyerBusinessProfile.FindFirstByCondition(
-                x => x.OrganizationId == request.OrganizationId && x.IsActive);
-            if (buyer == null)
-            {
-                _logger.LogError($"Buyer not found. OrganizationId: {request.OrganizationId}");
-                throw new NotFoundCustomException("Buyer not found.", "The signed-in organization does not have a buyer profile.");
-            }
-
-            ErpIntegrationConfiguration? existing = dto.SupplierOrganizationId.HasValue
-                ? await _repository.Wishlist.GetSupplierErpConfigurationAsync(buyer.Id, dto.SupplierOrganizationId.Value, cancellationToken)
-                : await _repository.Wishlist.GetErpConfigurationAsync(buyer.Id, cancellationToken);
-            if (existing == null)
-            {
-                ErpIntegrationConfiguration created = new ErpIntegrationConfiguration
-                {
-                    Id = Guid.NewGuid(),
-                    BuyerOrganizationId = request.OrganizationId,
-                    BuyerId = buyer.Id,
-                    Version = 1
-                };
-                Apply(created, dto, keepSecrets: false);
-                _repository.Wishlist.Add(created);
-                await _repository.SaveAsync();
-                _logger.LogInfo($"ERP API configuration created. ConfigurationId: {created.Id}, ErpType: {created.ErpType}");
-                return created.Id;
-            }
-
-            Apply(existing, dto, keepSecrets: true);
-            existing.Version += 1;
-            existing.IsActive = dto.IsActive;
-            await _repository.SaveAsync();
-            _logger.LogInfo($"ERP API configuration updated. ConfigurationId: {existing.Id}, Version: {existing.Version}");
-            return existing.Id;
         }
 
-        private static void Apply(ErpIntegrationConfiguration target, ErpIntegrationWriteDto request, bool keepSecrets)
+        internal static void Apply(ErpIntegrationConfiguration target, ErpIntegrationWriteDto request, bool keepSecrets)
         {
             target.ApiName = request.ApiName.Trim();
+            target.Process = request.Process.Trim();
             target.ErpType = request.ErpType.Trim();
             target.SupplierOrganizationId = request.SupplierOrganizationId;
             target.PayloadFormat = string.IsNullOrWhiteSpace(request.PayloadFormat) ? Common.PAYLOAD_JSON : request.PayloadFormat.Trim();
@@ -133,6 +120,19 @@ namespace Buyer.Application.Features.Commands.SaveErpIntegration
             }
 
             return keepSecrets ? current : incoming;
+        }
+
+        private BuyerBusinessProfile GetBuyer(Guid organizationId)
+        {
+            BuyerBusinessProfile? buyer = _repository.BuyerBusinessProfile.FindFirstByCondition(
+                x => x.OrganizationId == organizationId && x.IsActive);
+            if (buyer == null)
+            {
+                _logger.LogError($"Buyer not found. OrganizationId: {organizationId}");
+                throw new NotFoundCustomException("Buyer not found.", "The signed-in organization does not have a buyer profile.");
+            }
+
+            return buyer;
         }
     }
 }

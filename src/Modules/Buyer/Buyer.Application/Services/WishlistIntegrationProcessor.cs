@@ -206,8 +206,9 @@ namespace Buyer.Application.Services
                 return;
             }
 
-            ErpIntegrationConfiguration? destination = await _repository.Wishlist.GetSupplierErpConfigurationAsync(
+            ErpIntegrationConfiguration? destination = await _repository.ErpIntegration.FindActiveAsync(
                 wishlist.BuyerId,
+                Common.ERP_PROCESS_WISHLIST,
                 wishlist.SupplierOrganizationId.Value,
                 cancellationToken);
             if (destination == null)
@@ -304,10 +305,14 @@ namespace Buyer.Application.Services
         {
             if (integration.ConfigurationId.HasValue)
             {
-                return await _repository.Wishlist.GetErpConfigurationByIdAsync(integration.ConfigurationId.Value, cancellationToken);
+                return await _repository.ErpIntegration.GetTrackedAsync(wishlist.BuyerId, integration.ConfigurationId.Value, cancellationToken);
             }
 
-            return await _repository.Wishlist.GetErpConfigurationAsync(wishlist.BuyerId, cancellationToken);
+            return await _repository.ErpIntegration.FindActiveAsync(
+                wishlist.BuyerId,
+                Common.ERP_PROCESS_WISHLIST,
+                null,
+                cancellationToken);
         }
 
         private static void PinConfiguration(PurchaseDocumentIntegration integration, ErpIntegrationConfiguration configuration)
@@ -353,7 +358,7 @@ namespace Buyer.Application.Services
                 Status = Common.INTEGRATION_PENDING,
                 IsActive = true
             };
-            _repository.Wishlist.Add(created);
+            _repository.PurchaseDocumentIntegration.Create(created);
             await _repository.SaveAsync();
             return created;
         }
@@ -407,7 +412,7 @@ namespace Buyer.Application.Services
 
         private void AddAudit(Wishlist wishlist, string action, string? detail)
         {
-            _repository.Wishlist.Add(new WishlistAudit
+            _repository.WishlistAudit.Create(new WishlistAudit
             {
                 Id = Guid.NewGuid(),
                 WishlistId = wishlist.Id,

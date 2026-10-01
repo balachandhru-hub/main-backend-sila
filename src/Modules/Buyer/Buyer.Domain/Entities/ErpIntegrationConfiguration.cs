@@ -28,6 +28,12 @@ namespace Buyer.Domain.Entities
         [Required]
         public string ApiName { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Which process calls this API: WISHLIST, CONTRACT, ITEM_MASTER, or another process name.
+        /// </summary>
+        [Required]
+        public string Process { get; set; } = string.Empty;
+
         [Required]
         public string ErpType { get; set; } = string.Empty;
 

@@ -47,31 +47,6 @@ namespace Buyer.Infrastructure.Repository
                 .ToListAsync(cancellationToken);
         }
 
-        public Task<ErpIntegrationConfiguration?> GetErpConfigurationAsync(Guid buyerId, CancellationToken cancellationToken)
-        {
-            return RepositoryContext.ErpIntegrationConfiguration
-                .Where(x => x.BuyerId == buyerId && x.SupplierOrganizationId == null)
-                .OrderByDescending(x => x.Version)
-                .FirstOrDefaultAsync(cancellationToken);
-        }
-
-        public Task<ErpIntegrationConfiguration?> GetSupplierErpConfigurationAsync(
-            Guid buyerId,
-            Guid supplierOrganizationId,
-            CancellationToken cancellationToken)
-        {
-            return RepositoryContext.ErpIntegrationConfiguration
-                .Where(x => x.BuyerId == buyerId && x.SupplierOrganizationId == supplierOrganizationId && x.IsActive)
-                .OrderByDescending(x => x.Version)
-                .FirstOrDefaultAsync(cancellationToken);
-        }
-
-        public Task<ErpIntegrationConfiguration?> GetErpConfigurationByIdAsync(Guid configurationId, CancellationToken cancellationToken)
-        {
-            return RepositoryContext.ErpIntegrationConfiguration
-                .FirstOrDefaultAsync(x => x.Id == configurationId, cancellationToken);
-        }
-
         public Task<List<PurchaseDocumentIntegration>> GetIntegrationsAsync(Guid wishlistId, CancellationToken cancellationToken)
         {
             return RepositoryContext.PurchaseDocumentIntegration
@@ -145,16 +120,6 @@ namespace Buyer.Infrastructure.Repository
                             && i.Status == Common.INTEGRATION_FAILED))))
                 .Select(x => x.Id)
                 .ToListAsync(cancellationToken);
-        }
-
-        public void Add<T>(T entity) where T : class
-        {
-            RepositoryContext.Set<T>().Add(entity);
-        }
-
-        public void RemoveRange<T>(IEnumerable<T> entities) where T : class
-        {
-            RepositoryContext.Set<T>().RemoveRange(entities);
         }
     }
 }
