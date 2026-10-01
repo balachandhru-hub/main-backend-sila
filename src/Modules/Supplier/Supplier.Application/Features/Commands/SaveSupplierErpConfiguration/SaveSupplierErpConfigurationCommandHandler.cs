@@ -25,7 +25,20 @@ namespace Supplier.Application.Features.Commands.SaveSupplierErpConfiguration
             SupplierErpWriteDto dto = request.Request;
             if (string.IsNullOrWhiteSpace(dto.ErpType) || string.IsNullOrWhiteSpace(dto.BaseUrl) || string.IsNullOrWhiteSpace(dto.OrderPath) || string.IsNullOrWhiteSpace(dto.AuthType))
             {
-                throw new BadRequestCustomException("Supplier ERP configuration is incomplete.", "ERP type, base URL, order path, and authentication type are required.");
+                throw new BadRequestCustomException("Supplier ERP configuration is incomplete.", "System, base URL, path, and authentication are required.");
+            }
+
+            string payloadFormat = string.IsNullOrWhiteSpace(dto.PayloadFormat) ? "JSON" : dto.PayloadFormat.Trim();
+            if (!payloadFormat.Equals("JSON", StringComparison.OrdinalIgnoreCase)
+                && !payloadFormat.Equals("SOAP", StringComparison.OrdinalIgnoreCase)
+                && !payloadFormat.Equals("CXML", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BadRequestCustomException("Body format is invalid.", "Use JSON, SOAP, or CXML.");
+            }
+
+            if (!payloadFormat.Equals("JSON", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(dto.RequestBody))
+            {
+                throw new BadRequestCustomException("Request body is required.", "SOAP and cXML calls send the body saved on this API.");
             }
 
             if (!dto.BaseUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !dto.BaseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -58,8 +71,10 @@ namespace Supplier.Application.Features.Commands.SaveSupplierErpConfiguration
 
         private static void Apply(SupplierErpIntegrationConfiguration target, SupplierErpWriteDto request, bool keepSecrets)
         {
+            target.Process = string.IsNullOrWhiteSpace(request.Process) ? "PO_CREATE" : request.Process.Trim().ToUpperInvariant();
             target.ErpType = request.ErpType.Trim();
             target.PayloadFormat = string.IsNullOrWhiteSpace(request.PayloadFormat) ? "JSON" : request.PayloadFormat.Trim();
+            target.RequestBody = request.RequestBody;
             target.BaseUrl = request.BaseUrl.Trim();
             target.AuthPath = request.AuthPath;
             target.OrderPath = request.OrderPath.Trim();

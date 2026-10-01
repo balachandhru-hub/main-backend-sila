@@ -31,8 +31,10 @@ namespace Supplier.Application.Features.Queries.GetSupplierErpConfiguration
             return new SupplierErpResponseDto
             {
                 Id = configuration.Id,
+                Process = configuration.Process,
                 ErpType = configuration.ErpType,
                 PayloadFormat = configuration.PayloadFormat,
+                RequestBody = configuration.RequestBody,
                 BaseUrl = configuration.BaseUrl,
                 AuthPath = configuration.AuthPath,
                 OrderPath = configuration.OrderPath,

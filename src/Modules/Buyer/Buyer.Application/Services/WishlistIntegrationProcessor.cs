@@ -8,7 +8,7 @@ using SharedKernel.LoggerServices;
 namespace Buyer.Application.Services
 {
     /// <summary>
-    /// Sends the purchase order to every API configured for PO_CREATE.
+    /// Sends the purchase order to the one API stored for PO_CREATE.
     /// Called from the final approval request, so the send is not waiting on a poll.
     /// </summary>
     public class WishlistIntegrationProcessor
@@ -40,15 +40,14 @@ namespace Buyer.Application.Services
                 return;
             }
 
-            List<ErpIntegrationConfiguration> configurations = await _repository.ErpIntegration.ListForOperationAsync(
+            ErpIntegrationConfiguration? configuration = await _repository.ErpIntegration.FindForOperationAsync(
                 wishlist.BuyerId,
                 Common.ERP_OPERATION_PO_CREATE,
-                wishlist.SupplierOrganizationId,
                 cancellationToken);
-            if (configurations.Count == 0)
+            if (configuration == null)
             {
                 wishlist.Status = Common.WISHLIST_ERP_FAILED;
-                wishlist.LastError = "No purchase order API is configured. Add an API with type PO_CREATE.";
+                wishlist.LastError = "No purchase order API is configured. Save one PO_CREATE API for S/4, Ariba, or another ERP.";
                 AddAudit(wishlist, Common.AUDIT_ERP_FAILED, wishlist.LastError);
                 await _repository.SaveAsync();
                 _logger.LogError($"No PO_CREATE API is configured. WishlistId: {wishlist.Id}, BuyerId: {wishlist.BuyerId}");
@@ -58,40 +57,21 @@ namespace Buyer.Application.Services
             List<WishlistItem> items = await _repository.Wishlist.GetItemsAsync(wishlist.Id, cancellationToken);
             BuyerOutlet? outlet = await _repository.Wishlist.GetOutletAsync(wishlist.OutletId, wishlist.BuyerId, cancellationToken);
             List<PurchaseDocumentIntegration> existing = await _repository.Wishlist.GetIntegrationsAsync(wishlist.Id, cancellationToken);
-            List<string> documents = new List<string>();
-            List<string> failures = new List<string>();
-
-            foreach (ErpIntegrationConfiguration configuration in configurations)
+            string? documentNumber = await SendOneAsync(wishlist, configuration, items, outlet, existing, cancellationToken);
+            if (string.IsNullOrWhiteSpace(documentNumber))
             {
-                string? documentNumber = await SendOneAsync(wishlist, configuration, items, outlet, existing, cancellationToken);
-                if (string.IsNullOrWhiteSpace(documentNumber))
-                {
-                    failures.Add($"{configuration.ErpType}: {wishlist.LastError}");
-                    continue;
-                }
-
-                documents.Add($"{configuration.ErpType}: {documentNumber}");
-            }
-
-            if (documents.Count > 0)
-            {
-                wishlist.BuyerErpDocumentNumber = string.Join("; ", documents);
-                wishlist.BuyerErpDocumentType = Common.ERP_DOCUMENT_PO;
-            }
-
-            if (failures.Count == 0)
-            {
-                wishlist.Status = Common.WISHLIST_COMPLETED;
-                wishlist.LastError = null;
+                wishlist.Status = Common.WISHLIST_ERP_FAILED;
                 await _repository.SaveAsync();
-                _logger.LogInfo($"Purchase orders sent. WishlistId: {wishlist.Id}, Documents: {wishlist.BuyerErpDocumentNumber}");
+                _logger.LogError($"Purchase order send failed. WishlistId: {wishlist.Id}, System: {configuration.ErpType}, Error: {wishlist.LastError}");
                 return;
             }
 
-            wishlist.Status = Common.WISHLIST_ERP_FAILED;
-            wishlist.LastError = string.Join(" ", failures);
+            wishlist.BuyerErpDocumentNumber = documentNumber;
+            wishlist.BuyerErpDocumentType = Common.ERP_DOCUMENT_PO;
+            wishlist.Status = Common.WISHLIST_COMPLETED;
+            wishlist.LastError = null;
             await _repository.SaveAsync();
-            _logger.LogError($"Purchase order send failed. WishlistId: {wishlist.Id}, Error: {wishlist.LastError}");
+            _logger.LogInfo($"Purchase order sent. WishlistId: {wishlist.Id}, System: {configuration.ErpType}, Document: {documentNumber}");
         }
 
         private async Task<string?> SendOneAsync(

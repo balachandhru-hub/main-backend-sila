@@ -35,6 +35,15 @@ namespace Buyer.Application.Features.Commands.CreateErpIntegration
             Validate(dto);
 
             BuyerBusinessProfile buyer = GetBuyer(request.OrganizationId);
+            string operation = dto.Process.Trim().ToUpperInvariant();
+            ErpIntegrationConfiguration? duplicate = await _repository.ErpIntegration.FindForOperationAsync(buyer.Id, operation, cancellationToken);
+            if (duplicate != null)
+            {
+                throw new BadRequestCustomException(
+                    "This function already has an API.",
+                    $"{operation} can use only one system. Update the existing API instead of adding another.");
+            }
+
             ErpIntegrationConfiguration created = new ErpIntegrationConfiguration
             {
                 Id = Guid.NewGuid(),

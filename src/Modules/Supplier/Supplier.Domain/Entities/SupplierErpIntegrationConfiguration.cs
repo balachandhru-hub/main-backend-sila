@@ -12,10 +12,27 @@ namespace Supplier.Domain.Entities
         [Required]
         public Guid SupplierOrganizationId { get; set; }
 
+        /// <summary>
+        /// Operation this API performs. A supplier stores one system for PO_CREATE.
+        /// </summary>
+        [Required]
+        public string Process { get; set; } = "PO_CREATE";
+
+        /// <summary>
+        /// Target system name: SAP_S4, ARIBA, or another ERP name entered as Others.
+        /// </summary>
         [Required]
         public string ErpType { get; set; } = string.Empty;
 
+        /// <summary>
+        /// JSON, SOAP, or CXML. The system name does not choose the payload.
+        /// </summary>
         public string PayloadFormat { get; set; } = "JSON";
+
+        /// <summary>
+        /// Body sent to the configured URL. SOAP and cXML require this value.
+        /// </summary>
+        public string? RequestBody { get; set; }
 
         [Required]
         public string BaseUrl { get; set; } = string.Empty;

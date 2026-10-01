@@ -43,6 +43,17 @@ namespace Buyer.Application.Features.Commands.UpdateErpIntegration
                 throw new NotFoundCustomException("API configuration not found.", "No API configuration exists for this id.");
             }
 
+            ErpIntegrationConfiguration? duplicate = await _repository.ErpIntegration.FindForOperationAsync(
+                buyer.Id,
+                request.Request.Process,
+                cancellationToken);
+            if (duplicate != null && duplicate.Id != existing.Id)
+            {
+                throw new BadRequestCustomException(
+                    "This function already has an API.",
+                    $"{request.Request.Process.Trim().ToUpperInvariant()} can use only one system. Update that API instead of adding another.");
+            }
+
             CreateErpIntegrationCommandHandler.Apply(existing, request.Request, keepSecrets: true);
             existing.Version += 1;
             existing.IsActive = request.Request.IsActive;

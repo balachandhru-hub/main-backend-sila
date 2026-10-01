@@ -27,21 +27,16 @@ namespace Buyer.Infrastructure.Repository
                 .FirstOrDefaultAsync(x => x.Id == configurationId && x.BuyerId == buyerId, cancellationToken);
         }
 
-        public Task<List<ErpIntegrationConfiguration>> ListForOperationAsync(
+        public Task<ErpIntegrationConfiguration?> FindForOperationAsync(
             Guid buyerId,
             string operation,
-            Guid? supplierOrganizationId,
             CancellationToken cancellationToken)
         {
             string normalized = operation.Trim().ToUpperInvariant();
             return RepositoryContext.ErpIntegrationConfiguration
-                .Where(x => x.BuyerId == buyerId
-                    && x.IsActive
-                    && x.Process.ToUpper() == normalized
-                    && (x.SupplierOrganizationId == null || x.SupplierOrganizationId == supplierOrganizationId))
-                .OrderBy(x => x.ErpType)
-                .ThenBy(x => x.ApiName)
-                .ToListAsync(cancellationToken);
+                .Where(x => x.BuyerId == buyerId && x.IsActive && x.Process.ToUpper() == normalized)
+                .OrderByDescending(x => x.DateUpdated)
+                .FirstOrDefaultAsync(cancellationToken);
         }
     }
 }

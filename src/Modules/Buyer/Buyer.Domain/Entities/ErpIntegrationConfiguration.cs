@@ -30,7 +30,7 @@ namespace Buyer.Domain.Entities
 
         /// <summary>
         /// Operation this API performs, for example PO_CREATE.
-        /// After the last wishlist approval, every active PO_CREATE API is called.
+        /// One system is stored for this operation. PO_CREATE is either S/4, Ariba, or another ERP name.
         /// </summary>
         [Required]
         public string Process { get; set; } = string.Empty;
