@@ -2,6 +2,14 @@
 
 Phone layout for the SILA procurement portal. Buyers and suppliers sign in with the same accounts as the desktop app and use this system's API (`https://sila-api.chervicaon.com`, the `main-backend-sila` gateway).
 
+This history is an orphan branch, `cursor/sila-mobile-9098`, on `balachandhru-hub/main-backend-sila`. It does not share files with the .NET backend. To give it a repository of its own:
+
+```bash
+git clone -b cursor/sila-mobile-9098 --single-branch https://github.com/balachandhru-hub/main-backend-sila.git sila-mobile
+cd sila-mobile
+gh repo create balachandhru-hub/sila-mobile --public --source=. --remote=origin --push
+```
+
 ## What you can do
 
 - Sign in and keep the session with the identity cookies
