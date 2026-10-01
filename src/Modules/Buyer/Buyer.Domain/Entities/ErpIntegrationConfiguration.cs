@@ -22,6 +22,12 @@ namespace Buyer.Domain.Entities
 
         public BuyerBusinessProfile BuyerBusinessProfile { get; set; } = null!;
 
+        /// <summary>
+        /// What this API is for, for example "Create purchase order".
+        /// </summary>
+        [Required]
+        public string ApiName { get; set; } = string.Empty;
+
         [Required]
         public string ErpType { get; set; } = string.Empty;
 
@@ -35,6 +41,11 @@ namespace Buyer.Domain.Entities
         /// JSON or CXML. Ariba and S/4 use CXML. Other systems use JSON unless this is set.
         /// </summary>
         public string PayloadFormat { get; set; } = "JSON";
+
+        /// <summary>
+        /// Body configured for this API. Ariba and S/4 usually store cXML. Other systems store JSON.
+        /// </summary>
+        public string? RequestBody { get; set; }
 
         [Required]
         public string DocumentType { get; set; } = string.Empty;

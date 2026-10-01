@@ -3,9 +3,11 @@ namespace Buyer.Domain.Dtos
     public class ErpIntegrationResponseDto
     {
         public Guid Id { get; set; }
+        public string ApiName { get; set; } = string.Empty;
         public string ErpType { get; set; } = string.Empty;
         public Guid? SupplierOrganizationId { get; set; }
         public string PayloadFormat { get; set; } = "JSON";
+        public string? RequestBody { get; set; }
         public string DocumentType { get; set; } = string.Empty;
         public string BaseUrl { get; set; } = string.Empty;
         public string CreateDocumentPath { get; set; } = string.Empty;

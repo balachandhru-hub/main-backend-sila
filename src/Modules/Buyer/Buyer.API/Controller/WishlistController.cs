@@ -1,9 +1,7 @@
 using Buyer.Application.Features.Commands.CreateOutlet;
 using Buyer.Application.Features.Commands.CreateWishlist;
 using Buyer.Application.Features.Commands.DecideWishlist;
-using Buyer.Application.Features.Commands.SaveErpIntegration;
 using Buyer.Application.Features.Commands.UpdateWishlist;
-using Buyer.Application.Features.Queries.GetErpIntegration;
 using Buyer.Application.Features.Queries.GetOutlets;
 using Buyer.Application.Features.Queries.GetWishlist;
 using Buyer.Application.Features.Queries.GetWishlists;
@@ -37,6 +35,7 @@ namespace Buyer.API.Controllers
         [SwaggerResponse(200, type: typeof(SuccessResponseDto))]
         public async Task<IActionResult> Create([FromBody] WishlistWriteDto request)
         {
+            _logger.LogDebug($"Creating wishlist. Name: {request.WishlistName}");
             Guid id = await _mediator.Send(new CreateWishlistCommand
             {
                 OrganizationId = GetOrganizationId(),
@@ -58,6 +57,7 @@ namespace Buyer.API.Controllers
         [SwaggerOperation("UpdateWishlist")]
         public async Task<IActionResult> Update([FromRoute] Guid wishlistId, [FromBody] WishlistWriteDto request)
         {
+            _logger.LogDebug($"Updating wishlist. WishlistId: {wishlistId}");
             await _mediator.Send(new UpdateWishlistCommand
             {
                 OrganizationId = GetOrganizationId(),
@@ -80,6 +80,7 @@ namespace Buyer.API.Controllers
         [SwaggerOperation("GetWishlist")]
         public async Task<IActionResult> Get([FromRoute] Guid wishlistId)
         {
+            _logger.LogDebug($"Fetching wishlist. WishlistId: {wishlistId}");
             WishlistResponseDto result = await _mediator.Send(new GetWishlistQuery
             {
                 OrganizationId = GetOrganizationId(),
@@ -109,6 +110,7 @@ namespace Buyer.API.Controllers
         [SwaggerOperation("ApproveOrRejectWishlist")]
         public async Task<IActionResult> Decide([FromRoute] Guid wishlistId, [FromBody] WishlistDecisionDto decision)
         {
+            _logger.LogDebug($"Processing wishlist approval. WishlistId: {wishlistId}");
             await _mediator.Send(new DecideWishlistCommand
             {
                 OrganizationId = GetOrganizationId(),
@@ -158,37 +160,5 @@ namespace Buyer.API.Controllers
             });
         }
 
-        [HttpGet]
-        [Route("api/v1/buyer/erp-integration")]
-        [ApiAuthorization(Name = "MANAGE_BUYER_ERP_INTEGRATION")]
-        [SwaggerOperation("GetBuyerErpIntegration")]
-        public async Task<IActionResult> GetErp()
-        {
-            ErpIntegrationResponseDto? result = await _mediator.Send(new GetErpIntegrationQuery
-            {
-                OrganizationId = GetOrganizationId()
-            });
-            return Ok(result);
-        }
-
-        [HttpPut]
-        [Route("api/v1/buyer/erp-integration")]
-        [ApiAuthorization(Name = "MANAGE_BUYER_ERP_INTEGRATION")]
-        [SwaggerOperation("SaveBuyerErpIntegration")]
-        public async Task<IActionResult> SaveErp([FromBody] ErpIntegrationWriteDto request)
-        {
-            Guid id = await _mediator.Send(new SaveErpIntegrationCommand
-            {
-                OrganizationId = GetOrganizationId(),
-                Request = request
-            });
-            return Ok(new SuccessResponseDto
-            {
-                Id = id.ToString(),
-                StatusCode = 200,
-                Message = "Success",
-                Description = "Buyer ERP configuration saved."
-            });
-        }
     }
 }

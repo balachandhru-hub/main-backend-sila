@@ -252,6 +252,11 @@ namespace Buyer.Application.Services.Integration
 
         private static string BuildPayload(ErpIntegrationConfiguration configuration, BuyerPurchaseDocumentRequest request)
         {
+            if (!string.IsNullOrWhiteSpace(configuration.RequestBody))
+            {
+                return ApplyConfiguredBody(configuration.RequestBody, request);
+            }
+
             if (UsesCxml(configuration))
             {
                 return BuildCxml(request);
@@ -299,6 +304,25 @@ namespace Buyer.Application.Services.Integration
                     currency = line.Currency
                 })
             });
+        }
+
+        private static string ApplyConfiguredBody(string template, BuyerPurchaseDocumentRequest request)
+        {
+            string entries = JsonSerializer.Serialize(request.Lines.Select(line => new
+            {
+                qty = line.Quantity,
+                sku = line.MaterialCode,
+                uom = line.UnitOfMeasure,
+                unitPrice = line.UnitPrice
+            }));
+            return template
+                .Replace("{{wishlistId}}", request.WishlistId.ToString())
+                .Replace("{{buyerDocumentNumber}}", request.BuyerDocumentNumber ?? string.Empty)
+                .Replace("{{shipTo}}", request.ShipTo ?? string.Empty)
+                .Replace("{{orderDate}}", (request.RequiredDate ?? DateTime.UtcNow).ToString("dd/MM/yyyy"))
+                .Replace("{{currency}}", request.Currency ?? string.Empty)
+                .Replace("{{deliveryInstruction}}", request.DeliveryInstruction ?? string.Empty)
+                .Replace("{{entries}}", entries);
         }
 
         private static string BuildCxml(BuyerPurchaseDocumentRequest request)
