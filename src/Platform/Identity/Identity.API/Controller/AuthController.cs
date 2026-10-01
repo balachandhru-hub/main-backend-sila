@@ -96,11 +96,11 @@ namespace Identity.API.Controllers
             Response.Cookies.Append(Common.VERIFICATION_TOKEN_COOKIE_NAME, result.TemporaryVerificationToken!,
             new CookieOptions
             {
-                Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
-                Path = "/",
+                // Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                // Path = "/",
                 HttpOnly = true,
-                Secure = true,          // Use true in HTTPS
-                SameSite = SameSiteMode.None,
+                Secure = false,
+                SameSite = SameSiteMode.Lax,
                 Expires = DateTimeOffset.UtcNow.AddMinutes(30),
                 IsEssential = true
             });
@@ -136,8 +136,8 @@ namespace Identity.API.Controllers
                     // Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
                     // Path = "/",
                     HttpOnly = true,
-                    Secure = true,          // false for local HTTP, true for HTTPS
-                    SameSite = SameSiteMode.None,
+                    Secure = false,
+                    SameSite = SameSiteMode.Lax,
                     Expires = DateTimeOffset.UtcNow.AddHours(1),
                     IsEssential = true
                 });
@@ -149,8 +149,8 @@ namespace Identity.API.Controllers
                     // Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
                     // Path = "/",
                     HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None,
+                    Secure = false,
+                    SameSite = SameSiteMode.Lax,
                     Expires = DateTimeOffset.UtcNow.AddDays(_configuration.GetValue<int>(Common.REFRESH_TOKEN_EXPIRATION_TIME)),
                     IsEssential = true
                 });
@@ -215,11 +215,11 @@ namespace Identity.API.Controllers
                 result.Token!,
                 new CookieOptions
                 {
-                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
-                    Path = "/",
+                    // Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    // Path = "/",
                     HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None,
+                    Secure = false,
+                    SameSite = SameSiteMode.Lax,
                     Expires = DateTimeOffset.UtcNow.AddHours(1),
                     IsEssential = true
                 });
@@ -229,11 +229,11 @@ namespace Identity.API.Controllers
                 result.RefreshToken.ToString(),
                 new CookieOptions
                 {
-                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
-                    Path = "/",
+                    // Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    // Path = "/",
                     HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None,
+                    Secure = false,
+                    SameSite = SameSiteMode.Lax,
                     Expires = DateTimeOffset.UtcNow.AddDays(_configuration.GetValue<int>(Common.REFRESH_TOKEN_EXPIRATION_TIME)),
                     IsEssential = true
                 });
