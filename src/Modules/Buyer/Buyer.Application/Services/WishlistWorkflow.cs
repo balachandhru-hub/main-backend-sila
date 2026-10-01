@@ -37,10 +37,15 @@ namespace Buyer.Application.Services
         public async Task<Guid> CreateAsync(Guid organizationId, Guid userId, WishlistWriteDto request, CancellationToken cancellationToken)
         {
             BuyerBusinessProfile buyer = await GetBuyerAsync(organizationId);
-            ValidateWrite(request, requireApproval: false);
+            ValidateWrite(request, requireApproval: true);
             BuyerOutlet outlet = await RequireOutletAsync(request.OutletId, buyer.Id, cancellationToken);
-            MasterApprovalFlow? flow = await RequireApprovalAsync(request.MasterApprovalFlowId, buyer.Id, required: false, cancellationToken);
+            MasterApprovalFlow flow = await RequireApprovalAsync(request.MasterApprovalFlowId, buyer.Id, required: true, cancellationToken)
+                ?? throw new NotFoundCustomException("Approval flow not found.", "The selected approval flow does not belong to this buyer.");
             List<WishlistItem> items = await BuildItemsAsync(buyer.Id, Guid.Empty, request, cancellationToken);
+            if (items.Count == 0)
+            {
+                throw new BadRequestCustomException("Wishlist has no items.", "Add at least one material.");
+            }
 
             Wishlist wishlist = new Wishlist
             {
@@ -52,12 +57,14 @@ namespace Buyer.Application.Services
                 Description = request.Description,
                 SupplierOrganizationId = request.SupplierOrganizationId,
                 SupplierName = request.SupplierName,
-                Status = Common.WISHLIST_DRAFT,
-                MasterApprovalFlowId = flow?.Id,
-                ApprovalName = flow?.ApprovalName,
+                Status = Common.WISHLIST_PENDING_APPROVAL,
+                MasterApprovalFlowId = flow.Id,
+                ApprovalName = flow.ApprovalName,
                 Currency = request.Currency,
                 DeliveryInstruction = request.DeliveryInstruction,
-                RequiredDate = request.RequiredDate
+                RequiredDate = request.RequiredDate,
+                SubmittedOn = DateTime.UtcNow,
+                SubmittedBy = userId
             };
             _repository.Wishlist.Create(wishlist);
             foreach (WishlistItem item in items)
@@ -65,7 +72,8 @@ namespace Buyer.Application.Services
                 item.WishlistId = wishlist.Id;
                 _repository.Wishlist.Add(item);
             }
-            AddAudit(wishlist.Id, userId, Common.AUDIT_CREATED, "Wishlist created for the buyer organization.");
+            await CopyApprovalUsersAsync(wishlist, flow, cancellationToken);
+            AddAudit(wishlist.Id, userId, Common.AUDIT_CREATED, "Wishlist created and sent for approval.");
             await _repository.SaveAsync();
             _logger.LogInfo($"Wishlist created. WishlistId={wishlist.Id} BuyerOrganizationId={organizationId} OutletId={outlet.Id} Actor={userId}");
             return wishlist.Id;
@@ -76,21 +84,30 @@ namespace Buyer.Application.Services
             BuyerBusinessProfile buyer = await GetBuyerAsync(organizationId);
             Wishlist wishlist = await RequireWishlistAsync(wishlistId, buyer.Id, cancellationToken);
             EnsureEditable(wishlist);
-            ValidateWrite(request, requireApproval: false);
+            ValidateWrite(request, requireApproval: true);
             BuyerOutlet outlet = await RequireOutletAsync(request.OutletId, buyer.Id, cancellationToken);
-            MasterApprovalFlow? flow = await RequireApprovalAsync(request.MasterApprovalFlowId, buyer.Id, required: false, cancellationToken);
+            MasterApprovalFlow flow = await RequireApprovalAsync(request.MasterApprovalFlowId, buyer.Id, required: true, cancellationToken)
+                ?? throw new NotFoundCustomException("Approval flow not found.", "The selected approval flow does not belong to this buyer.");
             List<WishlistItem> items = await BuildItemsAsync(buyer.Id, wishlist.Id, request, cancellationToken);
+            if (items.Count == 0)
+            {
+                throw new BadRequestCustomException("Wishlist has no items.", "Add at least one material.");
+            }
 
             wishlist.OutletId = outlet.Id;
             wishlist.WishlistName = request.WishlistName.Trim();
             wishlist.Description = request.Description;
             wishlist.SupplierOrganizationId = request.SupplierOrganizationId;
             wishlist.SupplierName = request.SupplierName;
-            wishlist.MasterApprovalFlowId = flow?.Id;
-            wishlist.ApprovalName = flow?.ApprovalName;
+            wishlist.MasterApprovalFlowId = flow.Id;
+            wishlist.ApprovalName = flow.ApprovalName;
             wishlist.Currency = request.Currency;
             wishlist.DeliveryInstruction = request.DeliveryInstruction;
             wishlist.RequiredDate = request.RequiredDate;
+            wishlist.Status = Common.WISHLIST_PENDING_APPROVAL;
+            wishlist.SubmittedOn = DateTime.UtcNow;
+            wishlist.SubmittedBy = userId;
+            wishlist.LastError = null;
 
             List<WishlistItem> existing = await _repository.Wishlist.GetItemsAsync(wishlist.Id, cancellationToken);
             _repository.Wishlist.RemoveRange(existing);
@@ -98,7 +115,8 @@ namespace Buyer.Application.Services
             {
                 _repository.Wishlist.Add(item);
             }
-            AddAudit(wishlist.Id, userId, Common.AUDIT_MODIFIED, "Wishlist updated.");
+            await CopyApprovalUsersAsync(wishlist, flow, cancellationToken);
+            AddAudit(wishlist.Id, userId, Common.AUDIT_MODIFIED, "Wishlist updated and sent for approval again.");
             await _repository.SaveAsync();
         }
 
@@ -136,85 +154,6 @@ namespace Buyer.Application.Services
                 SupplierErpDocumentNumber = row.SupplierErpDocumentNumber,
                 LastError = row.LastError
             }).ToList();
-        }
-
-        public async Task SubmitAsync(Guid organizationId, Guid userId, Guid wishlistId, CancellationToken cancellationToken)
-        {
-            BuyerBusinessProfile buyer = await GetBuyerAsync(organizationId);
-            Wishlist wishlist = await RequireWishlistAsync(wishlistId, buyer.Id, cancellationToken);
-            EnsureEditable(wishlist);
-            if (wishlist.MasterApprovalFlowId == null)
-            {
-                throw new BadRequestCustomException("Approval flow is required.", "Select an approval flow before submitting the wishlist.");
-            }
-
-            List<WishlistItem> items = await _repository.Wishlist.GetItemsAsync(wishlist.Id, cancellationToken);
-            if (items.Count == 0)
-            {
-                throw new BadRequestCustomException("Wishlist has no items.", "Add at least one material before submitting.");
-            }
-
-            MasterApprovalFlow flow = await RequireApprovalAsync(wishlist.MasterApprovalFlowId, buyer.Id, required: true, cancellationToken)
-                ?? throw new NotFoundCustomException("Approval flow not found.", "The selected approval flow does not belong to this buyer.");
-
-            List<ApprovalFlowUserMapping> templateUsers = await _repository.ApprovalFlowUserMapping
-                .FindByCondition(x => x.ApprovalFlowId == flow.Id && x.IsActive)
-                .OrderBy(x => x.Order)
-                .ToListAsync(cancellationToken);
-            if (templateUsers.Count == 0)
-            {
-                throw new BadRequestCustomException("Approval flow has no approvers.", "Add approvers to the selected approval flow.");
-            }
-
-            WishlistApprovalFlow? instance = await _repository.Wishlist.GetApprovalFlowAsync(wishlist.Id, cancellationToken);
-            if (instance == null)
-            {
-                instance = new WishlistApprovalFlow
-                {
-                    Id = Guid.NewGuid(),
-                    WishlistId = wishlist.Id,
-                    ApprovalCode = flow.ApprovalCode,
-                    ApprovalName = flow.ApprovalName,
-                    MasterApprovalFlowId = flow.Id,
-                    Type = flow.Type,
-                    TotalAmount = flow.TotalAmount,
-                    Currency = flow.Currency
-                };
-                _repository.Wishlist.Add(instance);
-            }
-            else
-            {
-                instance.ApprovalCode = flow.ApprovalCode;
-                instance.ApprovalName = flow.ApprovalName;
-                instance.MasterApprovalFlowId = flow.Id;
-                instance.Type = flow.Type;
-                instance.TotalAmount = flow.TotalAmount;
-                instance.Currency = flow.Currency;
-                List<WishlistApprovalUserMapping> previous = await _repository.Wishlist.GetApprovalUsersAsync(instance.Id, cancellationToken);
-                _repository.Wishlist.RemoveRange(previous);
-            }
-
-            foreach (ApprovalFlowUserMapping templateUser in templateUsers)
-            {
-                _repository.Wishlist.Add(new WishlistApprovalUserMapping
-                {
-                    Id = Guid.NewGuid(),
-                    WishlistApprovalFlowId = instance.Id,
-                    UserId = templateUser.UserId,
-                    Order = templateUser.Order,
-                    Status = Common.PENDING
-                });
-            }
-
-            wishlist.Status = Common.WISHLIST_PENDING_APPROVAL;
-            wishlist.ApprovalName = flow.ApprovalName;
-            wishlist.SubmittedOn = DateTime.UtcNow;
-            wishlist.SubmittedBy = userId;
-            wishlist.LastError = null;
-            AddAudit(wishlist.Id, userId, Common.AUDIT_SUBMITTED, "Wishlist submitted and frozen for approval.");
-            AddAudit(wishlist.Id, userId, Common.AUDIT_APPROVAL_STARTED, $"ApprovalFlowId={flow.Id}");
-            await _repository.SaveAsync();
-            _logger.LogInfo($"Wishlist submitted. WishlistId={wishlist.Id} BuyerOrganizationId={organizationId} Actor={userId}");
         }
 
         public async Task DecideAsync(Guid organizationId, Guid userId, Guid wishlistId, WishlistDecisionDto decision, CancellationToken cancellationToken)
@@ -273,63 +212,15 @@ namespace Buyer.Application.Services
                 return;
             }
 
+            // Same point as predefined material's last approver: the PUT stores the
+            // decision and the downstream record. Material creates ItemBuyerMaster here.
+            // Wishlist only marks ERP processing. The scheduler sends the document.
             wishlist.FinalApprovedOn = DateTime.UtcNow;
             wishlist.Status = Common.WISHLIST_ERP_PROCESSING;
             wishlist.LastError = null;
             AddAudit(wishlist.Id, userId, Common.AUDIT_ERP_STARTED, "Final approval started buyer ERP processing.");
             await _repository.SaveAsync();
             _logger.LogInfo($"Wishlist final approval. WishlistId={wishlist.Id} BuyerOrganizationId={organizationId} Actor={userId}");
-        }
-
-        public async Task CancelAsync(Guid organizationId, Guid userId, Guid wishlistId, CancellationToken cancellationToken)
-        {
-            BuyerBusinessProfile buyer = await GetBuyerAsync(organizationId);
-            Wishlist wishlist = await RequireWishlistAsync(wishlistId, buyer.Id, cancellationToken);
-            if (wishlist.Status is Common.WISHLIST_ERP_PROCESSING
-                or Common.WISHLIST_ERP_PO_CREATED
-                or Common.WISHLIST_SUPPLIER_PO_PROCESSING
-                or Common.WISHLIST_COMPLETED
-                or Common.WISHLIST_CANCELLED)
-            {
-                throw new BadRequestCustomException("Wishlist cannot be cancelled.", "ERP processing has already started or the wishlist is already closed.");
-            }
-
-            wishlist.Status = Common.WISHLIST_CANCELLED;
-            AddAudit(wishlist.Id, userId, Common.AUDIT_CANCELLED, "Wishlist cancelled.");
-            await _repository.SaveAsync();
-        }
-
-        public async Task RetryAsync(Guid organizationId, Guid userId, Guid wishlistId, CancellationToken cancellationToken)
-        {
-            BuyerBusinessProfile buyer = await GetBuyerAsync(organizationId);
-            Wishlist wishlist = await RequireWishlistAsync(wishlistId, buyer.Id, cancellationToken);
-            if (wishlist.Status == Common.WISHLIST_ERP_FAILED)
-            {
-                wishlist.Status = Common.WISHLIST_ERP_PROCESSING;
-            }
-            else if (wishlist.Status == Common.WISHLIST_SUPPLIER_PO_FAILED)
-            {
-                wishlist.Status = Common.WISHLIST_SUPPLIER_PO_PROCESSING;
-            }
-            else
-            {
-                throw new BadRequestCustomException("Nothing to retry.", "Retry is available only after an ERP or supplier integration failure.");
-            }
-
-            List<PurchaseDocumentIntegration> integrations = await _repository.Wishlist.GetIntegrationsAsync(wishlist.Id, cancellationToken);
-            foreach (PurchaseDocumentIntegration integration in integrations)
-            {
-                if (integration.Status is Common.INTEGRATION_FAILED or Common.INTEGRATION_UNKNOWN)
-                {
-                    integration.Status = Common.INTEGRATION_PENDING;
-                    integration.NextAttemptOn = DateTime.UtcNow;
-                    integration.OutcomeUnknown = false;
-                }
-            }
-
-            wishlist.LastError = null;
-            AddAudit(wishlist.Id, userId, Common.AUDIT_RETRY, "Integration retry requested. Existing document numbers are reused.");
-            await _repository.SaveAsync();
         }
 
         public async Task<Guid> CreateOutletAsync(Guid organizationId, OutletWriteDto request, CancellationToken cancellationToken)
@@ -539,6 +430,58 @@ namespace Buyer.Application.Services
             }
 
             return wishlist;
+        }
+
+        private async Task CopyApprovalUsersAsync(Wishlist wishlist, MasterApprovalFlow flow, CancellationToken cancellationToken)
+        {
+            List<ApprovalFlowUserMapping> templateUsers = await _repository.ApprovalFlowUserMapping
+                .FindByCondition(x => x.ApprovalFlowId == flow.Id && x.IsActive)
+                .OrderBy(x => x.Order)
+                .ToListAsync(cancellationToken);
+            if (templateUsers.Count == 0)
+            {
+                throw new BadRequestCustomException("Approval flow has no approvers.", "Add approvers to the selected approval flow.");
+            }
+
+            WishlistApprovalFlow? instance = await _repository.Wishlist.GetApprovalFlowAsync(wishlist.Id, cancellationToken);
+            if (instance == null)
+            {
+                instance = new WishlistApprovalFlow
+                {
+                    Id = Guid.NewGuid(),
+                    WishlistId = wishlist.Id,
+                    ApprovalCode = flow.ApprovalCode,
+                    ApprovalName = flow.ApprovalName,
+                    MasterApprovalFlowId = flow.Id,
+                    Type = flow.Type,
+                    TotalAmount = flow.TotalAmount,
+                    Currency = flow.Currency
+                };
+                _repository.Wishlist.Add(instance);
+            }
+            else
+            {
+                instance.ApprovalCode = flow.ApprovalCode;
+                instance.ApprovalName = flow.ApprovalName;
+                instance.MasterApprovalFlowId = flow.Id;
+                instance.Type = flow.Type;
+                instance.TotalAmount = flow.TotalAmount;
+                instance.Currency = flow.Currency;
+                List<WishlistApprovalUserMapping> previous = await _repository.Wishlist.GetApprovalUsersAsync(instance.Id, cancellationToken);
+                _repository.Wishlist.RemoveRange(previous);
+            }
+
+            foreach (ApprovalFlowUserMapping templateUser in templateUsers)
+            {
+                _repository.Wishlist.Add(new WishlistApprovalUserMapping
+                {
+                    Id = Guid.NewGuid(),
+                    WishlistApprovalFlowId = instance.Id,
+                    UserId = templateUser.UserId,
+                    Order = templateUser.Order,
+                    Status = Common.PENDING
+                });
+            }
         }
 
         private async Task<BuyerOutlet> RequireOutletAsync(Guid outletId, Guid buyerId, CancellationToken cancellationToken)

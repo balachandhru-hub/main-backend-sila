@@ -1,10 +1,7 @@
-using Buyer.Application.Features.Commands.CancelWishlist;
 using Buyer.Application.Features.Commands.CreateOutlet;
 using Buyer.Application.Features.Commands.CreateWishlist;
 using Buyer.Application.Features.Commands.DecideWishlist;
-using Buyer.Application.Features.Commands.RetryWishlistIntegration;
 using Buyer.Application.Features.Commands.SaveErpIntegration;
-using Buyer.Application.Features.Commands.SubmitWishlist;
 using Buyer.Application.Features.Commands.UpdateWishlist;
 using Buyer.Application.Features.Queries.GetErpIntegration;
 using Buyer.Application.Features.Queries.GetOutlets;
@@ -106,31 +103,10 @@ namespace Buyer.API.Controllers
             return Ok(result);
         }
 
-        [HttpPost]
-        [Route("api/v1/buyer/wishlist/{wishlistId}/submit")]
-        [ApiAuthorization(Name = "SUBMIT_WISHLIST")]
-        [SwaggerOperation("SubmitWishlist")]
-        public async Task<IActionResult> Submit([FromRoute] Guid wishlistId)
-        {
-            await _mediator.Send(new SubmitWishlistCommand
-            {
-                OrganizationId = GetOrganizationId(),
-                UserId = GetUserId(),
-                WishlistId = wishlistId
-            });
-            return Ok(new SuccessResponseDto
-            {
-                Id = wishlistId.ToString(),
-                StatusCode = 200,
-                Message = "Success",
-                Description = "Wishlist submitted for approval."
-            });
-        }
-
-        [HttpPost]
-        [Route("api/v1/buyer/wishlist/{wishlistId}/approval")]
+        [HttpPut]
+        [Route("api/v1/buyer/wishlist/approval/{wishlistId}")]
         [ApiAuthorization(Name = "APPROVE_WISHLIST")]
-        [SwaggerOperation("DecideWishlist")]
+        [SwaggerOperation("ApproveOrRejectWishlist")]
         public async Task<IActionResult> Decide([FromRoute] Guid wishlistId, [FromBody] WishlistDecisionDto decision)
         {
             await _mediator.Send(new DecideWishlistCommand
@@ -146,76 +122,6 @@ namespace Buyer.API.Controllers
                 StatusCode = 200,
                 Message = "Success",
                 Description = "Wishlist approval updated."
-            });
-        }
-
-        [HttpGet]
-        [Route("api/v1/buyer/wishlist/{wishlistId}/approval")]
-        [ApiAuthorization(Name = "GET_WISHLIST")]
-        [SwaggerOperation("GetWishlistApproval")]
-        public async Task<IActionResult> Approval([FromRoute] Guid wishlistId)
-        {
-            WishlistResponseDto result = await _mediator.Send(new GetWishlistQuery
-            {
-                OrganizationId = GetOrganizationId(),
-                WishlistId = wishlistId
-            });
-            return Ok(result.ApprovalSteps);
-        }
-
-        [HttpGet]
-        [Route("api/v1/buyer/wishlist/{wishlistId}/integration-status")]
-        [ApiAuthorization(Name = "GET_WISHLIST_INTEGRATION")]
-        [SwaggerOperation("GetWishlistIntegration")]
-        public async Task<IActionResult> IntegrationStatus([FromRoute] Guid wishlistId)
-        {
-            WishlistResponseDto result = await _mediator.Send(new GetWishlistQuery
-            {
-                OrganizationId = GetOrganizationId(),
-                WishlistId = wishlistId
-            });
-            return Ok(result.Integrations);
-        }
-
-        [HttpPost]
-        [Route("api/v1/buyer/wishlist/{wishlistId}/retry-integration")]
-        [ApiAuthorization(Name = "RETRY_WISHLIST_INTEGRATION")]
-        [SwaggerOperation("RetryWishlistIntegration")]
-        public async Task<IActionResult> Retry([FromRoute] Guid wishlistId)
-        {
-            await _mediator.Send(new RetryWishlistIntegrationCommand
-            {
-                OrganizationId = GetOrganizationId(),
-                UserId = GetUserId(),
-                WishlistId = wishlistId
-            });
-            return Ok(new SuccessResponseDto
-            {
-                Id = wishlistId.ToString(),
-                StatusCode = 200,
-                Message = "Success",
-                Description = "Integration retry queued."
-            });
-        }
-
-        [HttpPost]
-        [Route("api/v1/buyer/wishlist/{wishlistId}/cancel")]
-        [ApiAuthorization(Name = "CANCEL_WISHLIST")]
-        [SwaggerOperation("CancelWishlist")]
-        public async Task<IActionResult> Cancel([FromRoute] Guid wishlistId)
-        {
-            await _mediator.Send(new CancelWishlistCommand
-            {
-                OrganizationId = GetOrganizationId(),
-                UserId = GetUserId(),
-                WishlistId = wishlistId
-            });
-            return Ok(new SuccessResponseDto
-            {
-                Id = wishlistId.ToString(),
-                StatusCode = 200,
-                Message = "Success",
-                Description = "Wishlist cancelled."
             });
         }
 
