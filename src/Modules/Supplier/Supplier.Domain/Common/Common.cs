@@ -86,5 +86,20 @@ namespace Supplier.Domain.Common
             ("TWO_TO_FOUR_WEEKS", "15–30 days", 15, 30),
             ("LATER", "30+ days", 31, int.MaxValue),
         };
+
+        public const string ERP_TYPE_ANE_DCI = "ANE_DCI";
+        public const string ERP_TYPE_ARIBA = "ARIBA";
+        public const string ERP_TYPE_SAP_S4 = "SAP_S4";
+        public const string PAYLOAD_CXML = "CXML";
+        public const string AUTH_DCI_PASSWORD = "DCI_PASSWORD";
+        public const string AUTH_NONE = "NONE";
+        public const string AUTH_BASIC = "BASIC";
+        public const string AUTH_API_KEY = "API_KEY";
+        public const string AUTH_BEARER = "BEARER";
+        public const string AUTH_OAUTH2_CLIENT_CREDENTIALS = "OAUTH2_CLIENT_CREDENTIALS";
+        public const string INTEGRATION_SUCCEEDED = "SUCCEEDED";
+        public const string INTEGRATION_FAILED = "FAILED";
+        public const string INTEGRATION_UNKNOWN = "UNKNOWN";
+        public const string ERP_DOCUMENT_PO = "PO";
     }
 }

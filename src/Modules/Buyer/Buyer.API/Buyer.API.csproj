@@ -11,7 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Buyer.Application\Buyer.Application.csproj" />
     <ProjectReference Include="..\Buyer.Infrastructure\Buyer.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\Platform\SharedKernel\SharedKernel.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -57,6 +57,14 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IContractTemplateRepository ContractTemplate { get; }
         IContractDetailsRepository ContractDetails { get; }
         IContractAttachmentRepository ContractAttachment { get; }
+        IWishlistRepository Wishlist { get; }
+        IWishlistItemRepository WishlistItem { get; }
+        IWishlistApprovalFlowRepository WishlistApprovalFlow { get; }
+        IWishlistApprovalUserMappingRepository WishlistApprovalUserMapping { get; }
+        IWishlistAuditRepository WishlistAudit { get; }
+        IBuyerOutletRepository BuyerOutlet { get; }
+        IErpIntegrationRepository ErpIntegration { get; }
+        IPurchaseDocumentIntegrationRepository PurchaseDocumentIntegration { get; }
         bool Save();
         Task<bool> SaveAsync();
     }

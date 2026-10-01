@@ -887,6 +887,268 @@ namespace Supplier.Infrastructure.Migrations
                     b.ToTable("supplier_email_verification", "supplier");
                 });
 
+            modelBuilder.Entity("Supplier.Domain.Entities.SupplierErpIntegrationConfiguration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AccessToken")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("access_token");
+
+                    b.Property<string>("ApiKey")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("api_key");
+
+                    b.Property<string>("ApiKeyHeader")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("api_key_header");
+
+                    b.Property<string>("AuthPath")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("auth_path");
+
+                    b.Property<string>("AuthType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("auth_type");
+
+                    b.Property<string>("BaseUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("base_url");
+
+                    b.Property<string>("ClientId")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("client_id");
+
+                    b.Property<string>("ClientSecret")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("client_secret");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<string>("DefaultShipTo")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("default_ship_to");
+
+                    b.Property<string>("ErpType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("erp_type");
+
+                    b.Property<string>("HeadersJson")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("headers_json");
+
+                    b.Property<string>("HttpMethod")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("http_method");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<int>("MaxRetryCount")
+                        .HasColumnType("int")
+                        .HasColumnName("max_retry_count");
+
+                    b.Property<string>("OrderDateFormat")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("order_date_format");
+
+                    b.Property<string>("OrderPath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("order_path");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("password");
+
+                    b.Property<string>("PayloadFormat")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("payload_format");
+
+                    b.Property<string>("Process")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("process");
+
+                    b.Property<string>("RequestBody")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("request_body");
+
+                    b.Property<string>("Scope")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("scope");
+
+                    b.Property<Guid>("SupplierOrganizationId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_organization_id");
+
+                    b.Property<int>("TimeoutSeconds")
+                        .HasColumnType("int")
+                        .HasColumnName("timeout_seconds");
+
+                    b.Property<string>("TokenUrl")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("token_url");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("username");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("int")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_supplier_erp_integration_configuration");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_supplier_erp_integration_configuration_is_active");
+
+                    b.ToTable("supplier_erp_integration_configuration", "supplier");
+                });
+
+            modelBuilder.Entity("Supplier.Domain.Entities.SupplierPurchaseDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BuyerDocumentNumber")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("buyer_document_number");
+
+                    b.Property<string>("BuyerDocumentType")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("buyer_document_type");
+
+                    b.Property<Guid>("BuyerOrganizationId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("buyer_organization_id");
+
+                    b.Property<Guid?>("ConfigurationId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("configuration_id");
+
+                    b.Property<int>("ConfigurationVersion")
+                        .HasColumnType("int")
+                        .HasColumnName("configuration_version");
+
+                    b.Property<string>("CorrelationId")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("error_message");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("LastAttemptOn")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("last_attempt_on");
+
+                    b.Property<bool>("OutcomeUnknown")
+                        .HasColumnType("bit")
+                        .HasColumnName("outcome_unknown");
+
+                    b.Property<string>("ResolvedBaseUrl")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("resolved_base_url");
+
+                    b.Property<string>("ResolvedOrderPath")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("resolved_order_path");
+
+                    b.Property<string>("ResponseBody")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("response_body");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("int")
+                        .HasColumnName("retry_count");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("SupplierDocumentNumber")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("supplier_document_number");
+
+                    b.Property<string>("SupplierDocumentType")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("supplier_document_type");
+
+                    b.Property<Guid>("SupplierOrganizationId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_organization_id");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("WishlistId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("wishlist_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_supplier_purchase_document");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_supplier_purchase_document_idempotency_key");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_supplier_purchase_document_is_active");
+
+                    b.ToTable("supplier_purchase_document", "supplier");
+                });
+
             modelBuilder.Entity("Supplier.Domain.Entities.SupplierQuotation", b =>
                 {
                     b.Property<Guid>("Id")
