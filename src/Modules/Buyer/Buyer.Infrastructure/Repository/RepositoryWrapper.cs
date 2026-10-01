@@ -70,6 +70,7 @@ namespace Buyer.Infrastructure.Repository
         private IWishlistApprovalUserMappingRepository _wishlistApprovalUserMappingRepository;
         private IWishlistAuditRepository _wishlistAuditRepository;
         private IBuyerOutletRepository _buyerOutletRepository;
+        private IBuyerOutletUserMappingRepository _buyerOutletUserMappingRepository;
         private IErpIntegrationRepository _erpIntegrationRepository;
         private IPurchaseDocumentIntegrationRepository _purchaseDocumentIntegrationRepository;
 
@@ -704,6 +705,17 @@ namespace Buyer.Infrastructure.Repository
                     _buyerOutletRepository = new BuyerOutletRepository(_context);
                 }
                 return _buyerOutletRepository;
+            }
+        }
+        public IBuyerOutletUserMappingRepository BuyerOutletUserMapping
+        {
+            get
+            {
+                if (_buyerOutletUserMappingRepository == null)
+                {
+                    _buyerOutletUserMappingRepository = new BuyerOutletUserMappingRepository(_context);
+                }
+                return _buyerOutletUserMappingRepository;
             }
         }
         public IErpIntegrationRepository ErpIntegration

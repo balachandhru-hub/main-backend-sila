@@ -1,4 +1,6 @@
+using Buyer.Application.Contracts;
 using Buyer.Domain.Common;
+using Buyer.Domain.Dto;
 using Buyer.Domain.Dtos;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
@@ -18,11 +20,16 @@ namespace Buyer.Application.Features.Queries.GetWishlist
 
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
+        private readonly IIdentityApiClient _identityApiClient;
 
-        public GetWishlistQueryHandler(IRepositoryWrapper repository, ILoggerManager logger)
+        public GetWishlistQueryHandler(
+            IRepositoryWrapper repository,
+            ILoggerManager logger,
+            IIdentityApiClient identityApiClient)
         {
             _repository = repository;
             _logger = logger;
+            _identityApiClient = identityApiClient;
         }
 
         public async Task<WishlistResponseDto> Handle(GetWishlistQuery request, CancellationToken cancellationToken)
@@ -43,6 +50,13 @@ namespace Buyer.Application.Features.Queries.GetWishlist
             List<WishlistApprovalUserMapping> steps = flow == null
                 ? new List<WishlistApprovalUserMapping>()
                 : await _repository.Wishlist.GetApprovalUsersAsync(flow.Id, cancellationToken);
+
+            // Approver names, so the wishlist shows who acted and who it is waiting for.
+            List<IdentityUserDto> approvers = steps.Count == 0
+                ? new List<IdentityUserDto>()
+                : await _identityApiClient.GetUsersByIds(
+                    steps.Select(step => step.UserId).Distinct().ToList(),
+                    cancellationToken);
 
             _logger.LogInfo($"Wishlist fetched. WishlistId: {wishlist.Id}");
             return new WishlistResponseDto
@@ -88,6 +102,8 @@ namespace Buyer.Application.Features.Queries.GetWishlist
                 ApprovalSteps = steps.Select(step => new WishlistApprovalStepDto
                 {
                     UserId = step.UserId,
+                    Name = approvers.FirstOrDefault(x => x.UserId == step.UserId)?.Name,
+                    Email = approvers.FirstOrDefault(x => x.UserId == step.UserId)?.Email,
                     Order = step.Order,
                     Status = step.Status,
                     Comment = step.Comment,

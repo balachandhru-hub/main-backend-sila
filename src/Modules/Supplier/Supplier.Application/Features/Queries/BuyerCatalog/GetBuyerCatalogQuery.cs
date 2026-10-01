@@ -15,6 +15,11 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
 
         public string? Search { get; set; }
 
+        /// <summary>
+        /// Supplier filter: part of the supplier's name or of its SNID.
+        /// </summary>
+        public string? Supplier { get; set; }
+
         public int Index { get; set; }
 
         public int Limit { get; set; }

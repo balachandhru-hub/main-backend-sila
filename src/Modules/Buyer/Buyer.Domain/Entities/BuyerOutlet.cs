@@ -33,5 +33,11 @@ namespace Buyer.Domain.Entities
         public string? City { get; set; }
 
         public string? Country { get; set; }
+
+        /// <summary>
+        /// Approval flow (type WISHLIST) used by every wishlist of this outlet.
+        /// The flow is a MasterApprovalFlow id; kept as a reference so an outlet can exist before its flow.
+        /// </summary>
+        public Guid? MasterApprovalFlowId { get; set; }
     }
 }

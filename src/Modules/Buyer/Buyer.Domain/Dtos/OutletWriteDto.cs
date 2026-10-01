@@ -9,5 +9,10 @@ namespace Buyer.Domain.Dtos
         public string? AddressLine1 { get; set; }
         public string? City { get; set; }
         public string? Country { get; set; }
+
+        /// <summary>
+        /// Approval flow (type WISHLIST) used by every wishlist of this outlet.
+        /// </summary>
+        public Guid? MasterApprovalFlowId { get; set; }
     }
 }

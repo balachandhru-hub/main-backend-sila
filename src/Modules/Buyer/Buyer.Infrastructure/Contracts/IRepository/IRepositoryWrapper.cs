@@ -63,6 +63,7 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IWishlistApprovalUserMappingRepository WishlistApprovalUserMapping { get; }
         IWishlistAuditRepository WishlistAudit { get; }
         IBuyerOutletRepository BuyerOutlet { get; }
+        IBuyerOutletUserMappingRepository BuyerOutletUserMapping { get; }
         IErpIntegrationRepository ErpIntegration { get; }
         IPurchaseDocumentIntegrationRepository PurchaseDocumentIntegration { get; }
         bool Save();

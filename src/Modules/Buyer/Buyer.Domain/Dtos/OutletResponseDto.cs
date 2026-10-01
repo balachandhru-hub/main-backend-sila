@@ -10,5 +10,7 @@ namespace Buyer.Domain.Dtos
         public string? AddressLine1 { get; set; }
         public string? City { get; set; }
         public string? Country { get; set; }
+        public Guid? MasterApprovalFlowId { get; set; }
+        public string? ApprovalName { get; set; }
     }
 }

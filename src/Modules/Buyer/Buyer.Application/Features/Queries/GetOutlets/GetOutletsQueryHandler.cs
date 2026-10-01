@@ -2,6 +2,7 @@ using Buyer.Domain.Dtos;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
 
@@ -20,7 +21,7 @@ namespace Buyer.Application.Features.Queries.GetOutlets
 
         public async Task<List<OutletResponseDto>> Handle(GetOutletsQuery request, CancellationToken cancellationToken)
         {
-            _logger.LogInfo($"Fetching outlets. OrganizationId: {request.OrganizationId}");
+            _logger.LogInfo($"Fetching outlets. OrganizationId: {request.OrganizationId}, UserId: {request.UserId}");
 
             BuyerBusinessProfile? buyer = _repository.BuyerBusinessProfile.FindFirstByCondition(
                 x => x.OrganizationId == request.OrganizationId && x.IsActive);
@@ -31,6 +32,28 @@ namespace Buyer.Application.Features.Queries.GetOutlets
             }
 
             List<BuyerOutlet> outlets = await _repository.Wishlist.ListOutletsAsync(buyer.Id, cancellationToken);
+
+            // A user assigned to outlets sees only those. A user with no assignment (the buyer administrator) sees all.
+            List<Guid> assignedOutletIds = await _repository.BuyerOutletUserMapping
+                .FindByCondition(x => x.UserId == request.UserId && x.IsActive)
+                .Select(x => x.OutletId)
+                .ToListAsync(cancellationToken);
+            if (assignedOutletIds.Count > 0)
+            {
+                outlets = outlets.Where(outlet => assignedOutletIds.Contains(outlet.Id)).ToList();
+            }
+
+            List<Guid> flowIds = outlets
+                .Where(outlet => outlet.MasterApprovalFlowId != null)
+                .Select(outlet => outlet.MasterApprovalFlowId!.Value)
+                .Distinct()
+                .ToList();
+            List<Buyer.Domain.Entities.MasterApprovalFlow> flows = flowIds.Count == 0
+                ? new List<Buyer.Domain.Entities.MasterApprovalFlow>()
+                : await _repository.MasterApprovalFlow
+                    .FindByCondition(x => flowIds.Contains(x.Id) && x.IsActive)
+                    .ToListAsync(cancellationToken);
+
             _logger.LogInfo($"Outlets fetched. Count: {outlets.Count}, BuyerId: {buyer.Id}");
             return outlets.Select(outlet => new OutletResponseDto
             {
@@ -41,7 +64,9 @@ namespace Buyer.Application.Features.Queries.GetOutlets
                 ExternalShipTo = outlet.ExternalShipTo,
                 AddressLine1 = outlet.AddressLine1,
                 City = outlet.City,
-                Country = outlet.Country
+                Country = outlet.Country,
+                MasterApprovalFlowId = outlet.MasterApprovalFlowId,
+                ApprovalName = flows.FirstOrDefault(flow => flow.Id == outlet.MasterApprovalFlowId)?.ApprovalName
             }).ToList();
         }
     }

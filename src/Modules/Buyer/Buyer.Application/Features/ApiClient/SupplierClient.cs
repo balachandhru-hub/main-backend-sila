@@ -837,5 +837,55 @@ namespace Buyer.Infrastructure.ApiClients
             _logger.LogInfo(
                 $"Supplier invited for contract successfully. RFQId: {rfqId}, SupplierId: {supplierId}");
         }
+
+        public async Task<BuyerCatalogItemDto?> GetBuyerCatalogById(
+            Guid catalogId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo($"Fetching product catalog item. CatalogId: {catalogId}");
+
+            var supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/buyer-catalog/{catalogId}");
+
+            // Get access token from current request cookie
+            var accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _logger.LogError($"Product catalog item not found. CatalogId: {catalogId}");
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to fetch product catalog item. CatalogId: {catalogId}, Status Code: {response.StatusCode}");
+
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new BadRequestCustomException(
+                    "Unable to fetch the product catalog item.",
+                    error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<BuyerCatalogItemDto>>(
+                cancellationToken: cancellationToken);
+
+            return result?.FirstOrDefault();
+        }
     }
 }

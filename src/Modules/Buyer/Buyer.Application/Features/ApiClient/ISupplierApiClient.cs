@@ -55,5 +55,8 @@ CancellationToken cancellationToken = default);
             Guid rfqId,
             Guid supplierId,
             CancellationToken cancellationToken = default);
+        Task<BuyerCatalogItemDto?> GetBuyerCatalogById(
+            Guid catalogId,
+            CancellationToken cancellationToken = default);
     }
 }

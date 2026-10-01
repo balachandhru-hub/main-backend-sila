@@ -62,6 +62,22 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                     x.Description.Contains(search));
             }
 
+            // Supplier filter: the suppliers whose name or SNID contains the text.
+            List<Guid>? filteredSupplierIds = null;
+            if (!string.IsNullOrWhiteSpace(request.Supplier))
+            {
+                _logger.LogInfo($"Applying supplier filter: {request.Supplier}");
+                string supplierText = request.Supplier.Trim();
+
+                filteredSupplierIds = _repository.SupplierBusinessProfile
+                    .FindByCondition(x => x.IsActive &&
+                        (x.OrganizationName.Contains(supplierText) || x.SNID.Contains(supplierText)))
+                    .Select(x => x.Id)
+                    .ToList();
+
+                catalogQuery = catalogQuery.Where(x => filteredSupplierIds.Contains(x.SupplierId));
+            }
+
             if (request.Segment.HasValue)
             {
                 _logger.LogInfo($"Applying segment filter: {request.Segment}");
@@ -246,6 +262,13 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                 }
 
 
+
+                if (filteredSupplierIds != null)
+                {
+                    _logger.LogInfo($"Applying supplier filter to additional catalogs: {request.Supplier}");
+                    additionalCatalogQuery =
+                        additionalCatalogQuery.Where(x => filteredSupplierIds.Contains(x.SupplierId));
+                }
 
                 if (request.Segment.HasValue)
                 {

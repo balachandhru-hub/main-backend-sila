@@ -59,6 +59,21 @@
       ]
     },
     {
+      "Key": "operations",
+      "SwaggerKey": "operations",
+      "UpstreamPathTemplate": "/api/v1/operations/{everything}",
+      "DownstreamPathTemplate": "/api/v1/operations/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8005
+        }
+      ],
+      "Timeout": 600
+    },
+    {
       "Key": "buyer-messagehub-ws",
       "UpstreamPathTemplate": "/buyermessageHub/{everything}",
       "DownstreamPathTemplate": "/buyermessageHub/{everything}",

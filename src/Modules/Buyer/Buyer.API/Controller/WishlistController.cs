@@ -1,8 +1,11 @@
 using Buyer.Application.Features.Commands.CreateOutlet;
 using Buyer.Application.Features.Commands.CreateWishlist;
 using Buyer.Application.Features.Commands.DecideWishlist;
+using Buyer.Application.Features.Commands.SetUserOutlets;
+using Buyer.Application.Features.Commands.UpdateOutlet;
 using Buyer.Application.Features.Commands.UpdateWishlist;
 using Buyer.Application.Features.Queries.GetOutlets;
+using Buyer.Application.Features.Queries.GetOutletUsers;
 using Buyer.Application.Features.Queries.GetWishlist;
 using Buyer.Application.Features.Queries.GetWishlists;
 using Buyer.Domain.Dtos;
@@ -135,9 +138,70 @@ namespace Buyer.API.Controllers
         {
             List<OutletResponseDto> result = await _mediator.Send(new GetOutletsQuery
             {
+                OrganizationId = GetOrganizationId(),
+                UserId = GetUserId()
+            });
+            return Ok(result);
+        }
+
+        [HttpPut]
+        [Route("api/v1/buyer/outlets/{outletId}")]
+        [ApiAuthorization(Name = "MANAGE_OUTLET")]
+        [SwaggerOperation("UpdateOutlet")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto))]
+        public async Task<IActionResult> UpdateOutlet([FromRoute] Guid outletId, [FromBody] OutletWriteDto request)
+        {
+            _logger.LogDebug($"Updating outlet. OutletId: {outletId}");
+            await _mediator.Send(new UpdateOutletCommand
+            {
+                OrganizationId = GetOrganizationId(),
+                OutletId = outletId,
+                Request = request
+            });
+            return Ok(new SuccessResponseDto
+            {
+                Id = outletId.ToString(),
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Outlet updated."
+            });
+        }
+
+        [HttpGet]
+        [Route("api/v1/buyer/outlets/users")]
+        [ApiAuthorization(Name = "MANAGE_OUTLET")]
+        [SwaggerOperation("GetOutletUsers")]
+        [SwaggerResponse(200, type: typeof(List<OutletUserMappingDto>))]
+        public async Task<IActionResult> OutletUsers()
+        {
+            List<OutletUserMappingDto> result = await _mediator.Send(new GetOutletUsersQuery
+            {
                 OrganizationId = GetOrganizationId()
             });
             return Ok(result);
+        }
+
+        [HttpPut]
+        [Route("api/v1/buyer/outlets/users/{userId}")]
+        [ApiAuthorization(Name = "MANAGE_OUTLET")]
+        [SwaggerOperation("SetUserOutlets")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto))]
+        public async Task<IActionResult> SetUserOutlets([FromRoute] Guid userId, [FromBody] OutletUsersWriteDto request)
+        {
+            _logger.LogDebug($"Assigning outlets to user. UserId: {userId}");
+            await _mediator.Send(new SetUserOutletsCommand
+            {
+                OrganizationId = GetOrganizationId(),
+                UserId = userId,
+                Request = request
+            });
+            return Ok(new SuccessResponseDto
+            {
+                Id = userId.ToString(),
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Outlets assigned."
+            });
         }
 
         [HttpPost]

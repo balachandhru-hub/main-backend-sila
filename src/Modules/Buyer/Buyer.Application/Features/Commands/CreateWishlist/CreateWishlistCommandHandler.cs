@@ -1,4 +1,6 @@
+using Buyer.Application.Contracts;
 using Buyer.Domain.Common;
+using Buyer.Domain.Dto;
 using Buyer.Domain.Dtos;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
@@ -13,11 +15,16 @@ namespace Buyer.Application.Features.Commands.CreateWishlist
     {
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
+        private readonly ISupplierApiClient _supplierApiClient;
 
-        public CreateWishlistCommandHandler(IRepositoryWrapper repository, ILoggerManager logger)
+        public CreateWishlistCommandHandler(
+            IRepositoryWrapper repository,
+            ILoggerManager logger,
+            ISupplierApiClient supplierApiClient)
         {
             _repository = repository;
             _logger = logger;
+            _supplierApiClient = supplierApiClient;
         }
 
         public async Task<Guid> Handle(CreateWishlistCommand request, CancellationToken cancellationToken)
@@ -35,11 +42,6 @@ namespace Buyer.Application.Features.Commands.CreateWishlist
                 throw new BadRequestCustomException("Wishlist name is required.", "Enter a wishlist name.");
             }
 
-            if (dto.MasterApprovalFlowId == null || dto.MasterApprovalFlowId == Guid.Empty)
-            {
-                throw new BadRequestCustomException("Approval flow is required.", "Select an approval flow.");
-            }
-
             BuyerBusinessProfile buyer = GetBuyer(request.OrganizationId);
             BuyerOutlet? outlet = await _repository.Wishlist.GetOutletAsync(dto.OutletId, buyer.Id, cancellationToken);
             if (outlet == null)
@@ -48,23 +50,49 @@ namespace Buyer.Application.Features.Commands.CreateWishlist
                 throw new NotFoundCustomException("Outlet not found.", "Select an outlet that belongs to this buyer organization.");
             }
 
-            MasterApprovalFlow? flow = await _repository.MasterApprovalFlow.FindFirstByConditionAsync(
-                x => x.Id == dto.MasterApprovalFlowId && x.BuyerId == buyer.Id && x.IsActive);
-            if (flow == null)
+            // A user assigned to outlets can raise wishlists only for those outlets.
+            List<Guid> assignedOutletIds = await _repository.BuyerOutletUserMapping
+                .FindByCondition(x => x.UserId == request.UserId && x.IsActive)
+                .Select(x => x.OutletId)
+                .ToListAsync(cancellationToken);
+            if (assignedOutletIds.Count > 0 && !assignedOutletIds.Contains(outlet.Id))
             {
-                _logger.LogError($"Approval flow not found. ApprovalFlowId: {dto.MasterApprovalFlowId}, BuyerId: {buyer.Id}");
-                throw new NotFoundCustomException("Approval flow not found.", "The approval flow does not belong to this buyer organization.");
+                _logger.LogError($"Outlet is not assigned to the user. OutletId: {outlet.Id}, UserId: {request.UserId}");
+                throw new BadRequestCustomException("Outlet is not assigned to you.", "Select one of your outlets.");
             }
 
-            if (!string.Equals(flow.Type, Common.WISHLIST_APPROVAL_TYPE, StringComparison.OrdinalIgnoreCase))
+            // The approval flow comes from the outlet. A draft stays editable and may be saved before the outlet has one.
+            bool isDraft = dto.SaveAsDraft;
+            Guid? flowId = outlet.MasterApprovalFlowId ?? dto.MasterApprovalFlowId;
+            bool hasFlow = flowId != null && flowId != Guid.Empty;
+            if (!isDraft && !hasFlow)
             {
-                throw new BadRequestCustomException("Approval flow type is not Wishlist.", "Select an approval configuration of type WISHLIST.");
+                throw new BadRequestCustomException(
+                    "Approval flow is required.",
+                    "This outlet has no approval flow. Ask your buyer administrator to assign one to the outlet.");
             }
 
-            List<WishlistItem> items = await BuildItemsAsync(buyer.Id, dto, cancellationToken);
+            MasterApprovalFlow? flow = null;
+            if (hasFlow)
+            {
+                flow = await _repository.MasterApprovalFlow.FindFirstByConditionAsync(
+                    x => x.Id == flowId && x.BuyerId == buyer.Id && x.IsActive);
+                if (flow == null)
+                {
+                    _logger.LogError($"Approval flow not found. ApprovalFlowId: {flowId}, BuyerId: {buyer.Id}");
+                    throw new NotFoundCustomException("Approval flow not found.", "The approval flow does not belong to this buyer organization.");
+                }
+
+                if (!string.Equals(flow.Type, Common.WISHLIST_APPROVAL_TYPE, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new BadRequestCustomException("Approval flow type is not Wishlist.", "Select an approval configuration of type WISHLIST.");
+                }
+            }
+
+            List<WishlistItem> items = await BuildItemsAsync(dto, cancellationToken);
             if (items.Count == 0)
             {
-                throw new BadRequestCustomException("Wishlist has no items.", "Add at least one material.");
+                throw new BadRequestCustomException("Wishlist has no items.", "Add at least one product from the product catalog.");
             }
 
             Wishlist wishlist = new Wishlist
@@ -77,14 +105,14 @@ namespace Buyer.Application.Features.Commands.CreateWishlist
                 Description = dto.Description,
                 SupplierOrganizationId = dto.SupplierOrganizationId,
                 SupplierName = dto.SupplierName,
-                Status = Common.WISHLIST_PENDING_APPROVAL,
-                MasterApprovalFlowId = flow.Id,
-                ApprovalName = flow.ApprovalName,
+                Status = isDraft ? Common.WISHLIST_DRAFT : Common.WISHLIST_PENDING_APPROVAL,
+                MasterApprovalFlowId = flow?.Id,
+                ApprovalName = flow?.ApprovalName,
                 Currency = dto.Currency,
                 DeliveryInstruction = dto.DeliveryInstruction,
                 RequiredDate = dto.RequiredDate,
-                SubmittedOn = DateTime.UtcNow,
-                SubmittedBy = request.UserId
+                SubmittedOn = isDraft ? null : DateTime.UtcNow,
+                SubmittedBy = isDraft ? null : request.UserId
             };
             _repository.Wishlist.Create(wishlist);
             foreach (WishlistItem item in items)
@@ -93,42 +121,51 @@ namespace Buyer.Application.Features.Commands.CreateWishlist
                 _repository.WishlistItem.Create(item);
             }
 
-            await CopyApprovalUsersAsync(wishlist, flow, cancellationToken);
-            AddAudit(wishlist.Id, request.UserId, Common.AUDIT_CREATED, "Wishlist created and sent for approval.");
+            if (isDraft || flow == null)
+            {
+                AddAudit(wishlist.Id, request.UserId, Common.AUDIT_CREATED, "Wishlist saved as draft.");
+            }
+            else
+            {
+                await CopyApprovalUsersAsync(wishlist, flow, cancellationToken);
+                AddAudit(wishlist.Id, request.UserId, Common.AUDIT_CREATED, "Wishlist created and sent for approval.");
+            }
+
             await _repository.SaveAsync();
 
             _logger.LogInfo($"Wishlist created. WishlistId: {wishlist.Id}, OrganizationId: {request.OrganizationId}, UserId: {request.UserId}");
             return wishlist.Id;
         }
 
-        private async Task<List<WishlistItem>> BuildItemsAsync(Guid buyerId, WishlistWriteDto request, CancellationToken cancellationToken)
+        // Wishlist items are products of the supplier product catalog. MaterialId holds the catalog id;
+        // name, unit and price are read from the Supplier service, not from the request.
+        private async Task<List<WishlistItem>> BuildItemsAsync(WishlistWriteDto request, CancellationToken cancellationToken)
         {
             List<WishlistItem> items = new List<WishlistItem>();
             foreach (WishlistItemWriteDto line in request.Items ?? new List<WishlistItemWriteDto>())
             {
                 if (line.Quantity <= 0)
                 {
-                    throw new BadRequestCustomException("Quantity must be greater than zero.", "Enter a quantity for every material.");
+                    throw new BadRequestCustomException("Quantity must be greater than zero.", "Enter a quantity for every product.");
                 }
 
-                ItemBuyerMaster? material = await _repository.ItemBuyerMaster.FindFirstByConditionAsync(
-                    x => x.Id == line.MaterialId && x.BuyerId == buyerId && x.IsActive);
-                if (material == null)
+                BuyerCatalogItemDto? product = await _supplierApiClient.GetBuyerCatalogById(line.MaterialId, cancellationToken);
+                if (product == null || product.CatalogId == null)
                 {
-                    _logger.LogError($"Material not found. MaterialId: {line.MaterialId}, BuyerId: {buyerId}");
-                    throw new NotFoundCustomException("Material not found.", "Select a material from the buyer catalog.");
+                    _logger.LogError($"Product not found in the product catalog. CatalogId: {line.MaterialId}");
+                    throw new NotFoundCustomException("Product not found.", "Select a product from the product catalog.");
                 }
 
                 items.Add(new WishlistItem
                 {
                     Id = Guid.NewGuid(),
-                    MaterialId = material.Id,
-                    MaterialCode = material.MaterialCode,
-                    MaterialName = material.Description,
-                    UnitOfMeasure = material.OrderUnitOfMeasure ?? material.BaseUnitOfMeasure,
+                    MaterialId = product.CatalogId.Value,
+                    MaterialCode = product.CatalogId.Value.ToString(),
+                    MaterialName = product.CatalogName ?? product.Description ?? string.Empty,
+                    UnitOfMeasure = product.UnitOfMeasure,
                     Quantity = line.Quantity,
-                    UnitPrice = line.UnitPrice,
-                    Currency = line.Currency ?? request.Currency,
+                    UnitPrice = product.Price ?? line.UnitPrice,
+                    Currency = product.Currency ?? line.Currency ?? request.Currency,
                     RequiredDate = line.RequiredDate ?? request.RequiredDate
                 });
             }

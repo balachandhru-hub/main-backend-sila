@@ -12,5 +12,10 @@ namespace Buyer.Domain.Dtos
         public string? DeliveryInstruction { get; set; }
         public DateTime? RequiredDate { get; set; }
         public List<WishlistItemWriteDto> Items { get; set; } = new();
+
+        /// <summary>
+        /// True keeps the wishlist as an editable draft. False submits it: the wishlist is frozen and approval starts.
+        /// </summary>
+        public bool SaveAsDraft { get; set; }
     }
 }

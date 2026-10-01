@@ -12,6 +12,7 @@ set -e
 (cd masterdata && ASPNETCORE_URLS=http://127.0.0.1:8002 exec dotnet MasterData.API.dll) &
 (cd supplier     && ASPNETCORE_URLS=http://127.0.0.1:8003 exec dotnet Supplier.API.dll)      &
 (cd buyer   && ASPNETCORE_URLS=http://127.0.0.1:8004 exec dotnet Buyer.API.dll)   &
+(cd operations && ASPNETCORE_URLS=http://127.0.0.1:8005 exec dotnet Operations.API.dll) &
 
 # Gateway is the only public listener; container dies with it so docker
 # restart policies and CI health checks see failures.

@@ -68,6 +68,7 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<ContractDetails> ContractDetails {get;set;}
         public DbSet<ContractAttachment> ContractAttachment {get;set;}
         public DbSet<BuyerOutlet> BuyerOutlet { get; set; }
+        public DbSet<BuyerOutletUserMapping> BuyerOutletUserMapping { get; set; }
         public DbSet<Wishlist> Wishlist { get; set; }
         public DbSet<WishlistItem> WishlistItem { get; set; }
         public DbSet<WishlistApprovalFlow> WishlistApprovalFlow { get; set; }
@@ -131,6 +132,8 @@ namespace Buyer.Infrastructure.DbContext
             _ = modelBuilder.Entity<ContractDetails>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<ContractAttachment>().HasIndex(a=>a.IsActive);
             _ = modelBuilder.Entity<BuyerOutlet>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<BuyerOutletUserMapping>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<BuyerOutletUserMapping>().HasIndex(a => a.UserId);
             _ = modelBuilder.Entity<Wishlist>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<WishlistItem>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<WishlistApprovalFlow>().HasIndex(a => a.IsActive);

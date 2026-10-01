@@ -703,6 +703,10 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
+                    b.Property<Guid?>("MasterApprovalFlowId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("master_approval_flow_id");
+
                     b.Property<string>("OutletCode")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("outlet_code");
@@ -726,6 +730,56 @@ namespace Buyer.Infrastructure.Migrations
                         .HasDatabaseName("ix_buyer_outlet_is_active");
 
                     b.ToTable("buyer_outlet", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.BuyerOutletUserMapping", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("OutletId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("outlet_id");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_buyer_outlet_user_mapping");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_buyer_outlet_user_mapping_is_active");
+
+                    b.HasIndex("OutletId")
+                        .HasDatabaseName("ix_buyer_outlet_user_mapping_outlet_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_buyer_outlet_user_mapping_user_id");
+
+                    b.ToTable("buyer_outlet_user_mapping", "buyersystem");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.BuyerRegistration", b =>
@@ -4120,6 +4174,18 @@ namespace Buyer.Infrastructure.Migrations
                         .HasConstraintName("fk_buyer_outlet_buyer_business_profile_buyer_id");
 
                     b.Navigation("BuyerBusinessProfile");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.BuyerOutletUserMapping", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.BuyerOutlet", "Outlet")
+                        .WithMany()
+                        .HasForeignKey("OutletId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_buyer_outlet_user_mapping_buyer_outlet_outlet_id");
+
+                    b.Navigation("Outlet");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.BuyerSupplierMapping", b =>

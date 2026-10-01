@@ -66,12 +66,11 @@ namespace Buyer.Application.Features.Commands.CreateErpIntegration
                 || string.IsNullOrWhiteSpace(dto.ErpType)
                 || string.IsNullOrWhiteSpace(dto.BaseUrl)
                 || string.IsNullOrWhiteSpace(dto.CreateDocumentPath)
-                || string.IsNullOrWhiteSpace(dto.AuthType)
-                || string.IsNullOrWhiteSpace(dto.DocumentType))
+                || string.IsNullOrWhiteSpace(dto.AuthType))
             {
                 throw new BadRequestCustomException(
                     "API configuration is incomplete.",
-                    "API name, API type, system, document type, base URL, path, and authentication are required.");
+                    "API name, API type, system, base URL, path, and authentication are required.");
             }
 
             string payloadFormat = string.IsNullOrWhiteSpace(dto.PayloadFormat) ? Common.PAYLOAD_JSON : dto.PayloadFormat.Trim();
@@ -103,7 +102,9 @@ namespace Buyer.Application.Features.Commands.CreateErpIntegration
                     "Use NONE, BASIC, API_KEY, BEARER, or OAUTH2_CLIENT_CREDENTIALS.");
             }
 
-            if (dto.DocumentType != Common.ERP_DOCUMENT_PO && dto.DocumentType != Common.ERP_DOCUMENT_PR)
+            // Only the purchase order API creates a PO or PR; the other API types have no document type.
+            bool isPurchaseOrder = string.Equals(dto.Process.Trim(), Common.ERP_OPERATION_PO_CREATE, StringComparison.OrdinalIgnoreCase);
+            if (isPurchaseOrder && dto.DocumentType != Common.ERP_DOCUMENT_PO && dto.DocumentType != Common.ERP_DOCUMENT_PR)
             {
                 throw new BadRequestCustomException("Document type is invalid.", "Use PO or PR.");
             }
@@ -117,7 +118,7 @@ namespace Buyer.Application.Features.Commands.CreateErpIntegration
             target.SupplierOrganizationId = request.SupplierOrganizationId;
             target.PayloadFormat = string.IsNullOrWhiteSpace(request.PayloadFormat) ? Common.PAYLOAD_JSON : request.PayloadFormat.Trim();
             target.RequestBody = request.RequestBody;
-            target.DocumentType = request.DocumentType.Trim();
+            target.DocumentType = request.DocumentType?.Trim() ?? string.Empty;
             target.BaseUrl = request.BaseUrl.Trim();
             target.CreateDocumentPath = request.CreateDocumentPath.Trim();
             target.HttpMethod = string.IsNullOrWhiteSpace(request.HttpMethod) ? "POST" : request.HttpMethod.Trim();

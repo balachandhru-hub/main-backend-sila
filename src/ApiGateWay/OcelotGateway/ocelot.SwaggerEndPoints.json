@@ -43,6 +43,17 @@
           "Url": "http://localhost:8004/swagger/v1/swagger.json"
         }
       ]
+    },
+    {
+      "Key": "operations",
+      "TransformByOcelotConfig": false,
+      "Config": [
+        {
+          "Name": "Operations API",
+          "Version": "v1",
+          "Url": "http://localhost:8005/swagger/v1/swagger.json"
+        }
+      ]
     }
   ]
 }

@@ -133,8 +133,8 @@ namespace Identity.API.Controllers
             Response.Cookies.Append(Common.COOKIE_ACCESS_TOKEN_KEY, result.Token!,
                 new CookieOptions
                 {
-                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
-                    Path = "/",
+                    // Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    // Path = "/",
                     HttpOnly = true,
                     Secure = true,          // false for local HTTP, true for HTTPS
                     SameSite = SameSiteMode.None,
@@ -146,8 +146,8 @@ namespace Identity.API.Controllers
                 result.RefreshToken.ToString(),
                 new CookieOptions
                 {
-                    Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
-                    Path = "/",
+                    // Domain = _configuration[Common.DOMAIN_COOKIE_NAME],
+                    // Path = "/",
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
