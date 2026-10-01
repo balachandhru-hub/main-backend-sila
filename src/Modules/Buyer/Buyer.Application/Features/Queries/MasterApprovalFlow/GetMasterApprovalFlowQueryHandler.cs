@@ -50,8 +50,8 @@ namespace Buyer.Application.Features.Queries.MasterApprovalFlow
                 Id = x.Id,
                 ApprovalCode = x.ApprovalCode,
                 ApprovalName = x.ApprovalName,
-
-                BuyerId = x.BuyerId
+                BuyerId = x.BuyerId,
+                Type = x.Type
             }).ToList();
             if (result == null)
             {

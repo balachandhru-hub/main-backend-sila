@@ -42,6 +42,8 @@ namespace Supplier.Infrastructure.DbContext
         public DbSet<SupplierQuotationItemHistory> SupplierQuotationItemHistory { get; set; }
         public DbSet<RFQOrganizationUserMapping> RFQOrganizationUserMapping { get; set; }
         public DbSet<RFQAttachmentMapping> RFQAttachmentMapping { get; set; }
+        public DbSet<SupplierErpIntegrationConfiguration> SupplierErpIntegrationConfiguration { get; set; }
+        public DbSet<SupplierPurchaseDocument> SupplierPurchaseDocument { get; set; }
 
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
@@ -68,6 +70,11 @@ namespace Supplier.Infrastructure.DbContext
             _ = modelBuilder.Entity<SupplierQuotationItemHistory>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<RFQOrganizationUserMapping>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<RFQAttachmentMapping>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<SupplierErpIntegrationConfiguration>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<SupplierPurchaseDocument>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<SupplierPurchaseDocument>()
+                .HasIndex(a => a.IdempotencyKey)
+                .IsUnique();
 
                 modelBuilder.Entity<SupplierQuotationItem>()
                     .HasOne(x => x.SupplierRFQItem)

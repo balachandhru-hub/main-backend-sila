@@ -133,5 +133,56 @@ namespace Buyer.Domain.Common
                         ("TWO_TO_FOUR_WEEKS", "15–30 days", 15, 30),
                         ("LATER", "30+ days", 31, int.MaxValue),
                 };
+
+                public const string WISHLIST_APPROVAL_TYPE = "WISHLIST";
+                public const string WISHLIST_DRAFT = "DRAFT";
+                public const string WISHLIST_SUBMITTED = "SUBMITTED";
+                public const string WISHLIST_PENDING_APPROVAL = "PENDING_APPROVAL";
+                public const string WISHLIST_APPROVED = "APPROVED";
+                public const string WISHLIST_ERP_PROCESSING = "ERP_PROCESSING";
+                public const string WISHLIST_ERP_PO_CREATED = "ERP_PO_CREATED";
+                public const string WISHLIST_SUPPLIER_PO_PROCESSING = "SUPPLIER_PO_PROCESSING";
+                public const string WISHLIST_COMPLETED = "COMPLETED";
+                public const string WISHLIST_REJECTED = "REJECTED";
+                public const string WISHLIST_ERP_FAILED = "ERP_FAILED";
+                public const string WISHLIST_SUPPLIER_PO_FAILED = "SUPPLIER_PO_FAILED";
+                public const string WISHLIST_CANCELLED = "CANCELLED";
+
+                public const string INTEGRATION_BUYER_ERP = "BUYER_ERP";
+                public const string INTEGRATION_SUPPLIER_ERP = "SUPPLIER_ERP";
+                public const string INTEGRATION_PENDING = "PENDING";
+                public const string INTEGRATION_PROCESSING = "PROCESSING";
+                public const string INTEGRATION_SUCCEEDED = "SUCCEEDED";
+                public const string INTEGRATION_FAILED = "FAILED";
+                public const string INTEGRATION_UNKNOWN = "UNKNOWN";
+
+                public const string ERP_OPERATION_PO_CREATE = "PO_CREATE";
+                public const string ERP_DOCUMENT_PO = "PO";
+                public const string ERP_DOCUMENT_PR = "PR";
+                public const string PAYLOAD_JSON = "JSON";
+                public const string PAYLOAD_SOAP = "SOAP";
+                public const string PAYLOAD_CXML = "CXML";
+
+                public const string AUTH_NONE = "NONE";
+                public const string AUTH_BASIC = "BASIC";
+                public const string AUTH_API_KEY = "API_KEY";
+                public const string AUTH_BEARER = "BEARER";
+                public const string AUTH_OAUTH2_CLIENT_CREDENTIALS = "OAUTH2_CLIENT_CREDENTIALS";
+
+                public const string AUDIT_CREATED = "CREATED";
+                public const string AUDIT_MODIFIED = "MODIFIED";
+                public const string AUDIT_SUBMITTED = "SUBMITTED";
+                public const string AUDIT_APPROVAL_STARTED = "APPROVAL_STARTED";
+                public const string AUDIT_APPROVED = "APPROVED";
+                public const string AUDIT_REJECTED = "REJECTED";
+                public const string AUDIT_ERP_STARTED = "ERP_INTEGRATION_STARTED";
+                public const string AUDIT_ERP_SUCCEEDED = "ERP_INTEGRATION_SUCCEEDED";
+                public const string AUDIT_ERP_FAILED = "ERP_INTEGRATION_FAILED";
+                public const string AUDIT_SUPPLIER_STARTED = "SUPPLIER_INTEGRATION_STARTED";
+                public const string AUDIT_SUPPLIER_SUCCEEDED = "SUPPLIER_INTEGRATION_SUCCEEDED";
+                public const string AUDIT_SUPPLIER_FAILED = "SUPPLIER_INTEGRATION_FAILED";
+                public const string AUDIT_RETRY = "RETRY";
+                public const string AUDIT_CANCELLED = "CANCELLED";
+                public const string IDEMPOTENCY_HEADER = "Idempotency-Key";
         }
 }

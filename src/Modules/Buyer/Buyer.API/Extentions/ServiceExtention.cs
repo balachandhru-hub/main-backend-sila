@@ -145,7 +145,6 @@ namespace Buyer.API.Extensions
             _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
             _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
             _ = services.AddScoped<ISupplierApiClient, SupplierApiClient>();
-       
             _ = services.AddScoped<IAesEncryption, AesEncryption>();
             _ = services.AddControllers();
 
@@ -157,12 +156,6 @@ namespace Buyer.API.Extensions
         public static void ConfigureRepositoryWrapper(this IServiceCollection services)
         {
             _ = services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
-        }
-
-        public static void ConfigureScheduler(this IServiceCollection services)
-        {
-
-
         }
 
         /// <summary>

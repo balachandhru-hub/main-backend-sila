@@ -24,6 +24,7 @@ namespace Buyer.API
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables()
                 .Build();
             builder.WebHost.ConfigureKestrel(options =>
              {
@@ -81,7 +82,6 @@ namespace Buyer.API
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
 });
-            builder.Services.ConfigureScheduler();
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())

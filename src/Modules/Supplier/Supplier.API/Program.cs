@@ -26,6 +26,7 @@ public partial class Program
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
+            .AddEnvironmentVariables()
             .Build();
         builder.WebHost.ConfigureKestrel(options =>
                {
