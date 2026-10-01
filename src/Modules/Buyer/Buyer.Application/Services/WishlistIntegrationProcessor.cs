@@ -7,6 +7,10 @@ using SharedKernel.LoggerServices;
 
 namespace Buyer.Application.Services
 {
+    /// <summary>
+    /// Sends the purchase order to every API configured for PO_CREATE.
+    /// Called from the final approval request, so the send is not waiting on a poll.
+    /// </summary>
     public class WishlistIntegrationProcessor
     {
         private readonly IRepositoryWrapper _repository;
@@ -26,212 +30,94 @@ namespace Buyer.Application.Services
             _logger = logger;
         }
 
-        public async Task ProcessAsync(CancellationToken cancellationToken)
+        public async Task SendPurchaseOrdersAsync(Guid wishlistId, Guid actorUserId, CancellationToken cancellationToken)
         {
-            List<Guid> due = await _repository.Wishlist.GetDueWishlistIdsAsync(DateTime.UtcNow, cancellationToken);
-            foreach (Guid wishlistId in due)
-            {
-                try
-                {
-                    await ProcessOneAsync(wishlistId, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Wishlist integration worker failed. WishlistId={wishlistId} Error={ex.Message}");
-                }
-            }
-        }
-
-        private async Task ProcessOneAsync(Guid wishlistId, CancellationToken cancellationToken)
-        {
+            _userContext.SetCurrentUserId(actorUserId);
             Wishlist? wishlist = await _repository.Wishlist.GetTrackedByIdAsync(wishlistId, cancellationToken);
             if (wishlist == null)
             {
+                _logger.LogError($"Wishlist not found while sending purchase orders. WishlistId: {wishlistId}");
                 return;
             }
 
-            _userContext.SetCurrentUserId(wishlist.UpdatedBy == Guid.Empty ? wishlist.CreatedBy : wishlist.UpdatedBy);
-
-            if (wishlist.Status == Common.WISHLIST_ERP_PROCESSING || wishlist.Status == Common.WISHLIST_ERP_FAILED)
-            {
-                await ProcessBuyerErpAsync(wishlist, cancellationToken);
-            }
-
-            if (wishlist.Status == Common.WISHLIST_SUPPLIER_PO_PROCESSING || wishlist.Status == Common.WISHLIST_SUPPLIER_PO_FAILED)
-            {
-                await ProcessSupplierErpAsync(wishlist, cancellationToken);
-            }
-        }
-
-        private async Task ProcessBuyerErpAsync(Wishlist wishlist, CancellationToken cancellationToken)
-        {
-            PurchaseDocumentIntegration integration = await EnsureIntegrationAsync(
-                wishlist,
-                Common.INTEGRATION_BUYER_ERP,
-                Guid.Empty,
+            List<ErpIntegrationConfiguration> configurations = await _repository.ErpIntegration.ListForOperationAsync(
+                wishlist.BuyerId,
+                Common.ERP_OPERATION_PO_CREATE,
+                wishlist.SupplierOrganizationId,
                 cancellationToken);
-
-            if (integration.Status == Common.INTEGRATION_SUCCEEDED && !string.IsNullOrWhiteSpace(integration.ExternalDocumentNumber))
+            if (configurations.Count == 0)
             {
-                ApplyBuyerSuccess(wishlist, integration.ExternalDocumentNumber, integration.DocumentType);
+                wishlist.Status = Common.WISHLIST_ERP_FAILED;
+                wishlist.LastError = "No purchase order API is configured. Add an API with type PO_CREATE.";
+                AddAudit(wishlist, Common.AUDIT_ERP_FAILED, wishlist.LastError);
                 await _repository.SaveAsync();
+                _logger.LogError($"No PO_CREATE API is configured. WishlistId: {wishlist.Id}, BuyerId: {wishlist.BuyerId}");
                 return;
             }
-
-            if (IsInFlight(integration))
-            {
-                return;
-            }
-
-            ErpIntegrationConfiguration? configuration = await ResolveBuyerConfigurationAsync(wishlist, integration, cancellationToken);
-            if (configuration == null || !configuration.IsActive)
-            {
-                await FailAsync(wishlist, integration, Common.WISHLIST_ERP_FAILED, Common.AUDIT_ERP_FAILED,
-                    "No active buyer ERP configuration is available for this organization.", false, 400, null, cancellationToken);
-                return;
-            }
-
-            PinConfiguration(integration, configuration);
-            string correlationId = Guid.NewGuid().ToString("N");
-            integration.Status = Common.INTEGRATION_PROCESSING;
-            integration.CorrelationId = correlationId;
-            integration.LastAttemptOn = DateTime.UtcNow;
-            AddAudit(wishlist, Common.AUDIT_ERP_STARTED, $"CorrelationId={correlationId} ConfigurationId={configuration.Id}");
-            await _repository.SaveAsync();
 
             List<WishlistItem> items = await _repository.Wishlist.GetItemsAsync(wishlist.Id, cancellationToken);
             BuyerOutlet? outlet = await _repository.Wishlist.GetOutletAsync(wishlist.OutletId, wishlist.BuyerId, cancellationToken);
-            BuyerPurchaseDocumentRequest request = new BuyerPurchaseDocumentRequest
+            List<PurchaseDocumentIntegration> existing = await _repository.Wishlist.GetIntegrationsAsync(wishlist.Id, cancellationToken);
+            List<string> documents = new List<string>();
+            List<string> failures = new List<string>();
+
+            foreach (ErpIntegrationConfiguration configuration in configurations)
             {
-                IdempotencyKey = integration.IdempotencyKey,
-                WishlistId = wishlist.Id,
-                BuyerOrganizationId = wishlist.BuyerOrganizationId,
-                DocumentType = integration.DocumentType ?? configuration.DocumentType,
-                OutletCode = outlet?.OutletCode,
-                OutletName = outlet?.OutletName,
-                Currency = wishlist.Currency,
-                DeliveryInstruction = wishlist.DeliveryInstruction,
-                RequiredDate = wishlist.RequiredDate,
-                CorrelationId = correlationId,
-                Lines = items.Select(item => new BuyerPurchaseLine
+                string? documentNumber = await SendOneAsync(wishlist, configuration, items, outlet, existing, cancellationToken);
+                if (string.IsNullOrWhiteSpace(documentNumber))
                 {
-                    MaterialCode = item.MaterialCode,
-                    MaterialName = item.MaterialName,
-                    Quantity = item.Quantity,
-                    UnitOfMeasure = item.UnitOfMeasure,
-                    UnitPrice = item.UnitPrice,
-                    Currency = item.Currency ?? wishlist.Currency
-                }).ToList()
-            };
+                    failures.Add($"{configuration.ErpType}: {wishlist.LastError}");
+                    continue;
+                }
 
-            ExternalCallResult result = await _buyerGateway.CreateBuyerPurchaseDocumentAsync(
-                configuration,
-                integration.ResolvedBaseUrl!,
-                integration.ResolvedPath!,
-                string.IsNullOrWhiteSpace(integration.ResolvedHttpMethod) ? "POST" : integration.ResolvedHttpMethod,
-                request,
-                cancellationToken);
-
-            if (result.Succeeded && !string.IsNullOrWhiteSpace(result.DocumentNumber))
-            {
-                integration.Status = Common.INTEGRATION_SUCCEEDED;
-                integration.ExternalDocumentNumber = result.DocumentNumber;
-                integration.ResponseBody = result.ResponseBody;
-                integration.ErrorMessage = null;
-                integration.OutcomeUnknown = false;
-                integration.NextAttemptOn = null;
-                ApplyBuyerSuccess(wishlist, result.DocumentNumber, integration.DocumentType);
-                AddAudit(wishlist, Common.AUDIT_ERP_SUCCEEDED, $"DocumentNumber={result.DocumentNumber} CorrelationId={correlationId}");
-                wishlist.Status = Common.WISHLIST_SUPPLIER_PO_PROCESSING;
-                await EnsureIntegrationAsync(wishlist, Common.INTEGRATION_SUPPLIER_ERP, wishlist.SupplierOrganizationId ?? Guid.Empty, cancellationToken);
-                AddAudit(wishlist, Common.AUDIT_SUPPLIER_STARTED, "Queued after buyer ERP document was stored.");
-                await _repository.SaveAsync();
-                _logger.LogInfo(
-                    $"Buyer ERP document stored. WishlistId={wishlist.Id} BuyerOrganizationId={wishlist.BuyerOrganizationId} " +
-                    $"ConfigurationId={configuration.Id} CorrelationId={correlationId} DurationMs={result.DurationMs} RetryCount={integration.RetryCount}");
-                return;
+                documents.Add($"{configuration.ErpType}: {documentNumber}");
             }
 
-            await FailAsync(
-                wishlist,
-                integration,
-                Common.WISHLIST_ERP_FAILED,
-                Common.AUDIT_ERP_FAILED,
-                result.ErrorMessage ?? "Buyer ERP creation failed.",
-                result.OutcomeUnknown,
-                result.StatusCode,
-                result.ResponseBody,
-                cancellationToken,
-                configuration.MaxRetryCount);
-        }
-
-        private async Task ProcessSupplierErpAsync(Wishlist wishlist, CancellationToken cancellationToken)
-        {
-            if (wishlist.SupplierOrganizationId == null || wishlist.SupplierOrganizationId == Guid.Empty)
+            if (documents.Count > 0)
             {
-                wishlist.Status = Common.WISHLIST_SUPPLIER_PO_FAILED;
-                wishlist.LastError = "Wishlist has no supplier organization, so a supplier purchase order cannot be created.";
-                AddAudit(wishlist, Common.AUDIT_SUPPLIER_FAILED, wishlist.LastError);
-                await _repository.SaveAsync();
-                return;
+                wishlist.BuyerErpDocumentNumber = string.Join("; ", documents);
+                wishlist.BuyerErpDocumentType = Common.ERP_DOCUMENT_PO;
             }
 
-            if (string.IsNullOrWhiteSpace(wishlist.BuyerErpDocumentNumber))
+            if (failures.Count == 0)
             {
-                wishlist.Status = Common.WISHLIST_SUPPLIER_PO_FAILED;
-                wishlist.LastError = "Supplier purchase order was not started because the buyer ERP document number is missing.";
-                AddAudit(wishlist, Common.AUDIT_SUPPLIER_FAILED, wishlist.LastError);
-                await _repository.SaveAsync();
-                return;
-            }
-
-            PurchaseDocumentIntegration integration = await EnsureIntegrationAsync(
-                wishlist,
-                Common.INTEGRATION_SUPPLIER_ERP,
-                wishlist.SupplierOrganizationId.Value,
-                cancellationToken);
-
-            if (integration.Status == Common.INTEGRATION_SUCCEEDED && !string.IsNullOrWhiteSpace(integration.ExternalDocumentNumber))
-            {
-                wishlist.SupplierErpDocumentNumber = integration.ExternalDocumentNumber;
-                wishlist.SupplierErpDocumentType = integration.DocumentType ?? Common.ERP_DOCUMENT_PO;
                 wishlist.Status = Common.WISHLIST_COMPLETED;
                 wishlist.LastError = null;
                 await _repository.SaveAsync();
+                _logger.LogInfo($"Purchase orders sent. WishlistId: {wishlist.Id}, Documents: {wishlist.BuyerErpDocumentNumber}");
                 return;
             }
 
-            if (IsInFlight(integration))
+            wishlist.Status = Common.WISHLIST_ERP_FAILED;
+            wishlist.LastError = string.Join(" ", failures);
+            await _repository.SaveAsync();
+            _logger.LogError($"Purchase order send failed. WishlistId: {wishlist.Id}, Error: {wishlist.LastError}");
+        }
+
+        private async Task<string?> SendOneAsync(
+            Wishlist wishlist,
+            ErpIntegrationConfiguration configuration,
+            List<WishlistItem> items,
+            BuyerOutlet? outlet,
+            List<PurchaseDocumentIntegration> existing,
+            CancellationToken cancellationToken)
+        {
+            PurchaseDocumentIntegration integration = await EnsureIntegrationAsync(wishlist, configuration, existing, cancellationToken);
+            if (integration.Status == Common.INTEGRATION_SUCCEEDED && !string.IsNullOrWhiteSpace(integration.ExternalDocumentNumber))
             {
-                return;
+                return integration.ExternalDocumentNumber;
             }
 
-            ErpIntegrationConfiguration? destination = await _repository.ErpIntegration.FindActiveAsync(
-                wishlist.BuyerId,
-                Common.ERP_PROCESS_WISHLIST,
-                wishlist.SupplierOrganizationId.Value,
-                cancellationToken);
-            if (destination == null)
-            {
-                wishlist.Status = Common.WISHLIST_SUPPLIER_PO_FAILED;
-                wishlist.LastError = "No ERP endpoint is configured for this supplier. Each supplier needs its own URL, authentication, and payload format.";
-                AddAudit(wishlist, Common.AUDIT_SUPPLIER_FAILED, wishlist.LastError);
-                await _repository.SaveAsync();
-                return;
-            }
-
-            PinConfiguration(integration, destination);
             string correlationId = Guid.NewGuid().ToString("N");
             integration.Status = Common.INTEGRATION_PROCESSING;
             integration.CorrelationId = correlationId;
             integration.LastAttemptOn = DateTime.UtcNow;
-            integration.DocumentType = string.IsNullOrWhiteSpace(destination.DocumentType)
+            integration.DocumentType = string.IsNullOrWhiteSpace(configuration.DocumentType)
                 ? Common.ERP_DOCUMENT_PO
-                : destination.DocumentType;
+                : configuration.DocumentType;
+            AddAudit(wishlist, Common.AUDIT_ERP_STARTED, $"System={configuration.ErpType} ConfigurationId={configuration.Id} CorrelationId={correlationId}");
             await _repository.SaveAsync();
 
-            BuyerOutlet? outlet = await _repository.Wishlist.GetOutletAsync(wishlist.OutletId, wishlist.BuyerId, cancellationToken);
-            List<WishlistItem> items = await _repository.Wishlist.GetItemsAsync(wishlist.Id, cancellationToken);
             BuyerPurchaseDocumentRequest request = new BuyerPurchaseDocumentRequest
             {
                 IdempotencyKey = integration.IdempotencyKey,
@@ -258,12 +144,13 @@ namespace Buyer.Application.Services
             };
 
             ExternalCallResult result = await _buyerGateway.CreateBuyerPurchaseDocumentAsync(
-                destination,
-                integration.ResolvedBaseUrl!,
-                integration.ResolvedPath!,
-                integration.ResolvedHttpMethod!,
+                configuration,
+                configuration.BaseUrl,
+                configuration.CreateDocumentPath,
+                string.IsNullOrWhiteSpace(configuration.HttpMethod) ? "POST" : configuration.HttpMethod,
                 request,
                 cancellationToken);
+
             if (result.Succeeded && !string.IsNullOrWhiteSpace(result.DocumentNumber))
             {
                 integration.Status = Common.INTEGRATION_SUCCEEDED;
@@ -272,142 +159,65 @@ namespace Buyer.Application.Services
                 integration.ErrorMessage = null;
                 integration.OutcomeUnknown = false;
                 integration.NextAttemptOn = null;
-                wishlist.SupplierErpDocumentNumber = result.DocumentNumber;
-                wishlist.SupplierErpDocumentType = Common.ERP_DOCUMENT_PO;
-                wishlist.Status = Common.WISHLIST_COMPLETED;
-                wishlist.LastError = null;
-                AddAudit(wishlist, Common.AUDIT_SUPPLIER_SUCCEEDED, $"DocumentNumber={result.DocumentNumber} CorrelationId={correlationId}");
+                AddAudit(wishlist, Common.AUDIT_ERP_SUCCEEDED, $"System={configuration.ErpType} DocumentNumber={result.DocumentNumber} CorrelationId={correlationId}");
                 await _repository.SaveAsync();
                 _logger.LogInfo(
-                    $"Supplier PO stored. WishlistId={wishlist.Id} SupplierOrganizationId={wishlist.SupplierOrganizationId} " +
-                    $"CorrelationId={correlationId} RetryCount={integration.RetryCount}");
-                return;
+                    $"Purchase order stored. WishlistId={wishlist.Id} System={configuration.ErpType} ConfigurationId={configuration.Id} " +
+                    $"CorrelationId={correlationId} DurationMs={result.DurationMs}");
+                return result.DocumentNumber;
             }
 
-            int maxRetry = destination.MaxRetryCount < 0 ? 0 : destination.MaxRetryCount;
-            await FailAsync(
-                wishlist,
-                integration,
-                Common.WISHLIST_SUPPLIER_PO_FAILED,
-                Common.AUDIT_SUPPLIER_FAILED,
-                result.ErrorMessage ?? "Supplier purchase order creation failed.",
-                result.OutcomeUnknown,
-                result.StatusCode,
-                result.ResponseBody,
-                cancellationToken,
-                maxRetry);
-        }
-
-        private async Task<ErpIntegrationConfiguration?> ResolveBuyerConfigurationAsync(
-            Wishlist wishlist,
-            PurchaseDocumentIntegration integration,
-            CancellationToken cancellationToken)
-        {
-            if (integration.ConfigurationId.HasValue)
-            {
-                return await _repository.ErpIntegration.GetTrackedAsync(wishlist.BuyerId, integration.ConfigurationId.Value, cancellationToken);
-            }
-
-            return await _repository.ErpIntegration.FindActiveAsync(
-                wishlist.BuyerId,
-                Common.ERP_PROCESS_WISHLIST,
-                null,
-                cancellationToken);
-        }
-
-        private static void PinConfiguration(PurchaseDocumentIntegration integration, ErpIntegrationConfiguration configuration)
-        {
-            if (!string.IsNullOrWhiteSpace(integration.ResolvedBaseUrl))
-            {
-                return;
-            }
-
-            integration.ConfigurationId = configuration.Id;
-            integration.ConfigurationVersion = configuration.Version;
-            integration.ResolvedBaseUrl = configuration.BaseUrl;
-            integration.ResolvedPath = configuration.CreateDocumentPath;
-            integration.ResolvedHttpMethod = configuration.HttpMethod;
-            integration.ResolvedErpType = configuration.ErpType;
-            integration.DocumentType = configuration.DocumentType;
+            string error = result.ErrorMessage ?? "Purchase order creation failed.";
+            integration.Status = result.OutcomeUnknown ? Common.INTEGRATION_UNKNOWN : Common.INTEGRATION_FAILED;
+            integration.RetryCount += 1;
+            integration.ErrorMessage = error;
+            integration.OutcomeUnknown = result.OutcomeUnknown;
+            integration.ResponseBody = result.ResponseBody;
+            integration.LastAttemptOn = DateTime.UtcNow;
+            integration.NextAttemptOn = null;
+            wishlist.LastError = error;
+            AddAudit(wishlist, Common.AUDIT_ERP_FAILED, $"System={configuration.ErpType} StatusCode={result.StatusCode} {error}");
+            await _repository.SaveAsync();
+            _logger.LogError(
+                $"Purchase order call failed. WishlistId={wishlist.Id} System={configuration.ErpType} ConfigurationId={configuration.Id} " +
+                $"CorrelationId={correlationId} StatusCode={result.StatusCode}");
+            return null;
         }
 
         private async Task<PurchaseDocumentIntegration> EnsureIntegrationAsync(
             Wishlist wishlist,
-            string integrationType,
-            Guid supplierOrganizationId,
+            ErpIntegrationConfiguration configuration,
+            List<PurchaseDocumentIntegration> existing,
             CancellationToken cancellationToken)
         {
-            PurchaseDocumentIntegration? existing = await _repository.Wishlist.GetIntegrationAsync(
-                wishlist.Id,
-                integrationType,
-                supplierOrganizationId,
-                cancellationToken);
-            if (existing != null)
+            PurchaseDocumentIntegration? integration = existing.FirstOrDefault(x => x.ConfigurationId == configuration.Id);
+            if (integration != null)
             {
-                return existing;
+                return integration;
             }
 
-            PurchaseDocumentIntegration created = new PurchaseDocumentIntegration
+            integration = new PurchaseDocumentIntegration
             {
                 Id = Guid.NewGuid(),
                 WishlistId = wishlist.Id,
                 BuyerOrganizationId = wishlist.BuyerOrganizationId,
-                SupplierOrganizationId = supplierOrganizationId,
-                IntegrationType = integrationType,
-                IdempotencyKey = $"{wishlist.Id}:{integrationType}:{supplierOrganizationId}",
+                SupplierOrganizationId = configuration.SupplierOrganizationId ?? Guid.Empty,
+                IntegrationType = Common.ERP_OPERATION_PO_CREATE,
+                IdempotencyKey = $"{wishlist.Id}:{configuration.Id}",
+                ConfigurationId = configuration.Id,
+                ConfigurationVersion = configuration.Version,
+                ResolvedBaseUrl = configuration.BaseUrl,
+                ResolvedPath = configuration.CreateDocumentPath,
+                ResolvedHttpMethod = configuration.HttpMethod,
+                ResolvedErpType = configuration.ErpType,
+                DocumentType = configuration.DocumentType,
                 Status = Common.INTEGRATION_PENDING,
                 IsActive = true
             };
-            _repository.PurchaseDocumentIntegration.Create(created);
+            _repository.PurchaseDocumentIntegration.Create(integration);
+            existing.Add(integration);
             await _repository.SaveAsync();
-            return created;
-        }
-
-        private async Task FailAsync(
-            Wishlist wishlist,
-            PurchaseDocumentIntegration integration,
-            string wishlistStatus,
-            string auditAction,
-            string error,
-            bool outcomeUnknown,
-            int statusCode,
-            string? responseBody,
-            CancellationToken cancellationToken,
-            int maxRetry = 3)
-        {
-            integration.Status = outcomeUnknown ? Common.INTEGRATION_UNKNOWN : Common.INTEGRATION_FAILED;
-            integration.RetryCount += 1;
-            integration.ErrorMessage = error;
-            integration.OutcomeUnknown = outcomeUnknown;
-            integration.ResponseBody = responseBody;
-            integration.LastAttemptOn = DateTime.UtcNow;
-            integration.NextAttemptOn = !outcomeUnknown && integration.RetryCount < maxRetry
-                ? DateTime.UtcNow.AddSeconds(30 * integration.RetryCount)
-                : null;
-            wishlist.Status = wishlistStatus;
-            wishlist.LastError = error;
-            AddAudit(wishlist, auditAction, $"StatusCode={statusCode} RetryCount={integration.RetryCount} OutcomeUnknown={outcomeUnknown} {error}");
-            await _repository.SaveAsync();
-            _logger.LogError(
-                $"Integration failed. WishlistId={wishlist.Id} BuyerOrganizationId={wishlist.BuyerOrganizationId} " +
-                $"SupplierOrganizationId={integration.SupplierOrganizationId} IntegrationType={integration.IntegrationType} " +
-                $"ConfigurationId={integration.ConfigurationId} CorrelationId={integration.CorrelationId} " +
-                $"StatusCode={statusCode} RetryCount={integration.RetryCount}");
-        }
-
-        private static bool IsInFlight(PurchaseDocumentIntegration integration)
-        {
-            return integration.Status == Common.INTEGRATION_PROCESSING
-                   && integration.LastAttemptOn.HasValue
-                   && integration.LastAttemptOn.Value > DateTime.UtcNow.AddMinutes(-10);
-        }
-
-        private static void ApplyBuyerSuccess(Wishlist wishlist, string documentNumber, string? documentType)
-        {
-            wishlist.BuyerErpDocumentNumber = documentNumber;
-            wishlist.BuyerErpDocumentType = string.IsNullOrWhiteSpace(documentType) ? Common.ERP_DOCUMENT_PO : documentType;
-            wishlist.Status = Common.WISHLIST_ERP_PO_CREATED;
-            wishlist.LastError = null;
+            return integration;
         }
 
         private void AddAudit(Wishlist wishlist, string action, string? detail)

@@ -1,6 +1,9 @@
+using Buyer.Application.Services;
+using Buyer.Application.Services.Integration;
 using Buyer.Domain.Common;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
+using Buyer.Infrastructure.Contracts.IServices;
 using MediatR;
 using SharedKernel.ExceptionHandler;
 using SharedKernel.LoggerServices;
@@ -10,11 +13,19 @@ namespace Buyer.Application.Features.Commands.DecideWishlist
     public class DecideWishlistCommandHandler : IRequestHandler<DecideWishlistCommand, Unit>
     {
         private readonly IRepositoryWrapper _repository;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IUserContext _userContext;
         private readonly ILoggerManager _logger;
 
-        public DecideWishlistCommandHandler(IRepositoryWrapper repository, ILoggerManager logger)
+        public DecideWishlistCommandHandler(
+            IRepositoryWrapper repository,
+            IHttpClientFactory httpClientFactory,
+            IUserContext userContext,
+            ILoggerManager logger)
         {
             _repository = repository;
+            _httpClientFactory = httpClientFactory;
+            _userContext = userContext;
             _logger = logger;
         }
 
@@ -92,9 +103,24 @@ namespace Buyer.Application.Features.Commands.DecideWishlist
             wishlist.FinalApprovedOn = DateTime.UtcNow;
             wishlist.Status = Common.WISHLIST_ERP_PROCESSING;
             wishlist.LastError = null;
-            AddAudit(wishlist.Id, request.UserId, Common.AUDIT_ERP_STARTED, "Final approval started buyer ERP processing.");
+            AddAudit(wishlist.Id, request.UserId, Common.AUDIT_ERP_STARTED, "Final approval is sending the purchase order to the configured APIs.");
             await _repository.SaveAsync();
             _logger.LogInfo($"Wishlist final approval stored. WishlistId: {wishlist.Id}, UserId: {request.UserId}");
+
+            WishlistIntegrationProcessor processor = new WishlistIntegrationProcessor(
+                _repository,
+                new BuyerPurchaseDocumentGateway(_httpClientFactory, _logger),
+                _userContext,
+                _logger);
+            await processor.SendPurchaseOrdersAsync(wishlist.Id, request.UserId, cancellationToken);
+            if (wishlist.Status == Common.WISHLIST_ERP_FAILED)
+            {
+                throw new PreConditionFailedCustomException(
+                    "Approval was stored, but the purchase order was not created.",
+                    wishlist.LastError ?? "The configured purchase order API did not accept the document.");
+            }
+
+            _logger.LogInfo($"Purchase order sent after approval. WishlistId: {wishlist.Id}, Document: {wishlist.BuyerErpDocumentNumber}");
             return Unit.Value;
         }
 

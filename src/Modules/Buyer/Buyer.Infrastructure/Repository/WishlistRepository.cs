@@ -1,4 +1,3 @@
-using Buyer.Domain.Common;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using Buyer.Infrastructure.DbContext;
@@ -90,35 +89,6 @@ namespace Buyer.Infrastructure.Repository
                 .AsNoTracking()
                 .Where(x => x.WishlistId == wishlistId && x.IsActive)
                 .OrderBy(x => x.DateCreated)
-                .ToListAsync(cancellationToken);
-        }
-
-        public Task<List<Guid>> GetDueWishlistIdsAsync(DateTime utcNow, CancellationToken cancellationToken)
-        {
-            string[] activeStatuses =
-            {
-                Common.WISHLIST_ERP_PROCESSING,
-                Common.WISHLIST_SUPPLIER_PO_PROCESSING
-            };
-            string[] retryStatuses =
-            {
-                Common.WISHLIST_ERP_FAILED,
-                Common.WISHLIST_SUPPLIER_PO_FAILED
-            };
-
-            return RepositoryContext.Wishlist
-                .AsNoTracking()
-                .Where(x => x.IsActive && (
-                    activeStatuses.Contains(x.Status)
-                    || (retryStatuses.Contains(x.Status)
-                        && RepositoryContext.PurchaseDocumentIntegration.Any(i =>
-                            i.WishlistId == x.Id
-                            && i.IsActive
-                            && i.NextAttemptOn != null
-                            && i.NextAttemptOn <= utcNow
-                            && !i.OutcomeUnknown
-                            && i.Status == Common.INTEGRATION_FAILED))))
-                .Select(x => x.Id)
                 .ToListAsync(cancellationToken);
         }
     }

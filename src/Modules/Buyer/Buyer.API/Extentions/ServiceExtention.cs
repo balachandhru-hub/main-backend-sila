@@ -158,15 +158,6 @@ namespace Buyer.API.Extensions
             _ = services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
         }
 
-        public static void ConfigureScheduler(this IServiceCollection services)
-        {
-            services.AddSingleton<Buyer.Application.Services.SchedulerService>();
-            services.AddSingleton<Buyer.Application.Services.ISchedulerService>(
-                provider => provider.GetRequiredService<Buyer.Application.Services.SchedulerService>());
-            services.AddHostedService(
-                provider => provider.GetRequiredService<Buyer.Application.Services.SchedulerService>());
-        }
-
         /// <summary>
         /// This method is used to inject the mappings of Entities and Dto.
         /// </summary>

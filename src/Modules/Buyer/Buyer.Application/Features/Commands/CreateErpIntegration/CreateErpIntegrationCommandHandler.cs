@@ -62,7 +62,23 @@ namespace Buyer.Application.Features.Commands.CreateErpIntegration
             {
                 throw new BadRequestCustomException(
                     "API configuration is incomplete.",
-                    "API name, process, system, document type, base URL, path, and authentication are required.");
+                    "API name, API type, system, document type, base URL, path, and authentication are required.");
+            }
+
+            string payloadFormat = string.IsNullOrWhiteSpace(dto.PayloadFormat) ? Common.PAYLOAD_JSON : dto.PayloadFormat.Trim();
+            if (!string.Equals(payloadFormat, Common.PAYLOAD_JSON, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(payloadFormat, Common.PAYLOAD_SOAP, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(payloadFormat, Common.PAYLOAD_CXML, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BadRequestCustomException("Body format is invalid.", "Use JSON, SOAP, or CXML.");
+            }
+
+            if (!string.Equals(payloadFormat, Common.PAYLOAD_JSON, StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrWhiteSpace(dto.RequestBody))
+            {
+                throw new BadRequestCustomException(
+                    "Request body is required.",
+                    "SOAP and cXML calls send the body configured here. Paste the envelope or cXML for this API.");
             }
 
             if (!dto.BaseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
@@ -87,7 +103,7 @@ namespace Buyer.Application.Features.Commands.CreateErpIntegration
         internal static void Apply(ErpIntegrationConfiguration target, ErpIntegrationWriteDto request, bool keepSecrets)
         {
             target.ApiName = request.ApiName.Trim();
-            target.Process = request.Process.Trim();
+            target.Process = request.Process.Trim().ToUpperInvariant();
             target.ErpType = request.ErpType.Trim();
             target.SupplierOrganizationId = request.SupplierOrganizationId;
             target.PayloadFormat = string.IsNullOrWhiteSpace(request.PayloadFormat) ? Common.PAYLOAD_JSON : request.PayloadFormat.Trim();

@@ -29,11 +29,15 @@ namespace Buyer.Domain.Entities
         public string ApiName { get; set; } = string.Empty;
 
         /// <summary>
-        /// Which process calls this API: WISHLIST, CONTRACT, ITEM_MASTER, or another process name.
+        /// Operation this API performs, for example PO_CREATE.
+        /// After the last wishlist approval, every active PO_CREATE API is called.
         /// </summary>
         [Required]
         public string Process { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Target system name, for example SAP_S4, ARIBA, or another ERP. The name does not choose the payload.
+        /// </summary>
         [Required]
         public string ErpType { get; set; } = string.Empty;
 
@@ -44,7 +48,7 @@ namespace Buyer.Domain.Entities
         public Guid? SupplierOrganizationId { get; set; }
 
         /// <summary>
-        /// JSON or CXML. Ariba and S/4 use CXML. Other systems use JSON unless this is set.
+        /// JSON for a REST API, SOAP, or CXML. Chosen on the configuration, not from the system name.
         /// </summary>
         public string PayloadFormat { get; set; } = "JSON";
 

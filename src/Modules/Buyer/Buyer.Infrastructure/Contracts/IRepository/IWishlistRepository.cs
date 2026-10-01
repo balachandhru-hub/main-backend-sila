@@ -14,6 +14,5 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         Task<WishlistApprovalFlow?> GetApprovalFlowAsync(Guid wishlistId, CancellationToken cancellationToken);
         Task<List<WishlistApprovalUserMapping>> GetApprovalUsersAsync(Guid approvalFlowId, CancellationToken cancellationToken);
         Task<List<WishlistAudit>> GetAuditAsync(Guid wishlistId, CancellationToken cancellationToken);
-        Task<List<Guid>> GetDueWishlistIdsAsync(DateTime utcNow, CancellationToken cancellationToken);
     }
 }
