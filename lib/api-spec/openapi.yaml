@@ -1,0 +1,2949 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Shared SILA ME foundation API for Cloud and Mobile
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Application-scoped authentication
+  - name: account
+    description: Authenticated account operations
+  - name: access
+    description: Organization and user access foundation
+  - name: operations
+    description: Invoice receiving and inventory operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /auth/cloud/login:
+    post:
+      operationId: cloudLogin
+      tags: [auth]
+      summary: Start a Cloud session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Authenticated Cloud account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "401":
+          $ref: "#/components/responses/AuthenticationError"
+  /auth/cloud/session:
+    get:
+      operationId: getCloudSession
+      tags: [auth]
+      summary: Restore a Cloud session
+      responses:
+        "200":
+          description: Authenticated Cloud account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "401":
+          $ref: "#/components/responses/AuthenticationError"
+  /auth/cloud/logout:
+    post:
+      operationId: cloudLogout
+      tags: [auth]
+      summary: Revoke the current Cloud session
+      responses:
+        "204":
+          description: Session revoked
+  /auth/mobile/login:
+    post:
+      operationId: mobileLogin
+      tags: [auth]
+      summary: Start a Mobile session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Authenticated Mobile account and bearer token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MobileAuthSession"
+        "401":
+          $ref: "#/components/responses/AuthenticationError"
+  /auth/mobile/logout:
+    post:
+      operationId: mobileLogout
+      tags: [auth]
+      summary: Revoke the current Mobile session
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Session revoked
+  /me:
+    get:
+      operationId: getCurrentUser
+      tags: [account]
+      summary: Get the authenticated user
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Authenticated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUser"
+        "401":
+          $ref: "#/components/responses/AuthenticationError"
+  /v1/access/context:
+    get:
+      operationId: getAccessContext
+      tags: [access]
+      summary: Get the current organization and permission context
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Current access context
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessContext"
+        "401":
+          $ref: "#/components/responses/AuthenticationError"
+  /v1/access/users:
+    get:
+      operationId: getAccessUsers
+      tags: [access]
+      summary: List users in accessible organizations
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Accessible users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AccessUser"
+        "401":
+          $ref: "#/components/responses/AuthenticationError"
+        "403":
+          description: Missing Cloud access permission
+    post:
+      operationId: createAccessUser
+      tags: [access]
+      summary: Create a user with scoped access
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAccessUserInput"
+      responses:
+        "201":
+          description: User created
+        "403":
+          description: Missing user permission
+  /v1/access/users/{userId}:
+    get:
+      operationId: getAccessUser
+      tags: [access]
+      summary: Get a user access detail and effective authorization preview
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: User access detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessUserDetail"
+        "404":
+          description: User is outside the current tenant scope
+  /v1/access/users/{userId}/overrides:
+    put:
+      operationId: setUserAuthorizationOverride
+      tags: [access]
+      summary: Set a user-level grant or deny override
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthorizationOverrideInput"
+      responses:
+        "200":
+          description: Updated user detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessUserDetail"
+  /v1/access/users/{userId}/overrides/{authorizationId}:
+    delete:
+      operationId: removeUserAuthorizationOverride
+      tags: [access]
+      summary: Remove a user-level authorization override
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: path
+          name: authorizationId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Override removed
+  /v1/access/authorization-preview:
+    get:
+      operationId: getAuthorizationPreview
+      tags: [access]
+      summary: Preview permissions inherited from a role
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: roleId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: application
+          schema: { type: string, enum: [CLOUD, MOBILE] }
+      responses:
+        "200":
+          description: Authorization preview
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuthorizationPreview"
+  /v1/access/storage-connections:
+    get:
+      operationId: getStorageConnections
+      tags: [access]
+      summary: List organization storage connections
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: organizationId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Storage connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StorageConnection"
+    post:
+      operationId: createStorageConnection
+      tags: [access]
+      summary: Register an external storage connection for backend validation
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStorageConnectionInput"
+      responses:
+        "201":
+          description: Pending storage connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageConnection"
+  /v1/access/roles:
+    get:
+      operationId: getAccessRoles
+      tags: [access]
+      summary: List active roles and permissions
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Active roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Role"
+        "401":
+          $ref: "#/components/responses/AuthenticationError"
+        "403":
+          description: Missing Cloud access permission
+    post:
+      operationId: assignRole
+      tags: [access]
+      summary: Assign a role to a user
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignRoleInput"
+      responses:
+        "204":
+          description: Role assigned
+        "403":
+          description: Missing access permission
+  /v1/access/permissions:
+    get:
+      operationId: getAccessPermissions
+      tags: [access]
+      summary: List active permissions
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Active permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Permission"
+        "401":
+          $ref: "#/components/responses/AuthenticationError"
+        "403":
+          description: Missing Cloud access permission
+  /v1/access/organizations:
+    post:
+      operationId: createOrganization
+      tags: [access]
+      summary: Create an organization
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationInput"
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "403":
+          description: Missing organization permission
+  /v1/access/organizations/{organizationId}/logo:
+    get:
+      operationId: getOrganizationLogo
+      tags: [access]
+      summary: Download the customer logo for an organization
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationId"
+      responses:
+        "200":
+          description: Customer logo image
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: No customer logo configured
+    put:
+      operationId: uploadOrganizationLogo
+      tags: [access]
+      summary: Upload or replace the customer logo (SUPER_ADMIN only)
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Organization with updated logo URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "403":
+          description: Only SUPER_ADMIN can update the customer logo
+    delete:
+      operationId: deleteOrganizationLogo
+      tags: [access]
+      summary: Remove the customer logo (SUPER_ADMIN only)
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationId"
+      responses:
+        "200":
+          description: Organization with logo cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "403":
+          description: Only SUPER_ADMIN can remove the customer logo
+  /v1/access/organizations/{organizationId}/units:
+    post:
+      operationId: createOrganizationUnit
+      tags: [access]
+      summary: Create an operating unit
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationUnitInput"
+      responses:
+        "201":
+          description: Operating unit created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationUnit"
+        "403":
+          description: Missing organization permission
+  /v1/access/memberships:
+    post:
+      operationId: assignMembership
+      tags: [access]
+      summary: Assign a user to an organization scope
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignMembershipInput"
+      responses:
+        "204":
+          description: Membership assigned
+        "403":
+          description: Missing access permission
+  /v1/documents/invoices:
+    post:
+      operationId: uploadInvoiceDocument
+      tags: [operations]
+      summary: Upload and process an invoice document
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadInvoiceDocumentInput"
+      responses:
+        "200":
+          description: Processed invoice document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "400":
+          $ref: "#/components/responses/OperationalError"
+  /v1/documents/basic-extract:
+    post:
+      operationId: extractBasicInvoice
+      tags: [operations]
+      summary: Extract the seven basic invoice fields from a temporary document
+      description: Authenticated backend OCR fallback for Mobile review. This endpoint does not create a persistent document or invoice.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/BasicOcrInput"
+      responses:
+        "200":
+          description: Basic OCR result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BasicOcrResponse"
+        "400":
+          $ref: "#/components/responses/OperationalError"
+  /v1/invoices/advanced-extract:
+    post:
+      operationId: extractAdvancedInvoice
+      tags: [operations]
+      summary: Run organization-controlled advanced invoice extraction on a temporary document
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/AdvancedInvoiceExtractionInput"
+      responses:
+        "200":
+          description: Advanced extraction result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdvancedInvoiceExtractionResponse"
+        "400":
+          $ref: "#/components/responses/OperationalError"
+  /v1/documents/{id}:
+    get:
+      operationId: getDocument
+      tags: [operations]
+      summary: Get an invoice document
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentId"
+      responses:
+        "200":
+          description: Document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+  /v1/documents/{id}/content:
+    get:
+      operationId: getDocumentContent
+      tags: [operations]
+      summary: Stream the stored invoice document
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentId"
+      responses:
+        "200":
+          description: Original stored document bytes
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /v1/documents/{id}/advanced-extract:
+    post:
+      operationId: extractAdvancedDocument
+      tags: [operations]
+      summary: Run advanced extraction against the authoritative stored document
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentId"
+      responses:
+        "200":
+          description: Advanced extraction result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdvancedInvoiceExtractionResponse"
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+  /v1/documents/{id}/status:
+    get:
+      operationId: getDocumentStatus
+      tags: [operations]
+      summary: Get document processing status
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentId"
+      responses:
+        "200":
+          description: Processing status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentStatus"
+  /v1/invoices:
+    get:
+      operationId: getInvoices
+      tags: [operations]
+      summary: List accessible invoices
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invoice"
+  /v1/invoices/{id}:
+    get:
+      operationId: getInvoice
+      tags: [operations]
+      summary: Get an invoice
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      responses:
+        "200":
+          description: Invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+    put:
+      operationId: updateInvoice
+      tags: [operations]
+      summary: Correct invoice fields
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInvoiceInput"
+      responses:
+        "200":
+          description: Updated invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+  /v1/invoices/{id}/process:
+    post:
+      operationId: processInvoice
+      tags: [operations]
+      summary: Process an uploaded invoice
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      responses:
+        "200":
+          description: Processed invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+  /v1/invoices/{id}/basic-extraction:
+    get:
+      operationId: getInvoiceBasicExtraction
+      tags: [operations]
+      summary: Get the lightweight extraction result for Mobile
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      responses:
+        "200":
+          description: Basic invoice extraction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BasicInvoiceExtraction"
+  /v1/invoices/{id}/extraction:
+    get:
+      operationId: getInvoiceExtraction
+      tags: [operations]
+      summary: Get the full invoice extraction result
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      responses:
+        "200":
+          description: Full invoice extraction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceExtraction"
+  /v1/invoices/{id}/reprocess:
+    post:
+      operationId: reprocessInvoice
+      tags: [operations]
+      summary: Re-run invoice extraction
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      responses:
+        "200":
+          description: Reprocessed extraction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceExtraction"
+  /v1/invoices/{id}/advanced-reread:
+    post:
+      operationId: advancedReread
+      tags: [operations]
+      summary: Re-read the authoritative invoice PDF with backend advanced OCR
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      responses:
+        "200":
+          description: Advanced extraction result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdvancedInvoiceExtractionResponse"
+  /v1/invoices/{id}/extraction-history:
+    get:
+      operationId: getInvoiceExtractionHistory
+      tags: [operations]
+      summary: List immutable extraction runs for an invoice
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      responses:
+        "200":
+          description: Extraction history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExtractionHistoryItem"
+  /v1/configuration/invoice-ocr:
+    get:
+      operationId: getInvoiceOcrConfiguration
+      tags: [configuration]
+      summary: Get organization-scoped invoice OCR configuration
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: organizationId
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Invoice OCR configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceOcrConfiguration"
+    put:
+      operationId: updateInvoiceOcrConfiguration
+      tags: [configuration]
+      summary: Update organization-scoped invoice OCR configuration
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: organizationId
+          in: query
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvoiceOcrConfigurationInput"
+      responses:
+        "200":
+          description: Updated invoice OCR configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceOcrConfiguration"
+  /v1/extraction-agents:
+    get:
+      operationId: getExtractionAgents
+      tags: [operations]
+      summary: List invoice extraction provider configurations
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: organizationId
+          in: query
+          schema: { type: string, nullable: true }
+      responses:
+        "200":
+          description: Extraction provider configurations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExtractionAgentConfig"
+    post:
+      operationId: createExtractionAgent
+      tags: [operations]
+      summary: Create an invoice extraction provider configuration
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: organizationId
+          in: query
+          schema: { type: string, nullable: true }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertExtractionAgentConfigInput"
+      responses:
+        "200":
+          description: Created provider configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractionAgentConfig"
+  /v1/extraction-agents/{id}:
+    put:
+      operationId: updateExtractionAgent
+      tags: [operations]
+      summary: Update an invoice extraction provider configuration
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertExtractionAgentConfigInput"
+      responses:
+        "200":
+          description: Updated provider configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractionAgentConfig"
+  /v1/extraction-agents/{id}/test:
+    post:
+      operationId: testExtractionAgent
+      tags: [operations]
+      summary: Validate an invoice extraction provider configuration
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Safe connection test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractionAgentTest"
+  /v1/invoices/{id}/match-supplier:
+    post:
+      operationId: matchInvoiceSupplier
+      tags: [operations]
+      summary: Match an invoice to a supplier
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchSupplierInput"
+      responses:
+        "200":
+          description: Updated invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+  /v1/invoices/{id}/supplier-candidates:
+    get:
+      operationId: getInvoiceSupplierCandidates
+      tags: [operations]
+      summary: Get authoritative supplier candidates for an invoice
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      responses:
+        "200":
+          description: Supplier candidates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierMatchResponse"
+  /v1/invoices/{id}/match-po:
+    post:
+      operationId: matchInvoicePurchaseOrder
+      tags: [operations]
+      summary: Match an invoice to a purchase order
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchPurchaseOrderInput"
+      responses:
+        "200":
+          description: Updated invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+  /v1/invoices/{id}/match-lines:
+    post:
+      operationId: matchInvoiceLines
+      tags: [operations]
+      summary: Match invoice lines to PO lines
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvoiceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchInvoiceLinesInput"
+      responses:
+        "200":
+          description: Updated invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+  /v1/purchase-orders/{poNumber}:
+    get:
+      operationId: getPurchaseOrder
+      tags: [operations]
+      summary: Get an accessible purchase order
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: poNumber
+          in: path
+          required: true
+          schema: { type: string }
+        - name: organizationId
+          in: query
+          schema: { type: string, format: uuid, nullable: true }
+        - name: entityCode
+          in: query
+          schema: { type: string, nullable: true }
+      responses:
+        "200":
+          description: Purchase order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+  /v1/purchase-orders/search:
+    get:
+      operationId: searchPurchaseOrders
+      tags: [operations]
+      summary: Search accessible purchase orders
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: query
+          in: query
+          schema: { type: string, nullable: true }
+        - name: organizationId
+          in: query
+          schema: { type: string, nullable: true }
+        - name: entityCode
+          in: query
+          schema: { type: string, nullable: true }
+        - name: operatingUnitId
+          in: query
+          schema: { type: string, nullable: true }
+        - name: supplierId
+          in: query
+          schema: { type: string, format: uuid, nullable: true }
+        - name: openOnly
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: Purchase orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PurchaseOrder"
+  /v1/grns/validate:
+    post:
+      operationId: validateGrn
+      tags: [operations]
+      summary: Validate a goods receipt
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GrnInput"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GrnValidation"
+  /v1/grns:
+    get:
+      operationId: getGrns
+      tags: [operations]
+      summary: List accessible goods receipts
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Goods receipts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GoodsReceipt"
+    post:
+      operationId: postGrn
+      tags: [operations]
+      summary: Post a goods receipt
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GrnInput"
+      responses:
+        "200":
+          description: Posted goods receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoodsReceipt"
+  /v1/grns/{id}:
+    get:
+      operationId: getGrn
+      tags: [operations]
+      summary: Get a goods receipt
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/GrnId"
+      responses:
+        "200":
+          description: Goods receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoodsReceipt"
+  /v1/grns/{id}/retry:
+    post:
+      operationId: retryGrn
+      tags: [operations]
+      summary: Retry or reconcile an uncertain ERP goods-receipt post
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/GrnId"
+      responses:
+        "200":
+          description: Updated goods receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoodsReceipt"
+  /v1/grns/by-number/{grnNumber}:
+    get:
+      operationId: getGrnByNumber
+      tags: [operations]
+      summary: Get a goods receipt by number
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: grnNumber
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Goods receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoodsReceipt"
+  /v1/master-data/suppliers:
+    get:
+      operationId: listSuppliers
+      tags: [master-data]
+      summary: List authoritative suppliers
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: entityCode
+          in: query
+          schema: { type: string, nullable: true }
+        - name: query
+          in: query
+          schema: { type: string, nullable: true }
+        - name: status
+          in: query
+          schema: { type: string, nullable: true }
+      responses:
+        "200":
+          description: Suppliers
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Supplier" } }
+    put:
+      operationId: createSupplier
+      tags: [master-data]
+      summary: Create an authoritative supplier
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/SupplierUpsertInput" } }
+      responses:
+        "200":
+          description: Supplier
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Supplier" } }
+  /v1/master-data/suppliers/{id}:
+    get:
+      operationId: getSupplierMaster
+      tags: [master-data]
+      summary: Get an authoritative supplier
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Supplier
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Supplier" } }
+    put:
+      operationId: updateSupplierMaster
+      tags: [master-data]
+      summary: Update an authoritative supplier
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/SupplierUpsertInput" } }
+      responses:
+        "200":
+          description: Supplier
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Supplier" } }
+  /v1/integrations:
+    get:
+      operationId: listApiIntegrations
+      tags: [integrations]
+      summary: List API integrations for an organization
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: API integrations
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/IntegrationConfiguration" } }
+    post:
+      operationId: createApiIntegration
+      tags: [integrations]
+      summary: Save an API integration draft
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/IntegrationConfigurationInput" } }
+      responses:
+        "200":
+          description: Saved integration
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/IntegrationConfiguration" } }
+  /v1/integrations/target-fields:
+    get:
+      operationId: listIntegrationTargetFields
+      tags: [integrations]
+      summary: List the controlled PO target-field registry
+      responses:
+        "200":
+          description: Target fields
+          content:
+            application/json: { schema: { type: array, items: { $ref: "#/components/schemas/IntegrationTargetField" } } }
+  /v1/integrations/executions:
+    get:
+      operationId: listIntegrationExecutions
+      tags: [integrations]
+      summary: List integration execution history
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: configurationId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Execution history
+          content:
+            application/json: { schema: { type: array, items: { $ref: "#/components/schemas/IntegrationExecution" } } }
+  /v1/integrations/{id}:
+    get:
+      operationId: getApiIntegration
+      tags: [integrations]
+      summary: Get an API integration
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: API integration
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/IntegrationConfiguration" } }
+    put:
+      operationId: updateApiIntegration
+      tags: [integrations]
+      summary: Update an API integration draft
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/IntegrationConfigurationInput" } }
+      responses:
+        "200":
+          description: Updated integration
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/IntegrationConfiguration" } }
+  /v1/integrations/{id}/test:
+    post:
+      operationId: testApiIntegration
+      tags: [integrations]
+      summary: Test an API integration
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Test result
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/IntegrationTestResult" } }
+  /v1/integrations/{id}/schema:
+    get:
+      operationId: getIntegrationSchema
+      tags: [integrations]
+      summary: Get the most recently discovered OData schema
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Schema snapshot
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/IntegrationSchema" } }
+    post:
+      operationId: discoverIntegrationSchema
+      tags: [integrations]
+      summary: Discover the OData V4 metadata schema
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Schema snapshot
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/IntegrationSchema" } }
+  /v1/integrations/{id}/mappings:
+    get:
+      operationId: listIntegrationMappings
+      tags: [integrations]
+      summary: List integration field mappings
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Field mappings
+          content:
+            application/json: { schema: { type: array, items: { $ref: "#/components/schemas/IntegrationMapping" } } }
+    put:
+      operationId: saveIntegrationMappings
+      tags: [integrations]
+      summary: Replace and validate integration field mappings
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: array, items: { $ref: "#/components/schemas/IntegrationMappingInput" } }
+      responses:
+        "200":
+          description: Saved mappings
+          content:
+            application/json: { schema: { type: array, items: { $ref: "#/components/schemas/IntegrationMapping" } } }
+  /v1/integrations/{id}/activate:
+    post:
+      operationId: activateApiIntegration
+      tags: [integrations]
+      summary: Activate a tested integration
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: Activated }
+  /v1/integrations/{id}/deactivate:
+    post:
+      operationId: deactivateApiIntegration
+      tags: [integrations]
+      summary: Deactivate an integration
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: Deactivated }
+  /v1/integrations/{id}/pull:
+    post:
+      operationId: pullApiIntegration
+      tags: [integrations]
+      summary: Pull purchase orders manually
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: false
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/IntegrationExecutionInput" } }
+      responses:
+        "200":
+          description: Execution
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/IntegrationExecution" } }
+  /v1/integrations/{id}/data-update:
+    get:
+      operationId: getIntegrationDataUpdate
+      tags: [integrations]
+      summary: Get imported data state
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: kind
+          in: query
+          required: false
+          schema: { type: string, enum: [PURCHASE_ORDERS, SUPPLIERS], default: PURCHASE_ORDERS }
+        - name: search
+          in: query
+          required: false
+          schema: { type: string }
+        - name: status
+          in: query
+          required: false
+          schema: { type: string }
+        - name: sortBy
+          in: query
+          required: false
+          schema: { type: string }
+        - name: descending
+          in: query
+          required: false
+          schema: { type: boolean, default: false }
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          required: false
+          schema: { type: integer, minimum: 10, maximum: 100, default: 25 }
+      responses:
+        "200":
+          description: Imported data state
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/IntegrationDataUpdate" } }
+  /v1/integrations/{id}/data-update/template:
+    get:
+      operationId: getIntegrationImportTemplate
+      tags: [integrations]
+      summary: Download a PO or supplier import template
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: kind
+          in: query
+          required: false
+          schema: { type: string, enum: [PURCHASE_ORDERS, SUPPLIERS], default: PURCHASE_ORDERS }
+      responses:
+        "200": { description: XLSX template, content: { application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: { schema: { type: string, format: binary } } } }
+  /v1/integrations/{id}/data-update/export:
+    get:
+      operationId: exportIntegrationData
+      tags: [integrations]
+      summary: Export normalized PO or supplier records
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: kind
+          in: query
+          required: false
+          schema: { type: string, enum: [PURCHASE_ORDERS, SUPPLIERS], default: PURCHASE_ORDERS }
+        - name: search
+          in: query
+          required: false
+          schema: { type: string }
+        - name: status
+          in: query
+          required: false
+          schema: { type: string }
+        - name: sortBy
+          in: query
+          required: false
+          schema: { type: string }
+        - name: descending
+          in: query
+          required: false
+          schema: { type: boolean, default: false }
+      responses:
+        "200": { description: XLSX export, content: { application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: { schema: { type: string, format: binary } } } }
+  /v1/integrations/{id}/data-update/import/preview:
+    post:
+      operationId: previewIntegrationImport
+      tags: [integrations]
+      summary: Validate a PO or supplier spreadsheet without changing records
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: kind
+          in: query
+          required: true
+          schema: { type: string, enum: [PURCHASE_ORDERS, SUPPLIERS] }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: Validation preview
+          content: { application/json: { schema: { $ref: "#/components/schemas/IntegrationImportPreview" } } }
+  /v1/integrations/{id}/data-update/import:
+    post:
+      operationId: commitIntegrationImport
+      tags: [integrations]
+      summary: Commit a validated PO or supplier spreadsheet
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/IntegrationImportCommit" } } }
+      responses:
+        "200":
+          description: Import execution
+          content: { application/json: { schema: { $ref: "#/components/schemas/IntegrationImportCommitResult" } } }
+  /v1/integrations/{id}/data-update/import/correction-report:
+    post:
+      operationId: downloadIntegrationImportCorrectionReport
+      tags: [integrations]
+      summary: Download rejected PO or supplier rows as a correction report
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: organizationId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IntegrationImportCorrectionReport" }
+      responses:
+        "200":
+          description: CSV correction report containing rejected rows
+          content: { text/csv: { schema: { type: string, format: binary } } }
+components:
+  parameters:
+    OrganizationId:
+      name: organizationId
+      in: path
+      required: true
+      schema:
+        type: string
+    DocumentId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    InvoiceId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    GrnId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sila_me_session
+  responses:
+    AuthenticationError:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    OperationalError:
+      description: Operational request failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+  schemas:
+    IntegrationConfigurationInput:
+      type: object
+      properties:
+        name: { type: string }
+        entityCode: { type: string }
+        organizationUnitId: { type: string, format: uuid, nullable: true }
+        processType: { type: string, enum: [GET_PO, GET_SUPPLIER, POST_PO, GET_GRN, POST_GRN, GET_INVOICE, POST_INVOICE, GET_STOCK] }
+        protocol: { type: string, enum: [REST, ODATA_V4] }
+        baseUrl: { type: string, format: uri }
+        resourcePath: { type: string, nullable: true }
+        authenticationType: { type: string, enum: [NONE, BASIC, BEARER_TOKEN, OAUTH2_CLIENT_CREDENTIALS, CUSTOM_TOKEN_ENDPOINT] }
+        username: { type: string, nullable: true }
+        password: { type: string, nullable: true, writeOnly: true }
+        clientId: { type: string, nullable: true, writeOnly: true }
+        clientSecret: { type: string, nullable: true, writeOnly: true }
+        bearerToken: { type: string, nullable: true, writeOnly: true }
+        tokenEndpoint: { type: string, nullable: true }
+        tokenScope: { type: string, nullable: true }
+        tokenHeaders: { type: object, additionalProperties: { type: string }, nullable: true }
+        tokenBody: { type: object, additionalProperties: { type: string }, nullable: true }
+        timeoutSeconds: { type: integer, minimum: 5, maximum: 300 }
+        retryCount: { type: integer, minimum: 0, maximum: 5 }
+        pageSize: { type: integer, minimum: 1, maximum: 1000, nullable: true }
+        watermarkField: { type: string, nullable: true }
+        scheduleCron: { type: string, nullable: true }
+      required: [name, entityCode, processType, protocol, baseUrl, authenticationType]
+    IntegrationConfiguration:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        organizationId: { type: string, format: uuid }
+        organizationUnitId: { type: string, format: uuid, nullable: true }
+        entityCode: { type: string }
+        name: { type: string }
+        processType: { type: string }
+        protocol: { type: string }
+        baseUrl: { type: string }
+        resourcePath: { type: string, nullable: true }
+        authenticationType: { type: string }
+        username: { type: string, nullable: true }
+        credentialStatus: { type: string }
+        timeoutSeconds: { type: integer }
+        retryCount: { type: integer }
+        pageSize: { type: integer, nullable: true }
+        watermarkField: { type: string, nullable: true }
+        lastWatermark: { type: string, format: date-time, nullable: true }
+        lastAttemptAt: { type: string, format: date-time, nullable: true }
+        lastSuccessfulRunAt: { type: string, format: date-time, nullable: true }
+        nextRunAt: { type: string, format: date-time, nullable: true }
+        isRunning: { type: boolean }
+        lastErrorSafe: { type: string, nullable: true }
+        scheduleCron: { type: string, nullable: true }
+        status: { type: string, enum: [DRAFT, TEST_FAILED, TESTED, ACTIVE, INACTIVE] }
+        testedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, organizationId, entityCode, name, processType, protocol, baseUrl, authenticationType, credentialStatus, timeoutSeconds, retryCount, isRunning, status, createdAt, updatedAt]
+    IntegrationMappingInput:
+      type: object
+      properties:
+        sourceField: { type: string }
+        targetField: { type: string }
+        transformation: { type: string, nullable: true }
+        nullPolicy: { type: string, enum: [IGNORE_NULL, WRITE_NULL, DEFAULT_VALUE] }
+        defaultValue: { type: string, nullable: true }
+      required: [sourceField, targetField, nullPolicy]
+    IntegrationMapping:
+      allOf:
+        - $ref: "#/components/schemas/IntegrationMappingInput"
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            configurationId: { type: string, format: uuid }
+            isValidated: { type: boolean }
+            updatedAt: { type: string, format: date-time }
+          required: [id, configurationId, isValidated, updatedAt]
+    IntegrationTargetField:
+      type: object
+      properties:
+        targetField: { type: string }
+        area: { type: string }
+        dataType: { type: string }
+        required: { type: boolean }
+        allowedTransformations: { type: array, items: { type: string } }
+      required: [targetField, area, dataType, required, allowedTransformations]
+    IntegrationSchema:
+      type: object
+      properties:
+        configurationId: { type: string, format: uuid }
+        metadataUrl: { type: string }
+        discoveredAt: { type: string, format: date-time }
+        entities: { type: array, items: { $ref: "#/components/schemas/IntegrationSchemaEntity" } }
+      required: [configurationId, metadataUrl, discoveredAt, entities]
+    IntegrationSchemaEntity:
+      type: object
+      properties:
+        name: { type: string }
+        entitySet: { type: string, nullable: true }
+        properties: { type: array, items: { $ref: "#/components/schemas/IntegrationSchemaProperty" } }
+        keys: { type: array, items: { type: string } }
+      required: [name, properties, keys]
+    IntegrationSchemaProperty:
+      type: object
+      properties:
+        name: { type: string }
+        type: { type: string }
+        nullable: { type: boolean }
+      required: [name, type, nullable]
+    IntegrationTestResult:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        httpStatus: { type: integer, nullable: true }
+        testedAt: { type: string, format: date-time }
+      required: [success, message, testedAt]
+    IntegrationExecutionInput:
+      type: object
+      properties:
+        fullSync: { type: boolean }
+      required: [fullSync]
+    IntegrationExecution:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        configurationId: { type: string, format: uuid }
+        trigger: { type: string }
+        status: { type: string }
+        startedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time, nullable: true }
+        recordsRead: { type: integer }
+        recordsCreated: { type: integer }
+        recordsUpdated: { type: integer }
+        recordsFailed: { type: integer }
+        watermarkBefore: { type: string, format: date-time, nullable: true }
+        watermarkAfter: { type: string, format: date-time, nullable: true }
+        errorCode: { type: string, nullable: true }
+        errorMessageSafe: { type: string, nullable: true }
+      required: [id, configurationId, trigger, status, startedAt, recordsRead, recordsCreated, recordsUpdated, recordsFailed]
+    IntegrationDataUpdate:
+      type: object
+      properties:
+        configurationId: { type: string, format: uuid }
+        purchaseOrders: { type: integer }
+        suppliers: { type: integer, nullable: true }
+        purchaseOrderRows:
+          type: array
+          items: { type: object, additionalProperties: true }
+        supplierRows:
+          type: array
+          items: { type: object, additionalProperties: true }
+        lastSyncedAt: { type: string, format: date-time, nullable: true }
+        lastWatermark: { type: string, format: date-time, nullable: true }
+        isRunning: { type: boolean }
+        lastErrorSafe: { type: string, nullable: true }
+        kind: { type: string }
+        totalRows: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+      required: [configurationId, purchaseOrders, suppliers, purchaseOrderRows, supplierRows, isRunning, kind, totalRows, page, pageSize]
+    IntegrationImportRow:
+      type: object
+      properties:
+        rowNumber: { type: integer }
+        isValid: { type: boolean }
+        values: { type: object, additionalProperties: { type: string, nullable: true } }
+        errors: { type: array, items: { type: string } }
+      required: [rowNumber, isValid, values, errors]
+    IntegrationImportPreview:
+      type: object
+      properties:
+        configurationId: { type: string, format: uuid }
+        kind: { type: string, enum: [PURCHASE_ORDERS, SUPPLIERS] }
+        fileName: { type: string }
+        totalRows: { type: integer }
+        validRows: { type: integer }
+        invalidRows: { type: integer }
+        columns: { type: array, items: { type: string } }
+        rows: { type: array, items: { $ref: "#/components/schemas/IntegrationImportRow" } }
+      required: [configurationId, kind, fileName, totalRows, validRows, invalidRows, columns, rows]
+    IntegrationImportCorrectionReport:
+      type: object
+      properties:
+        kind: { type: string, enum: [PURCHASE_ORDERS, SUPPLIERS] }
+        rows: { type: array, items: { $ref: "#/components/schemas/IntegrationImportRow" }, maxItems: 5000 }
+      required: [kind, rows]
+    IntegrationImportCommit:
+      type: object
+      properties:
+        kind: { type: string, enum: [PURCHASE_ORDERS, SUPPLIERS] }
+        rows:
+          type: array
+          items: { type: object, additionalProperties: { type: string, nullable: true } }
+      required: [kind, rows]
+    IntegrationImportCommitResult:
+      type: object
+      properties:
+        execution: { $ref: "#/components/schemas/IntegrationExecution" }
+        recordsCommitted: { type: integer }
+      required: [execution, recordsCommitted]
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 1
+      required: [email, password]
+    CurrentUser:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+          format: email
+        application:
+          type: string
+          enum: [CLOUD, MOBILE]
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+      required: [id, displayName, email, application, status]
+    AuthSession:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/CurrentUser"
+      required: [user]
+    MobileAuthSession:
+      allOf:
+        - $ref: "#/components/schemas/AuthSession"
+        - type: object
+          properties:
+            token:
+              type: string
+          required: [token]
+    ApiError:
+      description: Structured operational error returned to preserve recoverable validation and duplicate details.
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        missingFields:
+          description: Input fields that must be completed before the invoice can be saved.
+          type: array
+          items: { type: string }
+          nullable: true
+        existingInvoiceId:
+          description: Existing invoice that caused a duplicate warning, when available.
+          type: string
+          format: uuid
+          nullable: true
+        duplicateType:
+          description: Duplicate classification, such as PROBABLE.
+          type: string
+          nullable: true
+      required: [code, message]
+    Organization:
+      type: object
+      properties:
+        id: { type: string }
+        parentOrganizationId: { type: string, nullable: true }
+        code: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [CUSTOMER, HOSPITALITY_GROUP] }
+        status: { type: string, enum: [ACTIVE, INACTIVE] }
+        logoUrl: { type: string, nullable: true }
+      required: [id, code, name, kind, status]
+    OrganizationUnit:
+      type: object
+      properties:
+        id: { type: string }
+        organizationId: { type: string }
+        parentUnitId: { type: string, nullable: true }
+        code: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [PROPERTY, HOTEL, OUTLET, KITCHEN, STORE, STORAGE_LOCATION] }
+        status: { type: string, enum: [ACTIVE, INACTIVE] }
+      required: [id, organizationId, code, name, kind, status]
+    Permission:
+      type: object
+      properties:
+        id: { type: string }
+        key: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        module: { type: string }
+        subModule: { type: string, nullable: true }
+        applicationScope: { type: string, enum: [CLOUD, MOBILE, BOTH] }
+        riskLevel: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        isSystemAuthorization: { type: boolean }
+        isActive: { type: boolean }
+      required: [id, key, name]
+    Role:
+      type: object
+      properties:
+        id: { type: string }
+        key: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        isSystem: { type: boolean }
+        status: { type: string, enum: [ACTIVE, INACTIVE] }
+        applicationScope: { type: string, enum: [CLOUD, MOBILE, BOTH] }
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+      required: [id, key, name, isSystem, status, permissions]
+    AccessContext:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/CurrentUser"
+        organizations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Organization"
+        units:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrganizationUnit"
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+      required: [user, organizations, units, roles, permissions]
+    AccessUser:
+      type: object
+      properties:
+        id: { type: string }
+        displayName: { type: string }
+        email: { type: string, format: email }
+        status: { type: string, enum: [ACTIVE, INACTIVE] }
+        applications:
+          type: array
+          items: { type: string, enum: [CLOUD, MOBILE] }
+        organizations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Organization"
+        units:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrganizationUnit"
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+        firstName: { type: string, nullable: true }
+        lastName: { type: string, nullable: true }
+        mobileNumber: { type: string, nullable: true }
+        mustChangePassword: { type: boolean }
+      required: [id, displayName, email, status, applications, organizations, units, roles]
+    AuthorizationPreview:
+      type: object
+      properties:
+        permissionId: { type: string, format: uuid }
+        key: { type: string }
+        name: { type: string }
+        module: { type: string }
+        applicationScope: { type: string }
+        riskLevel: { type: string }
+        decision: { type: string, enum: [GRANT, DENY, DEFAULT] }
+        source: { type: string }
+      required: [permissionId, key, name, module, applicationScope, riskLevel, decision, source]
+    AccessUserDetail:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/AccessUser"
+        effectiveAuthorizations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuthorizationPreview"
+        overrides:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuthorizationPreview"
+        storage:
+          $ref: "#/components/schemas/StorageAssignment"
+      required: [user, effectiveAuthorizations, overrides, storage]
+    StorageAssignment:
+      type: object
+      properties:
+        provider: { type: string, enum: [NONE, MICROSOFT, GOOGLE, OTHER] }
+        status: { type: string, enum: [NOT_CONFIGURED, PENDING_VALIDATION, VALIDATED, FAILED, DISABLED] }
+        destinationUrl: { type: string, nullable: true }
+        externalTransferEnabled: { type: boolean }
+      required: [provider, status, externalTransferEnabled]
+    StorageConnection:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        organizationId: { type: string, format: uuid }
+        provider: { type: string, enum: [MICROSOFT, GOOGLE, OTHER, NONE] }
+        name: { type: string }
+        connectionStatus: { type: string, enum: [PENDING, CONNECTED, FAILED, DISABLED] }
+        tenantIdentifier: { type: string, nullable: true }
+        siteIdentifier: { type: string, nullable: true }
+        driveIdentifier: { type: string, nullable: true }
+        folderIdentifier: { type: string, nullable: true }
+        displayUrl: { type: string, nullable: true }
+        displayName: { type: string, nullable: true }
+        validatedAt: { type: string, format: date-time, nullable: true }
+      required: [id, organizationId, provider, name, connectionStatus]
+    CreateOrganizationInput:
+      type: object
+      properties:
+        code: { type: string, minLength: 2, maxLength: 64 }
+        name: { type: string, minLength: 2, maxLength: 200 }
+        kind: { type: string, enum: [CUSTOMER, HOSPITALITY_GROUP] }
+        parentOrganizationId: { type: string, nullable: true }
+      required: [code, name, kind]
+    CreateOrganizationUnitInput:
+      type: object
+      properties:
+        code: { type: string, minLength: 2, maxLength: 64 }
+        name: { type: string, minLength: 2, maxLength: 200 }
+        kind: { type: string, enum: [PROPERTY, HOTEL, OUTLET, KITCHEN, STORE, STORAGE_LOCATION] }
+        parentUnitId: { type: string, nullable: true }
+      required: [code, name, kind]
+    CreateAccessUserInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        displayName: { type: string, minLength: 2, maxLength: 160 }
+        password: { type: string, minLength: 8 }
+        applications:
+          type: array
+          minItems: 1
+          items: { type: string, enum: [CLOUD, MOBILE] }
+        organizationId: { type: string }
+        organizationUnitId: { type: string, nullable: true }
+        roleId: { type: string, nullable: true }
+        firstName: { type: string, nullable: true }
+        lastName: { type: string, nullable: true }
+        mobileNumber: { type: string, nullable: true }
+        roleIds: { type: array, items: { type: string, format: uuid } }
+        organizationUnitIds: { type: array, items: { type: string, format: uuid } }
+        grantedAuthorizationIds: { type: array, items: { type: string, format: uuid } }
+        deniedAuthorizationIds: { type: array, items: { type: string, format: uuid } }
+        passwordMode: { type: string, enum: [GENERATE, MANUAL] }
+        storageProvider: { type: string, enum: [NONE, MICROSOFT, GOOGLE, OTHER] }
+        storageConnectionId: { type: string, format: uuid, nullable: true }
+        storageDestinationUrl: { type: string, nullable: true }
+        externalStorageTransferEnabled: { type: boolean }
+      required: [email, displayName, applications, organizationId]
+    AuthorizationOverrideInput:
+      type: object
+      properties:
+        authorizationId: { type: string, format: uuid }
+        overrideType: { type: string, enum: [GRANT, DENY] }
+        reason: { type: string, nullable: true }
+      required: [authorizationId, overrideType]
+    CreateStorageConnectionInput:
+      type: object
+      properties:
+        organizationId: { type: string, format: uuid }
+        provider: { type: string, enum: [MICROSOFT, GOOGLE, OTHER] }
+        name: { type: string, minLength: 2 }
+        tenantIdentifier: { type: string, nullable: true }
+        siteIdentifier: { type: string, nullable: true }
+        driveIdentifier: { type: string, nullable: true }
+        folderIdentifier: { type: string, nullable: true }
+        displayUrl: { type: string, nullable: true }
+      required: [organizationId, provider, name]
+    AssignMembershipInput:
+      type: object
+      properties:
+        userId: { type: string }
+        organizationId: { type: string }
+        organizationUnitId: { type: string, nullable: true }
+      required: [userId, organizationId]
+    AssignRoleInput:
+      type: object
+      properties:
+        userId: { type: string }
+        roleId: { type: string }
+        organizationId: { type: string }
+        organizationUnitId: { type: string, nullable: true }
+      required: [userId, roleId, organizationId]
+    UploadInvoiceDocumentInput:
+      type: object
+      properties:
+        organizationId: { type: string }
+        operatingUnitId: { type: string, nullable: true }
+        sourceChannel: { type: string, enum: [MOBILE_CAMERA, MOBILE_UPLOAD, MOBILE_SCANNER, CLOUD_UPLOAD] }
+        pageCount: { type: integer, nullable: true }
+        scanSessionId: { type: string, nullable: true }
+        supplierName: { type: string, nullable: true }
+        supplierId: { type: string, format: uuid, nullable: true }
+        supplierTrn: { type: string, nullable: true }
+        supplierInvoiceNumber: { type: string, nullable: true }
+        invoiceDate: { type: string, format: date, nullable: true }
+        purchaseOrderNumber: { type: string, nullable: true }
+        noPurchaseOrder: { type: boolean, nullable: true }
+        invoiceGross: { type: number, nullable: true }
+        currency: { type: string, nullable: true }
+        ocrRequestId: { type: string, nullable: true }
+        manualEditedFieldsJson: { type: string, nullable: true }
+        deferFullExtraction: { type: boolean, nullable: true }
+        file: { type: string, format: binary }
+      required: [organizationId, sourceChannel, file]
+    BasicOcrInput:
+      type: object
+      properties:
+        organizationId: { type: string }
+        operatingUnitId: { type: string, nullable: true }
+        pageCount: { type: integer, nullable: true }
+        ocrRequestId: { type: string, nullable: true }
+        file: { type: string, format: binary }
+      required: [organizationId, file]
+    Document:
+      type: object
+      properties:
+        id: { type: string }
+        filename: { type: string }
+        contentType: { type: string }
+        fileSizeBytes: { type: integer, format: int64 }
+        pageCount: { type: integer, nullable: true }
+        sourceChannel: { type: string, enum: [MOBILE_CAMERA, MOBILE_UPLOAD, MOBILE_SCANNER, CLOUD_UPLOAD] }
+        status: { type: string, enum: [UPLOADED, READING, BASIC_EXTRACTION_COMPLETE, FULL_EXTRACTION_PROCESSING, FULL_EXTRACTION_COMPLETE, REVIEW_REQUIRED, PROCESSED, FAILED, GRN_READY, GRN_POSTED] }
+        createdAt: { type: string, format: date-time }
+        invoiceId: { type: string }
+        saveStatus: { type: string }
+        nextStep: { type: string }
+        message: { type: string, nullable: true }
+      required: [id, filename, contentType, fileSizeBytes, sourceChannel, status, createdAt, invoiceId, saveStatus, nextStep]
+    DocumentStatus:
+      type: object
+      properties:
+        documentId: { type: string }
+        invoiceId: { type: string }
+        documentStatus: { type: string }
+        invoiceStatus: { type: string }
+        message: { type: string, nullable: true }
+      required: [documentId, invoiceId, documentStatus, invoiceStatus]
+    BasicInvoiceExtraction:
+      type: object
+      properties:
+        documentId: { type: string }
+        supplierName: { type: string, nullable: true }
+        supplierTrn: { type: string, nullable: true }
+        supplierInvoiceNumber: { type: string, nullable: true }
+        invoiceDate: { type: string, format: date, nullable: true }
+        purchaseOrderNumber: { type: string, nullable: true }
+        invoiceGross: { type: number, nullable: true }
+        currency: { type: string, nullable: true }
+        status: { type: string }
+      required: [documentId, status]
+    BasicOcrResponse:
+      type: object
+      properties:
+        supplierName: { type: string, nullable: true }
+        supplierTrn: { type: string, nullable: true }
+        supplierInvoiceNumber: { type: string, nullable: true }
+        invoiceDate: { type: string, format: date, nullable: true }
+        purchaseOrderNumber: { type: string, nullable: true }
+        invoiceGross: { type: number, nullable: true }
+        currency: { type: string, nullable: true }
+        provider: { type: string }
+        available: { type: boolean }
+        status: { type: string }
+        confidence: { type: number, nullable: true }
+        rawText: { type: string, nullable: true }
+      required: [provider, available, status]
+    AdvancedField:
+      type: object
+      properties:
+        value: { nullable: true }
+        confidence: { type: number, nullable: true }
+        confidenceBand: { type: string }
+        pageNumber: { type: integer, nullable: true }
+        sourceLabel: { type: string, nullable: true }
+        extractionMethod: { type: string, nullable: true }
+      required: [confidenceBand]
+    AdvancedInvoiceHeader:
+      type: object
+      properties:
+        supplierName: { $ref: "#/components/schemas/AdvancedField" }
+        supplierLegalName: { $ref: "#/components/schemas/AdvancedField" }
+        supplierTrn: { $ref: "#/components/schemas/AdvancedField" }
+        supplierAddress: { $ref: "#/components/schemas/AdvancedField" }
+        supplierEmail: { $ref: "#/components/schemas/AdvancedField" }
+        supplierPhone: { $ref: "#/components/schemas/AdvancedField" }
+        invoiceNumber: { $ref: "#/components/schemas/AdvancedField" }
+        invoiceDate: { $ref: "#/components/schemas/AdvancedField" }
+        invoiceType: { $ref: "#/components/schemas/AdvancedField" }
+        purchaseOrderNumber: { $ref: "#/components/schemas/AdvancedField" }
+        currency: { $ref: "#/components/schemas/AdvancedField" }
+        netAmount: { $ref: "#/components/schemas/AdvancedField" }
+        discountAmount: { $ref: "#/components/schemas/AdvancedField" }
+        freightAmount: { $ref: "#/components/schemas/AdvancedField" }
+        otherCharges: { $ref: "#/components/schemas/AdvancedField" }
+        taxableAmount: { $ref: "#/components/schemas/AdvancedField" }
+        taxAmount: { $ref: "#/components/schemas/AdvancedField" }
+        grossAmount: { $ref: "#/components/schemas/AdvancedField" }
+        amountDue: { $ref: "#/components/schemas/AdvancedField" }
+        paymentTerms: { $ref: "#/components/schemas/AdvancedField" }
+        dueDate: { $ref: "#/components/schemas/AdvancedField" }
+      required: [supplierName, supplierLegalName, supplierTrn, supplierAddress, supplierEmail, supplierPhone, invoiceNumber, invoiceDate, invoiceType, purchaseOrderNumber, currency, netAmount, discountAmount, freightAmount, otherCharges, taxableAmount, taxAmount, grossAmount, amountDue, paymentTerms, dueDate]
+    AdvancedInvoiceLine:
+      type: object
+      properties:
+        lineNumber: { type: integer }
+        supplierItemCode: { $ref: "#/components/schemas/AdvancedField" }
+        description: { $ref: "#/components/schemas/AdvancedField" }
+        poItemNumber: { $ref: "#/components/schemas/AdvancedField" }
+        quantity: { $ref: "#/components/schemas/AdvancedField" }
+        uom: { $ref: "#/components/schemas/AdvancedField" }
+        unitPrice: { $ref: "#/components/schemas/AdvancedField" }
+        discountAmount: { $ref: "#/components/schemas/AdvancedField" }
+        netAmount: { $ref: "#/components/schemas/AdvancedField" }
+        taxRate: { $ref: "#/components/schemas/AdvancedField" }
+        taxAmount: { $ref: "#/components/schemas/AdvancedField" }
+        grossAmount: { $ref: "#/components/schemas/AdvancedField" }
+        batchNumber: { $ref: "#/components/schemas/AdvancedField" }
+        expiryDate: { $ref: "#/components/schemas/AdvancedField" }
+      required: [lineNumber, supplierItemCode, description, poItemNumber, quantity, uom, unitPrice, discountAmount, netAmount, taxRate, taxAmount, grossAmount, batchNumber, expiryDate]
+    AdvancedInvoiceValidation:
+      type: object
+      properties:
+        amountsReconciled: { type: boolean }
+        lineTotalMatchesNet: { type: boolean }
+        taxReconciled: { type: boolean }
+        difference: { type: number, nullable: true }
+        supplierMatched: { type: boolean }
+        purchaseOrderMatched: { type: boolean }
+      required: [amountsReconciled, lineTotalMatchesNet, taxReconciled, supplierMatched, purchaseOrderMatched]
+    AdvancedInvoiceExtractionResponse:
+      type: object
+      properties:
+        documentId: { type: string, nullable: true }
+        provider: { type: string }
+        status: { type: string }
+        trigger: { type: string }
+        confidence: { type: number, nullable: true }
+        header: { $ref: "#/components/schemas/AdvancedInvoiceHeader" }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/AdvancedInvoiceLine" }
+        validation: { $ref: "#/components/schemas/AdvancedInvoiceValidation" }
+        requiresReview: { type: boolean }
+        fallbackUsed: { type: boolean }
+        startedAt: { type: string, format: date-time, nullable: true }
+        completedAt: { type: string, format: date-time, nullable: true }
+        pageCount: { type: integer }
+        errorMessage: { type: string, nullable: true }
+        ocrRequestId: { type: string, nullable: true }
+        rawText: { type: string, nullable: true }
+        effectiveConfiguration:
+          $ref: "#/components/schemas/AdvancedOcrConfigurationSnapshot"
+      required: [provider, status, trigger, header, lines, validation, requiresReview, fallbackUsed, pageCount]
+    AdvancedOcrConfigurationSnapshot:
+      type: object
+      properties:
+        mobileBasicOcrEnabled: { type: boolean }
+        automaticBackendFallbackEnabled: { type: boolean }
+        minimumMobileConfidence: { type: number }
+        requireSupplierName: { type: boolean }
+        requireInvoiceNumber: { type: boolean }
+        requirePurchaseOrderNumber: { type: boolean }
+        requireInvoiceAmount: { type: boolean }
+        requireInvoiceDate: { type: boolean }
+        requireCurrency: { type: boolean }
+        requireSupplierTrn: { type: boolean }
+        alwaysBackendOnReread: { type: boolean }
+        detailedLineExtractionEnabled: { type: boolean }
+        supplierMasterValidationEnabled: { type: boolean }
+        purchaseOrderValidationEnabled: { type: boolean }
+        financialReconciliationEnabled: { type: boolean }
+        version: { type: integer }
+    AdvancedInvoiceExtractionInput:
+      type: object
+      properties:
+        organizationId: { type: string }
+        operatingUnitId: { type: string, nullable: true }
+        trigger: { type: string }
+        mobileSupplierName: { type: string, nullable: true }
+        mobileSupplierInvoiceNumber: { type: string, nullable: true }
+        mobilePurchaseOrderNumber: { type: string, nullable: true }
+        mobileInvoiceGross: { type: number, nullable: true }
+        mobileConfidence: { type: number, nullable: true }
+        ocrRequestId: { type: string, nullable: true }
+        file: { type: string, format: binary }
+      required: [organizationId, file]
+    ExtractionHistoryItem:
+      type: object
+      properties:
+        id: { type: string }
+        documentId: { type: string }
+        provider: { type: string }
+        status: { type: string }
+        trigger: { type: string }
+        ocrRequestId: { type: string, nullable: true }
+        extractionMethod: { type: string }
+        confidence: { type: number, nullable: true }
+        contentHash: { type: string, nullable: true }
+        fallbackUsed: { type: boolean }
+        processingStartedAt: { type: string, format: date-time, nullable: true }
+        processingCompletedAt: { type: string, format: date-time, nullable: true }
+        processingDurationMs: { type: integer, nullable: true }
+        createdAt: { type: string, format: date-time }
+      required: [id, documentId, provider, status, trigger, extractionMethod, fallbackUsed, createdAt]
+    InvoiceOcrConfiguration:
+      type: object
+      properties:
+        id: { type: string }
+        organizationId: { type: string }
+        mobileBasicOcrEnabled: { type: boolean }
+        automaticBackendFallbackEnabled: { type: boolean }
+        minimumMobileConfidence: { type: number }
+        requireSupplierName: { type: boolean }
+        requireInvoiceNumber: { type: boolean }
+        requirePurchaseOrderNumber: { type: boolean }
+        requireInvoiceAmount: { type: boolean }
+        requireInvoiceDate: { type: boolean }
+        requireCurrency: { type: boolean }
+        requireSupplierTrn: { type: boolean }
+        backendProvider: { type: string }
+        alwaysBackendOnReread: { type: boolean }
+        detailedLineExtractionEnabled: { type: boolean }
+        supplierMasterValidationEnabled: { type: boolean }
+        purchaseOrderValidationEnabled: { type: boolean }
+        financialReconciliationEnabled: { type: boolean }
+        amountTolerance: { type: number }
+        backendTimeoutSeconds: { type: integer }
+        backendRetryCount: { type: integer }
+        reuseCachedOcr: { type: boolean }
+        version: { type: integer }
+        updatedAt: { type: string, format: date-time }
+      required: [id, organizationId, mobileBasicOcrEnabled, automaticBackendFallbackEnabled, minimumMobileConfidence, requireSupplierName, requireInvoiceNumber, requirePurchaseOrderNumber, requireInvoiceAmount, requireInvoiceDate, requireCurrency, requireSupplierTrn, backendProvider, alwaysBackendOnReread, detailedLineExtractionEnabled, supplierMasterValidationEnabled, purchaseOrderValidationEnabled, financialReconciliationEnabled, amountTolerance, backendTimeoutSeconds, backendRetryCount, reuseCachedOcr, version, updatedAt]
+    InvoiceOcrConfigurationInput:
+      type: object
+      properties:
+        mobileBasicOcrEnabled: { type: boolean }
+        automaticBackendFallbackEnabled: { type: boolean }
+        minimumMobileConfidence: { type: number, minimum: 0, maximum: 1 }
+        requireSupplierName: { type: boolean }
+        requireInvoiceNumber: { type: boolean }
+        requirePurchaseOrderNumber: { type: boolean }
+        requireInvoiceAmount: { type: boolean }
+        requireInvoiceDate: { type: boolean }
+        requireCurrency: { type: boolean }
+        requireSupplierTrn: { type: boolean }
+        backendProvider: { type: string }
+        alwaysBackendOnReread: { type: boolean }
+        detailedLineExtractionEnabled: { type: boolean }
+        supplierMasterValidationEnabled: { type: boolean }
+        purchaseOrderValidationEnabled: { type: boolean }
+        financialReconciliationEnabled: { type: boolean }
+        amountTolerance: { type: number, minimum: 0 }
+        backendTimeoutSeconds: { type: integer, minimum: 1 }
+        backendRetryCount: { type: integer, minimum: 0 }
+        reuseCachedOcr: { type: boolean }
+    InvoiceExtractionHeader:
+      type: object
+      properties:
+        documentId: { type: string }
+        supplierName: { type: string, nullable: true }
+        supplierTrn: { type: string, nullable: true }
+        supplierInvoiceNumber: { type: string, nullable: true }
+        invoiceDate: { type: string, format: date, nullable: true }
+        purchaseOrderNumber: { type: string, nullable: true }
+        invoiceGross: { type: number, nullable: true }
+        invoiceNet: { type: number, nullable: true }
+        currency: { type: string, nullable: true }
+      required: [documentId]
+    InvoiceExtractionLine:
+      type: object
+      properties:
+        itemSkuId: { type: string, nullable: true }
+        itemAmount: { type: number, nullable: true }
+        itemNet: { type: number, nullable: true }
+        itemDescription: { type: string, nullable: true }
+        lineItemNumber: { type: string, nullable: true }
+        purchaseOrderItemId: { type: string, nullable: true }
+    InvoiceExtraction:
+      type: object
+      properties:
+        header: { $ref: "#/components/schemas/InvoiceExtractionHeader" }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/InvoiceExtractionLine" }
+        provider: { type: string }
+        extractionMethod: { type: string }
+        confidence: { type: number, nullable: true }
+        fallbackUsed: { type: boolean }
+        status: { type: string }
+        completedAt: { type: string, format: date-time, nullable: true }
+      required: [header, lines, provider, extractionMethod, fallbackUsed, status]
+    ExtractionAgentConfig:
+      type: object
+      properties:
+        id: { type: string }
+        organizationId: { type: string, nullable: true }
+        name: { type: string }
+        documentType: { type: string }
+        providerType: { type: string }
+        endpointUrl: { type: string, nullable: true }
+        authenticationType: { type: string, enum: [NONE, API_KEY, BEARER_TOKEN, BASIC, OAUTH2, CUSTOM] }
+        credentialMask: { type: string, nullable: true }
+        priority: { type: integer }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, name, documentType, providerType, authenticationType, priority, isActive, createdAt, updatedAt]
+    UpsertExtractionAgentConfigInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        documentType: { type: string, enum: [INVOICE] }
+        providerType: { type: string, minLength: 1, maxLength: 100 }
+        endpointUrl: { type: string, format: uri, nullable: true }
+        authenticationType: { type: string, enum: [NONE, API_KEY, BEARER_TOKEN, BASIC, OAUTH2, CUSTOM] }
+        credentialReference: { type: string, maxLength: 500, nullable: true }
+        priority: { type: integer, minimum: 1 }
+        isActive: { type: boolean }
+        configurationJson: { type: string, nullable: true }
+      required: [name, documentType, providerType]
+    ExtractionAgentTest:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+      required: [success, message]
+    InvoiceLine:
+      type: object
+      properties:
+        id: { type: string }
+        lineNumber: { type: integer }
+        supplierMaterialCode: { type: string, nullable: true }
+        materialId: { type: string, nullable: true }
+        description: { type: string }
+        quantity: { type: number, nullable: true }
+        uom: { type: string, nullable: true }
+        unitPrice: { type: number, nullable: true }
+        taxRate: { type: number, nullable: true }
+        taxAmount: { type: number, nullable: true }
+        lineAmount: { type: number, nullable: true }
+        confidence: { type: number, nullable: true }
+        matchStatus: { type: string, enum: [MATCHED, SUGGESTED, UNMATCHED] }
+        purchaseOrderItemId: { type: string, nullable: true }
+      required: [id, lineNumber, description, matchStatus]
+    Invoice:
+      type: object
+      properties:
+        id: { type: string }
+        documentId: { type: string }
+        invoiceNumber: { type: string }
+        invoiceDate: { type: string, format: date, nullable: true }
+        supplierName: { type: string, nullable: true }
+        supplierTaxNumber: { type: string, nullable: true }
+        purchaseOrderNumber: { type: string, nullable: true }
+        purchaseOrderId: { type: string, nullable: true }
+        currency: { type: string, nullable: true }
+        netAmount: { type: number, nullable: true }
+        taxAmount: { type: number, nullable: true }
+        grossAmount: { type: number, nullable: true }
+        invoiceType: { type: string, enum: [MATERIAL, SERVICE, MIXED, UNKNOWN] }
+        status: { type: string, enum: [UPLOADED, PROCESSING, REVIEW_REQUIRED, PO_MATCHED, READY_FOR_GRN, GRN_POSTED, OCR_FAILED, FAILED] }
+        overallConfidence: { type: number, nullable: true }
+        organizationId: { type: string }
+        operatingUnitId: { type: string, nullable: true }
+        operatingUnitName: { type: string, nullable: true }
+        supplierId: { type: string, nullable: true }
+        supplierCode: { type: string, nullable: true }
+        goodsReceiptId: { type: string, nullable: true }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/InvoiceLine" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, documentId, invoiceNumber, invoiceType, status, organizationId, lines, createdAt, updatedAt]
+    UpdateInvoiceInput:
+      type: object
+      properties:
+        invoiceNumber: { type: string }
+        invoiceDate: { type: string, format: date, nullable: true }
+        supplierName: { type: string, nullable: true }
+        supplierTaxNumber: { type: string, nullable: true }
+        poNumber: { type: string, nullable: true }
+        currency: { type: string, nullable: true }
+        netAmount: { type: number, nullable: true }
+        taxAmount: { type: number, nullable: true }
+        grossAmount: { type: number, nullable: true }
+        supplierId: { type: string, nullable: true }
+        noPurchaseOrder: { type: boolean, nullable: true }
+      required: [invoiceNumber]
+    MatchSupplierInput:
+      type: object
+      properties:
+        supplierId: { type: string, nullable: true }
+    SupplierMatchCandidate:
+      type: object
+      properties:
+        supplierId: { type: string }
+        supplierCode: { type: string }
+        name: { type: string }
+        taxNumber: { type: string, nullable: true }
+        confidence: { type: number }
+        matchReason: { type: string }
+      required: [supplierId, supplierCode, name, confidence, matchReason]
+    SupplierMatchResponse:
+      type: object
+      properties:
+        invoiceId: { type: string }
+        supplierId: { type: string, nullable: true }
+        supplierName: { type: string, nullable: true }
+        candidates:
+          type: array
+          items: { $ref: "#/components/schemas/SupplierMatchCandidate" }
+        requiresSelection: { type: boolean }
+      required: [invoiceId, candidates, requiresSelection]
+    MatchPurchaseOrderInput:
+      type: object
+      properties:
+        purchaseOrderId: { type: string, nullable: true }
+        poNumber: { type: string, nullable: true }
+    MatchInvoiceLine:
+      type: object
+      properties:
+        invoiceLineId: { type: string }
+        purchaseOrderItemId: { type: string, nullable: true }
+      required: [invoiceLineId]
+    MatchInvoiceLinesInput:
+      type: object
+      properties:
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/MatchInvoiceLine" }
+      required: [lines]
+    Supplier:
+      type: object
+      properties:
+        id: { type: string }
+        supplierCode: { type: string }
+        name: { type: string }
+        searchName: { type: string, nullable: true }
+        businessPartnerId: { type: string, nullable: true }
+        legalName: { type: string, nullable: true }
+        taxNumber: { type: string, nullable: true }
+        trn: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        entityCode: { type: string }
+        country: { type: string, nullable: true }
+        city: { type: string, nullable: true }
+        postalCode: { type: string, nullable: true }
+        street: { type: string, nullable: true }
+        currency: { type: string, nullable: true }
+        isBlocked: { type: boolean }
+        isDeleted: { type: boolean }
+        isActive: { type: boolean }
+        status: { type: string }
+        aliases: { type: array, items: { type: string } }
+        sourceSystem: { type: string, nullable: true }
+        sourceLastChangedAt: { type: string, format: date-time, nullable: true }
+        lastSyncedAt: { type: string, format: date-time, nullable: true }
+        updatedAt: { type: string, format: date-time }
+      required: [id, supplierCode, name, entityCode, isBlocked, isDeleted, status, aliases, updatedAt]
+    SupplierUpsertInput:
+      type: object
+      properties:
+        supplierCode: { type: string }
+        name: { type: string }
+        searchName: { type: string, nullable: true }
+        businessPartnerId: { type: string, nullable: true }
+        legalName: { type: string, nullable: true }
+        taxNumber: { type: string, nullable: true }
+        trn: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        entityCode: { type: string }
+        country: { type: string, nullable: true }
+        city: { type: string, nullable: true }
+        postalCode: { type: string, nullable: true }
+        street: { type: string, nullable: true }
+        currency: { type: string, nullable: true }
+        isBlocked: { type: boolean }
+        isDeleted: { type: boolean }
+        status: { type: string }
+        aliases: { type: array, items: { type: string } }
+      required: [supplierCode, name, entityCode, isBlocked, isDeleted, status, aliases]
+    PurchaseOrderItem:
+      type: object
+      properties:
+        id: { type: string }
+        lineNumber: { type: integer }
+        itemNumber: { type: string, nullable: true }
+        materialId: { type: string, nullable: true }
+        materialCode: { type: string }
+        description: { type: string }
+        orderedQuantity: { type: number }
+        receivedQuantity: { type: number }
+        openQuantity: { type: number }
+        uom: { type: string }
+        unitPrice: { type: number, nullable: true }
+        priceQuantity: { type: number, nullable: true }
+        itemAmount: { type: number, nullable: true }
+        taxCode: { type: string, nullable: true }
+        taxAmount: { type: number, nullable: true }
+        grossItemAmount: { type: number, nullable: true }
+        currency: { type: string, nullable: true }
+        materialGroup: { type: string, nullable: true }
+        plant: { type: string, nullable: true }
+        storageLocation: { type: string, nullable: true }
+        itemCategory: { type: string, nullable: true }
+        accountAssignmentCategory: { type: string, nullable: true }
+        goodsReceiptExpected: { type: boolean }
+        invoiceExpected: { type: boolean }
+        deliveryCompleted: { type: boolean }
+        deletionIndicator: { type: boolean }
+        status: { type: string, enum: [OPEN, PARTIALLY_RECEIVED, CLOSED, CANCELLED] }
+      required: [id, lineNumber, materialCode, description, orderedQuantity, receivedQuantity, openQuantity, uom, status]
+    PurchaseOrder:
+      type: object
+      properties:
+        id: { type: string }
+        poNumber: { type: string }
+        entityCode: { type: string }
+        purchaseOrderType: { type: string, nullable: true }
+        companyCode: { type: string, nullable: true }
+        erpSupplierId: { type: string, nullable: true }
+        purchasingOrganization: { type: string, nullable: true }
+        purchasingGroup: { type: string, nullable: true }
+        paymentTerms: { type: string, nullable: true }
+        poCategory: { type: string, nullable: true }
+        poDate: { type: string, format: date, nullable: true }
+        deliveryDate: { type: string, format: date, nullable: true }
+        currency: { type: string }
+        totalNetAmount: { type: number, nullable: true }
+        totalTaxAmount: { type: number, nullable: true }
+        totalAmount: { type: number, nullable: true }
+        totalOrderedQuantity: { type: number, nullable: true }
+        totalReceivedQuantity: { type: number, nullable: true }
+        sourceSystem: { type: string, nullable: true }
+        sourceLastChangedAt: { type: string, format: date-time, nullable: true }
+        lastSyncedAt: { type: string, format: date-time, nullable: true }
+        status: { type: string, enum: [OPEN, PARTIALLY_RECEIVED, CLOSED, CANCELLED] }
+        organizationId: { type: string }
+        operatingUnitId: { type: string, nullable: true }
+        operatingUnitName: { type: string, nullable: true }
+        supplierId: { type: string }
+        supplierName: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/PurchaseOrderItem" }
+      required: [id, poNumber, currency, status, organizationId, supplierId, supplierName, items]
+    GrnLine:
+      type: object
+      properties:
+        purchaseOrderItemId: { type: string }
+        receivedQuantity: { type: number, minimum: 0 }
+        acceptedQuantity: { type: number, minimum: 0 }
+        damagedQuantity: { type: number, minimum: 0 }
+        rejectedQuantity: { type: number, minimum: 0 }
+        batchNumber: { type: string, nullable: true }
+        expiryDate: { type: string, format: date, nullable: true }
+      required: [purchaseOrderItemId, receivedQuantity, acceptedQuantity, damagedQuantity, rejectedQuantity]
+    GrnInput:
+      type: object
+      properties:
+        invoiceId: { type: string }
+        purchaseOrderId: { type: string }
+        operatingUnitId: { type: string }
+        receiptDate: { type: string, format: date-time, nullable: true }
+        lines:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/GrnLine" }
+      required: [invoiceId, purchaseOrderId, operatingUnitId, lines]
+    GrnValidation:
+      type: object
+      properties:
+        valid: { type: boolean }
+        errors:
+          type: array
+          items: { type: string }
+        warnings:
+          type: array
+          items: { type: string }
+      required: [valid, errors, warnings]
+    GoodsReceiptLine:
+      type: object
+      properties:
+        id: { type: string }
+        purchaseOrderItemId: { type: string }
+        purchaseOrderLineNumber: { type: integer }
+        materialCode: { type: string }
+        description: { type: string }
+        openQuantityBefore: { type: number }
+        invoiceQuantity: { type: number, nullable: true }
+        receivedQuantity: { type: number }
+        acceptedQuantity: { type: number }
+        damagedQuantity: { type: number }
+        rejectedQuantity: { type: number }
+        uom: { type: string }
+        batchNumber: { type: string, nullable: true }
+        expiryDate: { type: string, format: date, nullable: true }
+      required: [id, purchaseOrderItemId, purchaseOrderLineNumber, materialCode, description, openQuantityBefore, receivedQuantity, acceptedQuantity, damagedQuantity, rejectedQuantity, uom]
+    GoodsReceipt:
+      type: object
+      properties:
+        id: { type: string }
+        grnNumber: { type: string }
+        status: { type: string, enum: [DRAFT, READY_TO_POST, POSTING, POSTED, FAILED, UNKNOWN, CANCELLED] }
+        businessStatus: { type: string, nullable: true }
+        erpPostingStatus: { type: string, nullable: true }
+        erpMaterialDocument: { type: string, nullable: true }
+        erpDocumentYear: { type: string, nullable: true }
+        erpResponseJson: { type: string, nullable: true }
+        erpAttemptCount: { type: integer }
+        lastErpAttemptAt: { type: string, format: date-time, nullable: true }
+        erpPostedAt: { type: string, format: date-time, nullable: true }
+        failureCode: { type: string, nullable: true }
+        failureMessage: { type: string, nullable: true }
+        purchaseOrderId: { type: string }
+        purchaseOrderNumber: { type: string }
+        invoiceId: { type: string, nullable: true }
+        invoiceNumber: { type: string, nullable: true }
+        supplierId: { type: string }
+        supplierName: { type: string }
+        organizationId: { type: string }
+        operatingUnitId: { type: string }
+        operatingUnitName: { type: string }
+        receiptDate: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        postedAt: { type: string, format: date-time, nullable: true }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/GoodsReceiptLine" }
+      required: [id, grnNumber, status, purchaseOrderId, purchaseOrderNumber, supplierId, supplierName, organizationId, operatingUnitId, operatingUnitName, receiptDate, createdAt, lines]

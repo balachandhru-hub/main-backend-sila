@@ -1,0 +1,1371 @@
+PROJECT: SILA ME
+TASK: FIX "SAVE INVOICE AND CONTINUE" END-TO-END
+
+CURRENT DEFECT
+
+On Mobile Invoice Review:
+
+SAVE INVOICE AND CONTINUE
+
+currently appears to perform no action.
+
+This button must execute the actual invoice persistence workflow.
+
+DO NOT only fix navigation.
+
+Required flow:
+
+Reviewed OCR Data
+        ↓
+Validate Required Fields
+        ↓
+Duplicate Invoice Check
+        ↓
+Create / Update Invoice
+        ↓
+Create / Update Invoice Lines
+        ↓
+Persist Detailed Extraction
+        ↓
+Link Scanned Document
+        ↓
+Mark Review State
+        ↓
+Commit Transaction
+        ↓
+Return Saved Invoice
+        ↓
+Continue to PO / GRN flow
+
+============================================================
+1. FIRST TRACE CURRENT BUTTON
+============================================================
+
+Find the exact runtime component containing:
+
+SAVE INVOICE AND CONTINUE
+
+Search:
+
+"Save Invoice and Continue"
+saveInvoice
+handleSaveInvoice
+invoice-review
+InvoiceReview
+createInvoice
+updateInvoice
+duplicate
+invoice_ext_data
+
+Trace:
+
+Button
+→ onPress
+→ validation
+→ API client
+→ backend endpoint
+→ service
+→ database
+→ response
+→ navigation.
+
+Add Development trace:
+
+[INVOICE-SAVE] BUTTON_PRESSED
+
+If this does not appear:
+
+fix Mobile event handling first.
+
+Then:
+
+[INVOICE-SAVE] VALIDATION_STARTED
+[INVOICE-SAVE] DUPLICATE_CHECK_STARTED
+[INVOICE-SAVE] API_REQUEST_STARTED
+[INVOICE-SAVE] API_RESPONSE
+[INVOICE-SAVE] SAVE_COMPLETED
+[INVOICE-SAVE] NAVIGATION_STARTED
+
+Do not log confidential invoice values.
+
+============================================================
+2. BUTTON UX
+============================================================
+
+When pressed:
+
+disable button
+
+show spinner
+
+change label to:
+
+SAVING INVOICE...
+
+Prevent double taps.
+
+Do not navigate until backend returns success.
+
+On failure:
+
+re-enable button
+
+show meaningful error.
+
+Never silently fail.
+
+============================================================
+3. REQUIRED DATA
+============================================================
+
+Before save, validate reviewed invoice data.
+
+For a normal material invoice require at minimum:
+
+DocumentId
+
+Supplier Name OR confirmed SupplierId
+
+Invoice Number
+
+Invoice Gross Amount
+
+Currency if required by current business configuration.
+
+PO Number may be required according to current Invoice OCR /
+procurement configuration.
+
+Do NOT blindly require PO for legitimate non-PO/service invoices if
+configuration allows them.
+
+For every missing required field:
+
+highlight the field.
+
+Example:
+
+"Invoice number is required before saving."
+
+Do not make user guess why Save did nothing.
+
+============================================================
+4. SAVE IS DIFFERENT FROM OCR
+============================================================
+
+OCR produces candidate data.
+
+SAVE INVOICE AND CONTINUE means:
+
+the user has reviewed the currently displayed invoice information and
+wants SILA ME to persist it.
+
+Therefore save:
+
+FINAL REVIEWED VALUES
+
+not blindly:
+
+raw OCR values.
+
+Priority:
+
+USER CONFIRMED / MANUAL
+        >
+MERGED BACKEND OCR
+        >
+MOBILE OCR.
+
+============================================================
+5. BACKEND SAVE ENDPOINT
+============================================================
+
+Inspect existing APIs first.
+
+Reuse existing endpoint if appropriate.
+
+If current API does not support this transaction cleanly, implement:
+
+POST /api/v1/invoices
+
+for first save
+
+and:
+
+PUT /api/v1/invoices/{invoiceId}
+
+for subsequent review updates.
+
+Alternatively create one explicit reviewed-invoice endpoint if it fits
+the existing architecture better.
+
+Do NOT create duplicate overlapping endpoints unnecessarily.
+
+============================================================
+6. SAVE REQUEST
+============================================================
+
+Conceptual request:
+
+{
+  "documentId": "...",
+
+  "supplierId": "...",
+  "supplierName": "ABC Food Trading LLC",
+  "supplierTrn": "...",
+
+  "invoiceNumber": "INV-10025",
+  "invoiceDate": "2026-09-16",
+
+  "purchaseOrderId": "...",
+  "purchaseOrderNumber": "4500012345",
+
+  "currency": "AED",
+
+  "netAmount": 950.00,
+  "taxAmount": 47.50,
+  "grossAmount": 997.50,
+
+  "invoiceType": "MATERIAL",
+
+  "lines": [
+    {
+      "lineNumber": 1,
+      "supplierItemCode": "...",
+      "description": "...",
+      "poItemNumber": "10",
+      "quantity": 10,
+      "uom": "KG",
+      "unitPrice": 20,
+      "netAmount": 200,
+      "taxRate": 5,
+      "taxAmount": 10,
+      "grossAmount": 210
+    }
+  ]
+}
+
+Use actual existing DTOs/field names where available.
+
+============================================================
+7. DUPLICATE VALIDATION — CRITICAL
+============================================================
+
+BEFORE creating a new Invoice business record:
+
+perform server-side duplicate detection.
+
+Do NOT rely on Mobile-only duplicate validation.
+
+Primary exact duplicate key:
+
+OrganizationId
++
+Supplier identity
++
+Normalized Invoice Number.
+
+Supplier identity preference:
+
+SupplierId
+
+otherwise validated supplier identity / normalized Supplier Name.
+
+Invoice number must be normalized safely for comparison.
+
+Example:
+
+INV-10025
+
+and:
+
+inv-10025
+
+must not create separate invoices merely because of case.
+
+Do not over-normalize meaningful characters without understanding
+existing invoice-number conventions.
+
+============================================================
+8. STRONG EXACT DUPLICATE
+============================================================
+
+If an existing invoice has:
+
+same Organization
+
+same Supplier
+
+same Invoice Number
+
+then normally treat as:
+
+EXACT_DUPLICATE.
+
+Return HTTP 409 or existing project-standard conflict response:
+
+{
+  "code": "DUPLICATE_INVOICE",
+  "duplicateType": "EXACT",
+  "existingInvoiceId": "...",
+  "existingInvoiceNumber": "INV-10025",
+  "message": "This supplier invoice already exists in SILA ME."
+}
+
+Do NOT create another invoice.
+
+============================================================
+9. PROBABLE DUPLICATE
+============================================================
+
+Also detect probable duplicates.
+
+Examples:
+
+same supplier
+
+same invoice date
+
+same gross amount
+
+same PO
+
+but invoice number OCR differs slightly.
+
+Or:
+
+same supplier
+
+similar normalized invoice number
+
+same gross amount.
+
+Return:
+
+POSSIBLE_DUPLICATE
+
+with safe matching information.
+
+Do not automatically block every probable duplicate.
+
+Mobile can show:
+
+POSSIBLE DUPLICATE INVOICE
+
+A similar invoice already exists.
+
+Invoice:
+<existing number>
+
+Supplier:
+<supplier>
+
+Amount:
+AED <amount>
+
+Date:
+<date>
+
+Actions:
+
+VIEW EXISTING
+
+REVIEW CURRENT
+
+If business rules permit authorized override later:
+
+CONTINUE AS NEW
+
+must require explicit confirmation, reason and audit.
+
+Do not add override if existing authorization model does not support it
+yet; exact duplicates should remain blocked.
+
+============================================================
+10. DATABASE-LEVEL DUPLICATE PROTECTION
+============================================================
+
+Application-level checking is not enough.
+
+Where current data model safely supports it, add a database uniqueness
+constraint/index representing the exact duplicate business key.
+
+Preferred concept:
+
+OrganizationId
+SupplierId
+NormalizedInvoiceNumber
+
+for matched suppliers.
+
+If SupplierId can be null, design appropriate protection for unmatched
+supplier invoices without breaking legitimate data.
+
+Do not create a dangerous unique index until existing data has been
+checked for duplicates.
+
+If duplicate historical data exists:
+
+report it.
+
+Do not delete historical records automatically.
+
+============================================================
+11. IMPORTANT — RE-READ IS NOT A DUPLICATE
+============================================================
+
+If the same:
+
+DocumentId
+
+or same existing:
+
+InvoiceId
+
+is being saved again after:
+
+Re-read Invoice
+
+manual correction
+
+OCR improvement
+
+then UPDATE the existing invoice.
+
+Do NOT classify the invoice against itself as a duplicate.
+
+Duplicate query must exclude:
+
+current InvoiceId.
+
+============================================================
+12. DOCUMENT IDEMPOTENCY
+============================================================
+
+One scanned Document should not accidentally create multiple Invoice
+records because:
+
+button pressed twice
+
+network retry
+
+Mobile timeout
+
+user navigated backward/forward
+
+Re-read occurred.
+
+Enforce document-to-invoice relationship appropriately.
+
+If Document already belongs to Invoice X:
+
+SAVE should update Invoice X.
+
+Do not create Invoice Y.
+
+============================================================
+13. IDEMPOTENCY KEY
+============================================================
+
+Use an idempotency mechanism for create/save if current architecture
+supports it.
+
+Example:
+
+DocumentId + operation SAVE_REVIEWED_INVOICE.
+
+Repeated identical requests should return the same saved Invoice,
+not create another.
+
+============================================================
+14. TRANSACTION
+============================================================
+
+The save must be transactional.
+
+Conceptually:
+
+BEGIN
+
+validate organization/scope
+
+load Document
+
+determine existing Invoice for Document
+
+validate supplier
+
+validate PO where supplied
+
+duplicate check
+
+create/update Invoice
+
+create/update InvoiceLines
+
+persist detailed extraction/current reviewed values
+
+link Document
+
+update review status
+
+write audit
+
+COMMIT.
+
+If any required database operation fails:
+
+ROLLBACK.
+
+Do not leave:
+
+Invoice header saved
+
+but lines missing
+
+or:
+
+Document linked without Invoice.
+
+============================================================
+15. INVOICE TABLE
+============================================================
+
+Inspect current Invoice entity/table.
+
+Reuse it.
+
+Ensure the reviewed business record contains/mappings exist for:
+
+Id
+
+OrganizationId
+
+PropertyId
+
+OperatingUnitId / StoreId where applicable
+
+DocumentId
+
+SupplierId nullable
+
+SupplierName
+
+SupplierTrn
+
+InvoiceNumber
+
+NormalizedInvoiceNumber
+
+InvoiceDate
+
+InvoiceType
+
+PurchaseOrderId nullable
+
+PurchaseOrderNumber nullable
+
+Currency
+
+NetAmount
+
+TaxAmount
+
+GrossAmount
+
+AmountDue if supported
+
+ExtractionStatus
+
+ReviewStatus
+
+PostingStatus
+
+CreatedBy
+
+CreatedAt
+
+UpdatedBy
+
+UpdatedAt.
+
+Do not create duplicate columns if equivalents already exist.
+
+============================================================
+16. INVOICE LINES
+============================================================
+
+If backend detailed OCR returned lines:
+
+persist reviewed lines into existing InvoiceLine table.
+
+Save:
+
+InvoiceId
+
+LineNumber
+
+SupplierItemCode
+
+Description
+
+PoItemNumber
+
+Quantity
+
+Uom
+
+UnitPrice
+
+DiscountAmount
+
+NetAmount
+
+TaxRate
+
+TaxAmount
+
+GrossAmount.
+
+If lines are currently zero because OCR failed:
+
+do not invent lines.
+
+Invoice header can still be saved if business rules permit.
+
+But mark:
+
+REVIEW_REQUIRED
+
+or equivalent for line completeness where appropriate.
+
+============================================================
+17. INVOICE_EXT_DATA
+============================================================
+
+Continue updating existing:
+
+invoice_ext_data
+
+or actual equivalent.
+
+Detailed extraction should retain fields already designed such as:
+
+docid
+
+supplier name
+
+supplier TRN
+
+invoice number
+
+invoice date
+
+PO
+
+invoiceGross
+
+invoicenet
+
+item-sku-id
+
+itemamount
+
+itemnet
+
+itemdescription
+
+line item number
+
+PO item ID.
+
+Do not abandon this data because reviewed Invoice tables now exist.
+
+============================================================
+18. EXTRACTION VS VERIFIED BUSINESS DATA
+============================================================
+
+Maintain distinction:
+
+OCR extraction/history
+=
+what OCR detected.
+
+Invoice / InvoiceLine
+=
+current reviewed business data.
+
+Do not overwrite extraction history when user corrects a value.
+
+Example:
+
+OCR:
+INV-10028
+
+User:
+INV-10025.
+
+Extraction history keeps:
+
+INV-10028.
+
+Invoice business record stores:
+
+INV-10025.
+
+Audit records manual correction if applicable.
+
+============================================================
+19. REVIEW STATUS
+============================================================
+
+After successful save:
+
+if required header data is reviewed and valid:
+
+ReviewStatus = VERIFIED
+
+or current equivalent.
+
+If some optional/detailed fields still need review:
+
+use appropriate current status.
+
+Do not claim VERIFIED if mandatory business fields are unresolved.
+
+============================================================
+20. POSTING STATUS
+============================================================
+
+Keep Invoice lifecycle separate from GRN lifecycle.
+
+Suggested/current equivalent:
+
+EXTRACTION_PENDING
+
+REVIEW_REQUIRED
+
+VERIFIED
+
+WAITING_FOR_GRN
+
+READY_FOR_POSTING
+
+POSTED
+
+POSTING_FAILED.
+
+For material invoice:
+
+after reviewed invoice save and before GRN:
+
+WAITING_FOR_GRN.
+
+Do not post invoice yet.
+
+============================================================
+21. AFTER SAVE — MATERIAL INVOICE
+============================================================
+
+For MATERIAL invoice:
+
+after successful save determine PO state.
+
+If PO already confidently linked:
+
+continue to:
+
+PO / LINE MATCH / PHYSICAL QUANTITY / GRN
+
+using existing flow.
+
+Do not create a new parallel GRN flow.
+
+If PO requires confirmation:
+
+continue to existing:
+
+PO MATCH.
+
+============================================================
+22. AFTER SAVE — SERVICE INVOICE
+============================================================
+
+For SERVICE invoice:
+
+save Invoice.
+
+GRN status remains:
+
+NOT_APPLICABLE.
+
+Do not send user into goods receipt.
+
+Continue according to existing service-invoice workflow.
+
+Do not invent GRN for service PO.
+
+============================================================
+23. AFTER SAVE — MIXED
+============================================================
+
+For MIXED:
+
+save full invoice.
+
+Existing GRN rules determine material-line treatment.
+
+Do not change existing GRN business logic.
+
+============================================================
+24. API RESPONSE
+============================================================
+
+Return useful result:
+
+{
+  "invoiceId": "...",
+  "invoiceNumber": "...",
+  "documentId": "...",
+  "saveStatus": "SAVED",
+  "reviewStatus": "VERIFIED",
+  "postingStatus": "WAITING_FOR_GRN",
+  "duplicateStatus": "CLEAR",
+  "purchaseOrderMatched": true,
+  "nextStep": "GRN_REVIEW"
+}
+
+Use actual enums/contracts consistent with project.
+
+Possible nextStep:
+
+PO_MATCH
+LINE_MATCH
+QUANTITY_CONFIRMATION
+GRN_REVIEW
+SERVICE_INVOICE_REVIEW
+INVOICE_DETAIL.
+
+============================================================
+25. MOBILE NAVIGATION
+============================================================
+
+Navigation happens ONLY after:
+
+SAVE_COMPLETED.
+
+Use backend nextStep or current deterministic business flow.
+
+Do not navigate based only on local assumptions if backend has already
+determined status.
+
+============================================================
+26. EXACT DUPLICATE MOBILE UX
+============================================================
+
+If backend returns:
+
+DUPLICATE_INVOICE
+
+do NOT navigate forward.
+
+Show:
+
+DUPLICATE INVOICE
+
+This supplier invoice already exists in SILA ME.
+
+Invoice:
+<invoice number>
+
+Supplier:
+<supplier>
+
+Date:
+<date>
+
+Amount:
+<currency amount>
+
+Actions:
+
+VIEW EXISTING INVOICE
+
+BACK TO REVIEW.
+
+Do not allow another invoice to be created accidentally.
+
+============================================================
+27. DUPLICATE CHECK BEFORE FINAL SAVE UX
+============================================================
+
+Preferred UX:
+
+User presses:
+
+SAVE INVOICE AND CONTINUE
+
+UI:
+
+Checking invoice...
+
+Then:
+
+Saving invoice...
+
+Then:
+
+Invoice saved ✓
+
+Then navigate.
+
+If duplicate:
+
+Checking invoice...
+
+then show duplicate modal.
+
+Do not show:
+
+Invoice saved.
+
+============================================================
+28. SERVER-SIDE AUTHORIZATION
+============================================================
+
+Backend must enforce:
+
+authenticated Mobile user
+
+correct application access
+
+organization scope
+
+property/store scope
+
+UPLOAD_INVOICE / EDIT_INVOICE or actual applicable permissions.
+
+Never trust OrganizationId supplied by Mobile without validating it
+against authenticated user context.
+
+============================================================
+29. AUDIT
+============================================================
+
+Audit:
+
+INVOICE_SAVE_REQUESTED
+
+INVOICE_DUPLICATE_CHECKED
+
+INVOICE_DUPLICATE_BLOCKED
+
+INVOICE_POSSIBLE_DUPLICATE_FOUND
+
+INVOICE_CREATED
+
+INVOICE_UPDATED
+
+INVOICE_REVIEW_VERIFIED
+
+INVOICE_SAVE_FAILED.
+
+Include safe:
+
+UserId
+OrganizationId
+DocumentId
+InvoiceId
+SupplierId
+PO Id where applicable
+result
+timestamp.
+
+Do not log confidential document contents.
+
+============================================================
+30. DEVELOPMENT DIAGNOSTICS
+============================================================
+
+Extend existing Development diagnostics with:
+
+SAVE INVOICE
+
+Button:
+PRESSED
+
+Validation:
+PASS/FAIL
+
+Document:
+FOUND/NOT_FOUND
+
+Existing Invoice:
+YES/NO
+
+Duplicate Check:
+CLEAR / EXACT / POSSIBLE
+
+API:
+CALLED / FAILED
+
+HTTP:
+<status>
+
+Invoice:
+CREATED / UPDATED / NOT_SAVED
+
+Invoice Lines:
+<n>
+
+invoice_ext_data:
+UPDATED / NOT_UPDATED
+
+Transaction:
+COMMITTED / ROLLED_BACK
+
+Next Step:
+<step>.
+
+This is DEVELOPMENT only.
+
+============================================================
+31. CURRENT OCR FAILURE MUST NOT MAKE BUTTON DEAD
+============================================================
+
+Current OCR diagnostic showed:
+
+Backend REVIEW_REQUIRED
+Final PARTIAL
+Missing:
+supplierName
+purchaseOrderNumber
+invoiceGross.
+
+If mandatory fields remain missing:
+
+SAVE button should NOT silently do nothing.
+
+It must explicitly highlight them and say:
+
+"Complete the highlighted invoice details before saving."
+
+If user manually enters the required values:
+
+SAVE must proceed.
+
+OCR quality and Save behavior are separate issues.
+
+============================================================
+32. DUPLICATE TEST 1 — EXACT
+============================================================
+
+Existing:
+
+Organization A
+
+Supplier:
+ABC FOOD TRADING LLC
+
+Invoice:
+INV-10025.
+
+Attempt second:
+
+same organization
+same supplier
+same invoice number.
+
+Expected:
+
+DUPLICATE_INVOICE.
+
+Second Invoice row:
+
+NOT CREATED.
+
+============================================================
+33. DUPLICATE TEST 2 — DIFFERENT SUPPLIER
+============================================================
+
+Supplier A:
+
+INV-10025.
+
+Supplier B:
+
+INV-10025.
+
+Expected:
+
+not exact duplicate solely because invoice numbers match.
+
+Both may exist.
+
+============================================================
+34. DUPLICATE TEST 3 — DIFFERENT ORGANIZATION
+============================================================
+
+Organization A:
+
+Supplier X
+INV-10025.
+
+Organization B:
+
+Supplier X
+INV-10025.
+
+Expected:
+
+tenant isolation.
+
+Organization B is not blocked by Organization A's invoice.
+
+============================================================
+35. DUPLICATE TEST 4 — RE-READ SAME INVOICE
+============================================================
+
+Document D1
+
+Invoice I1.
+
+Run Backend Re-read.
+
+Press Save again.
+
+Expected:
+
+I1 UPDATED.
+
+No I2.
+
+Duplicate check excludes I1.
+
+============================================================
+36. DOUBLE TAP TEST
+============================================================
+
+Simulate:
+
+SAVE pressed twice rapidly.
+
+Expected:
+
+one Invoice.
+
+one set of InvoiceLines.
+
+one Document link.
+
+No duplicate.
+
+============================================================
+37. NETWORK RETRY TEST
+============================================================
+
+Backend saves successfully but Mobile response is interrupted.
+
+Mobile retries same save.
+
+Expected:
+
+same Invoice returned.
+
+No duplicate.
+
+============================================================
+38. TRANSACTION FAILURE TEST
+============================================================
+
+Simulate InvoiceLine persistence failure.
+
+Expected:
+
+transaction rollback.
+
+Do not leave partially saved new Invoice.
+
+============================================================
+39. DATABASE VERIFICATION
+============================================================
+
+After successful real test save, verify directly:
+
+Invoice row exists.
+
+Correct DocumentId.
+
+Correct Organization.
+
+Correct reviewed header values.
+
+Correct PO where applicable.
+
+InvoiceLine count correct.
+
+invoice_ext_data updated.
+
+Extraction history preserved.
+
+Audit created.
+
+No duplicate invoice.
+
+============================================================
+40. GRN REGRESSION
+============================================================
+
+After successful material invoice save:
+
+continue through existing GRN flow.
+
+Verify:
+
+Invoice Quantity remains supplier invoice quantity.
+
+Physical Received Qty remains user-entered physical quantity.
+
+GRN accepted quantity remains separate.
+
+Do not let this fix change existing GRN rules.
+
+============================================================
+41. SHAREPOINT REGRESSION
+============================================================
+
+Do not change automatic SharePoint PDF routing.
+
+The already stored PDF remains the same authoritative document.
+
+Invoice persistence links to that Document.
+
+Do not generate another PDF during Save.
+
+============================================================
+42. BALA PROTECTION
+============================================================
+
+Do NOT modify:
+
+bala@chervic.in.
+
+No user migration/reseed/reset.
+
+============================================================
+43. FINAL REPORT
+============================================================
+
+Return:
+
+SILA ME SAVE INVOICE AND CONTINUE
+
+BUTTON HANDLER:
+PASS/FAIL
+
+ROOT CAUSE OF NO ACTION:
+<exact cause>
+
+FORM VALIDATION:
+PASS/FAIL
+
+MISSING FIELD FEEDBACK:
+PASS/FAIL
+
+SAVE API:
+PASS/FAIL
+
+SERVER-SIDE DUPLICATE CHECK:
+PASS/FAIL
+
+EXACT DUPLICATE:
+PASS/FAIL
+
+POSSIBLE DUPLICATE:
+PASS/FAIL
+
+SELF-EXCLUSION ON UPDATE:
+PASS/FAIL
+
+DOCUMENT IDEMPOTENCY:
+PASS/FAIL
+
+DOUBLE-TAP PROTECTION:
+PASS/FAIL
+
+NETWORK RETRY IDEMPOTENCY:
+PASS/FAIL
+
+INVOICE CREATE:
+PASS/FAIL
+
+INVOICE UPDATE:
+PASS/FAIL
+
+INVOICE TABLE:
+PASS/FAIL
+
+INVOICE LINES:
+PASS/FAIL
+
+INVOICE_EXT_DATA:
+PASS/FAIL
+
+EXTRACTION HISTORY PRESERVED:
+PASS/FAIL
+
+DATABASE TRANSACTION:
+PASS/FAIL
+
+AUDIT:
+PASS/FAIL
+
+REVIEW STATUS:
+PASS/FAIL
+
+POSTING STATUS:
+PASS/FAIL
+
+MATERIAL NEXT STEP:
+<actual>
+
+SERVICE GRN:
+NOT_APPLICABLE
+
+MOBILE NAVIGATION:
+PASS/FAIL
+
+SHAREPOINT REGRESSION:
+PASS/FAIL
+
+GRN REGRESSION:
+PASS/FAIL
+
+BALA USER MODIFIED:
+NO
+
+API TESTS:
+x/x
+
+MOBILE TYPECHECK:
+PASS/FAIL
+
+CLOUD BUILD:
+PASS/FAIL
+
+DATABASE MIGRATION:
+<name/NONE>
+
+FINAL STATUS:
+PASS / BLOCKED / FAIL
+
+============================================================
+44. COMMIT
+============================================================
+
+Only if actual database verification succeeds:
+
+git commit -m "fix: persist reviewed invoice with duplicate validation"
+
+DO NOT PUSH.
+
+STOP.

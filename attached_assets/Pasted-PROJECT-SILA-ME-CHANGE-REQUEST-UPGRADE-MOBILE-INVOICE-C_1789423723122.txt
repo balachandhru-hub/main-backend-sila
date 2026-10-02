@@ -1,0 +1,1972 @@
+PROJECT: SILA ME
+
+CHANGE REQUEST:
+UPGRADE MOBILE INVOICE CAPTURE INTO A COMPLETE SCANNER APP WITH:
+
+1. ON-DEVICE BASIC OCR
+2. PAGE-BY-PAGE DOCUMENT SCANNING
+3. MULTI-PAGE PDF CREATION
+4. ADD / DELETE / RETAKE / REORDER / ROTATE PAGES
+5. BASIC INVOICE FIELD EXTRACTION ON MOBILE
+6. REVIEW + SAVE
+7. BACKEND DOCUMENT / INVOICE TABLE UPDATE
+8. CLOUD FULL EXTRACTION INTO invoice_ext_data
+9. FIX ALL MOBILE BACK / NAVIGATION BUTTONS
+
+IMPORTANT:
+
+The existing Phase 3 functionality already works.
+
+DO NOT rebuild:
+
+- Authentication
+- Organization/access control
+- Existing GRN posting
+- PO matching
+- Inventory updates
+- invoice_ext_data architecture
+- Cloud extraction-agent configuration
+
+Enhance the existing implementation.
+
+==================================================
+1. TARGET MOBILE EXPERIENCE
+==================================================
+
+SILA ME Mobile must behave like a proper document scanner application.
+
+Expected user flow:
+
+Mobile Home
+   ↓
+Receive Stock
+   ↓
+Scan Invoice
+   ↓
+Camera Scanner
+   ↓
+Capture Page 1
+   ↓
+Preview Page
+   ↓
+ADD ANOTHER PAGE
+   ↓
+Capture Page 2
+   ↓
+ADD ANOTHER PAGE
+   ↓
+Capture Page 3
+   ↓
+Review All Pages
+   ↓
+Generate PDF
+   ↓
+Run Basic Mobile OCR
+   ↓
+Show Basic Invoice Information
+   ↓
+User Reviews / Corrects
+   ↓
+SAVE
+   ↓
+Upload PDF + Basic Fields
+   ↓
+Backend saves document/invoice
+   ↓
+Backend full extraction starts
+   ↓
+Find PO / Continue GRN
+
+This must feel like:
+
+Adobe Scan
+Microsoft Lens
+CamScanner
+
+in terms of basic scanning workflow.
+
+Do NOT simply open the camera and upload one photograph.
+
+==================================================
+2. MOBILE OCR IS REQUIRED
+==================================================
+
+Add OCR capability directly to the Mobile application.
+
+Purpose of Mobile OCR:
+
+FAST BASIC EXTRACTION ONLY.
+
+Mobile OCR must extract:
+
+1. Supplier Name
+2. Supplier TRN
+3. Supplier Invoice Number
+4. Invoice Date
+5. Purchase Order Number
+6. Invoice Gross Amount
+
+Full invoice-line extraction remains a backend/Cloud responsibility.
+
+==================================================
+3. MOBILE OCR TECHNOLOGY
+==================================================
+
+Inspect the current Expo version and existing Mobile architecture.
+
+Implement a maintained on-device OCR solution compatible with the project.
+
+Preferred architecture:
+
+Camera Image
+   ↓
+Image preprocessing
+   ↓
+On-device OCR / text recognition
+   ↓
+Basic Invoice Field Parser
+   ↓
+Basic Invoice Data
+
+A native ML Kit-style text-recognition library or another maintained
+on-device OCR package may be used.
+
+IMPORTANT:
+
+Do NOT call:
+
+OpenAI
+Azure OCR
+Google Document AI cloud API
+AWS Textract
+Gemini
+Claude
+
+from the phone for basic OCR.
+
+The basic OCR must execute locally/on-device.
+
+No OCR API token should be required for Mobile basic extraction.
+
+==================================================
+4. EXPO / NATIVE BUILD RULE
+==================================================
+
+If proper document scanning / on-device OCR requires native modules:
+
+DO NOT compromise the requested functionality just to preserve Expo Go.
+
+Instead:
+
+- configure Expo prebuild correctly
+- configure required native plugins
+- support Expo Development Build
+- keep Android/iOS project configuration reproducible
+
+Clearly report:
+
+EXPO GO COMPATIBLE: YES/NO
+
+DEVELOPMENT BUILD REQUIRED: YES/NO
+
+Do not falsely claim Expo Go compatibility.
+
+==================================================
+5. CAMERA SCANNER
+==================================================
+
+Create a dedicated scanner experience.
+
+Screen:
+
+Invoice Scanner
+
+Camera should occupy most of the screen.
+
+Provide:
+
+Flash On/Off
+
+Auto / Manual capture if practical
+
+Capture button
+
+Close
+
+Gallery import
+
+After capturing a page:
+
+display Page Preview.
+
+Actions:
+
+USE PAGE
+
+RETAKE
+
+ROTATE
+
+CROP
+
+DELETE
+
+==================================================
+6. DOCUMENT EDGE / CROP SUPPORT
+==================================================
+
+Where supported by the chosen package:
+
+Detect document edges.
+
+Allow:
+
+automatic crop
+
+manual corner correction
+
+perspective correction
+
+deskew
+
+Do not block the first implementation if perfect edge detection is unavailable.
+
+At minimum provide:
+
+Crop
+Rotate
+Retake
+
+==================================================
+7. PAGE-BY-PAGE SCANNING
+==================================================
+
+The scanner must support multiple invoice pages.
+
+Example:
+
+Capture Page 1
+
+then show:
+
+PAGE 1 ADDED
+
+Buttons:
+
+ADD PAGE
+
+REVIEW DOCUMENT
+
+When ADD PAGE is selected:
+
+return to camera without losing Page 1.
+
+User can continue:
+
+Page 1
+Page 2
+Page 3
+Page 4
+...
+
+There must not be a hard-coded 2-page restriction.
+
+Use a sensible maximum such as 20 pages initially.
+
+Make maximum configurable.
+
+==================================================
+8. PAGE SESSION MODEL
+==================================================
+
+Maintain one temporary scanning session.
+
+Suggested model:
+
+ScanSession
+
+sessionId
+documentType
+createdAt
+
+Pages:
+
+pageId
+pageNumber
+localUri
+width
+height
+rotation
+ocrText
+thumbnailUri
+
+Temporary scan session remains local until Save/Upload.
+
+==================================================
+9. PAGE REVIEW SCREEN
+==================================================
+
+After pages are captured show:
+
+Review Invoice
+
+Example:
+
+[PAGE 1] [PAGE 2] [PAGE 3]
+
+Each page thumbnail supports:
+
+Tap → Full Preview
+
+Drag / controls → Reorder
+
+Rotate
+
+Delete
+
+Retake
+
+Add Page
+
+Display:
+
+3 Pages
+
+Buttons:
+
+ADD PAGE
+
+CREATE PDF
+
+CANCEL
+
+==================================================
+10. PAGE REORDERING
+==================================================
+
+User must be able to change:
+
+1
+2
+3
+
+into:
+
+1
+3
+2
+
+PDF must use final selected order.
+
+OCR aggregation must use final page order.
+
+==================================================
+11. DELETE PAGE
+==================================================
+
+Deleting a page:
+
+- removes it from scan session
+- renumbers remaining pages
+- removes temporary local file where safe
+
+Confirm deletion where appropriate.
+
+==================================================
+12. PDF CREATION
+==================================================
+
+When user chooses:
+
+CREATE PDF
+
+convert the selected pages into:
+
+ONE PDF DOCUMENT.
+
+Example:
+
+Page 1.jpg
+Page 2.jpg
+Page 3.jpg
+
+becomes:
+
+invoice_<timestamp>.pdf
+
+Preserve:
+
+page order
+reasonable image quality
+readable text
+
+Balance file quality and size.
+
+Do not severely compress invoices until text becomes unreadable.
+
+==================================================
+13. PDF PREVIEW
+==================================================
+
+After PDF creation show:
+
+Invoice Ready
+
+PDF Preview
+
+Pages:
+3
+
+File Size:
+example 2.4 MB
+
+Actions:
+
+EDIT PAGES
+
+CONTINUE
+
+CONTINUE triggers basic field review.
+
+==================================================
+14. WHEN OCR RUNS
+==================================================
+
+OCR may run:
+
+Option A:
+per page immediately after capture
+
+OR
+
+Option B:
+after all pages have been captured
+
+Preferred:
+
+Run page OCR in background after each page capture.
+
+This reduces waiting after PDF creation.
+
+Then combine OCR text in final page order.
+
+==================================================
+15. MOBILE BASIC EXTRACTION
+==================================================
+
+Create:
+
+IMobileBasicInvoiceParser
+
+or equivalent TypeScript service.
+
+Input:
+
+OCR text from all pages.
+
+Output:
+
+supplierName
+
+supplierTrn
+
+supplierInvoiceNumber
+
+invoiceDate
+
+purchaseOrderNumber
+
+invoiceGross
+
+currency
+
+Do NOT attempt full invoice table extraction on Mobile.
+
+==================================================
+16. SUPPLIER NAME
+==================================================
+
+Attempt supplier name extraction using:
+
+- top portion of first page
+- company-name indicators
+- TRN proximity
+- invoice-header layout
+
+Never silently fabricate a supplier name.
+
+If confidence is low:
+
+return extracted candidate and mark:
+
+NEEDS REVIEW
+
+==================================================
+17. SUPPLIER TRN
+==================================================
+
+Recognize labels such as:
+
+TRN
+
+VAT TRN
+
+Supplier TRN
+
+Tax Registration Number
+
+VAT Registration Number
+
+Store as STRING.
+
+Do not store as integer.
+
+==================================================
+18. SUPPLIER INVOICE NUMBER
+==================================================
+
+Recognize:
+
+Invoice Number
+
+Invoice No
+
+Invoice #
+
+Tax Invoice No
+
+Tax Invoice Number
+
+Inv No
+
+Document No
+
+Avoid confusing this with:
+
+PO Number
+TRN
+Customer Number
+Delivery Note
+
+==================================================
+19. INVOICE DATE
+==================================================
+
+Recognize:
+
+Invoice Date
+
+Tax Invoice Date
+
+Document Date
+
+Normalize internally into:
+
+YYYY-MM-DD
+
+Display in user-friendly format.
+
+==================================================
+20. PURCHASE ORDER NUMBER
+==================================================
+
+Recognize:
+
+PO Number
+
+PO No
+
+P.O. No
+
+Purchase Order
+
+Purchase Order Number
+
+Customer PO
+
+Order Reference
+
+Use labels/proximity.
+
+Do not randomly treat any long number as a PO.
+
+==================================================
+21. GROSS INVOICE AMOUNT
+==================================================
+
+Recognize:
+
+Grand Total
+
+Invoice Total
+
+Gross Total
+
+Total Including VAT
+
+Total Incl VAT
+
+Amount Due
+
+Total Amount
+
+Avoid:
+
+Subtotal
+
+Net Amount
+
+VAT Amount
+
+individual line totals
+
+==================================================
+22. BASIC INFORMATION SCREEN
+==================================================
+
+After scanning/PDF/OCR show:
+
+INVOICE DETAILS
+
+Supplier Name
+[ editable ]
+
+Supplier TRN
+[ editable ]
+
+Supplier Invoice Number
+[ editable ]
+
+Invoice Date
+[ editable ]
+
+Purchase Order Number
+[ editable ]
+
+Invoice Amount
+Currency + [ editable ]
+
+Below:
+
+Document
+3-page PDF
+
+Actions:
+
+BACK
+
+EDIT PDF
+
+SAVE
+
+==================================================
+23. USER CORRECTION
+==================================================
+
+All extracted fields must be editable.
+
+OCR is assistance only.
+
+User can correct:
+
+Supplier
+
+TRN
+
+Invoice Number
+
+Date
+
+PO
+
+Gross Amount
+
+Corrected values become the basic normalized invoice data when Save is pressed.
+
+==================================================
+24. SAVE BEHAVIOUR
+==================================================
+
+CRITICAL:
+
+Before Save:
+
+document/pages may remain temporary on device.
+
+When user presses SAVE:
+
+1. Validate required fields
+2. Finalize PDF
+3. Upload PDF to backend
+4. Create/update documents table
+5. Create/update invoice record
+6. Persist Mobile-confirmed basic extraction
+7. Start Cloud/backend full extraction
+8. Return saved Invoice ID
+9. Continue to PO / receiving workflow
+
+Do NOT create multiple invoices during page scanning.
+
+One scan session = one invoice/document.
+
+==================================================
+25. DATABASE UPDATE
+==================================================
+
+On SAVE:
+
+documents table must store:
+
+document ID
+
+organization ID
+
+operating unit ID
+
+uploaded user
+
+document type = INVOICE
+
+PDF filename
+
+content type = application/pdf
+
+file size
+
+page count
+
+storage reference
+
+source channel = MOBILE_SCANNER
+
+status
+
+created timestamp
+
+==================================================
+26. INVOICE TABLE UPDATE
+==================================================
+
+Save confirmed basic fields into the existing invoice record.
+
+Map:
+
+Supplier Name
+→ supplier_name_raw / normalized appropriate field
+
+Supplier TRN
+→ supplier TRN field
+
+Supplier Invoice Number
+→ invoice_number
+
+Invoice Date
+→ invoice_date
+
+Purchase Order Number
+→ po_number_raw
+
+Invoice Gross
+→ gross_amount
+
+Currency
+→ currency
+
+Use the existing Phase 3 schema where appropriate.
+
+Do NOT create duplicate parallel header tables unnecessarily.
+
+==================================================
+27. MOBILE CONFIRMED EXTRACTION METADATA
+==================================================
+
+Record source as:
+
+MOBILE_OCR
+
+If user changed a field:
+
+MOBILE_USER_CORRECTED
+
+Preserve original OCR value where current extraction/audit framework supports it.
+
+==================================================
+28. FULL CLOUD EXTRACTION AFTER SAVE
+==================================================
+
+After Mobile Save:
+
+Backend must start detailed extraction.
+
+Flow:
+
+Saved PDF
+   ↓
+Provider Resolver
+   ↓
+Configured External Provider?
+       YES → external agent
+       NO → built-in backend OCR
+   ↓
+Full invoice extraction
+   ↓
+invoice_ext_data
+
+This remains independent of Mobile basic OCR.
+
+==================================================
+29. invoice_ext_data
+==================================================
+
+Do not change previously approved purpose.
+
+Cloud full extraction populates:
+
+docid
+
+supplier_name
+
+supplier_trn
+
+supplier_invoice_number
+
+invoice_date
+
+purchase_order_number
+
+invoice_gross
+
+invoice_net
+
+item_sku_id
+
+item_amount
+
+item_net
+
+item_description
+
+line_item_number
+
+po_item_id
+
+plus existing metadata.
+
+Mobile basic extraction does NOT need to determine all line data.
+
+==================================================
+30. MOBILE SHOULD NOT WAIT FOR FULL EXTRACTION
+==================================================
+
+After SAVE:
+
+if required basic fields and PO are available:
+
+allow user to continue receiving.
+
+Detailed Cloud extraction can continue asynchronously.
+
+Display status where useful:
+
+Detailed invoice extraction in progress.
+
+Do not block Store Manager unnecessarily.
+
+==================================================
+31. SAVE RESPONSE
+==================================================
+
+Backend should return something similar to:
+
+{
+  "documentId": "...",
+  "invoiceId": "...",
+  "documentStatus": "SAVED",
+  "fullExtractionStatus": "PROCESSING",
+  "purchaseOrderNumber": "4500001001"
+}
+
+==================================================
+32. SAVED CONFIRMATION
+==================================================
+
+After Save show:
+
+INVOICE SAVED
+
+Supplier
+Invoice Number
+PO
+Amount
+Pages
+
+Then actions:
+
+CONTINUE RECEIVING
+
+VIEW SAVED INVOICE
+
+RETURN HOME
+
+==================================================
+33. DUPLICATE SAVE PROTECTION
+==================================================
+
+Do not create duplicates if:
+
+user double taps Save
+
+network retries
+
+app receives delayed response
+
+Use:
+
+idempotency key
+
+generated for the scan session.
+
+One ScanSession must result in maximum one saved document/invoice.
+
+==================================================
+34. TEMPORARY LOCAL DATA
+==================================================
+
+While scanning:
+
+store pages in temporary application storage.
+
+After successful upload/save:
+
+clean temporary page images and temporary PDF when safe.
+
+If upload fails:
+
+do NOT immediately delete scan session.
+
+Allow:
+
+Retry Save
+
+==================================================
+35. SAVE FAILURE
+==================================================
+
+If upload/save fails show:
+
+Invoice could not be saved.
+
+Your scanned pages have been kept on this device.
+
+Buttons:
+
+RETRY
+
+BACK TO REVIEW
+
+Do not force the user to rescan every page.
+
+==================================================
+36. BACK BUTTONS - CURRENT BUG
+==================================================
+
+The current Mobile Back buttons are not working correctly.
+
+Fix ALL navigation/back behavior.
+
+This is mandatory.
+
+Inspect every Mobile receiving route.
+
+==================================================
+37. REQUIRED BACK BEHAVIOUR
+==================================================
+
+Expected navigation:
+
+Home
+→ Receive Stock
+
+Receive Stock
+→ Scanner
+
+Scanner
+→ Page Review
+
+Page Review
+→ PDF Preview
+
+PDF Preview
+→ Invoice Basic Review
+
+Invoice Basic Review
+→ PO Match
+
+PO Match
+→ Physical Quantity
+
+Physical Quantity
+→ GRN Review
+
+==================================================
+38. HEADER BACK BUTTON
+==================================================
+
+Every non-root Mobile screen must display a functional Back button.
+
+Use Expo Router navigation correctly.
+
+Preferred behavior:
+
+router.back()
+
+when valid history exists.
+
+If no valid history:
+
+use explicit safe fallback route.
+
+Example:
+
+Scanner fallback:
+router.replace("/receive")
+
+Invoice Review fallback:
+router.replace("/receive")
+
+GRN Review fallback:
+router.replace("/receive/quantities")
+
+Do not leave buttons that only visually appear clickable.
+
+==================================================
+39. ANDROID HARDWARE BACK
+==================================================
+
+Test Android hardware/system Back.
+
+It must follow the same logical flow.
+
+Do not accidentally exit the entire app when a previous SILA ME screen exists.
+
+==================================================
+40. IOS BACK
+==================================================
+
+Ensure native iOS back gesture/button remains functional where supported.
+
+Do not disable native back gestures without reason.
+
+==================================================
+41. UNSAVED CHANGES
+==================================================
+
+If user has scanned pages but presses Back/Close:
+
+show:
+
+Discard scanned invoice?
+
+Your scanned pages have not been saved.
+
+Buttons:
+
+KEEP EDITING
+
+DISCARD
+
+Do not silently lose scanning work.
+
+==================================================
+42. BACK FROM OCR REVIEW
+==================================================
+
+Back from:
+
+Invoice Details
+
+should return to:
+
+PDF Preview / Page Review
+
+without deleting:
+
+pages
+PDF
+OCR text
+extracted fields
+
+==================================================
+43. BACK FROM PO SCREEN
+==================================================
+
+Back from PO Matching should return to:
+
+Basic Invoice Review
+
+without re-running scanner.
+
+==================================================
+44. BACK FROM PHYSICAL RECEIPT
+==================================================
+
+Back from Physical Quantity screen:
+
+returns to PO/line matching
+
+while preserving entered quantities where reasonable.
+
+==================================================
+45. GRN POSTED SCREEN
+==================================================
+
+After GRN has actually been POSTED:
+
+Back button must NOT allow accidental repost.
+
+Use safe navigation such as:
+
+View GRN
+
+Receive History
+
+Home
+
+A posted GRN must remain idempotent.
+
+==================================================
+46. MOBILE ROUTES TO REVIEW
+==================================================
+
+Inspect and fix all current routes including existing equivalents of:
+
+/receive
+
+/receive/scan
+
+/receive/document-preview
+
+/receive/invoice-review
+
+/receive/supplier-match
+
+/receive/po-match
+
+/receive/line-match
+
+/receive/quantities
+
+/receive/grn-review
+
+/receive/grn-result
+
+/receive/history
+
+/receive/history/[id]
+
+Ensure each screen has:
+
+defined parent destination
+
+working Back button
+
+safe state preservation
+
+==================================================
+47. SCANNER STATE MANAGEMENT
+==================================================
+
+Do not pass large images/PDF bytes through route parameters.
+
+Create scanner/session state service/store.
+
+Example:
+
+InvoiceScanStore
+
+State:
+
+sessionId
+
+pages[]
+
+pdfUri
+
+ocrText[]
+
+basicExtraction
+
+userCorrections
+
+uploadStatus
+
+savedDocumentId
+
+savedInvoiceId
+
+Maintain state while navigating between scanner screens.
+
+==================================================
+48. DO NOT STORE IMAGE BASE64 IN GLOBAL STATE
+==================================================
+
+Use local file URI references.
+
+Do not keep huge base64 image strings in React state.
+
+This can crash lower-memory phones.
+
+==================================================
+49. IMAGE OPTIMIZATION
+==================================================
+
+Scanner should create readable document pages.
+
+Recommended:
+
+high enough resolution for OCR
+
+reasonable JPEG compression
+
+correct orientation
+
+Avoid:
+
+10–20 MB per page
+
+and also avoid:
+
+aggressive low-quality compression.
+
+==================================================
+50. SCANNER UI
+==================================================
+
+Follow SILA ME branding:
+
+Page background:
+WHITE
+
+Controls:
+SILA BLUE
+
+Borders:
+LIGHT SILA BLUE
+
+Main text:
+DARK NAVY
+
+Thumbnail cards:
+WHITE + BLUE BORDER
+
+Primary buttons:
+BLUE + WHITE TEXT
+
+Do not use a dark application background except temporarily in actual camera view if required by native camera UI.
+
+==================================================
+51. CAMERA SCREEN UX
+==================================================
+
+Camera screen can naturally use camera preview.
+
+Top:
+
+Back
+Invoice Scanner
+Flash
+
+Bottom:
+
+Gallery
+Capture
+Page Count
+
+Example:
+
+3 pages
+
+After capture:
+
+show subtle confirmation:
+
+Page 3 captured
+
+and allow immediate next page.
+
+==================================================
+52. DOCUMENT REVIEW UX
+==================================================
+
+Screen:
+
+REVIEW INVOICE
+
+3 Pages
+
+Horizontal/vertical page thumbnails.
+
+Each thumbnail:
+
+Page 1
+Rotate
+Delete
+
+Actions:
+
++ ADD PAGE
+
+CREATE PDF
+
+==================================================
+53. OCR UX
+==================================================
+
+After PDF creation:
+
+show:
+
+Reading invoice...
+
+Steps:
+
+Reading pages
+
+Finding supplier
+
+Finding invoice details
+
+Finding PO
+
+Do not expose:
+
+regex
+
+ML Kit
+
+OCR engine
+
+technical messages.
+
+==================================================
+54. LOW CONFIDENCE
+==================================================
+
+Fields that are uncertain should be marked:
+
+Please review
+
+Do not block Save purely because OCR confidence is low if user manually confirms the value.
+
+==================================================
+55. REQUIRED FIELDS
+==================================================
+
+For initial Save:
+
+Document/PDF is mandatory.
+
+Supplier Name:
+recommended
+
+Invoice Number:
+required unless business rule currently permits missing
+
+Invoice Date:
+recommended
+
+PO Number:
+required for immediate GRN workflow
+
+Gross Amount:
+recommended
+
+TRN:
+optional if invoice genuinely does not contain it
+
+Do not fabricate missing values.
+
+==================================================
+56. CLOUD VIEW
+==================================================
+
+Cloud Invoice Detail must show:
+
+Original scanned PDF
+
+Page Count
+
+Source:
+Mobile Scanner
+
+Mobile Basic Extraction:
+
+Supplier
+TRN
+Invoice
+Date
+PO
+Gross
+
+Full Cloud Extraction:
+
+Gross
+Net
+Detailed Line Data
+
+Extraction Provider
+
+Status
+
+==================================================
+57. ORIGINAL PDF MUST BE PRESERVED
+==================================================
+
+The PDF generated from Mobile scans is the source document.
+
+Do not replace it after extraction.
+
+Cloud users must be able to view/download the original generated PDF.
+
+==================================================
+58. AUDIT EVENTS
+==================================================
+
+Add/reuse:
+
+MOBILE_SCAN_STARTED
+
+MOBILE_PAGE_CAPTURED
+
+MOBILE_PAGE_REMOVED
+
+MOBILE_PDF_CREATED
+
+MOBILE_OCR_COMPLETED
+
+MOBILE_BASIC_DATA_CORRECTED
+
+MOBILE_INVOICE_SAVED
+
+FULL_EXTRACTION_STARTED
+
+FULL_EXTRACTION_COMPLETED
+
+Do not flood server audit with every local UI interaction before upload.
+
+Only server-relevant events need backend audit.
+
+==================================================
+59. API
+==================================================
+
+Reuse existing APIs where possible.
+
+Add/adjust endpoint for scanner save conceptually:
+
+POST /api/v1/invoices/mobile-scan
+
+Multipart request:
+
+pdf file
+
+scanSessionId
+
+pageCount
+
+supplierName
+
+supplierTrn
+
+supplierInvoiceNumber
+
+invoiceDate
+
+purchaseOrderNumber
+
+invoiceGross
+
+currency
+
+basicExtractionJson optional
+
+Idempotency-Key
+
+Backend returns:
+
+documentId
+
+invoiceId
+
+saveStatus
+
+fullExtractionStatus
+
+==================================================
+60. SECURITY
+==================================================
+
+Mobile OCR requires NO server secret.
+
+External OCR/agent credentials remain backend-only.
+
+Validate final PDF server-side:
+
+MIME
+
+size
+
+page count
+
+file signature where practical
+
+Do not trust extension only.
+
+==================================================
+61. OFFLINE / CONNECTION FAILURE
+==================================================
+
+Scanner and Mobile OCR should work without connection where possible.
+
+User should be able to:
+
+scan pages
+
+create PDF
+
+read basic fields
+
+review
+
+while temporarily offline.
+
+SAVE requires backend connection.
+
+If offline:
+
+show:
+
+Invoice is ready to save.
+
+Internet connection is required to upload this invoice.
+
+Retain local session.
+
+==================================================
+62. TEST DEVICES
+==================================================
+
+Test at minimum:
+
+Android
+
+iOS if environment/device available
+
+Widths:
+
+320
+
+360
+
+390
+
+414
+
+430
+
+Test:
+
+small screen
+
+keyboard open
+
+camera permission denied
+
+gallery permission
+
+multi-page document
+
+large PDF
+
+back navigation
+
+==================================================
+63. MANDATORY SCANNER TEST
+==================================================
+
+Test:
+
+1. Open Receive Stock
+2. Scan Page 1
+3. Add Page
+4. Scan Page 2
+5. Add Page
+6. Scan Page 3
+7. Review
+8. Reorder Page 3 to Page 2
+9. Rotate one page
+10. Delete one page
+11. Add replacement page
+12. Create PDF
+13. Verify final PDF page count/order
+14. OCR basic data
+15. Display extracted information
+16. Correct one field
+17. Press Save
+18. Verify document row
+19. Verify invoice basic data
+20. Verify original PDF accessible
+21. Verify full backend extraction started
+
+==================================================
+64. MANDATORY OCR TEST
+==================================================
+
+Use an invoice containing:
+
+Supplier Name:
+Demo Hospitality Supplier
+
+Supplier TRN:
+100123456700003
+
+Invoice Number:
+INV-1001
+
+Invoice Date:
+15-Sep-2026
+
+PO:
+4500001001
+
+Gross:
+997.50 AED
+
+Expected Mobile display:
+
+Supplier
+Demo Hospitality Supplier
+
+TRN
+100123456700003
+
+Invoice
+INV-1001
+
+Invoice Date
+15-Sep-2026
+
+PO
+4500001001
+
+Invoice Amount
+AED 997.50
+
+==================================================
+65. MANDATORY BACK BUTTON TEST
+==================================================
+
+Test every route.
+
+Scenario:
+
+Home
+→ Receive Stock
+→ Scan
+→ Add Pages
+→ Review
+→ PDF
+→ Invoice Details
+→ PO
+→ Quantities
+→ GRN Review
+
+Then navigate backward one screen at a time.
+
+Expected:
+
+GRN Review
+→ Quantities
+
+Quantities
+→ PO/Line Match
+
+PO
+→ Invoice Details
+
+Invoice Details
+→ PDF/Page Review
+
+Page Review
+→ Scanner/Receive flow
+
+No dead Back buttons.
+
+No blank screen.
+
+No accidental Home jump unless intended.
+
+No lost scan session.
+
+==================================================
+66. DATABASE VERIFICATION AFTER SAVE
+==================================================
+
+After Mobile Save verify:
+
+documents:
+
+one row
+
+document_type = INVOICE
+
+source_channel = MOBILE_SCANNER
+
+page_count = correct
+
+content_type = application/pdf
+
+storage_reference populated
+
+invoices:
+
+one corresponding row
+
+supplier name populated
+
+supplier TRN populated
+
+invoice number populated
+
+invoice date populated
+
+PO number populated
+
+gross amount populated
+
+currency populated
+
+Then:
+
+backend detailed extraction runs
+
+invoice_ext_data populated when processing completes.
+
+==================================================
+67. DO NOT CHANGE GRN RULE
+==================================================
+
+Even if Mobile OCR reads:
+
+Invoice Quantity = 50
+
+GRN physical received quantity remains separately confirmed.
+
+Do not change:
+
+Physical Qty Confirmation
+→ GRN Posting
+
+OCR must never automatically create GRN quantity.
+
+==================================================
+68. DO NOT BUILD YET
+==================================================
+
+Do NOT add:
+
+payment
+
+AP posting
+
+SAP posting
+
+Odoo posting
+
+Oracle posting
+
+Menu Engineering
+
+Stock transfer
+
+Inventory count
+
+AI autonomous receipt
+
+WhatsApp
+
+Teams
+
+Focus only on:
+
+MOBILE SCANNER + MOBILE OCR + PDF + SAVE + BACK NAVIGATION.
+
+==================================================
+69. IMPLEMENTATION ORDER
+==================================================
+
+Implement exactly in this order:
+
+1. Inspect existing Mobile receiving routes
+2. Fix navigation architecture
+3. Add scanner session state
+4. Add multi-page camera scanner
+5. Add page review
+6. Add rotate/delete/reorder/add-page
+7. Add PDF generation
+8. Add on-device OCR
+9. Add basic invoice parser
+10. Add basic review/edit screen
+11. Add Mobile Save API
+12. Persist document + invoice basic data
+13. Trigger existing full backend extraction
+14. Verify invoice_ext_data processing
+15. Fix every Back button
+16. Test hardware/system Back
+17. Run Mobile typecheck
+18. Run native/Expo build
+19. Run API regression tests
+20. Run Cloud regression tests
+21. Run full scanner E2E
+22. Commit
+23. STOP
+
+==================================================
+70. BEFORE CODING
+==================================================
+
+First report:
+
+1. Current Mobile scanner implementation
+2. Why current scanning is insufficient
+3. Current Back-button problem
+4. On-device OCR package selected
+5. Scanner package/components selected
+6. Expo Go compatibility
+7. Whether development build is required
+8. PDF generation approach
+9. Scanner state-management approach
+10. Database/API reuse plan
+
+Then implement.
+
+Do NOT stop after the report.
+
+Proceed with implementation unless there is a genuine technical blocker.
+
+==================================================
+71. SOURCE CONTROL
+==================================================
+
+After verification:
+
+git status --short
+
+git diff --check
+
+Commit:
+
+feat: add mobile invoice scanner ocr and multipage pdf flow
+
+Return full commit SHA.
+
+Do not push unless explicitly requested.
+
+==================================================
+72. FINAL REPORT
+==================================================
+
+Return:
+
+A. MOBILE SCANNER
+
+1. Camera scanner PASS/FAIL
+2. Gallery import PASS/FAIL
+3. Page-by-page scanning PASS/FAIL
+4. Add Page PASS/FAIL
+5. Delete Page PASS/FAIL
+6. Retake Page PASS/FAIL
+7. Rotate Page PASS/FAIL
+8. Crop PASS/FAIL
+9. Reorder Pages PASS/FAIL
+10. Page thumbnails PASS/FAIL
+11. Multi-page PDF PASS/FAIL
+12. PDF preview PASS/FAIL
+
+B. MOBILE OCR
+
+13. On-device OCR package
+14. External OCR API required YES/NO
+15. Supplier Name PASS/FAIL
+16. Supplier TRN PASS/FAIL
+17. Invoice Number PASS/FAIL
+18. Invoice Date PASS/FAIL
+19. PO Number PASS/FAIL
+20. Gross Amount PASS/FAIL
+21. User correction PASS/FAIL
+
+C. SAVE
+
+22. Save button PASS/FAIL
+23. PDF uploaded PASS/FAIL
+24. documents row created PASS/FAIL
+25. invoice row created PASS/FAIL
+26. Page count saved PASS/FAIL
+27. Mobile basic fields saved PASS/FAIL
+28. Duplicate-save protection PASS/FAIL
+29. Failed upload retains scan PASS/FAIL
+
+D. CLOUD/BACKEND
+
+30. Full extraction triggered PASS/FAIL
+31. invoice_ext_data populated PASS/FAIL
+32. Original PDF visible from Cloud PASS/FAIL
+33. Mobile basic extraction visible Cloud PASS/FAIL
+
+E. NAVIGATION
+
+34. Header Back buttons PASS/FAIL
+35. Android hardware Back PASS/FAIL/NOT RUN
+36. iOS Back PASS/FAIL/NOT RUN
+37. Back preserves scanner state PASS/FAIL
+38. Unsaved-scan warning PASS/FAIL
+39. No dead Back buttons PASS/FAIL
+40. Posted GRN cannot accidentally repost PASS/FAIL
+
+F. BUILD
+
+41. Mobile typecheck
+42. Expo/native build
+43. Expo Go compatible YES/NO
+44. Development build required YES/NO
+45. API build
+46. API tests passed
+47. API tests failed
+48. Cloud build
+
+G. E2E
+
+49. Scan 3-page invoice PASS/FAIL
+50. Reorder pages PASS/FAIL
+51. Replace page PASS/FAIL
+52. Generate single PDF PASS/FAIL
+53. Basic OCR extraction PASS/FAIL
+54. Edit extracted field PASS/FAIL
+55. Save invoice PASS/FAIL
+56. Database update PASS/FAIL
+57. Full backend extraction PASS/FAIL
+58. Continue to PO/GRN PASS/FAIL
+
+H. DECISION
+
+59. Mobile behaves as scanner app YES/NO
+60. Mobile OCR operational YES/NO
+61. Multi-page invoice scanning ready YES/NO
+62. Save/database integration ready YES/NO
+63. Back navigation fixed YES/NO
+64. Ready for physical phone testing YES/NO
+65. Remaining blockers
+
+STOP.
+
+DO NOT START ANOTHER SILA ME FEATURE.

@@ -1,0 +1,20 @@
+:root {
+  --sila-brand-primary: #177db8;
+  --sila-brand-primary-dark: #0f5f8c;
+  --sila-brand-primary-light: #eaf5fb;
+  --sila-brand-green: #679659;
+  --sila-border: #b8d8e8;
+  --sila-border-strong: #74acca;
+  --sila-background: #ffffff;
+  --sila-surface: #ffffff;
+  --sila-surface-subtle: #f7fbfd;
+  --sila-text-primary: #102a3a;
+  --sila-text-secondary: #5d6c75;
+  --sila-text-muted: #7b8990;
+  --sila-success: #2f7d55;
+  --sila-success-surface: #edf8f1;
+  --sila-warning: #b7791f;
+  --sila-warning-surface: #fff8e8;
+  --sila-error: #c44747;
+  --sila-error-surface: #fff1f1;
+}

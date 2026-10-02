@@ -1,0 +1,24 @@
+# SILA ME local Postgres 16. On Mac, if Homebrew already owns 5432:
+#   SILA_PG_PORT=5433 docker compose up -d
+#   (or ./scripts/db.sh up)
+services:
+  postgres:
+    image: postgres:16
+    container_name: sila-me-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sila}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sila}
+      POSTGRES_DB: ${POSTGRES_DB:-sila_me}
+    ports:
+      - "${SILA_PG_PORT:-5432}:5432"
+    volumes:
+      - sila_me_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sila} -d ${POSTGRES_DB:-sila_me}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  sila_me_pgdata:

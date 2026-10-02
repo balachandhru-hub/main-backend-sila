@@ -1,0 +1,2496 @@
+PROJECT: SILA ME
+FEATURE: GENERIC ENTERPRISE API INTEGRATION FRAMEWORK + SAP PO SYNC
+
+OBJECTIVE
+
+Build a generic backend API integration/configuration framework in
+SILA ME.
+
+The first real implementation is SAP S/4HANA Cloud Purchase Order
+OData V4:
+
+API_PURCHASEORDER_2
+
+Base service example:
+
+/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/
+
+But the architecture MUST support additional APIs/processes without
+writing a new integration framework each time.
+
+Initial process types:
+
+GET_PO
+POST_PO
+UPDATE_STOCK
+POST_GRN
+GET_GRN
+GET_INVOICE
+POST_INVOICE
+GET_STOCK
+
+Initial organization:
+
+FIVE Hotels and Resorts
+
+Initial entities:
+
+Dubai
+Spain
+NewYork
+Zurich
+ALL
+
+============================================================
+1. ARCHITECTURE
+============================================================
+
+Build:
+
+CLOUD INTEGRATION CONFIGURATION
+        ↓
+API CONFIGURATION
+        ↓
+AUTHENTICATION CONFIGURATION
+        ↓
+TEST API
+        ↓
+SCHEMA DISCOVERY
+        ↓
+FIELD MAPPING
+        ↓
+SAVE CONFIGURATION
+        ↓
+SCHEDULER / MANUAL PULL
+        ↓
+BACKEND API EXECUTION
+        ↓
+SOURCE RESPONSE
+        ↓
+FIELD MAPPING ENGINE
+        ↓
+DATABASE UPSERT
+        ↓
+LAST SUCCESSFUL RUN
+        ↓
+NEXT INCREMENTAL EXTRACTION
+
+Do NOT put SAP API calls directly inside React.
+
+Cloud = configuration/control.
+
+ASP.NET backend = execution.
+
+============================================================
+2. CLOUD MENU
+============================================================
+
+Add:
+
+ADMINISTRATION
+  → INTEGRATIONS
+      → API CONFIGURATION
+      → FIELD MAPPING
+      → DATA UPDATE
+      → EXECUTION HISTORY
+
+Use existing SILA ME white/blue design.
+
+============================================================
+3. API CONFIGURATION
+============================================================
+
+Create/reuse:
+
+ApiIntegrationConfiguration
+
+Fields:
+
+Id
+OrganizationId
+EntityCode
+ProcessType
+IntegrationType
+ApiBaseUrl
+ResourcePath
+HttpMethod
+AuthenticationType
+TokenApiConfiguration
+UsernameEncrypted/credential reference
+PasswordEncrypted/credential reference
+IsActive
+SchedulingEnabled
+ScheduleIntervalMinutes
+IncrementalSyncEnabled
+TimestampSourceField
+LastSuccessfulRunAt
+LastAttemptAt
+NextRunAt
+TimeoutSeconds
+RetryCount
+CreatedAt
+CreatedBy
+UpdatedAt
+UpdatedBy
+
+Do not store plaintext credentials.
+
+Prefer secure credential storage / encrypted server-side storage.
+
+Never return password/token secrets to frontend after save.
+
+============================================================
+4. ORGANIZATION
+============================================================
+
+Organization must come from existing SILA organization master.
+
+Example:
+
+FIVE Hotels and Resorts.
+
+Do NOT store only free-text organization if an OrganizationId exists.
+
+Cloud:
+
+Organization
+[ FIVE Hotels and Resorts ▼ ]
+
+============================================================
+5. ENTITY
+============================================================
+
+Entity:
+
+Dubai
+Spain
+NewYork
+Zurich
+ALL
+
+Prefer configurable organization entity/master rather than hard-coded
+React values if current organization model supports this.
+
+Store:
+
+EntityCode
+
+and preferably EntityId when available.
+
+ALL means:
+
+configuration applies to every applicable entity unless a more
+specific entity configuration overrides it.
+
+Resolution precedence:
+
+ORGANIZATION + SPECIFIC ENTITY + PROCESS TYPE
+
+then:
+
+ORGANIZATION + ALL + PROCESS TYPE.
+
+============================================================
+6. PROCESS TYPE
+============================================================
+
+Initial enum/config values:
+
+GET_PO
+
+POST_PO
+
+UPDATE_STOCK
+
+POST_GRN
+
+GET_GRN
+
+GET_INVOICE
+
+POST_INVOICE
+
+GET_STOCK.
+
+Design ProcessType extensibly.
+
+Do not scatter string comparisons throughout controllers.
+
+============================================================
+7. ACTUAL API URL
+============================================================
+
+Cloud must allow:
+
+Actual API URL / Base URL.
+
+Example:
+
+https://<tenant>.api.s4hana.cloud.sap
+
+plus Resource Path.
+
+For GET_PO example:
+
+/sap/opu/odata4/sap/api_purchaseorder_2/srvd_a2x/sap/purchaseorder/0001/PurchaseOrder
+
+Allow full URL if current design requires it, but normalize internally
+into:
+
+BaseUrl
+ResourcePath
+
+where practical.
+
+Never allow Mobile to override this URL.
+
+============================================================
+8. AUTHENTICATION
+============================================================
+
+Configuration requested:
+
+token_api_Curl
+username
+password.
+
+Do NOT store executable shell cURL and blindly execute it.
+
+Instead provide Cloud fields for:
+
+Authentication Type
+
+NONE
+BASIC
+OAUTH2_CLIENT_CREDENTIALS
+BEARER_TOKEN
+CUSTOM_TOKEN_ENDPOINT
+
+For token-based authentication store structured fields:
+
+Token URL
+HTTP Method
+Content Type
+Client ID if applicable
+Client Secret if applicable
+Username if applicable
+Password if applicable
+Scope if applicable
+Additional Headers
+Additional Body Parameters.
+
+If user pastes a token API cURL:
+
+provide:
+
+IMPORT TOKEN CURL
+
+Parse the cURL into structured configuration.
+
+Show parsed result for confirmation.
+
+NEVER execute arbitrary shell commands.
+
+Never persist raw cURL containing visible secrets after structured
+conversion unless encrypted/redacted storage is explicitly required.
+
+============================================================
+9. CREDENTIAL SECURITY
+============================================================
+
+Credentials must be backend-only.
+
+Cloud may submit them during create/update over HTTPS.
+
+After save:
+
+return:
+
+Username:
+masked
+
+Password:
+********
+
+Client Secret:
+********
+
+Token:
+never returned.
+
+Encrypt sensitive values at rest or store through existing secret
+management.
+
+Never:
+
+console.log credentials
+
+audit plaintext passwords
+
+send credentials to Mobile
+
+store credentials in VITE_ variables.
+
+============================================================
+10. TEST API — MANDATORY
+============================================================
+
+Before an API configuration can become ACTIVE:
+
+user must press:
+
+TEST API.
+
+Button:
+
+[ TEST API ]
+
+Backend performs actual authentication and safe API request.
+
+For GET API:
+
+perform a small read.
+
+Example:
+
+?$top=1
+
+or safe equivalent.
+
+For POST/UPDATE API:
+
+DO NOT create business data merely to test connectivity.
+
+For write APIs, validate:
+
+authentication
+
+endpoint accessibility
+
+metadata/schema
+
+required CSRF/token behavior where applicable
+
+without creating a real transaction unless a dedicated safe test
+operation exists.
+
+============================================================
+11. TEST API RESULT
+============================================================
+
+Show:
+
+API TEST
+
+DNS/Connection:
+PASS/FAIL
+
+Authentication:
+PASS/FAIL
+
+Token Acquisition:
+PASS/FAIL/NOT_REQUIRED
+
+Endpoint:
+PASS/FAIL
+
+HTTP Status:
+<n>
+
+Response:
+VALID/INVALID
+
+Schema:
+AVAILABLE/NOT_AVAILABLE
+
+Duration:
+<n> ms
+
+Tested:
+<timestamp>
+
+Configuration may become ACTIVE only after successful test where
+appropriate.
+
+============================================================
+12. TEST API ERRORS
+============================================================
+
+Return specific safe errors:
+
+API_HOST_UNREACHABLE
+
+API_TIMEOUT
+
+SSL_ERROR
+
+AUTHENTICATION_FAILED
+
+TOKEN_ACQUISITION_FAILED
+
+TOKEN_RESPONSE_INVALID
+
+HTTP_401_UNAUTHORIZED
+
+HTTP_403_FORBIDDEN
+
+HTTP_404_ENDPOINT_NOT_FOUND
+
+HTTP_429_RATE_LIMITED
+
+SAP_ODATA_ERROR
+
+SCHEMA_NOT_AVAILABLE
+
+INVALID_RESPONSE
+
+CONFIGURATION_INCOMPLETE.
+
+Cloud must show meaningful error.
+
+Never expose password/token in error.
+
+============================================================
+13. SAP PO API
+============================================================
+
+For ProcessType:
+
+GET_PO
+
+support SAP S/4HANA Cloud Purchase Order OData V4:
+
+API_PURCHASEORDER_2
+
+Service:
+
+PurchaseOrder
+
+Version:
+
+0001.
+
+Do not hard-code the entire SAP schema from assumptions.
+
+Use OData metadata/schema discovery where possible.
+
+============================================================
+14. ODATA METADATA
+============================================================
+
+For OData integrations provide:
+
+[ LOAD API SCHEMA ]
+
+Backend calls the service metadata endpoint appropriate to the
+configured OData service.
+
+Parse:
+
+Entity Types
+Entity Sets
+Properties
+Data Types
+Keys
+Navigation Properties.
+
+Store/cache schema snapshot.
+
+Cloud mapping UI uses this ACTUAL schema.
+
+============================================================
+15. SAP PO ENTITIES
+============================================================
+
+Support at minimum:
+
+PurchaseOrder
+
+PurchaseOrderItem.
+
+Architecture must allow future mapping of:
+
+PurchaseOrderScheduleLine
+
+PurchaseOrderAccountAssignment
+
+PurOrderItemPricingElement
+
+PurchaseOrderPartner
+
+PurchaseOrderSupplierAddress
+
+Delivery Address
+
+and other service entities.
+
+Do not put all of these into one flat table.
+
+============================================================
+16. PO HEADER TABLE
+============================================================
+
+Create/reuse:
+
+PurchaseOrder
+
+or current purchase_orders table.
+
+Recommended structure:
+
+Id UUID/internal key
+
+OrganizationId
+
+EntityId nullable
+
+EntityCode
+
+SourceSystem
+
+PurchaseOrder
+
+PurchaseOrderType nullable
+
+CompanyCode nullable
+
+PurchasingOrganization nullable
+
+PurchasingGroup nullable
+
+Supplier nullable
+
+DocumentCurrency nullable
+
+PurchaseOrderDate nullable
+
+ValidityStartDate nullable
+
+ValidityEndDate nullable
+
+PaymentTerms nullable
+
+CreatedByUser nullable
+
+CreationDate nullable
+
+SourceLastChangedAt nullable
+
+Status
+
+IsActive
+
+RawSourceHash nullable
+
+LastSyncedAt
+
+CreatedAt
+
+UpdatedAt.
+
+Do not create duplicate columns if current PO table already has
+equivalent fields.
+
+Unique business key:
+
+OrganizationId
+EntityCode
+PurchaseOrder
+
+or equivalent tenant-safe key.
+
+============================================================
+17. PO ITEM TABLE
+============================================================
+
+Create/reuse:
+
+PurchaseOrderItem.
+
+Recommended structure:
+
+Id
+
+PurchaseOrderId FK
+
+OrganizationId
+
+EntityCode
+
+PurchaseOrder
+
+PurchaseOrderItem
+
+Material nullable
+
+MaterialGroup nullable
+
+PurchaseOrderItemText nullable
+
+Plant nullable
+
+StorageLocation nullable
+
+OrderQuantity nullable decimal
+
+PurchaseOrderQuantityUnit nullable
+
+NetPriceAmount nullable decimal
+
+NetPriceQuantity nullable decimal
+
+NetAmount nullable decimal
+
+TaxCode nullable
+
+AccountAssignmentCategory nullable
+
+ItemCategory nullable
+
+GoodsReceiptIsExpected nullable
+
+InvoiceIsExpected nullable
+
+IsReturnsItem nullable
+
+DeletionStatus nullable
+
+SourceLastChangedAt nullable
+
+LastSyncedAt
+
+CreatedAt
+
+UpdatedAt.
+
+Unique:
+
+OrganizationId
+EntityCode
+PurchaseOrder
+PurchaseOrderItem.
+
+============================================================
+18. IMPORTANT — FIELD MAPPING DRIVES DB
+============================================================
+
+The PO fields above are SILA target fields.
+
+Do NOT assume the exact SAP source property for every target.
+
+Cloud Field Mapping determines:
+
+SAP SOURCE FIELD
+        →
+SILA TARGET FIELD.
+
+Example:
+
+API Entity:
+PurchaseOrder
+
+API Field:
+<actual metadata property>
+
+→
+
+DB Entity:
+PurchaseOrder
+
+DB Field:
+PurchaseOrder.
+
+============================================================
+19. FIELD MAPPING TABLE
+============================================================
+
+Create:
+
+ApiFieldMapping
+
+Fields:
+
+Id
+
+ApiIntegrationConfigurationId
+
+SourceEntity
+
+SourceField
+
+SourceDataType
+
+TargetTable
+
+TargetField
+
+TargetDataType
+
+IsKey
+
+IsRequired
+
+TransformationType
+
+TransformationExpression nullable
+
+DefaultValue nullable
+
+IsActive
+
+DisplayOrder
+
+CreatedAt
+CreatedBy
+UpdatedAt
+UpdatedBy.
+
+============================================================
+20. MAPPING UI
+============================================================
+
+Cloud:
+
+Administration
+→ Integrations
+→ Field Mapping.
+
+Header:
+
+Organization:
+FIVE Hotels and Resorts
+
+Entity:
+Dubai
+
+Process:
+GET_PO
+
+Configuration:
+SAP Purchase Order.
+
+Then mapping grid:
+
+SOURCE ENTITY
+SOURCE FIELD
+SOURCE TYPE
+→
+TARGET TABLE
+TARGET FIELD
+TARGET TYPE
+KEY
+REQUIRED
+TRANSFORMATION
+STATUS.
+
+Example:
+
+PurchaseOrder
+<API PO field>
+→
+PurchaseOrder
+PurchaseOrder
+
+PurchaseOrderItem
+<API item field>
+→
+PurchaseOrderItem
+PurchaseOrderItem.
+
+Source dropdown must come from discovered API schema.
+
+Target dropdown must come from an APPROVED backend mapping schema.
+
+Do not expose arbitrary DB tables/columns.
+
+============================================================
+21. TARGET FIELD REGISTRY
+============================================================
+
+Implement backend-controlled:
+
+IntegrationTargetFieldRegistry.
+
+Example allowed targets:
+
+PurchaseOrder.PurchaseOrder
+
+PurchaseOrder.Supplier
+
+PurchaseOrder.CompanyCode
+
+PurchaseOrder.DocumentCurrency
+
+PurchaseOrder.SourceLastChangedAt
+
+PurchaseOrderItem.PurchaseOrderItem
+
+PurchaseOrderItem.Material
+
+PurchaseOrderItem.Description
+
+PurchaseOrderItem.Quantity
+
+PurchaseOrderItem.Uom
+
+PurchaseOrderItem.NetPrice
+
+PurchaseOrderItem.NetAmount.
+
+Cloud must not be able to map API data into:
+
+User.PasswordHash
+
+Session.TokenHash
+
+Microsoft credentials
+
+or unrelated DB fields.
+
+============================================================
+22. MAPPING VALIDATION
+============================================================
+
+Before activating mapping validate:
+
+source field exists
+
+target field allowed
+
+type compatibility
+
+required key fields mapped
+
+duplicate target mapping
+
+required parent-child keys
+
+transformation valid.
+
+GET_PO cannot activate unless minimum key mapping exists:
+
+PurchaseOrder header key
+
+PurchaseOrder item key if item extraction enabled.
+
+============================================================
+23. TRANSFORMATIONS
+============================================================
+
+Support controlled transformations:
+
+NONE
+
+TRIM
+
+UPPERCASE
+
+LOWERCASE
+
+DECIMAL
+
+INTEGER
+
+BOOLEAN
+
+DATE
+
+DATETIME
+
+UTC_DATETIME
+
+UOM_NORMALIZE
+
+CUSTOM_SAFE_EXPRESSION later.
+
+Do NOT execute arbitrary user code.
+
+============================================================
+24. API SCHEDULING
+============================================================
+
+Some GET/extract APIs must run automatically.
+
+Cloud API Configuration:
+
+Enable Scheduling
+[ON/OFF]
+
+Run Every
+[ 10 ] minutes.
+
+Input is integer MINUTES.
+
+Examples:
+
+10
+=
+10 minutes.
+
+120
+=
+2 hours.
+
+1440
+=
+1 day.
+
+2880
+=
+2 days.
+
+Minimum allowed interval should be configurable/sensible.
+
+Reject:
+
+0
+negative
+non-integer.
+
+============================================================
+25. SCHEDULE FIELDS
+============================================================
+
+Persist:
+
+SchedulingEnabled
+
+ScheduleIntervalMinutes
+
+LastAttemptAt
+
+LastSuccessfulRunAt
+
+NextRunAt
+
+LastRunStatus
+
+LastRecordCount
+
+LastErrorCode.
+
+Do not use only in-memory timers.
+
+Schedule must survive API restart.
+
+============================================================
+26. SCHEDULER
+============================================================
+
+Implement backend scheduler/hosted worker or reuse existing job
+infrastructure.
+
+Scheduler finds:
+
+IsActive = TRUE
+
+SchedulingEnabled = TRUE
+
+ProcessType supports extraction
+
+NextRunAt <= UTC now.
+
+Claim job safely.
+
+Do not allow multiple API instances to execute same scheduled run
+concurrently.
+
+============================================================
+27. EXTRACTABLE PROCESS TYPES
+============================================================
+
+Initially classify:
+
+GET_PO
+GET_GRN
+GET_INVOICE
+GET_STOCK
+
+as extractable/read processes.
+
+Write processes:
+
+POST_PO
+UPDATE_STOCK
+POST_GRN
+POST_INVOICE
+
+must NOT run merely because a scheduler interval exists unless
+explicitly designed later.
+
+Do not accidentally POST business transactions on a timer.
+
+============================================================
+28. INCREMENTAL EXTRACTION
+============================================================
+
+Critical.
+
+For extractable APIs, support:
+
+IncrementalSyncEnabled
+
+TimestampSourceField.
+
+Example:
+
+LastSuccessfulRunAt:
+2026-09-16T10:00:00Z.
+
+Next GET should request records changed after that checkpoint using
+the API's configured timestamp field/filter syntax.
+
+Do NOT blindly assume every API uses the same timestamp property.
+
+Mapping/config must identify:
+
+Incremental Timestamp Source Field
+
+and:
+
+Incremental Filter Strategy.
+
+For SAP OData:
+
+generate safe OData $filter based on configured source timestamp
+property.
+
+============================================================
+29. CHECKPOINT PRINCIPLE
+============================================================
+
+NEVER advance extraction checkpoint before successful DB commit.
+
+Correct:
+
+LastSuccessfulRunAt = T1.
+
+Start API extraction at T2.
+
+Pull records changed since T1.
+
+Map.
+
+Validate.
+
+UPSERT DB.
+
+COMMIT.
+
+Only after successful completion:
+
+LastSuccessfulRunAt = extraction checkpoint.
+
+If API fails:
+
+DO NOT advance LastSuccessfulRunAt.
+
+If DB fails:
+
+DO NOT advance LastSuccessfulRunAt.
+
+============================================================
+30. WATERMARK
+============================================================
+
+Prefer source-system watermark when available.
+
+Store:
+
+LastSourceWatermark
+
+and/or:
+
+LastSuccessfulRunAt.
+
+For timestamp extraction:
+
+capture job start watermark:
+
+ExtractionUpperBound = UTC now
+
+or appropriate source time.
+
+Query:
+
+> previous watermark
+<= current upper bound
+
+to reduce gaps.
+
+Design for overlap/safety where timestamp precision can cause boundary
+records.
+
+Upsert/idempotency must protect duplicates.
+
+============================================================
+31. PAGINATION
+============================================================
+
+SAP GET_PO can return many records.
+
+Implement OData pagination.
+
+Follow OData nextLink/skiptoken mechanism.
+
+Do not assume one API response contains all records.
+
+Process pages until:
+
+no next page
+
+or configured safety limit reached.
+
+Persist one job execution summary.
+
+============================================================
+32. PO ITEM EXPANSION
+============================================================
+
+For GET_PO allow configuration to retrieve:
+
+PurchaseOrder header
+
+and PurchaseOrderItem.
+
+Use OData navigation/expand where supported by actual service/schema,
+or separate entity requests if more reliable.
+
+Do not hard-code obsolete V2 navigation syntax into V4.
+
+Use actual discovered metadata.
+
+============================================================
+33. DATA UPDATE WINDOW
+============================================================
+
+Cloud:
+
+Administration
+→ Integrations
+→ Data Update.
+
+Show all configured API processes.
+
+Columns:
+
+Organization
+
+Entity
+
+Process Type
+
+API Name
+
+Active
+
+Schedule
+
+Last Attempt
+
+Last Successful Run
+
+Next Run
+
+Last Status
+
+Last Records
+
+Manual Pull
+
+View History.
+
+Example:
+
+FIVE Hotels and Resorts
+Dubai
+GET_PO
+SAP Purchase Order
+Active
+Every 10 min
+16-Sep 10:00
+16-Sep 10:00
+16-Sep 10:10
+SUCCESS
+143
+[PULL NOW]
+
+============================================================
+34. PULL DATA BUTTON
+============================================================
+
+For extractable process types show:
+
+[ PULL DATA ]
+
+When clicked:
+
+backend executes the SAME integration service used by scheduler.
+
+Do NOT create separate manual-pull business logic.
+
+Manual Pull:
+
+uses current LastSuccessfulRunAt/watermark
+
+extracts incremental records
+
+maps
+
+upserts
+
+commits
+
+updates LastSuccessfulRunAt
+
+updates NextRunAt appropriately.
+
+============================================================
+35. MANUAL PULL + SCHEDULER CONCURRENCY
+============================================================
+
+If scheduler job already running:
+
+PULL DATA must not start duplicate extraction.
+
+Return:
+
+INTEGRATION_ALREADY_RUNNING.
+
+If manual pull owns the job:
+
+scheduler must skip it.
+
+============================================================
+36. FORCE FULL SYNC
+============================================================
+
+Do NOT make normal PULL DATA perform full history extraction.
+
+Optionally provide authorized:
+
+FULL SYNC
+
+or:
+
+RESET WATERMARK
+
+only for SUPER_ADMIN / PLATFORM_ADMIN or appropriate integration
+administrator.
+
+Require confirmation.
+
+Audit it.
+
+Do not include if it creates unnecessary risk in current release.
+
+============================================================
+37. INTEGRATION EXECUTION TABLE
+============================================================
+
+Create:
+
+ApiIntegrationExecution.
+
+Fields:
+
+Id
+
+ConfigurationId
+
+OrganizationId
+
+EntityCode
+
+ProcessType
+
+TriggerType
+
+StartedAt
+
+CompletedAt
+
+Status
+
+PreviousWatermark
+
+ExtractionUpperBound
+
+NewWatermark
+
+ApiPagesRead
+
+RecordsRead
+
+RecordsMapped
+
+RecordsInserted
+
+RecordsUpdated
+
+RecordsSkipped
+
+RecordsFailed
+
+HttpStatus nullable
+
+ErrorCode nullable
+
+SafeErrorMessage nullable
+
+CorrelationId
+
+CreatedAt.
+
+TriggerType:
+
+TEST
+
+SCHEDULED
+
+MANUAL
+
+RETRY
+
+FULL_SYNC.
+
+============================================================
+38. EXECUTION HISTORY
+============================================================
+
+Cloud:
+
+Integrations
+→ Execution History.
+
+Show:
+
+Process
+
+Entity
+
+Trigger
+
+Start
+
+Duration
+
+Status
+
+Records Read
+
+Inserted
+
+Updated
+
+Skipped
+
+Failed
+
+Previous Watermark
+
+New Watermark
+
+Error.
+
+Allow drilldown.
+
+Never show credentials/token.
+
+============================================================
+39. GENERIC API EXECUTOR
+============================================================
+
+Create/reuse:
+
+IApiIntegrationExecutor
+
+ApiIntegrationExecutor.
+
+Responsibilities:
+
+resolve configuration
+
+resolve credentials
+
+acquire token/auth
+
+construct request
+
+apply incremental filter
+
+execute HTTP
+
+handle pagination
+
+return normalized response.
+
+Do NOT let each process duplicate HTTP/token logic.
+
+============================================================
+40. AUTH SERVICE
+============================================================
+
+Create/reuse:
+
+IIntegrationAuthenticationService.
+
+Supports:
+
+Basic
+
+OAuth2
+
+Bearer
+
+Custom token endpoint.
+
+Cache access token safely according to expiry.
+
+Do not request a new OAuth token for every record.
+
+Refresh/reacquire when required.
+
+============================================================
+41. MAPPING ENGINE
+============================================================
+
+Create:
+
+IIntegrationMappingEngine.
+
+Input:
+
+Configuration
+
+Source Entity
+
+API JSON payload
+
+Mappings.
+
+Output:
+
+validated normalized SILA records.
+
+Mapping engine handles:
+
+source field selection
+
+type conversion
+
+null handling
+
+transformations
+
+target field assignment
+
+key validation.
+
+============================================================
+42. DATABASE UPSERT SERVICE
+============================================================
+
+Do NOT dynamically concatenate SQL from Cloud mapping.
+
+Create controlled target adapters.
+
+Example:
+
+IPurchaseOrderImportService.
+
+It receives mapped:
+
+PurchaseOrderImportModel
+
+PurchaseOrderItemImportModel.
+
+Then performs safe EF Core upsert.
+
+Cloud mappings cannot execute SQL.
+
+============================================================
+43. GET_PO PROCESS HANDLER
+============================================================
+
+Create:
+
+IIntegrationProcessHandler
+
+with specific:
+
+GetPurchaseOrderProcessHandler.
+
+Generic framework handles:
+
+auth
+
+HTTP
+
+pagination
+
+mapping.
+
+GET_PO handler handles:
+
+PO-specific validation
+
+header/item relationships
+
+PO upsert
+
+checkpoint.
+
+Future:
+
+GetInvoiceProcessHandler
+
+GetStockProcessHandler
+
+etc.
+
+============================================================
+44. PO UPSERT
+============================================================
+
+For each mapped PO:
+
+if tenant-safe PO key does not exist:
+
+INSERT.
+
+If exists:
+
+UPDATE mapped fields.
+
+Do not erase unmapped fields.
+
+Only fields configured as active mappings should be updated from the
+source.
+
+For item:
+
+upsert by:
+
+Organization
+Entity
+PurchaseOrder
+PurchaseOrderItem.
+
+============================================================
+45. FIELD MAPPING BEHAVIOR
+============================================================
+
+Critical user requirement:
+
+"whatever fields got mapped those fields will be updated in the DB
+whenever API calls."
+
+Implement exactly this.
+
+Example mappings:
+
+SAP.Supplier
+→
+PurchaseOrder.Supplier
+
+SAP.CompanyCode
+→
+PurchaseOrder.CompanyCode
+
+SAP.DocumentCurrency
+→
+PurchaseOrder.DocumentCurrency.
+
+If PurchaseOrder.PaymentTerms is NOT mapped:
+
+GET_PO sync must not overwrite it.
+
+============================================================
+46. NULL POLICY
+============================================================
+
+For each mapping support:
+
+Null Handling:
+
+IGNORE_NULL
+
+WRITE_NULL
+
+DEFAULT_VALUE.
+
+Default:
+
+IGNORE_NULL
+
+for synchronization safety.
+
+This prevents source omission from unexpectedly clearing local data.
+
+============================================================
+47. ENTITY ROUTING
+============================================================
+
+FIVE may have:
+
+Dubai
+
+Spain
+
+NewYork
+
+Zurich.
+
+Configuration resolution must know which SAP/API connection belongs
+to which entity.
+
+Example:
+
+FIVE + Dubai + GET_PO
+→ Dubai SAP endpoint.
+
+FIVE + Spain + GET_PO
+→ Spain endpoint.
+
+If:
+
+FIVE + ALL + GET_PO
+
+exists:
+
+use as fallback unless specific entity config exists.
+
+Never mix entity data.
+
+============================================================
+48. SOURCE ENTITY IDENTIFICATION
+============================================================
+
+Every imported PO must retain:
+
+OrganizationId
+
+EntityCode
+
+SourceSystem
+
+SourceConfigurationId if useful
+
+LastSyncedAt.
+
+This is essential because the same PO number may theoretically exist
+across different connected entities/systems.
+
+============================================================
+49. TEST API BEFORE SAVE
+============================================================
+
+For NEW or materially changed API configuration:
+
+TEST API must PASS before:
+
+Activate
+
+or final Save as ACTIVE.
+
+Allow:
+
+SAVE AS DRAFT
+
+without successful test.
+
+Status:
+
+DRAFT
+
+TEST_FAILED
+
+TESTED
+
+ACTIVE
+
+INACTIVE.
+
+Changing:
+
+URL
+
+authentication
+
+token config
+
+credentials
+
+resource path
+
+should invalidate previous test.
+
+Require TEST API again.
+
+============================================================
+50. SCHEMA TEST
+============================================================
+
+For GET_PO Test API should prove:
+
+Authentication
+
+PurchaseOrder endpoint reachable
+
+OData response valid
+
+Schema/metadata reachable
+
+PurchaseOrder entity exists
+
+and if item sync enabled:
+
+PurchaseOrderItem entity/navigation available.
+
+============================================================
+51. CLOUD API CONFIG UI
+============================================================
+
+Page:
+
+API CONFIGURATION.
+
+Sections:
+
+GENERAL
+
+Organization
+Entity
+Process Type
+Integration Type
+Configuration Name
+Active.
+
+
+ENDPOINT
+
+API Base URL
+Resource Path
+HTTP Method.
+
+
+AUTHENTICATION
+
+Authentication Type
+
+structured token/auth fields
+
+IMPORT TOKEN CURL
+
+masked credentials.
+
+
+SCHEDULING
+
+Enable Schedule
+
+Run Every [___] Minutes
+
+Incremental Sync
+
+Timestamp Source Field
+
+Filter Strategy.
+
+
+SCHEMA
+
+[LOAD API SCHEMA]
+
+
+TEST
+
+[TEST API]
+
+Last Test
+
+Test Status
+
+Response Time.
+
+
+Actions:
+
+SAVE DRAFT
+
+TEST API
+
+ACTIVATE.
+
+============================================================
+52. FIELD MAPPING UX
+============================================================
+
+After successful schema load:
+
+show two-panel mapping.
+
+LEFT:
+
+API SCHEMA
+
+PurchaseOrder
+  PurchaseOrder
+  Supplier
+  ...
+PurchaseOrderItem
+  PurchaseOrder
+  PurchaseOrderItem
+  Material
+  ...
+
+
+RIGHT:
+
+SILA DATABASE TARGET
+
+PurchaseOrder
+  PurchaseOrder
+  Supplier
+  CompanyCode
+  Currency
+  ...
+
+PurchaseOrderItem
+  PurchaseOrderItem
+  Material
+  Description
+  Quantity
+  UOM
+  ...
+
+
+Admin maps fields.
+
+Support search.
+
+Show:
+
+Mapped
+Unmapped
+Required.
+
+============================================================
+53. IMPORTANT FIELD MAPPING PRESET
+============================================================
+
+For SAP GET_PO provide a recommended mapping preset ONLY after actual
+metadata is loaded.
+
+Do not invent source property names if metadata differs.
+
+Button:
+
+[APPLY RECOMMENDED SAP PO MAPPING]
+
+Then show every mapping for review before save.
+
+Never silently map unknown fields.
+
+============================================================
+54. API RESPONSE RAW DATA
+============================================================
+
+Do not permanently store every raw API response by default if it
+contains unnecessary sensitive/business data.
+
+For diagnostics optionally store:
+
+response hash
+
+safe execution metrics
+
+or short-lived payload when Development configuration explicitly
+enables it.
+
+Business DB is authoritative for mapped fields.
+
+============================================================
+55. ERROR HANDLING
+============================================================
+
+One bad record should not necessarily destroy the entire sync.
+
+Support configurable transaction strategy.
+
+For PO:
+
+prefer page/batch processing with validation.
+
+Track:
+
+RecordsRead
+
+Mapped
+
+Inserted
+
+Updated
+
+Skipped
+
+Failed.
+
+However:
+
+do not advance checkpoint past unsafe failures that could cause data
+loss.
+
+If partial failure creates ambiguity:
+
+mark execution PARTIAL
+
+and retain/replay safe watermark.
+
+============================================================
+56. AUDIT
+============================================================
+
+Audit:
+
+API_CONFIG_CREATED
+
+API_CONFIG_UPDATED
+
+API_CONFIG_TESTED
+
+API_CONFIG_ACTIVATED
+
+API_CONFIG_DEACTIVATED
+
+API_CREDENTIAL_CHANGED
+
+API_SCHEMA_LOADED
+
+FIELD_MAPPING_CREATED
+
+FIELD_MAPPING_UPDATED
+
+INTEGRATION_MANUAL_PULL
+
+INTEGRATION_SCHEDULED_RUN
+
+INTEGRATION_COMPLETED
+
+INTEGRATION_FAILED
+
+WATERMARK_UPDATED.
+
+Never audit secrets.
+
+============================================================
+57. AUTHORIZATION
+============================================================
+
+Use existing SILA authorization model.
+
+Recommended:
+
+VIEW_INTEGRATION
+
+MANAGE_INTEGRATION
+
+TEST_INTEGRATION
+
+VIEW_INTEGRATION_LOG.
+
+Add only if missing:
+
+MANAGE_INTEGRATION_MAPPING
+
+RUN_INTEGRATION
+
+VIEW_INTEGRATION_DATA_UPDATE.
+
+Customer Admin:
+
+only own organization.
+
+Super Admin:
+
+platform scope.
+
+No cross-tenant configuration access.
+
+============================================================
+58. GET_PO INITIAL ACCEPTANCE TEST
+============================================================
+
+Configure:
+
+Organization:
+FIVE Hotels and Resorts
+
+Entity:
+Dubai
+
+Process:
+GET_PO
+
+API:
+SAP Purchase Order OData V4.
+
+Enter endpoint/authentication.
+
+TEST API.
+
+Expected:
+
+PASS.
+
+LOAD SCHEMA.
+
+Expected:
+
+PurchaseOrder
+
+PurchaseOrderItem
+
+available.
+
+Map required fields.
+
+Set:
+
+Schedule = 10.
+
+Activate.
+
+Expected:
+
+NextRunAt correctly calculated.
+
+============================================================
+59. MANUAL PULL TEST
+============================================================
+
+Click:
+
+PULL DATA.
+
+Expected:
+
+API called.
+
+PO records read.
+
+Mappings applied.
+
+PurchaseOrder inserted/updated.
+
+PurchaseOrderItem inserted/updated.
+
+Execution history created.
+
+LastSuccessfulRunAt updated ONLY after success.
+
+NextRunAt updated.
+
+============================================================
+60. INCREMENTAL TEST
+============================================================
+
+Run 1:
+
+LastSuccessfulRunAt = null.
+
+Perform initial extraction according to configured initial-load policy.
+
+Complete successfully.
+
+Checkpoint = T1.
+
+Create/change source PO after T1.
+
+Run 2.
+
+Expected:
+
+only relevant changed records since checkpoint/window are requested
+where source API supports configured incremental filtering.
+
+DB upsert.
+
+Checkpoint = T2.
+
+============================================================
+61. MANUAL PULL CHECKPOINT TEST
+============================================================
+
+Suppose:
+
+LastSuccessfulRunAt = 10:00.
+
+Schedule next = 10:10.
+
+At 10:05 user presses:
+
+PULL DATA.
+
+Expected:
+
+extract from last successful watermark.
+
+Successful manual pull checkpoint becomes approximately 10:05/source
+upper bound.
+
+Scheduler at next run must continue from new checkpoint.
+
+It must NOT pull the same old window as if manual pull never happened.
+
+Upsert/idempotency still protects overlap.
+
+============================================================
+62. SCHEDULE EXAMPLES
+============================================================
+
+Validate:
+
+10
+→ 10 minutes.
+
+120
+→ 2 hours.
+
+1440
+→ 1 day.
+
+2880
+→ 2 days.
+
+Cloud may display friendly helper:
+
+120 minutes (2 hours)
+
+1440 minutes (1 day)
+
+2880 minutes (2 days).
+
+Database stores integer minutes.
+
+============================================================
+63. API CONFIGURATION RESOLUTION TEST
+============================================================
+
+Create:
+
+FIVE
+ALL
+GET_PO
+
+and:
+
+FIVE
+Dubai
+GET_PO.
+
+For Dubai:
+
+specific Dubai config wins.
+
+For Zurich with no Zurich-specific config:
+
+ALL config wins.
+
+============================================================
+64. SECURITY TEST
+============================================================
+
+Verify:
+
+Cloud never receives saved password.
+
+Execution History never exposes password/token.
+
+API errors redact Authorization header.
+
+Logs redact:
+
+Authorization
+
+Cookie
+
+ClientSecret
+
+Password
+
+access_token
+
+refresh_token.
+
+============================================================
+65. DO NOT MODIFY
+============================================================
+
+Do not modify:
+
+Mobile scanner
+
+OCR
+
+PDF generation
+
+Invoice Review
+
+GRN logic
+
+SharePoint routing
+
+bala@chervic.in.
+
+This is an Integration Framework + PO synchronization task.
+
+============================================================
+66. MIGRATION SAFETY
+============================================================
+
+Create safe additive migration(s).
+
+Do not:
+
+drop existing PurchaseOrder data
+
+truncate tables
+
+reseed users destructively
+
+recreate organizations
+
+change Bala account.
+
+If PurchaseOrder tables already exist:
+
+extend/reuse them.
+
+Do not create duplicate competing PO tables without justification.
+
+============================================================
+67. TESTS
+============================================================
+
+Add tests for:
+
+config creation
+
+credential masking
+
+TEST API success
+
+TEST API 401
+
+TEST API timeout
+
+token acquisition
+
+configuration test invalidation after URL change
+
+schema loading
+
+mapping validation
+
+target-field allowlist
+
+schedule 10
+
+schedule 120
+
+schedule 1440
+
+schedule 2880
+
+specific entity vs ALL resolution
+
+manual pull
+
+scheduled pull
+
+same executor for manual/scheduled
+
+watermark success
+
+watermark not advanced on API failure
+
+watermark not advanced on DB failure
+
+pagination
+
+PO insert
+
+PO update
+
+PO item insert
+
+PO item update
+
+unmapped fields preserved
+
+IGNORE_NULL
+
+manual pull updates checkpoint
+
+concurrency lock
+
+tenant isolation.
+
+============================================================
+68. FINAL REPORT
+============================================================
+
+Return:
+
+SILA ME INTEGRATION FRAMEWORK
+
+API CONFIGURATION:
+PASS/FAIL
+
+ORGANIZATION:
+PASS/FAIL
+
+ENTITY:
+PASS/FAIL
+
+PROCESS TYPE:
+PASS/FAIL
+
+SECURE CREDENTIAL STORAGE:
+PASS/FAIL
+
+TOKEN API:
+PASS/FAIL
+
+TEST API:
+PASS/FAIL
+
+TEST REQUIRED BEFORE ACTIVATION:
+PASS/FAIL
+
+SAP GET_PO:
+PASS/FAIL
+
+ODATA V4:
+PASS/FAIL
+
+SCHEMA DISCOVERY:
+PASS/FAIL
+
+PURCHASE ORDER HEADER TABLE:
+PASS/FAIL
+
+PURCHASE ORDER ITEM TABLE:
+PASS/FAIL
+
+FIELD MAPPING:
+PASS/FAIL
+
+TARGET FIELD ALLOWLIST:
+PASS/FAIL
+
+MAPPED-FIELDS-ONLY UPDATE:
+PASS/FAIL
+
+SCHEDULER:
+PASS/FAIL
+
+MINUTES CONFIG:
+PASS/FAIL
+
+10 MIN:
+PASS/FAIL
+
+120 MIN:
+PASS/FAIL
+
+1440 MIN:
+PASS/FAIL
+
+2880 MIN:
+PASS/FAIL
+
+DATA UPDATE WINDOW:
+PASS/FAIL
+
+PULL DATA:
+PASS/FAIL
+
+MANUAL/SCHEDULE SAME EXECUTOR:
+PASS/FAIL
+
+INCREMENTAL EXTRACTION:
+PASS/FAIL
+
+LAST SUCCESSFUL RUN:
+PASS/FAIL
+
+CHECKPOINT AFTER MANUAL PULL:
+PASS/FAIL
+
+CHECKPOINT NOT ADVANCED ON FAILURE:
+PASS/FAIL
+
+PAGINATION:
+PASS/FAIL
+
+PO UPSERT:
+PASS/FAIL
+
+PO ITEM UPSERT:
+PASS/FAIL
+
+ENTITY ISOLATION:
+PASS/FAIL
+
+ALL FALLBACK:
+PASS/FAIL
+
+EXECUTION HISTORY:
+PASS/FAIL
+
+AUDIT:
+PASS/FAIL
+
+API TESTS:
+x/x
+
+CLOUD BUILD:
+PASS/FAIL
+
+MOBILE MODIFIED:
+NO
+
+OCR MODIFIED:
+NO
+
+GRN MODIFIED:
+NO
+
+SHAREPOINT ROUTING MODIFIED:
+NO
+
+BALA USER MODIFIED:
+NO
+
+DATABASE MIGRATION:
+<name>
+
+FINAL STATUS:
+PASS / BLOCKED / FAIL
+
+============================================================
+69. COMMIT
+============================================================
+
+Only if healthy:
+
+git commit -m "feat: add configurable api integration and po sync framework"
+
+DO NOT PUSH.
+
+STOP.
+
+Do not implement another integration process after GET_PO in this run.

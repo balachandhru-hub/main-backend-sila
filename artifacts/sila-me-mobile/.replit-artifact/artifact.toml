@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/sila-me-mobile/"
+title = "SILA ME Mobile"
+description = "A focused Expo companion for SILA ME operations, starting with secure mobile access and a connected authenticated home screen."
+version = "1.0.0"
+id = "artifacts/sila-me-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/sila-me-mobile/" ]
+localPort = 19433
+
+[services.development]
+run = "pnpm --filter @workspace/sila-me-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/sila-me-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/sila-me-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "19433"
+BASE_PATH = "/sila-me-mobile/"

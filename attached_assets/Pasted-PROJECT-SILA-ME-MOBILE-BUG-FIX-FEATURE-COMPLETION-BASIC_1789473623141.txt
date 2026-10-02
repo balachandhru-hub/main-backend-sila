@@ -1,0 +1,1155 @@
+PROJECT: SILA ME MOBILE
+
+BUG FIX / FEATURE COMPLETION:
+BASIC OCR EXTRACTION IS NOT WORKING AFTER SCANNING.
+
+DO NOT CHANGE THE SCANNER OR PDF GENERATION AGAIN.
+
+CURRENT EXPECTED FLOW:
+
+Scan Invoice
+→ Add all pages
+→ Create PDF
+→ BASIC OCR
+→ Extract 6 invoice fields
+→ Show editable Invoice Basic Review
+→ User corrects if necessary
+→ SAVE
+→ Upload PDF
+→ Backend full extraction
+→ invoice_ext_data
+→ PO Match
+→ GRN
+
+==================================================
+1. REQUIRED MOBILE BASIC OCR FIELDS
+==================================================
+
+Mobile must automatically attempt to extract:
+
+1. Supplier Name
+2. Supplier TRN
+3. Supplier Invoice Number
+4. Invoice Date
+5. Purchase Order Number
+6. Invoice Gross Amount
+7. Currency
+
+These values must be shown on the Invoice Basic Review screen.
+
+OCR is an assistance mechanism.
+
+If confidence is low or a field is not found:
+
+DO NOT invent a value.
+
+Leave it blank and allow the user to enter/correct it.
+
+==================================================
+2. IMPORTANT ARCHITECTURE
+==================================================
+
+BASIC OCR must happen ON THE MOBILE SCAN FLOW.
+
+It must NOT require:
+
+- Cloud
+- External OCR agent
+- External LLM
+- OpenAI
+- backend full extraction
+- invoice_ext_data
+- user pressing Save first
+
+The phone must perform basic OCR immediately after scanning/PDF creation.
+
+Backend full invoice extraction remains a separate process AFTER Save.
+
+==================================================
+3. OCR THE PAGE IMAGES — NOT THE PDF PREVIEW
+==================================================
+
+OCR source MUST be:
+
+ScanPage.processedImageUri
+
+For every scanned page:
+
+processedImageUri
+→ OCR
+→ page OCR text
+
+DO NOT OCR:
+
+thumbnailUri
+
+PDF viewer
+
+screen screenshot
+
+review screen
+
+HTML
+
+compressed thumbnail.
+
+The high-quality processed scanner image is the OCR input.
+
+==================================================
+4. FIND THE EXISTING OCR IMPLEMENTATION FIRST
+==================================================
+
+Before adding another OCR library, inspect the current SILA ME code
+and the migrated SILA Store scanner code.
+
+Search for:
+
+OCR
+recognizeText
+textRecognition
+TextRecognition
+MLKit
+ML Kit
+vision
+recognize
+extractText
+basicExtraction
+invoiceParser
+parseInvoice
+processedImageUri
+ocrText
+
+Determine:
+
+A. Which OCR library is installed?
+B. Is it actually called?
+C. Does it support iOS?
+D. Does it support Android?
+E. Does it support Web?
+F. Does it require Development Build?
+G. Does it receive processedImageUri?
+H. Does it return raw text?
+I. Is the parser called after OCR?
+
+DO NOT install another OCR package until this is understood.
+
+==================================================
+5. PREFERRED NATIVE OCR
+==================================================
+
+Because SILA ME already requires an Expo Development Build for:
+
+react-native-document-scanner-plugin
+
+prefer a reliable ON-DEVICE native OCR implementation.
+
+Preferred architecture:
+
+Native document scanner
+        ↓
+processedImageUri
+        ↓
+On-device text recognition
+        ↓
+Raw OCR text
+        ↓
+Basic Invoice Parser
+        ↓
+6 Basic Fields + Currency
+
+Use a maintained React Native-compatible ML Kit / native text
+recognition solution that is compatible with the CURRENT Expo SDK.
+
+Do not downgrade Expo or React Native.
+
+==================================================
+6. DO NOT USE WEB PREVIEW TO PROVE NATIVE OCR
+==================================================
+
+This is important.
+
+The Replit Expo Web Preview is NOT proof that native OCR works.
+
+If native OCR cannot execute on Web:
+
+show a clear DEVELOPMENT fallback:
+
+"Native OCR requires the SILA ME Development Build."
+
+Do not report native OCR PASS based only on Web.
+
+For Web/fallback testing, a development OCR fixture/mock may be used
+ONLY to test parser/UI plumbing.
+
+Never present that as real OCR.
+
+==================================================
+7. OCR EACH PAGE
+==================================================
+
+For every ScanPage:
+
+const text = await recognizeText(
+    page.processedImageUri
+);
+
+Store:
+
+page.ocrText = text;
+
+For multiple pages:
+
+Page 1 OCR
+Page 2 OCR
+Page 3 OCR
+
+Then combine while retaining page boundaries:
+
+--- PAGE 1 ---
+...
+
+--- PAGE 2 ---
+...
+
+--- PAGE 3 ---
+...
+
+Do not only OCR Page 1.
+
+==================================================
+8. OCR STATUS UI
+==================================================
+
+After CREATE PDF succeeds:
+
+show:
+
+Reading invoice...
+
+Then:
+
+Reading page 1 of 3
+Reading page 2 of 3
+Reading page 3 of 3
+
+Then:
+
+Extracting invoice information...
+
+Then navigate to:
+
+Invoice Basic Review
+
+Do not leave the user wondering whether OCR is running.
+
+==================================================
+9. OCR FAILURE MUST NOT BLOCK SAVE
+==================================================
+
+If OCR fails:
+
+do NOT lose the PDF.
+
+Navigate to Invoice Basic Review with blank fields.
+
+Show:
+
+"We couldn't read some invoice details automatically.
+Please review and enter the missing information."
+
+The scanned PDF must remain available.
+
+==================================================
+10. RAW OCR DEBUGGING
+==================================================
+
+During DEVELOPMENT only, add diagnostic logging:
+
+[OCR] START PAGE 1
+
+[OCR] IMAGE URI:
+<scheme only / safe local info>
+
+[OCR] TEXT LENGTH:
+1234
+
+[OCR] TEXT PREVIEW:
+<first 300 chars>
+
+[OCR] COMPLETE PAGE 1
+
+Do NOT log sensitive invoice text in production.
+
+This is necessary to determine whether the problem is:
+
+OCR ENGINE
+
+or
+
+INVOICE PARSER.
+
+==================================================
+11. SEPARATE OCR FROM FIELD EXTRACTION
+==================================================
+
+Do NOT combine everything into one opaque function.
+
+Required services:
+
+I / equivalent:
+
+MobileOcrService
+
+BasicInvoiceParser
+
+Concept:
+
+recognizeInvoicePages(pages)
+    ↓
+rawText
+
+parseBasicInvoiceFields(rawText)
+    ↓
+BasicInvoiceExtraction
+
+This makes debugging much easier.
+
+==================================================
+12. BASIC EXTRACTION RESULT
+==================================================
+
+Use a structure similar to:
+
+type BasicInvoiceExtraction = {
+
+  supplierName?: string;
+
+  supplierTrn?: string;
+
+  supplierInvoiceNumber?: string;
+
+  invoiceDate?: string;
+
+  purchaseOrderNumber?: string;
+
+  invoiceGross?: number;
+
+  currency?: string;
+
+  confidence?: {
+    supplierName?: number;
+    supplierTrn?: number;
+    supplierInvoiceNumber?: number;
+    invoiceDate?: number;
+    purchaseOrderNumber?: number;
+    invoiceGross?: number;
+    currency?: number;
+  };
+
+  rawTextAvailable: boolean;
+};
+
+==================================================
+13. SUPPLIER TRN EXTRACTION
+==================================================
+
+For UAE invoices specifically recognize labels such as:
+
+TRN
+Tax Registration Number
+VAT Registration Number
+VAT Reg No
+Tax Reg No
+
+Typical UAE TRN is 15 digits.
+
+Example pattern concept:
+
+\b\d{15}\b
+
+BUT:
+
+do not simply take the first 15-digit number blindly.
+
+Prefer a 15-digit number located near:
+
+TRN
+VAT
+Tax Registration
+
+Normalize spaces/hyphens where OCR inserted them.
+
+==================================================
+14. INVOICE NUMBER EXTRACTION
+==================================================
+
+Recognize labels including:
+
+Invoice No
+Invoice Number
+Invoice #
+Inv No
+Inv #
+Tax Invoice No
+Tax Invoice Number
+
+Extract the value immediately adjacent/below the label where possible.
+
+Do not confuse with:
+
+PO number
+TRN
+delivery note
+customer number.
+
+==================================================
+15. INVOICE DATE
+==================================================
+
+Recognize:
+
+Invoice Date
+Date
+Tax Invoice Date
+
+Support common formats:
+
+DD/MM/YYYY
+DD-MM-YYYY
+YYYY-MM-DD
+DD MMM YYYY
+DD MMMM YYYY
+
+Normalize internally to:
+
+YYYY-MM-DD
+
+But preserve the ability for the user to correct it.
+
+==================================================
+16. PURCHASE ORDER NUMBER
+==================================================
+
+Recognize:
+
+PO
+PO No
+PO Number
+Purchase Order
+Purchase Order No
+Purchase Order Number
+Your PO
+Customer PO
+
+For SAP customers, numbers may commonly look like:
+
+4500001001
+
+But DO NOT hardcode:
+
+45xxxxxxxx
+
+because SILA ME must work with non-SAP customers too.
+
+Use label proximity first.
+
+==================================================
+17. INVOICE GROSS AMOUNT
+==================================================
+
+Recognize labels such as:
+
+Grand Total
+Invoice Total
+Total Amount
+Amount Due
+Gross Amount
+Total Including VAT
+Total Incl VAT
+Total Payable
+
+Do NOT accidentally use:
+
+Subtotal
+Taxable Amount
+VAT Amount
+Line Total
+
+Prefer the final payable/gross total.
+
+==================================================
+18. CURRENCY
+==================================================
+
+Recognize:
+
+AED
+USD
+EUR
+GBP
+SAR
+QAR
+OMR
+BHD
+KWD
+MYR
+INR
+
+and common currency symbols where reliable.
+
+For UAE invoice:
+
+AED may appear as:
+
+AED
+د.إ
+
+Do not assume AED merely because the user is in UAE.
+
+If currency is not found:
+
+leave blank.
+
+==================================================
+19. SUPPLIER NAME — IMPORTANT
+==================================================
+
+Supplier Name is harder than regex fields.
+
+Use deterministic invoice-layout heuristics.
+
+Prefer:
+
+top portion of Page 1
+
+business name near logo/header
+
+name located near supplier TRN/address
+
+"Supplier"
+"Vendor"
+"From"
+
+Avoid extracting:
+
+customer/buyer name
+
+Ship To
+
+Bill To
+
+Sold To.
+
+If uncertain:
+
+leave Supplier Name blank rather than selecting the buyer.
+
+==================================================
+20. PAGE PRIORITY
+==================================================
+
+Header fields should normally prioritize Page 1:
+
+Supplier Name
+TRN
+Invoice Number
+Invoice Date
+PO Number
+
+Gross amount may appear on:
+
+Page 1
+
+or
+
+final page.
+
+Therefore search all pages for totals.
+
+==================================================
+21. FIELD SCORING
+==================================================
+
+Do not simply use the first regex match.
+
+Score candidates.
+
+Example factors:
+
+label proximity
+
+same line as label
+
+next line after label
+
+page position
+
+Page 1 priority
+
+total-page priority
+
+valid format
+
+duplicate consistency.
+
+Select highest-confidence candidate.
+
+==================================================
+22. OCR NORMALIZATION
+==================================================
+
+Before parsing:
+
+normalize Unicode
+
+normalize whitespace
+
+retain line breaks
+
+collapse repeated spaces
+
+normalize common OCR separators
+
+BUT:
+
+do not destroy line structure.
+
+Invoice layout parsing depends on line relationships.
+
+Keep:
+
+rawText
+
+and:
+
+normalizedText
+
+separately.
+
+==================================================
+23. COMMON OCR CHARACTER ERRORS
+==================================================
+
+Handle common OCR confusion carefully:
+
+O vs 0
+
+I vs 1
+
+S vs 5
+
+B vs 8
+
+Only normalize when field context makes it safe.
+
+Example:
+
+TRN expected numeric
+
+so:
+
+O → 0
+
+may be appropriate.
+
+Do NOT globally change supplier names.
+
+==================================================
+24. BASIC REVIEW SCREEN
+==================================================
+
+After OCR show:
+
+Invoice Details
+
+Supplier Name
+[_______________]
+
+Supplier TRN
+[_______________]
+
+Invoice Number
+[_______________]
+
+Invoice Date
+[_______________]
+
+Purchase Order
+[_______________]
+
+Invoice Amount
+[_______________]
+
+Currency
+[_______________]
+
+All fields editable.
+
+Show a small status:
+
+Automatically extracted — please review.
+
+Do not imply OCR is guaranteed correct.
+
+==================================================
+25. SHOW SCANNED DOCUMENT
+==================================================
+
+Invoice Basic Review should allow:
+
+VIEW DOCUMENT
+
+so user can compare the invoice against extracted fields.
+
+Do not force user to go backwards through scanner pages.
+
+==================================================
+26. SAVE
+==================================================
+
+SAVE must persist:
+
+PDF
+
+AND
+
+user-reviewed basic fields.
+
+Important:
+
+Save the FINAL USER-REVIEWED VALUES,
+
+not blindly the original OCR values.
+
+Preserve provenance if available:
+
+OCR value
+
+User corrected value
+
+final value.
+
+==================================================
+27. CLOUD FULL EXTRACTION REMAINS SEPARATE
+==================================================
+
+After Save:
+
+PDF
++
+basic reviewed fields
+→ SILA ME .NET API
+
+Backend:
+
+built-in/full OCR/extraction
+OR
+configured external extraction agent
+
+→ full invoice header
+→ invoice line items
+→ invoice_ext_data.
+
+Do not replace Cloud full extraction with Mobile basic OCR.
+
+==================================================
+28. DEBUG THE CURRENT FAILURE IN ORDER
+==================================================
+
+Determine which stage currently fails:
+
+STAGE 1
+processedImageUri exists?
+
+STAGE 2
+OCR library invoked?
+
+STAGE 3
+OCR returns text?
+
+STAGE 4
+text length > 0?
+
+STAGE 5
+BasicInvoiceParser invoked?
+
+STAGE 6
+parser returns fields?
+
+STAGE 7
+fields written to scanner state?
+
+STAGE 8
+Invoice Review receives state?
+
+STAGE 9
+form default values populated?
+
+Do not say "OCR fixed" without identifying the failed stage.
+
+==================================================
+29. IMPORTANT STATE CHECK
+==================================================
+
+Check whether OCR succeeds but navigation loses the extraction.
+
+Scanner state should contain:
+
+scanSessionId
+pages
+pdfUri
+ocrStatus
+ocrText
+basicExtraction
+
+Do NOT pass the complete OCR result only through temporary route params.
+
+Invoice Review should read from authoritative scan-session state.
+
+==================================================
+30. FORM DEFAULT VALUE BUG
+==================================================
+
+Specifically check this common issue:
+
+React Hook Form / form state initializes BEFORE OCR completes.
+
+Example:
+
+defaultValues: basicExtraction
+
+runs while extraction is undefined.
+
+Later OCR finishes but form remains blank.
+
+If this is happening:
+
+use reset(extractedValues)
+
+when extraction completes.
+
+Do not rely on defaultValues updating automatically.
+
+==================================================
+31. OCR SHOULD RUN ONLY WHEN NEEDED
+==================================================
+
+Do not repeatedly OCR every time the user opens Invoice Review.
+
+Persist OCR result in ScanSession.
+
+Run OCR when:
+
+new pages scanned
+
+page retaken
+
+page cropped
+
+page rotated
+
+or explicit RE-READ action.
+
+Do not rerun because user navigated Back/Forward.
+
+==================================================
+32. ADD RE-READ ACTION
+==================================================
+
+On Invoice Basic Review add:
+
+RE-READ INVOICE
+
+This manually reruns basic OCR from current processedImageUri pages.
+
+Useful when OCR failed temporarily.
+
+Do not recreate the PDF just to rerun OCR.
+
+==================================================
+33. TEST WITH REALISTIC OCR TEXT FIXTURE
+==================================================
+
+Add parser tests using text similar to:
+
+ABC FOOD TRADING LLC
+
+TRN: 100123456700003
+
+TAX INVOICE
+
+Invoice No: INV-1001
+Invoice Date: 15/09/2026
+
+PO Number: 4500001001
+
+Subtotal: AED 950.00
+VAT 5%: AED 47.50
+
+Grand Total: AED 997.50
+
+Expected:
+
+Supplier Name:
+ABC FOOD TRADING LLC
+
+Supplier TRN:
+100123456700003
+
+Invoice Number:
+INV-1001
+
+Invoice Date:
+2026-09-15
+
+PO Number:
+4500001001
+
+Invoice Gross:
+997.50
+
+Currency:
+AED
+
+==================================================
+34. MULTI-PAGE TEST
+==================================================
+
+Page 1:
+
+Supplier
+TRN
+Invoice Number
+Date
+PO
+
+Page 2:
+
+Line items
+
+Page 3:
+
+Subtotal
+VAT
+Grand Total
+
+Expected:
+
+header from Page 1
+
+gross amount from Page 3
+
+ONE BasicInvoiceExtraction result.
+
+==================================================
+35. NEGATIVE TEST
+==================================================
+
+OCR text contains:
+
+Bill To:
+FIVE Hotels
+
+Supplier:
+ABC Food Trading LLC
+
+Expected:
+
+Supplier Name =
+ABC Food Trading LLC
+
+NOT:
+
+FIVE Hotels.
+
+==================================================
+36. NO-PO TEST
+==================================================
+
+Invoice has no PO.
+
+Expected:
+
+purchaseOrderNumber = blank
+
+Do not manufacture a PO number.
+
+User can enter it manually.
+
+==================================================
+37. OCR FAILURE TEST
+==================================================
+
+OCR returns empty text.
+
+Expected:
+
+PDF retained
+
+Invoice Review opens
+
+all unknown fields blank
+
+message displayed
+
+manual entry available
+
+SAVE still possible subject to existing validation.
+
+==================================================
+38. PHYSICAL DEVICE TEST
+==================================================
+
+Because native OCR may require the Development Build:
+
+Real device validation is mandatory.
+
+Test:
+
+real iPhone
+
+and
+
+real Android
+
+with the same invoice if possible.
+
+Check:
+
+OCR execution
+
+text extraction
+
+field extraction
+
+processing time
+
+scanner image orientation
+
+multi-page extraction.
+
+If this cannot be executed from Replit:
+
+report exactly:
+
+PHYSICAL DEVICE OCR TEST PENDING USER ACTION
+
+==================================================
+39. DO NOT MODIFY
+==================================================
+
+Do not modify:
+
+Login
+Authentication
+SecureStore auth
+/api/me
+Organization
+Operating unit
+Cloud login
+PO matching rules
+Physical quantity rules
+GRN posting
+Inventory
+scanner image quality
+scanner PDF generation
+Delete Page
+external extraction agent configuration.
+
+==================================================
+40. FINAL REPORT
+==================================================
+
+Return:
+
+BASIC OCR ROOT CAUSE:
+<exact reason>
+
+OCR LIBRARY:
+<package/version>
+
+OCR TYPE:
+ON-DEVICE / REMOTE / MOCK
+
+DEVELOPMENT BUILD REQUIRED:
+YES/NO
+
+OCR INPUT:
+processedImageUri YES/NO
+
+MULTI-PAGE OCR:
+PASS/FAIL
+
+RAW OCR TEXT:
+PASS/FAIL
+
+RAW OCR TEXT LENGTH:
+<number from test>
+
+BASIC PARSER:
+PASS/FAIL
+
+SUPPLIER NAME:
+PASS/FAIL
+
+SUPPLIER TRN:
+PASS/FAIL
+
+INVOICE NUMBER:
+PASS/FAIL
+
+INVOICE DATE:
+PASS/FAIL
+
+PO NUMBER:
+PASS/FAIL
+
+INVOICE GROSS:
+PASS/FAIL
+
+CURRENCY:
+PASS/FAIL
+
+OCR → SCAN SESSION:
+PASS/FAIL
+
+SCAN SESSION → REVIEW FORM:
+PASS/FAIL
+
+RE-READ INVOICE:
+PASS/FAIL
+
+OCR FAILURE MANUAL FALLBACK:
+PASS/FAIL
+
+MOBILE TYPESCRIPT:
+PASS/FAIL
+
+MOBILE TESTS:
+<number passed>
+
+EXPO DOCTOR:
+<result>
+
+AUTH FILES MODIFIED:
+NO
+
+BACKEND FILES MODIFIED:
+NO
+
+PHYSICAL DEVICE OCR TEST:
+PASS/FAIL or
+PHYSICAL DEVICE OCR TEST PENDING USER ACTION
+
+FINAL STATUS:
+BASIC OCR WORKING / BASIC OCR NOT WORKING
+
+If proven working:
+
+git commit -m "fix: enable mobile basic invoice ocr extraction"
+
+Return commit SHA.
+
+STOP.
+
+DO NOT START ANOTHER FEATURE.

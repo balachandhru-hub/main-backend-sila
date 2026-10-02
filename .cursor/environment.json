@@ -1,0 +1,23 @@
+{
+  "name": "SILA ME",
+  "install": ".cursor/install.sh",
+  "start": ".cursor/start.sh",
+  "terminals": [
+    {
+      "name": "api",
+      "command": ".cursor/run-api.sh"
+    },
+    {
+      "name": "web",
+      "command": "PORT=5173 BASE_PATH=/five/ pnpm --filter @workspace/sila-me-cloud run dev"
+    },
+    {
+      "name": "web-proxy",
+      "command": "node .cursor/dev-proxy.mjs"
+    },
+    {
+      "name": "store",
+      "command": "PORT=5174 pnpm --filter @workspace/sila-me-mobile run dev"
+    }
+  ]
+}

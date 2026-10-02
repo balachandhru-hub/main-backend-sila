@@ -1,0 +1,756 @@
+PROJECT: SILA ME
+
+IMPLEMENT BASIC OCR FALLBACK FOR EXPO GO / REPLIT TESTING.
+
+CURRENT STATUS:
+
+Native OCR implementation exists using ML Kit.
+
+However:
+
+RNMLKitTextRecognition is unavailable in Expo Go.
+
+Replit currently serves:
+
+exp://...expo.sisko.replit.dev
+
+This is an Expo Go bundle and NOT a custom Development Build.
+
+DO NOT REMOVE ML KIT.
+
+DO NOT replace the native OCR implementation.
+
+Instead implement an automatic BASIC OCR provider strategy.
+
+==================================================
+1. REQUIRED ARCHITECTURE
+==================================================
+
+Basic invoice extraction must work in BOTH environments.
+
+PRODUCTION / DEVELOPMENT BUILD:
+
+Processed Scan Images
+→ Native ML Kit OCR
+→ Basic Invoice Parser
+→ Basic Invoice Fields
+
+EXPO GO / REPLIT:
+
+Processed Scan Images / Generated PDF
+→ Existing SILA ME .NET API
+→ Built-In OCR
+→ Basic Invoice Parser
+→ Basic Invoice Fields
+
+The user should see the SAME Invoice Basic Review screen regardless
+of which OCR provider was used.
+
+==================================================
+2. PROVIDER STRATEGY
+==================================================
+
+Create/use:
+
+IBasicOcrProvider
+
+Implement:
+
+NativeMlKitBasicOcrProvider
+
+BackendBasicOcrProvider
+
+Create:
+
+BasicOcrProviderResolver
+
+Concept:
+
+if native ML Kit module is available:
+
+    use NativeMlKitBasicOcrProvider
+
+else:
+
+    use BackendBasicOcrProvider
+
+Do NOT detect only:
+
+Platform.OS
+
+because iOS/Android Expo Go still does not contain ML Kit.
+
+Detect whether the native module is actually available.
+
+==================================================
+3. NEVER CRASH WHEN ML KIT IS MISSING
+==================================================
+
+Current condition:
+
+RNMLKitTextRecognition unavailable
+
+must NOT cause:
+
+OCR failure
+blank screen
+runtime exception
+unhandled promise rejection.
+
+Instead:
+
+ML Kit unavailable
+→ automatically select BackendBasicOcrProvider.
+
+Development log:
+
+[BasicOCR] Native ML Kit unavailable
+[BasicOCR] Using backend fallback
+
+==================================================
+4. BACKEND BASIC OCR ENDPOINT
+==================================================
+
+Use the EXISTING SILA ME .NET backend.
+
+Do not create another service/application.
+
+Add/reuse an authenticated endpoint such as:
+
+POST /api/v1/documents/basic-extract
+
+Input:
+
+multipart/form-data
+
+Preferred:
+
+document = generated PDF
+
+OR, if the existing built-in OCR performs better on images:
+
+pages = processed scanner images
+
+Include existing organization/operating-unit context as required by
+current SILA ME authorization.
+
+Use the EXISTING authenticated Mobile API client.
+
+==================================================
+5. RESPONSE
+==================================================
+
+Return:
+
+{
+  "supplierName": "ABC Food Trading LLC",
+  "supplierTrn": "100123456700003",
+  "supplierInvoiceNumber": "INV-1001",
+  "invoiceDate": "2026-09-15",
+  "purchaseOrderNumber": "4500001001",
+  "invoiceGross": 997.50,
+  "currency": "AED",
+  "provider": "BUILT_IN_BACKEND",
+  "status": "REVIEW_REQUIRED"
+}
+
+Unknown fields:
+
+null
+
+NEVER invent values.
+
+==================================================
+6. IMPORTANT — THIS IS BASIC EXTRACTION
+==================================================
+
+This endpoint is NOT the full Cloud extraction.
+
+It only needs:
+
+Supplier Name
+Supplier TRN
+Supplier Invoice Number
+Invoice Date
+PO Number
+Invoice Gross
+Currency
+
+It should return quickly for the Mobile review flow.
+
+Full extraction remains separate.
+
+==================================================
+7. BACKEND BUILT-IN OCR
+==================================================
+
+We already require SILA ME backend to have its own built-in OCR
+capability.
+
+Inspect existing code FIRST.
+
+Search:
+
+IOcrProvider
+BuiltInOcrProvider
+IDocumentTextExtractor
+IPdfTextExtractor
+IInvoiceExtractionService
+BasicInvoiceParser
+InvoiceNormalization
+OCR
+
+REUSE existing backend OCR/extraction code.
+
+Do NOT build duplicate OCR architecture if these services already
+exist.
+
+==================================================
+8. DIGITAL PDF
+==================================================
+
+If uploaded PDF contains embedded text:
+
+PDF
+→ embedded text extraction
+→ Basic Invoice Parser
+
+Do NOT OCR unnecessarily.
+
+==================================================
+9. SCANNED PDF
+==================================================
+
+If PDF has insufficient/no embedded text:
+
+PDF pages
+→ Built-In OCR
+→ OCR text
+→ Basic Invoice Parser
+
+No external OCR/AI agent required.
+
+==================================================
+10. EXTERNAL AGENT MUST NOT BE REQUIRED
+==================================================
+
+Basic Mobile OCR fallback must work WITHOUT:
+
+OpenAI
+Claude
+Azure Document Intelligence
+Google Cloud OCR
+external OCR API
+configured extraction agent.
+
+This is the SILA ME built-in fallback.
+
+==================================================
+11. BASIC INVOICE PARSER
+==================================================
+
+Reuse the same extraction rules wherever practical.
+
+Required fields:
+
+SUPPLIER NAME
+
+SUPPLIER TRN
+
+SUPPLIER INVOICE NUMBER
+
+INVOICE DATE
+
+PURCHASE ORDER NUMBER
+
+INVOICE GROSS
+
+CURRENCY
+
+For UAE TRN:
+
+prefer 15-digit candidate near:
+
+TRN
+Tax Registration Number
+VAT Registration Number
+
+For invoice number:
+
+Invoice No
+Invoice Number
+Invoice #
+Tax Invoice No
+
+For PO:
+
+PO No
+PO Number
+Purchase Order
+Purchase Order Number
+Customer PO
+
+For gross:
+
+Grand Total
+Invoice Total
+Total Amount
+Amount Due
+Total Including VAT
+Total Payable
+
+Do not confuse gross with:
+
+Subtotal
+VAT
+Taxable Amount
+line amount.
+
+==================================================
+12. MOBILE FLOW
+==================================================
+
+Required user experience:
+
+Scan Pages
+
+→ CREATE PDF
+
+→ PDF Ready
+
+→ "Reading invoice..."
+
+→ Basic OCR provider resolver
+
+IF ML Kit available:
+    Native OCR
+
+ELSE:
+    Backend Basic OCR
+
+→ Invoice Basic Review
+
+The user should NOT have to select the OCR provider manually.
+
+==================================================
+13. REVIEW SCREEN
+==================================================
+
+Populate:
+
+Supplier Name
+Supplier TRN
+Invoice Number
+Invoice Date
+PO Number
+Invoice Amount
+Currency
+
+All fields editable.
+
+Display small text:
+
+Automatically extracted — please review.
+
+Optionally DEVELOPMENT only:
+
+OCR Provider: Native ML Kit
+
+or
+
+OCR Provider: SILA ME Built-In
+
+Do not make provider information prominent in production UI.
+
+==================================================
+14. VERY IMPORTANT — DO NOT REQUIRE SAVE FIRST
+==================================================
+
+The flow must NOT be:
+
+Create PDF
+→ Save
+→ OCR.
+
+Required:
+
+Create PDF
+→ Basic OCR
+→ Review
+→ Save.
+
+The user reviews extracted values BEFORE Save.
+
+==================================================
+15. TEMPORARY DOCUMENT HANDLING
+==================================================
+
+If backend OCR requires upload before final Save:
+
+upload as TEMPORARY SCAN.
+
+Example:
+
+document status:
+
+TEMPORARY
+
+After user presses Save:
+
+finalize the existing document.
+
+Do NOT upload the same PDF twice unnecessarily.
+
+Prefer:
+
+Create PDF
+→ temporary upload
+→ OCR
+→ review
+→ Save/finalize.
+
+==================================================
+16. CLEANUP
+==================================================
+
+If user abandons a temporary OCR document:
+
+do not immediately create permanent invoice business records.
+
+Use temporary document lifecycle/cleanup.
+
+Do not pollute invoice tables with abandoned scans.
+
+==================================================
+17. OCR FAILURE
+==================================================
+
+If BOTH:
+
+Native OCR unavailable
+
+AND
+
+Backend Basic OCR fails:
+
+still open Invoice Basic Review.
+
+Show:
+
+"We couldn't automatically read the invoice details.
+Please enter the information below."
+
+PDF remains intact.
+
+User can manually enter fields.
+
+==================================================
+18. RE-READ INVOICE
+==================================================
+
+Add/retain:
+
+RE-READ INVOICE
+
+It should call the resolver again.
+
+Development Build:
+
+ML Kit preferred.
+
+Expo Go:
+
+backend automatically.
+
+Do not recreate the PDF.
+
+==================================================
+19. DO NOT CHANGE SCANNER
+==================================================
+
+DO NOT modify:
+
+react-native-document-scanner-plugin
+
+camera capture
+
+multi-page scanner
+
+crop
+
+perspective correction
+
+rotation
+
+Delete Page
+
+PDF generation
+
+pdf-lib
+
+image quality.
+
+This task is OCR fallback only.
+
+==================================================
+20. DO NOT CHANGE AUTH
+==================================================
+
+Backend OCR request must use existing:
+
+Mobile bearer token
+
+existing API client
+
+existing organization/unit authorization.
+
+DO NOT create:
+
+new login
+new token
+OCR-specific authentication.
+
+==================================================
+21. SECURITY
+==================================================
+
+Backend endpoint must enforce:
+
+authenticated user
+
+organization scope
+
+operating-unit scope where applicable
+
+SCAN_INVOICE / UPLOAD_INVOICE / relevant existing permission.
+
+Do not expose an anonymous OCR endpoint.
+
+==================================================
+22. TEST REPLIT / EXPO GO
+==================================================
+
+This is now a mandatory acceptance path.
+
+Using current Replit Expo Go workflow:
+
+Scan/upload invoice
+
+→ Create PDF
+
+→ ML Kit unavailable detected
+
+→ backend fallback automatically selected
+
+→ backend reads invoice
+
+→ basic fields returned
+
+→ Invoice Review populated.
+
+Expected:
+
+NO RNMLKitTextRecognition error.
+
+==================================================
+23. TEST DEVELOPMENT BUILD LOGIC
+==================================================
+
+Where runtime execution is unavailable, test resolver behavior.
+
+When:
+
+ML Kit available = true
+
+Expected:
+
+NATIVE_ML_KIT
+
+When:
+
+ML Kit available = false
+
+Expected:
+
+BUILT_IN_BACKEND
+
+Do not claim real native OCR PASS without physical Development Build.
+
+==================================================
+24. TEST SAMPLE
+==================================================
+
+Use a real or fixture invoice containing:
+
+ABC FOOD TRADING LLC
+
+TRN: 100123456700003
+
+Tax Invoice
+
+Invoice No: INV-1001
+
+Invoice Date: 15/09/2026
+
+PO Number: 4500001001
+
+Subtotal: AED 950.00
+
+VAT: AED 47.50
+
+Grand Total: AED 997.50
+
+Expected:
+
+Supplier:
+ABC FOOD TRADING LLC
+
+TRN:
+100123456700003
+
+Invoice:
+INV-1001
+
+Date:
+2026-09-15
+
+PO:
+4500001001
+
+Gross:
+997.50
+
+Currency:
+AED
+
+==================================================
+25. DO NOT FAKE SUCCESS
+==================================================
+
+Development fixture/mock may test UI/parser.
+
+But the actual Replit acceptance test must use:
+
+real backend OCR execution.
+
+Do NOT return hardcoded invoice values.
+
+==================================================
+26. FULL EXTRACTION AFTER SAVE
+==================================================
+
+After user reviews and presses SAVE:
+
+existing SILA ME workflow continues:
+
+Document
+→ Invoice
+→ Full Backend Extraction
+→ invoice_ext_data
+→ PO Match
+→ Physical Quantity
+→ GRN.
+
+Do not duplicate the document if it was already temporarily uploaded
+for Basic OCR.
+
+==================================================
+27. FINAL REPORT
+==================================================
+
+Return:
+
+NATIVE OCR:
+Configured YES/NO
+
+ML KIT PACKAGE:
+<package/version>
+
+EXPO GO NATIVE OCR:
+UNAVAILABLE
+
+FALLBACK IMPLEMENTED:
+YES/NO
+
+BACKEND BASIC OCR ENDPOINT:
+<route>
+
+BACKEND OCR PROVIDER:
+<implementation>
+
+EXTERNAL AGENT REQUIRED:
+NO
+
+REPLIT EXPO GO TEST:
+
+PDF created:
+PASS/FAIL
+
+ML Kit absence detected:
+PASS/FAIL
+
+Backend OCR called:
+PASS/FAIL
+
+Raw OCR text obtained:
+PASS/FAIL
+
+Supplier Name:
+PASS/FAIL
+
+Supplier TRN:
+PASS/FAIL
+
+Invoice Number:
+PASS/FAIL
+
+Invoice Date:
+PASS/FAIL
+
+PO Number:
+PASS/FAIL
+
+Invoice Gross:
+PASS/FAIL
+
+Currency:
+PASS/FAIL
+
+Invoice Review populated:
+PASS/FAIL
+
+Manual correction:
+PASS/FAIL
+
+Save:
+PASS/FAIL
+
+FULL EXTRACTION:
+PASS/FAIL
+
+NATIVE DEVELOPMENT BUILD:
+PHYSICAL DEVICE TEST PENDING USER ACTION
+
+AUTH CHANGED:
+NO
+
+SCANNER CHANGED:
+NO
+
+PDF GENERATOR CHANGED:
+NO
+
+DELETE PAGE CHANGED:
+NO
+
+FINAL STATUS:
+
+EXPO GO BASIC OCR WORKING / NOT WORKING
+
+Commit if successful:
+
+fix: add backend basic ocr fallback for expo go
+
+Return commit SHA.
+
+STOP.

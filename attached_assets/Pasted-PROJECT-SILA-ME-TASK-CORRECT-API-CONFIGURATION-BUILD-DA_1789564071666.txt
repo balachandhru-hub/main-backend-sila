@@ -1,0 +1,1921 @@
+PROJECT: SILA ME
+TASK: CORRECT API CONFIGURATION + BUILD DATA UPDATE / PURCHASE ORDER DATA MANAGEMENT
+
+CURRENT ISSUES
+
+1. API Configuration screen is not structured correctly.
+2. PULL DATA screen does not show the actual Purchase Order records.
+3. Purchase Order data is not visible/manageable from Cloud.
+4. User needs to see EXISTING DB records before pulling.
+5. User must be able to update data through:
+   - API PULL
+   - EXCEL UPLOAD
+6. User must be able to DOWNLOAD current data to Excel.
+7. API Pull and Excel Upload must use the SAME DB field mapping / validation / upsert logic.
+8. Last Run timestamp must update correctly after successful API Pull.
+9. Existing records must never disappear just because API Pull fails.
+
+DO NOT create a second integration framework.
+
+Inspect and CORRECT the existing implementation.
+
+
+============================================================
+1. TARGET CLOUD NAVIGATION
+============================================================
+
+Administration
+  → Integrations
+      → API Configuration
+      → Field Mapping
+      → Data Update
+      → Execution History
+
+Data Update is the operational data screen.
+
+It is NOT merely a list of integration jobs.
+
+
+============================================================
+2. API CONFIGURATION — CORRECT STRUCTURE
+============================================================
+
+API Configuration list should show:
+
+Organization
+Entity
+Process Type
+Configuration Name
+API Type
+Authentication
+Schedule
+Last Successful Run
+Next Run
+Test Status
+Status
+Actions
+
+Actions:
+
+EDIT
+TEST API
+FIELD MAPPING
+DATA UPDATE
+EXECUTION HISTORY
+ACTIVATE / DEACTIVATE
+
+
+============================================================
+3. API CONFIGURATION FORM
+============================================================
+
+GENERAL
+
+Organization
+Entity
+Process Type
+Configuration Name
+Active
+
+
+CONNECTION
+
+Actual API URL
+HTTP Method
+API Type
+
+For SAP:
+
+ODATA_V4
+
+
+AUTHENTICATION
+
+Authentication Type
+
+Token URL / structured Token API configuration
+Username
+Password
+Client ID / Secret where applicable
+
+Secrets backend-only.
+
+
+SCHEDULER
+
+Enable Scheduled Pull
+
+Interval Minutes
+
+Examples:
+
+10 = 10 minutes
+120 = 2 hours
+1440 = 1 day
+2880 = 2 days
+
+Incremental Extraction
+
+Timestamp Field
+
+Last Successful Run
+
+Next Run.
+
+
+SCHEMA
+
+LOAD API SCHEMA
+
+
+TEST
+
+TEST API
+
+
+Do not activate new/changed connection until TEST API passes.
+
+Allow SAVE DRAFT.
+
+
+============================================================
+4. PROCESS TYPES
+============================================================
+
+Initial:
+
+GET_PO
+POST_PO
+UPDATE_STOCK
+POST_GRN
+GET_GRN
+GET_INVOICE
+POST_INVOICE
+GET_STOCK
+
+Classify:
+
+EXTRACTABLE:
+
+GET_PO
+GET_GRN
+GET_INVOICE
+GET_STOCK
+
+TRANSACTIONAL:
+
+POST_PO
+UPDATE_STOCK
+POST_GRN
+POST_INVOICE
+
+
+Only extractable APIs get:
+
+PULL DATA
+
+scheduled extraction
+
+Excel data-management capability where appropriate.
+
+
+============================================================
+5. DATA UPDATE LANDING PAGE
+============================================================
+
+Create proper:
+
+INTEGRATIONS → DATA UPDATE
+
+At top:
+
+Organization
+[ FIVE Hotels and Resorts ]
+
+Entity
+[ Dubai ]
+
+Process Type
+[ GET_PO ]
+
+Configuration
+[ SAP S/4 Purchase Orders ]
+
+
+Show integration status:
+
+API: CONNECTED
+
+Last Successful Pull:
+<timestamp>
+
+Next Scheduled Pull:
+<timestamp>
+
+Schedule:
+Every 10 minutes
+
+Last Result:
+SUCCESS
+
+Last Records:
+<n>
+
+
+Actions:
+
+[ PULL DATA ]
+
+[ UPLOAD EXCEL ]
+
+[ DOWNLOAD EXCEL ]
+
+[ VIEW HISTORY ]
+
+
+============================================================
+6. CRITICAL — SHOW EXISTING DATA
+============================================================
+
+Below the controls, show ACTUAL records currently stored in SILA ME.
+
+For GET_PO:
+
+PURCHASE ORDERS
+
+The screen must load DB records immediately.
+
+It must NOT require PULL DATA before displaying records.
+
+Flow:
+
+Open Data Update
+      ↓
+GET existing PO records from SILA DB
+      ↓
+Display table
+      ↓
+User optionally PULL DATA
+      ↓
+SAP API executes
+      ↓
+mapped data upserted
+      ↓
+table refreshes
+      ↓
+new/updated records appear.
+
+
+Existing data must remain visible if SAP is unavailable.
+
+
+============================================================
+7. PURCHASE ORDER TABLE
+============================================================
+
+For GET_PO show PO HEADER records.
+
+Recommended columns:
+
+Purchase Order
+Supplier
+PO Date
+Company Code
+Purchasing Organization
+Purchasing Group
+Currency
+Total / Net Value if mapped
+Items
+PO Status
+GR Expected
+Invoice Expected
+Source
+Last Source Change
+Last Synced
+Actions
+
+
+Do not force display of fields that are not mapped/available.
+
+Allow configurable columns where practical.
+
+
+============================================================
+8. TABLE CAPABILITIES
+============================================================
+
+Purchase Order table must support:
+
+Search
+
+Filter
+
+Sort
+
+Pagination
+
+Refresh
+
+Column selection
+
+Entity filter
+
+Supplier filter
+
+PO Status filter
+
+Date range
+
+Source filter
+
+Last Synced filter.
+
+
+Search should support:
+
+PO Number
+Supplier
+Material where practical.
+
+
+============================================================
+9. PO DETAIL
+============================================================
+
+Clicking a PO opens:
+
+/purchasing/purchase-orders/{id}
+
+or existing equivalent.
+
+Header:
+
+PO Number
+Supplier
+Entity
+Company Code
+Currency
+PO Date
+Status
+Source
+Last Synced.
+
+
+Tabs:
+
+OVERVIEW
+
+ITEMS
+
+RECEIVING
+
+INVOICES
+
+SYNC HISTORY
+
+
+============================================================
+10. PO ITEMS
+============================================================
+
+ITEMS tab shows actual PurchaseOrderItem records:
+
+Item
+Material
+Description
+Plant
+Storage Location
+Ordered Quantity
+UOM
+Net Price
+Net Amount
+GR Expected
+Invoice Expected
+Received Quantity where available
+Open Quantity where available.
+
+
+Do not invent quantities.
+
+Use mapped/current DB values.
+
+
+============================================================
+11. DATA SOURCE INDICATOR
+============================================================
+
+Every imported record should identify:
+
+Source:
+
+SAP_API
+
+EXCEL_UPLOAD
+
+MANUAL
+
+or other supported source.
+
+
+Also retain:
+
+LastSyncedAt
+SourceLastChangedAt
+SourceConfigurationId.
+
+
+This allows us to know where each PO came from.
+
+
+============================================================
+12. PULL DATA
+============================================================
+
+When user clicks:
+
+PULL DATA
+
+show confirmation/details:
+
+Organization:
+FIVE Hotels and Resorts
+
+Entity:
+Dubai
+
+Process:
+GET_PO
+
+Last Successful Run:
+<timestamp>
+
+Extraction Mode:
+INCREMENTAL
+
+
+Button:
+
+[ START PULL ]
+
+
+Then execute backend integration.
+
+
+============================================================
+13. PULL DATA PROGRESS
+============================================================
+
+After starting:
+
+show:
+
+CONNECTING TO SAP...
+
+then:
+
+READING PURCHASE ORDERS...
+
+then:
+
+MAPPING DATA...
+
+then:
+
+UPDATING SILA ME...
+
+then:
+
+COMPLETED.
+
+
+Where asynchronous job execution is required, poll execution status.
+
+
+Final result:
+
+DATA PULL COMPLETED
+
+Records Read: 325
+
+Inserted: 18
+
+Updated: 41
+
+Unchanged: 266
+
+Failed: 0
+
+Last Successful Run:
+<new timestamp>
+
+
+Then automatically refresh PO table.
+
+
+============================================================
+14. PULL MUST USE LAST SUCCESSFUL RUN
+============================================================
+
+For incremental APIs:
+
+Previous LastSuccessfulRunAt:
+
+T1.
+
+PULL starts:
+
+use T1 as lower watermark.
+
+Capture safe extraction upper watermark:
+
+T2.
+
+API reads changed records between configured boundaries.
+
+Map.
+
+Validate.
+
+Upsert.
+
+Commit.
+
+Only after successful completion:
+
+LastSuccessfulRunAt = T2.
+
+
+If API fails:
+
+DO NOT update LastSuccessfulRunAt.
+
+If mapping fails critically:
+
+DO NOT incorrectly advance watermark.
+
+If DB transaction fails:
+
+DO NOT update LastSuccessfulRunAt.
+
+
+============================================================
+15. MANUAL PULL UPDATES SCHEDULER WATERMARK
+============================================================
+
+Important.
+
+If schedule is every 10 minutes:
+
+Last Successful Run:
+10:00
+
+User manually pulls at:
+
+10:05
+
+and succeeds:
+
+Last Successful Run becomes:
+
+10:05 / source watermark.
+
+Next scheduler must continue from that checkpoint.
+
+Do not separately maintain manual and scheduled watermarks.
+
+
+============================================================
+16. SAME EXECUTION ENGINE
+============================================================
+
+Manual:
+
+PULL DATA
+
+and:
+
+Scheduled Pull
+
+must use exactly the SAME backend integration execution service.
+
+Only TriggerType differs:
+
+MANUAL
+
+SCHEDULED.
+
+
+Do not maintain two extraction implementations.
+
+
+============================================================
+17. EXCEL DOWNLOAD
+============================================================
+
+Add:
+
+DOWNLOAD EXCEL
+
+
+For GET_PO provide workbook:
+
+Purchase_Orders_<Entity>_<timestamp>.xlsx
+
+
+Workbook should preferably contain:
+
+Sheet 1:
+PO_HEADERS
+
+Sheet 2:
+PO_ITEMS
+
+Sheet 3:
+INSTRUCTIONS / METADATA
+
+
+PO_HEADERS contains fields from approved PO target registry.
+
+PO_ITEMS contains item fields.
+
+
+At minimum include stable keys:
+
+PO_HEADERS:
+PurchaseOrder
+
+PO_ITEMS:
+PurchaseOrder
+PurchaseOrderItem.
+
+
+Do not include:
+
+internal passwords
+tokens
+credential references
+sensitive integration configuration.
+
+
+============================================================
+18. DOWNLOAD MODES
+============================================================
+
+Provide:
+
+DOWNLOAD CURRENT VIEW
+
+and preferably:
+
+DOWNLOAD TEMPLATE
+
+
+CURRENT VIEW:
+
+exports filtered DB records currently represented by the user's
+filters, subject to safe row/export limits.
+
+TEMPLATE:
+
+empty workbook with approved columns and instructions.
+
+
+Do not make users manually invent Excel column names.
+
+
+============================================================
+19. EXCEL TEMPLATE + FIELD MAPPING
+============================================================
+
+Excel upload must use the SAME SILA target field definitions used by
+API mapping.
+
+For example:
+
+PurchaseOrder
+Supplier
+CompanyCode
+DocumentCurrency
+PurchaseOrderDate
+...
+
+PO_ITEMS:
+
+PurchaseOrder
+PurchaseOrderItem
+Material
+Description
+Quantity
+UOM
+NetPrice
+NetAmount
+...
+
+
+Do not create an entirely separate PO schema for Excel.
+
+
+============================================================
+20. EXCEL UPLOAD
+============================================================
+
+Add:
+
+UPLOAD EXCEL
+
+
+Flow:
+
+Select XLSX
+      ↓
+Upload to SILA backend
+      ↓
+Parse workbook
+      ↓
+Validate headers
+      ↓
+Validate values
+      ↓
+Preview changes
+      ↓
+User confirms
+      ↓
+Use same normalized import models
+      ↓
+Same validation
+      ↓
+Same PO upsert service
+      ↓
+DB transaction
+      ↓
+Refresh table.
+
+
+Do not update DB immediately when file is selected.
+
+
+============================================================
+21. EXCEL PREVIEW
+============================================================
+
+Before import show:
+
+EXCEL IMPORT PREVIEW
+
+Rows Read:
+<n>
+
+Valid:
+<n>
+
+New:
+<n>
+
+Updates:
+<n>
+
+Unchanged:
+<n>
+
+Warnings:
+<n>
+
+Errors:
+<n>
+
+
+Tabs:
+
+NEW RECORDS
+
+UPDATES
+
+WARNINGS
+
+ERRORS
+
+
+For update show:
+
+PO 4500012345
+
+Field             Existing       Excel
+
+Supplier          ABC            ABC
+
+Currency          AED            AED
+
+Net Amount        10,000         10,500
+
+
+Then:
+
+[ CONFIRM IMPORT ]
+
+or:
+
+[ CANCEL ]
+
+
+============================================================
+22. EXCEL VALIDATION
+============================================================
+
+Validate:
+
+required PO key
+
+required PO Item key
+
+data types
+
+decimal values
+
+dates
+
+UOM
+
+currency where applicable
+
+duplicate rows inside workbook
+
+header/item relationship
+
+organization/entity context
+
+unknown columns
+
+invalid values.
+
+
+Return row-level errors.
+
+Example:
+
+Row 28
+
+PurchaseOrder:
+4500012456
+
+Field:
+PurchaseOrderDate
+
+Error:
+INVALID_DATE.
+
+
+Do not reject entire workbook for one bad row unless transaction
+policy requires it.
+
+
+============================================================
+23. EXCEL DUPLICATE HANDLING
+============================================================
+
+If PO already exists:
+
+do not create duplicate.
+
+Use same business key as API import.
+
+Header:
+
+Organization
+Entity
+PurchaseOrder.
+
+
+Item:
+
+Organization
+Entity
+PurchaseOrder
+PurchaseOrderItem.
+
+
+Existing record:
+
+UPDATE mapped/importable fields.
+
+New record:
+
+INSERT.
+
+
+============================================================
+24. API + EXCEL MUST SHARE UPSERT LOGIC
+============================================================
+
+This is mandatory.
+
+Architecture:
+
+SAP API
+   ↓
+API Mapping Engine
+   ↓
+Normalized PurchaseOrderImportModel
+                       ↓
+                PO UPSERT SERVICE
+                       ↑
+Excel Parser
+   ↓
+Excel Mapping/Validation
+   ↓
+Normalized PurchaseOrderImportModel
+
+
+There must NOT be:
+
+SapPoSaveService
+
+and separately:
+
+ExcelPoSaveService
+
+with different business behavior.
+
+
+Use one:
+
+IPurchaseOrderImportService
+
+or current equivalent.
+
+
+============================================================
+25. SOURCE OWNERSHIP / UPDATE SAFETY
+============================================================
+
+Important.
+
+API and Excel can both update the same PO.
+
+Do not blindly overwrite every column.
+
+
+Use approved importable fields.
+
+API:
+
+only active mapped fields update DB.
+
+
+Excel:
+
+only approved/importable Excel fields update DB.
+
+
+Maintain:
+
+LastUpdatedSource
+
+LastSyncedAt
+
+and field-level source ownership only if current architecture requires
+it.
+
+
+Do not overwrite SILA-calculated fields such as:
+
+physical received quantity
+
+GRN quantities
+
+internal workflow status
+
+with Excel/API values unless explicitly mapped and allowed.
+
+
+============================================================
+26. FIELD MAPPING SCREEN — CORRECT IT
+============================================================
+
+For selected:
+
+Organization:
+FIVE Hotels and Resorts
+
+Entity:
+Dubai
+
+Process:
+GET_PO
+
+
+show:
+
+SOURCE
+
+SAP API Schema
+
+
+TARGET
+
+SILA Purchase Order DB Schema.
+
+
+Mapping table:
+
+Source Entity
+Source Field
+Source Type
+
+→
+
+Target Entity
+Target Field
+Target Type
+
+Key
+Required
+Transformation
+Null Policy
+Active.
+
+
+============================================================
+27. SHOW DB STRUCTURE IN MAPPING SCREEN
+============================================================
+
+The user specifically needs to understand API schema versus DB.
+
+Provide two expandable schema panels:
+
+API SCHEMA
+
+PurchaseOrder
+  <actual fields from $metadata>
+
+PurchaseOrderItem
+  <actual fields>
+
+
+SILA DB TARGET
+
+PurchaseOrder
+  PurchaseOrder
+  Supplier
+  CompanyCode
+  PurchasingOrganization
+  PurchasingGroup
+  DocumentCurrency
+  PurchaseOrderDate
+  ...
+
+PurchaseOrderItem
+  PurchaseOrder
+  PurchaseOrderItem
+  Material
+  MaterialGroup
+  Description
+  Plant
+  StorageLocation
+  OrderQuantity
+  UOM
+  NetPrice
+  NetAmount
+  ...
+
+
+Mapping connects them.
+
+
+============================================================
+28. IMPORTANT — ACTUAL API SCHEMA
+============================================================
+
+For SAP OData:
+
+LOAD API SCHEMA
+
+must actually retrieve/parse OData metadata.
+
+Do not populate fake SAP fields in frontend.
+
+Cache schema.
+
+Display actual:
+
+Entity
+Property
+EDM Type
+Nullable
+Key.
+
+
+============================================================
+29. DATA UPDATE IS PROCESS-AWARE
+============================================================
+
+The same Data Update screen must work for future:
+
+GET_PO
+GET_GRN
+GET_INVOICE
+GET_STOCK.
+
+
+When:
+
+GET_PO
+
+selected:
+
+show Purchase Order records.
+
+
+When:
+
+GET_INVOICE
+
+selected later:
+
+show Invoice records.
+
+
+When:
+
+GET_STOCK
+
+selected later:
+
+show Stock records.
+
+
+Do not build four completely unrelated screens.
+
+
+Use process-specific data adapters/components under a common:
+
+IntegrationDataUpdatePage.
+
+
+============================================================
+30. POST PROCESS TYPES
+============================================================
+
+For:
+
+POST_PO
+POST_GRN
+POST_INVOICE
+UPDATE_STOCK
+
+do NOT show:
+
+PULL DATA.
+
+
+Instead Data Update may show:
+
+transaction/execution history
+
+and appropriate outbound queue/status later.
+
+
+Do not implement new outbound business processes in this task.
+
+
+============================================================
+31. EXISTING PO RECORDS MUST DISPLAY
+============================================================
+
+Critical acceptance criterion:
+
+If PurchaseOrder table currently has 500 records:
+
+opening:
+
+Data Update
+→ GET_PO
+
+must show those 500 records through pagination/filtering
+
+BEFORE any API is called.
+
+
+PULL DATA should update:
+
+500
+→ for example 525
+
+or update existing rows.
+
+
+It must never show an empty screen simply because no integration has
+run in the current browser session.
+
+
+============================================================
+32. PURCHASE ORDER MAIN MODULE
+============================================================
+
+Also connect the same data to:
+
+PURCHASING
+→ PURCHASE ORDERS.
+
+
+This is the normal business view.
+
+
+Data Update is integration-oriented.
+
+Purchase Orders is business-oriented.
+
+
+Both read from the SAME:
+
+PurchaseOrder
+PurchaseOrderItem
+
+tables.
+
+
+Do not maintain a separate Integration PO table.
+
+
+============================================================
+33. PURCHASE ORDERS BUSINESS SCREEN
+============================================================
+
+PURCHASING → PURCHASE ORDERS
+
+show:
+
+PO Number
+
+Supplier
+
+Entity
+
+PO Date
+
+Currency
+
+Value
+
+Items
+
+Received
+
+Open
+
+Status
+
+Last Synced.
+
+
+Actions:
+
+VIEW PO.
+
+
+Filters:
+
+Entity
+Supplier
+Date
+Status
+Open/Closed
+Source.
+
+
+============================================================
+34. PO DETAIL FOR MOBILE READINESS
+============================================================
+
+The PO detail data must also be exposed through existing SILA API so
+Mobile can consume it later/currently.
+
+Mobile never calls SAP.
+
+Mobile:
+
+SILA ME Mobile
+    ↓
+SILA ME API
+    ↓
+PurchaseOrder DB.
+
+
+Do NOT modify Mobile in this task unless existing PO API regression
+requires a contract-compatible fix.
+
+
+============================================================
+35. EXCEL IMPORT EXECUTION HISTORY
+============================================================
+
+Excel upload should also create execution history.
+
+Trigger:
+
+EXCEL_UPLOAD.
+
+
+Track:
+
+FileName
+
+StartedAt
+
+CompletedAt
+
+RowsRead
+
+Inserted
+
+Updated
+
+Unchanged
+
+Failed
+
+Status
+
+UploadedBy.
+
+
+Do not store spreadsheet contents in execution logs.
+
+
+============================================================
+36. API PULL EXECUTION HISTORY
+============================================================
+
+For PULL DATA:
+
+Trigger:
+
+MANUAL.
+
+
+Scheduled:
+
+SCHEDULED.
+
+
+Show both in same history.
+
+Example:
+
+GET_PO | Dubai | MANUAL | SUCCESS | 325 | +18 | ~41
+
+GET_PO | Dubai | SCHEDULED | SUCCESS | 12 | +2 | ~4
+
+GET_PO | Dubai | EXCEL_UPLOAD | SUCCESS | 80 | +10 | ~15
+
+
+============================================================
+37. DATA REFRESH
+============================================================
+
+After successful:
+
+API PULL
+
+or:
+
+EXCEL IMPORT
+
+invalidate/refetch:
+
+Purchase Order list
+
+PO detail if open
+
+Data Update table
+
+Dashboard PO KPIs if applicable.
+
+
+Do not require browser reload.
+
+
+============================================================
+38. EXCEL EXPORT BACKEND
+============================================================
+
+Generate XLSX in backend.
+
+Do not construct huge Excel files entirely in browser.
+
+Backend applies:
+
+tenant scope
+
+entity scope
+
+filters
+
+approved columns
+
+row limit/security.
+
+
+Return file download.
+
+
+============================================================
+39. API ENDPOINTS
+============================================================
+
+Inspect existing endpoints first.
+
+Reuse where possible.
+
+
+Conceptually need:
+
+GET
+/api/v1/integrations/configurations
+
+GET
+/api/v1/integrations/configurations/{id}
+
+POST/PUT
+/api/v1/integrations/configurations
+
+POST
+/api/v1/integrations/configurations/{id}/test
+
+POST
+/api/v1/integrations/configurations/{id}/load-schema
+
+GET/PUT
+/api/v1/integrations/configurations/{id}/mappings
+
+POST
+/api/v1/integrations/configurations/{id}/pull
+
+GET
+/api/v1/integrations/configurations/{id}/executions
+
+
+PO data:
+
+GET
+/api/v1/purchase-orders
+
+GET
+/api/v1/purchase-orders/{id}
+
+
+Excel:
+
+GET
+/api/v1/purchase-orders/export
+
+GET
+/api/v1/purchase-orders/import-template
+
+POST
+/api/v1/purchase-orders/import/preview
+
+POST
+/api/v1/purchase-orders/import/commit
+
+
+Use actual project route conventions.
+
+
+============================================================
+40. IMPORT PREVIEW SAFETY
+============================================================
+
+Preview must NOT mutate PO tables.
+
+Create temporary server-side import session or safe validated preview
+token.
+
+
+Commit endpoint uses:
+
+ImportPreviewId.
+
+
+Prevent:
+
+client altering preview result before commit.
+
+
+Expire preview after reasonable period.
+
+
+============================================================
+41. API TEST CONFIG FIX
+============================================================
+
+Ensure API Configuration correctly supports:
+
+Organization
+
+Entity
+
+Process Type
+
+Actual API URL
+
+Authentication
+
+Token configuration
+
+Username/password where required
+
+Schedule minutes
+
+Incremental timestamp field
+
+Field mapping.
+
+
+TEST API must verify actual endpoint.
+
+
+Configuration cannot silently report CONNECTED from saved fields.
+
+
+============================================================
+42. TEST CURRENT GET_PO CONFIG
+============================================================
+
+Use current FIVE GET_PO configuration.
+
+Verify:
+
+Organization:
+FIVE Hotels and Resorts
+
+Entity:
+<configured entity>
+
+Process:
+GET_PO
+
+
+Test:
+
+authentication
+
+SAP endpoint
+
+OData metadata
+
+PurchaseOrder entity
+
+PurchaseOrderItem entity
+
+small data read.
+
+
+Report exact stage if failure.
+
+
+============================================================
+43. DATABASE VERIFICATION
+============================================================
+
+Before testing Pull:
+
+report existing:
+
+PO Header Count
+PO Item Count.
+
+
+Then perform controlled Pull.
+
+
+After:
+
+PO Header Count
+PO Item Count
+
+Inserted
+Updated
+Unchanged
+Failed.
+
+
+Verify existing PO records remain.
+
+
+============================================================
+44. EXCEL ROUND-TRIP TEST
+============================================================
+
+Test:
+
+1. Download current PO data.
+
+2. Modify one allowed field in test data.
+
+3. Add one new test PO.
+
+4. Upload.
+
+5. Preview.
+
+6. Confirm.
+
+7. Verify:
+
+existing PO updated
+
+new PO inserted
+
+items correct
+
+no duplicate.
+
+8. Download again.
+
+9. Verify updated values present.
+
+
+Use Development/test data.
+
+Do not corrupt production data.
+
+
+============================================================
+45. API PULL + EXCEL COEXISTENCE TEST
+============================================================
+
+PO exists from SAP_API.
+
+Update an allowed field via Excel.
+
+Then run API Pull.
+
+
+Expected:
+
+only fields controlled by active API mappings are updated by API.
+
+
+Internal SILA operational fields remain intact.
+
+
+No duplicate PO created.
+
+
+============================================================
+46. UI DESIGN
+============================================================
+
+Keep SILA ME design:
+
+pure white background
+
+SILA blue borders
+
+dark navy text
+
+blue primary actions
+
+no dark admin screen
+
+no gradients.
+
+
+Data Update should look like an enterprise operational cockpit.
+
+
+Top:
+
+configuration/context + status.
+
+
+Middle:
+
+action toolbar.
+
+
+Bottom:
+
+actual data grid.
+
+
+============================================================
+47. PERMISSIONS
+============================================================
+
+Use existing:
+
+VIEW_INTEGRATION
+
+MANAGE_INTEGRATION
+
+TEST_INTEGRATION
+
+VIEW_INTEGRATION_LOG.
+
+
+Use appropriate existing/new permissions for:
+
+RUN_INTEGRATION
+
+EXPORT_PO
+
+IMPORT_PO.
+
+
+Backend authorization mandatory.
+
+
+Customer Admin only own organization.
+
+
+============================================================
+48. DO NOT MODIFY
+============================================================
+
+Do not modify:
+
+Mobile scanner
+
+OCR
+
+PDF generation
+
+Invoice Save
+
+GRN business logic
+
+Inventory transaction logic
+
+SharePoint routing
+
+bala@chervic.in.
+
+
+============================================================
+49. ACCEPTANCE
+============================================================
+
+The task is NOT complete until I can:
+
+1. Open API Configuration.
+
+2. See correct FIVE configuration.
+
+3. Edit Organization/Entity/Process/API/Auth/Schedule.
+
+4. TEST API successfully.
+
+5. Load actual SAP schema.
+
+6. Map SAP fields to PO DB fields.
+
+7. Open DATA UPDATE.
+
+8. Immediately see EXISTING PO records.
+
+9. Click PULL DATA.
+
+10. See pull progress/result.
+
+11. See new/updated PO records without browser reload.
+
+12. See Last Successful Run updated.
+
+13. Download PO data to Excel.
+
+14. Download empty import template.
+
+15. Upload Excel.
+
+16. Preview inserts/updates/errors.
+
+17. Confirm import.
+
+18. See DB records updated.
+
+19. Open PURCHASE ORDERS under Purchasing.
+
+20. See the SAME PO records.
+
+21. Open PO and see header + items.
+
+============================================================
+50. FINAL REPORT
+============================================================
+
+Return:
+
+SILA ME PO DATA MANAGEMENT
+
+API CONFIGURATION:
+PASS/FAIL
+
+FIVE CONFIG:
+PASS/FAIL
+
+TEST API:
+PASS/FAIL
+
+SAP ODATA SCHEMA:
+PASS/FAIL
+
+FIELD MAPPING:
+PASS/FAIL
+
+EXISTING PO RECORDS VISIBLE:
+PASS/FAIL
+
+EXISTING PO HEADERS:
+<n>
+
+EXISTING PO ITEMS:
+<n>
+
+DATA UPDATE:
+PASS/FAIL
+
+PULL DATA:
+PASS/FAIL
+
+INCREMENTAL WATERMARK:
+PASS/FAIL
+
+LAST RUN UPDATED:
+PASS/FAIL
+
+PO TABLE AUTO REFRESH:
+PASS/FAIL
+
+PO BUSINESS SCREEN:
+PASS/FAIL
+
+PO DETAIL:
+PASS/FAIL
+
+PO ITEMS:
+PASS/FAIL
+
+EXCEL DOWNLOAD:
+PASS/FAIL
+
+EXCEL TEMPLATE:
+PASS/FAIL
+
+EXCEL UPLOAD:
+PASS/FAIL
+
+EXCEL PREVIEW:
+PASS/FAIL
+
+EXCEL UPSERT:
+PASS/FAIL
+
+API/EXCEL SAME UPSERT SERVICE:
+PASS/FAIL
+
+DUPLICATE PO PROTECTION:
+PASS/FAIL
+
+EXECUTION HISTORY:
+PASS/FAIL
+
+ENTITY ISOLATION:
+PASS/FAIL
+
+API TESTS:
+x/x
+
+CLOUD BUILD:
+PASS/FAIL
+
+MOBILE MODIFIED:
+NO
+
+OCR MODIFIED:
+NO
+
+INVOICE SAVE MODIFIED:
+NO
+
+GRN MODIFIED:
+NO
+
+BALA USER MODIFIED:
+NO
+
+FINAL STATUS:
+PASS / BLOCKED / FAIL
+
+
+============================================================
+51. COMMIT
+============================================================
+
+Only after real DB/API/Excel verification:
+
+git commit -m "fix: complete po data update api and excel management"
+
+DO NOT PUSH.
+
+STOP.

@@ -1,0 +1,10 @@
+- [API and Expo runtime quirks](api-and-expo-runtime.md) — shared .NET workflow paths are artifact-relative; SecureStore needs a web-preview fallback.
+- [Local verification constraints](api-and-expo-runtime.md) — global dotnet tools need DOTNET_ROOT in this Nix environment; Expo static builds can conflict with the sandbox on port 8081.
+- [Expo workspace package exports](expo-workspace-package-exports.md) — Metro resolves local packages reliably with simple string exports pointing directly to source files.
+- [Cloud route contracts](cloud-route-contracts.md) — verify explicit product route names after delegated frontend work; shortened aliases can silently violate the spec.
+- [Manual EF migrations](manual-ef-migrations.md) — hand-written migrations need explicit context and migration metadata or startup can silently skip them.
+- [Advanced OCR regression boundaries](advanced-ocr-regressions.md) — preserve OCR line boundaries and keep reread current-state rows separate from immutable history.
+- [EF enum storage alignment](ef-enum-mappings.md) — verify enum properties use the same text/integer conversion as the existing PostgreSQL column.
+- [OpenAPI generation collisions](api-and-expo-runtime.md) — new operation IDs can require the Zod export filter to avoid duplicate generated parameter names.
+- [Integration spreadsheet imports](integration-spreadsheet-imports.md) — preview and revalidate canonical rows before one-transaction upserts and history recording.
+- [Mobile no-PO receiving](api-and-expo-runtime.md) — intentional no-PO review must be explicit and cannot enter PO-dependent GRN posting.

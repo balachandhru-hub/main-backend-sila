@@ -1,0 +1,2592 @@
+PROJECT: SILA ME
+
+OBJECTIVE:
+Build SILA ME as a complete hospitality Menu Engineering, Inventory, Store Operations, Receiving, Document Capture, Procurement Support, Approval, and Analytics platform using:
+
+- SILA ME Cloud — React / Browser
+- SILA ME Mobile — Expo / React Native
+- SILA ME API — ASP.NET Core Web API
+- PostgreSQL — shared database
+- One shared backend for Cloud + Mobile
+
+IMPORTANT:
+
+Start from the already-proven basic foundation:
+- Cloud preview works
+- external Cloud URL works
+- Mobile Expo app works
+- Mobile can reach API
+- Cloud login works
+- Mobile login works
+- one .NET backend
+- one PostgreSQL database
+
+DO NOT rebuild the foundation.
+
+Add functionality gradually and preserve working login, routing, preview, Expo, API, and database behavior.
+
+==================================================
+1. PRODUCT POSITIONING
+==================================================
+
+Product:
+
+SILA ME
+
+Full name:
+
+SILA ME — Menu Engineering & Store Operations
+
+Primary hospitality use cases:
+
+- Menu engineering
+- Recipe management
+- Ingredient planning
+- Inventory control
+- Goods receiving
+- GRN
+- Inventory count
+- Stock transfer
+- Goods issue
+- Damage/rejection/write-off
+- Document/invoice capture
+- PO visibility
+- Supplier/material lookup
+- Batch/expiry tracking
+- Approval workflows
+- Store operations
+- Forecast-driven purchasing
+- Consumption analytics
+- Procurement recommendations
+
+The product must work for:
+
+Hotels
+Resorts
+Restaurants
+Central kitchens
+Cloud kitchens
+F&B outlets
+Catering companies
+Hospitality groups
+
+==================================================
+2. ARCHITECTURE
+==================================================
+
+Final architecture:
+
+SILA ME CLOUD
+React / Browser
+        |
+        |
+        v
+SILA ME API
+ASP.NET Core
+        |
+        v
+PostgreSQL
+        ^
+        |
+        |
+SILA ME MOBILE
+Expo / React Native
+
+Cloud and Mobile use the SAME backend.
+
+No duplicate backend.
+No direct database access from frontend.
+
+==================================================
+3. BACKEND TECHNOLOGY
+==================================================
+
+Use:
+
+ASP.NET Core Web API
+C#
+Entity Framework Core
+PostgreSQL
+Npgsql
+ASP.NET Dependency Injection
+FluentValidation where useful
+Serilog or standard ILogger
+OpenAPI / Swagger in Development
+
+Keep Controllers thin.
+
+Use services/repositories/domain logic where appropriate.
+
+==================================================
+4. DESIGN / GUI
+==================================================
+
+Apply the SILA ME visual standard everywhere.
+
+Use the attached SILA ME logo as visual source of truth.
+
+All pages:
+
+WHITE background
+
+Borders:
+
+SILA light-blue / blue
+
+Text:
+
+dark navy / charcoal
+
+Primary actions:
+
+accessible darker derivative of logo blue
+
+Cards:
+
+white
+blue border
+subtle shadow
+rounded corners
+
+Cloud and Mobile must visibly belong to the same product family.
+
+No dark sidebars.
+No gray page backgrounds.
+No gradients.
+No heavy black borders.
+
+==================================================
+5. MASTER DATA
+==================================================
+
+Build shared master data modules.
+
+CLOUD:
+
+Master Data
+- Materials
+- Ingredients
+- Recipes
+- Menu Items
+- Suppliers
+- Supplier-Material Mapping
+- UOM
+- Categories
+- Subcategories
+- Brands
+- Allergens
+- Nutrition attributes
+- Plants
+- Properties
+- Stores
+- Storage Locations
+- Outlets
+- Kitchens
+
+MOBILE:
+
+Read-only/operational access where relevant.
+
+Do not allow unrestricted master-data maintenance from mobile.
+
+==================================================
+6. ORGANIZATION STRUCTURE
+==================================================
+
+Support:
+
+Customer
+Hospitality Group
+Property
+Hotel
+Outlet
+Kitchen
+Store
+Storage Location
+
+Example:
+
+Customer
+  └── Property
+       ├── Main Store
+       ├── Kitchen Store
+       ├── Beverage Store
+       ├── Restaurant Outlet
+       └── Pool Bar
+
+Design scope generically.
+
+Do not hardcode FIVE or any single customer.
+
+==================================================
+7. USER / ACCESS MODEL
+==================================================
+
+Support users with application access:
+
+CLOUD
+MOBILE
+BOTH
+
+Later add:
+
+Roles
+Permissions
+Customer Access
+Property Access
+Store Access
+Outlet Access
+
+Typical roles:
+
+SUPER_ADMIN
+PROPERTY_ADMIN
+STORE_MANAGER
+STORE_KEEPER
+INVENTORY_CONTROLLER
+CHEF
+EXECUTIVE_CHEF
+F&B_MANAGER
+PROCUREMENT_MANAGER
+FINANCE_MANAGER
+APPROVER
+VIEWER
+
+All enforcement must happen in backend.
+
+==================================================
+8. MOBILE HOME
+==================================================
+
+SILA ME Mobile Home should contain operational tiles:
+
+RECEIVE GOODS
+COUNT INVENTORY
+SCAN DOCUMENT
+STOCK TRANSFER
+GOODS ISSUE
+DAMAGE / REJECTION
+BATCH & EXPIRY
+APPROVALS
+STOCK LOOKUP
+PO LOOKUP
+MENU PLAN
+INGREDIENT REQUIREMENT
+HISTORY
+
+Show only features the logged-in user is authorized to use.
+
+==================================================
+9. CLOUD NAVIGATION
+==================================================
+
+Cloud navigation:
+
+DASHBOARD
+
+MENU ENGINEERING
+- Menus
+- Recipes
+- Ingredients
+- Costing
+- Portion Planning
+- Demand Forecast
+- Menu Performance
+
+INVENTORY
+- Stock Overview
+- Inventory Count
+- Adjustments
+- Transfers
+- Goods Issue
+- Damage / Write-Off
+- Batch & Expiry
+
+RECEIVING
+- Purchase Orders
+- Receive Goods
+- GRNs
+- Exceptions
+
+PROCUREMENT
+- Material Requirements
+- Purchase Suggestions
+- Supplier Comparison
+- Reorder Planning
+
+DOCUMENTS
+- Invoice Capture
+- Delivery Notes
+- OCR Results
+- Document Archive
+
+APPROVALS
+- My Approvals
+- Workflow Monitor
+- Approval Configuration
+
+MASTER DATA
+- Materials
+- Ingredients
+- Recipes
+- Menu Items
+- Suppliers
+- UOM
+- Categories
+- Locations
+
+ANALYTICS
+- Consumption
+- Food Cost
+- Menu Performance
+- Inventory Variance
+- Waste
+- Purchase Trends
+
+ADMIN
+- Users
+- Roles
+- Permissions
+- Properties
+- Stores
+- Configurations
+- Integrations
+- Audit Logs
+
+==================================================
+10. MENU ENGINEERING
+==================================================
+
+Build Menu Engineering as a core SILA ME feature.
+
+Cloud functionality:
+
+Create Menu
+
+Fields:
+
+Menu Name
+Property
+Outlet
+Meal Period
+Breakfast / Lunch / Dinner / Snacks / Events
+Effective Date
+Guest Count
+Cuisine
+Nationality Mix
+Age Mix
+Special Preferences
+Dietary Requirements
+Event Type
+
+Menu contains:
+
+Menu Items
+
+Each Menu Item links to:
+
+Recipe
+
+Recipe contains:
+
+Ingredients
+Quantity
+UOM
+Yield
+Portions
+Preparation Loss %
+Cooking Loss %
+Cost
+
+==================================================
+11. RECIPE MANAGEMENT
+==================================================
+
+Recipe entity:
+
+Recipe ID
+Name
+Category
+Cuisine
+Yield
+Default Portions
+Preparation Time
+Cooking Time
+Instructions
+Version
+Status
+
+Recipe Ingredient:
+
+Ingredient
+Quantity
+UOM
+Waste %
+Yield %
+Substitute Ingredient
+Cost
+
+Calculate:
+
+Recipe Cost
+Cost per Portion
+Ingredient Quantity per Portion
+
+Allow recipe versioning.
+
+==================================================
+12. MENU PLANNING
+==================================================
+
+User should be able to create a menu based on expected demand.
+
+Example:
+
+20 rooms
+38 guests
+Nationality mix
+Age mix
+Meal plan
+Breakfast
+Lunch
+Dinner
+Snacks
+
+System suggests:
+
+recommended dishes
+recommended portions
+ingredient requirement
+
+User can modify and finalize.
+
+When finalized:
+
+menu → recipe demand → ingredient demand.
+
+==================================================
+13. AI MENU SUGGESTION
+==================================================
+
+Design for future AI support.
+
+Input:
+
+guest count
+guest nationality
+guest age
+dietary requirements
+weather if available
+event type
+historical consumption
+available inventory
+previous menu performance
+
+AI proposes:
+
+menu items
+portion quantity
+estimated ingredient requirement
+
+IMPORTANT:
+
+AI suggestion is advisory.
+
+User must confirm before material planning.
+
+Do not automatically create purchase orders without authorization.
+
+==================================================
+14. PORTION CALCULATION
+==================================================
+
+Support:
+
+Expected Guest Count
+Buffer %
+Historical Waste %
+Historical Consumption
+Recipe Yield
+
+Example:
+
+Expected Guests = 100
+
+Recommended Portions:
+105
+
+User can override.
+
+Store:
+
+suggested portions
+final portions
+override reason
+
+==================================================
+15. INGREDIENT REQUIREMENT
+==================================================
+
+Finalized menu should explode recipes.
+
+Flow:
+
+Menu
+→ Menu Items
+→ Recipes
+→ Ingredients
+→ Required Quantity
+
+Aggregate common ingredients.
+
+Example:
+
+Chicken Biryani
+Butter Chicken
+
+both use:
+
+Chicken
+
+System aggregates chicken requirement.
+
+==================================================
+16. INVENTORY CHECK
+==================================================
+
+Compare:
+
+Required Ingredient Quantity
+
+against:
+
+Available Inventory
+
+Calculate:
+
+Available
+Reserved
+Required
+Shortage
+Surplus
+
+Example:
+
+Required Chicken = 100 KG
+Available = 65 KG
+Shortage = 35 KG
+
+==================================================
+17. PROCUREMENT REQUIREMENT
+==================================================
+
+Based on shortage:
+
+create Procurement Requirement.
+
+Not necessarily Purchase Order yet.
+
+Fields:
+
+Material
+Required Qty
+Available Qty
+Shortage Qty
+Required Date
+Property
+Store
+Menu/Event Reference
+Suggested Supplier
+
+Procurement team can review.
+
+==================================================
+18. PURCHASE SUGGESTION
+==================================================
+
+Generate purchase suggestions based on:
+
+menu requirement
+current stock
+minimum stock
+reorder point
+open PO
+expected receipts
+safety stock
+historical usage
+
+Formula logic must be configurable.
+
+==================================================
+19. MATERIAL MASTER
+==================================================
+
+Material:
+
+Material Code
+Description
+Category
+Subcategory
+Brand
+Base UOM
+Purchase UOM
+Issue UOM
+Conversion
+Barcode
+GTIN
+Supplier Material Code
+Shelf Life
+Batch Managed
+Expiry Managed
+Active Status
+
+Allow multiple barcodes where necessary.
+
+==================================================
+20. STOCK MODEL
+==================================================
+
+Inventory must support:
+
+Customer
+Property
+Plant
+Store
+Storage Location
+Material
+Batch
+Expiry
+
+Stock quantities:
+
+Unrestricted
+Reserved
+Blocked
+Damaged
+Available
+
+Keep transaction ledger.
+
+Never directly edit stock without inventory transaction.
+
+==================================================
+21. STOCK LOOKUP
+==================================================
+
+Mobile:
+
+Scan barcode
+
+or search material.
+
+Display:
+
+Material
+Description
+Store
+Location
+Available Qty
+UOM
+Batch
+Expiry
+
+Cloud:
+
+advanced stock search and filters.
+
+==================================================
+22. PURCHASE ORDER VISIBILITY
+==================================================
+
+Support Purchase Order data.
+
+PO Header:
+
+PO Number
+Supplier
+Property
+Plant
+Status
+PO Date
+Delivery Date
+Currency
+
+PO Item:
+
+Material
+Description
+Ordered Qty
+Received Qty
+Open Qty
+UOM
+Price
+
+For first phase:
+
+can support imported/mock PO records.
+
+Later ERP integration.
+
+==================================================
+23. RECEIVE GOODS
+==================================================
+
+Mobile flow:
+
+Receive Goods
+
+Step 1:
+identify PO
+
+Methods:
+
+Scan PO barcode/QR
+Enter PO
+Scan invoice
+Scan delivery note
+Supplier search
+
+Step 2:
+retrieve open PO.
+
+Step 3:
+show lines.
+
+Step 4:
+identify received item.
+
+Methods:
+
+Barcode
+QR
+Supplier material code
+Search
+OCR
+future AI recognition
+
+Step 5:
+enter actual received quantity.
+
+Step 6:
+classify:
+
+Accepted
+Damaged
+Rejected
+Short
+
+Step 7:
+Review Receipt.
+
+Step 8:
+Submit GRN.
+
+==================================================
+24. GRN
+==================================================
+
+Create one GRN per delivery/PO as appropriate.
+
+GRN Header:
+
+GRN Number
+PO
+Supplier
+Property
+Store
+Receipt Date
+Delivery Note
+Invoice Reference
+Status
+Created By
+
+GRN Lines:
+
+PO Item
+Material
+Ordered Qty
+Open Qty
+Received Qty
+Accepted Qty
+Damaged Qty
+Rejected Qty
+UOM
+Batch
+Expiry
+
+Do not create one GRN per individual material scan.
+
+==================================================
+25. GRN VALIDATION
+==================================================
+
+Before posting:
+
+validate:
+
+PO active
+PO item open
+Material matches
+UOM valid
+Open quantity
+Overdelivery tolerance
+Duplicate receipt
+Batch required
+Expiry required
+
+External ERP remains authoritative when integrated.
+
+==================================================
+26. MATERIAL vs SERVICE PO
+==================================================
+
+Material PO:
+
+receiving / GRN allowed.
+
+Service PO:
+
+mobile goods receipt must NOT be allowed.
+
+Display:
+
+Service PO — goods receipt is not available in SILA ME.
+
+Service invoices follow document/invoice process only.
+
+==================================================
+27. INVENTORY COUNT
+==================================================
+
+Mobile flow:
+
+Count Inventory
+
+Select:
+
+Property
+Store
+Location
+
+Then:
+
+Scan material
+or search material
+
+Enter:
+
+Physical Quantity
+
+Optional modes:
+
+Blind Count
+Visible Book Quantity
+
+Save draft.
+
+Continue count.
+
+Review variance.
+
+Submit.
+
+==================================================
+28. INVENTORY VARIANCE
+==================================================
+
+Calculate:
+
+Variance = Physical Qty - Book Qty
+
+Show:
+
+Book Qty
+Physical Qty
+Variance
+Variance %
+Estimated Value Difference if user authorized
+
+Saving count must NOT automatically change stock.
+
+Count must proceed through review / approval / adjustment.
+
+==================================================
+29. INVENTORY ADJUSTMENT
+==================================================
+
+Once approved:
+
+create inventory adjustment.
+
+Reasons:
+
+COUNT_VARIANCE
+DAMAGE
+EXPIRY
+WRITE_OFF
+CORRECTION
+
+Record:
+
+before qty
+adjustment qty
+after qty
+reason
+reference transaction
+approved by
+
+Never directly overwrite stock balance.
+
+==================================================
+30. STOCK TRANSFER
+==================================================
+
+Mobile:
+
+Stock Transfer
+
+From:
+
+Property
+Store
+Location
+
+To:
+
+Property
+Store
+Location
+
+Scan material.
+
+Enter quantity.
+
+Support:
+
+Transfer Request
+Issue
+Receipt
+
+Statuses:
+
+DRAFT
+SUBMITTED
+APPROVED
+IN_TRANSIT
+RECEIVED
+COMPLETED
+REJECTED
+
+==================================================
+31. GOODS ISSUE
+==================================================
+
+Support:
+
+Issue inventory from Store to:
+
+Kitchen
+Outlet
+Department
+Cost Center
+Event
+Banquet
+
+Mobile:
+
+scan material
+enter quantity
+select destination
+submit
+
+Stock deduction occurs only after authorized posting.
+
+==================================================
+32. KITCHEN ISSUE FROM MENU
+==================================================
+
+Allow kitchen/store requirement to originate from finalized menu.
+
+Flow:
+
+Final Menu
+
+→ Ingredient Requirement
+
+→ Store Issue Request
+
+→ Store prepares/picks
+
+→ Goods Issue
+
+→ Kitchen receives
+
+This connects Menu Engineering with Inventory.
+
+==================================================
+33. DAMAGE / REJECTION
+==================================================
+
+Mobile:
+
+select/scan material
+
+capture:
+
+Quantity
+Reason
+Photo
+Notes
+Batch
+Expiry
+
+Types:
+
+DAMAGED
+REJECTED
+SPOILED
+EXPIRED
+BROKEN
+QUALITY_FAILURE
+
+Submit through approval when required.
+
+==================================================
+34. STOCK WRITE-OFF
+==================================================
+
+Authorized users can submit write-off.
+
+Must require:
+
+reason
+quantity
+reference
+audit trail
+
+Optional approval threshold by:
+
+quantity
+value
+category
+
+==================================================
+35. BATCH & EXPIRY
+==================================================
+
+Support:
+
+Batch Number
+Manufacture Date
+Expiry Date
+Received Date
+
+Mobile receiving should request batch/expiry when material requires it.
+
+Dashboard:
+
+Expired
+Expiring in 7 days
+30 days
+60 days
+90 days
+
+Enable FEFO recommendations.
+
+==================================================
+36. BARCODE / QR
+==================================================
+
+Mobile should support camera barcode/QR scanning.
+
+Scan should identify:
+
+Material
+PO
+Document where applicable
+
+Material lookup priority:
+
+1. Barcode / GTIN
+2. Supplier Material Code
+3. Internal Material Code
+4. Manual Search
+
+Future:
+
+OCR
+AI visual recognition
+
+==================================================
+37. DOCUMENT SCANNER
+==================================================
+
+Mobile Scan Document module.
+
+Document types:
+
+Invoice
+Delivery Note
+Credit Note
+Other
+
+Capabilities:
+
+camera capture
+multi-page
+gallery upload
+crop
+rotate
+retake
+delete
+reorder pages
+create one document
+
+Generate document ID.
+
+Do not rely on filename as business key.
+
+==================================================
+38. INVOICE CAPTURE
+==================================================
+
+Mobile scope:
+
+Scan
+Upload
+OCR
+Review
+Correct
+Save structured data
+
+Mobile must NOT handle:
+
+AP posting
+Payment
+Finance workflow
+
+Those belong in Cloud / downstream finance system.
+
+==================================================
+39. INVOICE DATA MODEL
+==================================================
+
+Capture:
+
+Document ID
+Invoice Number
+Invoice Date
+Supplier
+Supplier Tax Number
+PO Number
+Currency
+Net Amount
+Tax Amount
+Gross Amount
+
+Lines:
+
+Description
+Material
+Quantity
+UOM
+Unit Price
+Tax Rate
+Tax Amount
+Line Amount
+
+Document type:
+
+MATERIAL
+SERVICE
+MIXED
+UNKNOWN
+
+==================================================
+40. OCR PIPELINE
+==================================================
+
+Architecture:
+
+Mobile Scan
+→ Backend Upload
+→ OCR
+→ Structured Extraction
+→ User Review
+→ Save
+
+If PDF contains embedded text:
+
+extract text.
+
+If image/scanned PDF:
+
+OCR each page.
+
+Preserve page order.
+
+Do not place AI/API keys in mobile app.
+
+All OCR/AI calls must occur in backend.
+
+==================================================
+41. MATERIAL INVOICE
+==================================================
+
+Material invoice:
+
+OCR may help identify:
+
+Supplier
+PO
+Materials
+Quantities
+Prices
+
+Can assist receiving process.
+
+But actual physical received quantity must be confirmed by user.
+
+Never use invoice quantity blindly as actual GRN quantity.
+
+==================================================
+42. SERVICE INVOICE
+==================================================
+
+Service invoice:
+
+Scan
+OCR
+Save
+
+NO inventory movement.
+
+NO GRN.
+
+Set:
+
+GRN Status = NOT_APPLICABLE
+
+==================================================
+43. APPROVAL ENGINE
+==================================================
+
+Create generic approval engine.
+
+Applicable transactions:
+
+INVENTORY_ADJUSTMENT
+GRN
+GRN_EXCEPTION
+OVER_DELIVERY
+STOCK_TRANSFER
+GOODS_ISSUE
+DAMAGE
+REJECTION
+STOCK_WRITE_OFF
+PURCHASE_REQUIREMENT
+
+Flow:
+
+Transaction
+→ Approval Evaluation
+
+If no workflow:
+execute directly
+
+If workflow:
+PENDING_APPROVAL
+
+Final approval:
+execute corresponding business handler.
+
+==================================================
+44. APPROVAL STATUS
+==================================================
+
+Separate:
+
+Business Status
+
+from:
+
+Approval Status
+
+Approval states:
+
+DRAFT
+SUBMITTED
+PENDING_APPROVAL
+APPROVED
+REJECTED
+SENT_BACK
+
+Execution states:
+
+NOT_STARTED
+EXECUTING
+COMPLETED
+FAILED
+
+Do not mix approval with posting logic.
+
+==================================================
+45. APPROVAL WORKFLOW CONFIG
+==================================================
+
+Cloud should eventually allow:
+
+Transaction Type
+Property
+Store
+Category
+Amount Threshold
+Quantity Threshold
+Approval Levels
+Approver Role/User
+
+Example:
+
+Stock Write-Off
+> AED 1,000
+
+Level 1:
+Store Manager
+
+Level 2:
+Finance Manager
+
+Level 3:
+General Manager
+
+==================================================
+46. MOBILE APPROVALS
+==================================================
+
+Authorized approvers can see:
+
+My Approvals
+
+Each record:
+
+Transaction Type
+Reference
+Property
+Requested By
+Date
+Summary
+Amount/Quantity if allowed
+
+Actions:
+
+Approve
+Reject
+Send Back
+
+Require comment for reject/send back.
+
+==================================================
+47. OFFLINE DESIGN
+==================================================
+
+Design mobile for intermittent connectivity.
+
+Safe offline functions:
+
+document scan
+draft inventory count
+draft damage entry
+draft stock transfer entry
+
+Do NOT blindly post:
+
+GRN
+Inventory Adjustment
+Stock Transfer Posting
+
+while offline.
+
+On reconnect:
+
+refresh authoritative data
+revalidate
+ask for confirmation where required.
+
+==================================================
+48. MOBILE OFFLINE QUEUE
+==================================================
+
+Create safe local queue.
+
+Statuses:
+
+PENDING
+SYNCING
+SYNCED
+FAILED
+NEEDS_REVIEW
+
+Never duplicate transaction submission.
+
+Use idempotency keys.
+
+==================================================
+49. NOTIFICATIONS
+==================================================
+
+Future-ready notification engine.
+
+Examples:
+
+Approval required
+GRN failed
+Inventory variance high
+Expiry approaching
+Stock low
+Transfer awaiting receipt
+Document processing completed
+
+Channels later:
+
+In-app
+Email
+Push
+Teams
+WhatsApp
+
+For first iteration:
+
+in-app notifications only if needed.
+
+==================================================
+50. DASHBOARD — CLOUD
+==================================================
+
+Cloud dashboard cards:
+
+Open POs
+Pending Receipts
+Pending GRNs
+Today Receipts
+Inventory Variances
+Low Stock
+Expiring Stock
+Pending Approvals
+Menu Plans
+Ingredient Shortages
+Purchase Requirements
+Waste Value
+
+Use white cards with SILA blue borders.
+
+==================================================
+51. DASHBOARD — MOBILE
+==================================================
+
+Mobile Home cards:
+
+Today's Receipts
+Open Receiving
+Pending Counts
+Pending Sync
+My Approvals
+Low Stock
+Expiring Items
+Today's Menu Requirements
+
+Keep mobile concise.
+
+==================================================
+52. CONSUMPTION ANALYTICS
+==================================================
+
+Track:
+
+Material Usage
+Ingredient Usage
+Daily Consumption
+Weekly Consumption
+Monthly Consumption
+
+Compare:
+
+Actual Consumption
+
+vs
+
+Menu Planned Consumption
+
+vs
+
+Purchase Quantity
+
+vs
+
+Waste
+
+==================================================
+53. MENU PERFORMANCE
+==================================================
+
+Metrics:
+
+Planned Portions
+Served/Sold Portions
+Waste
+Ingredient Cost
+Revenue if available
+Food Cost %
+Contribution Margin
+Popularity
+
+Future classify:
+
+Stars
+Plowhorses
+Puzzles
+Dogs
+
+Do not require revenue data if customer does not provide it.
+
+==================================================
+54. FOOD COST
+==================================================
+
+Recipe Cost:
+
+sum ingredient cost.
+
+Portion Cost:
+
+Recipe Cost / Yield
+
+Menu Item Food Cost %:
+
+Cost / Selling Price × 100
+
+Support different supplier/material prices.
+
+==================================================
+55. WASTE ANALYTICS
+==================================================
+
+Track waste sources:
+
+Preparation Waste
+Cooking Waste
+Expired Inventory
+Damage
+Overproduction
+Returned Food
+Spoilage
+
+Dashboard:
+
+Waste Qty
+Waste Value
+Waste %
+Top Waste Materials
+Top Waste Outlets
+
+==================================================
+56. PURCHASE TREND
+==================================================
+
+Analyze:
+
+Material purchase quantity
+Purchase price
+Supplier
+Period
+Property
+
+Show:
+
+price trends
+supplier comparison
+purchase frequency
+consumption correlation
+
+==================================================
+57. ERP INTEGRATION LAYER
+==================================================
+
+Do NOT hardwire SILA ME to one ERP.
+
+Create integration abstraction.
+
+Interfaces:
+
+IMaterialIntegration
+ISupplierIntegration
+IPurchaseOrderIntegration
+IInventoryIntegration
+IGrnIntegration
+ITransferIntegration
+
+Adapters later:
+
+SAP S/4HANA
+Odoo
+Oracle
+Other ERP
+
+==================================================
+58. EXCEL-FIRST ERP IMPORT
+==================================================
+
+Before live APIs:
+
+support controlled CSV/XLSX import for:
+
+Material Master
+Supplier
+Supplier Material
+Plant
+Storage Location
+Stock
+Open PO
+Open PO Items
+
+Use staging tables.
+
+Flow:
+
+Upload
+→ Validate
+→ Show errors
+→ Confirm
+→ Import
+
+Do not directly import invalid records.
+
+==================================================
+59. SOURCE SYSTEM
+==================================================
+
+Store metadata:
+
+SourceSystem
+SourceChannel
+ExternalId
+LastSyncedAt
+
+Example:
+
+SourceSystem = SAP_S4
+SourceChannel = EXCEL_IMPORT
+
+Later:
+
+SourceChannel = API
+
+==================================================
+60. AUDIT
+==================================================
+
+Audit meaningful activities:
+
+Login
+Logout
+GRN submit
+Inventory count submit
+Adjustment
+Transfer
+Goods Issue
+Damage
+Write-Off
+Approval
+Document upload
+Invoice correction
+Master data change
+
+Do not log:
+
+password
+bearer token
+cookie
+API key
+database credentials
+
+==================================================
+61. MOBILE SECURITY
+==================================================
+
+Use:
+
+Expo SecureStore
+
+Never:
+
+AsyncStorage for tokens
+
+All API traffic:
+
+HTTPS
+
+No API secrets in mobile bundle.
+
+Temporary document files should be minimized and securely cleaned where practical.
+
+==================================================
+62. CLOUD SECURITY
+==================================================
+
+Cloud:
+
+HttpOnly session cookies
+Secure on HTTPS
+SameSite appropriate
+CSRF protection where needed
+server-side authorization
+input validation
+
+Do not rely only on hidden frontend buttons.
+
+==================================================
+63. API CONVENTIONS
+==================================================
+
+Use:
+
+/api/v1/
+
+for business APIs if appropriate.
+
+Examples:
+
+GET /api/v1/materials
+
+GET /api/v1/stock
+
+GET /api/v1/purchase-orders
+
+POST /api/v1/grns
+
+POST /api/v1/inventory-counts
+
+POST /api/v1/stock-transfers
+
+POST /api/v1/documents
+
+GET /api/v1/approvals/my-pending
+
+Keep auth routes stable.
+
+==================================================
+64. API ERROR MODEL
+==================================================
+
+Use consistent errors:
+
+{
+  "code": "PO_NOT_FOUND",
+  "message": "Purchase order was not found.",
+  "correlationId": "..."
+}
+
+Never expose internal stack trace.
+
+==================================================
+65. IDEMPOTENCY
+==================================================
+
+Critical mobile submissions must support idempotency.
+
+Examples:
+
+GRN
+Adjustment
+Transfer
+Goods Issue
+
+Use client-generated:
+
+Idempotency-Key
+
+Prevent duplicate posting after network retry.
+
+==================================================
+66. TRANSACTION HISTORY
+==================================================
+
+Mobile History:
+
+Receiving
+Inventory Count
+Transfer
+Goods Issue
+Damage
+Documents
+
+Filters:
+
+Today
+7 Days
+30 Days
+Status
+
+Cloud:
+
+full transaction search.
+
+==================================================
+67. SEARCH
+==================================================
+
+Global Cloud search later:
+
+Material
+Supplier
+PO
+GRN
+Invoice
+Menu
+Recipe
+
+Mobile search:
+
+Material
+PO
+Supplier
+
+Keep search performant.
+
+==================================================
+68. CONFIGURATION
+==================================================
+
+Cloud Config should eventually support:
+
+Receiving settings
+Inventory settings
+Batch rules
+Expiry rules
+Overdelivery tolerance
+Count variance threshold
+Approval rules
+Menu planning settings
+Purchase calculation parameters
+
+Configuration must come from backend.
+
+Do not hardcode into Mobile.
+
+==================================================
+69. MOBILE CONFIG API
+==================================================
+
+Create:
+
+GET /api/mobile/config
+
+Return safe operational configuration.
+
+Example:
+
+features
+permissions
+default property
+default store
+count mode
+batch behavior
+expiry behavior
+
+Do not expose backend secrets.
+
+==================================================
+70. FEATURE FLAGS
+==================================================
+
+Cloud admin can eventually enable/disable features by:
+
+Customer
+Property
+Store
+
+Mobile should dynamically hide unavailable features.
+
+Examples:
+
+Receiving
+Inventory
+Transfers
+Documents
+Approvals
+Menu Planning
+
+==================================================
+71. BASIC REPORTS
+==================================================
+
+Cloud reports:
+
+Stock Report
+GRN Report
+Inventory Variance
+Transfer Report
+Goods Issue
+Waste
+Expiry
+Menu Ingredient Requirement
+Purchase Requirement
+Recipe Cost
+Food Cost
+
+Export later:
+
+Excel
+PDF
+
+==================================================
+72. MOBILE CAMERA
+==================================================
+
+Use camera for:
+
+Barcode
+QR
+Document scanning
+Damage photos
+
+Do not request camera permission until feature needs it.
+
+Handle permission denied gracefully.
+
+==================================================
+73. AI VISUAL RECOGNITION — FUTURE
+==================================================
+
+Prepare extension point for:
+
+photo of product
+→ AI candidate material matches
+
+But do NOT trust AI directly.
+
+Always show confirmation:
+
+Material
+Description
+Confidence
+Current Stock
+Location
+
+User confirms before transaction.
+
+==================================================
+74. MATERIAL IDENTIFICATION PRIORITY
+==================================================
+
+Use:
+
+1. Barcode/QR exact
+2. Supplier Material Code
+3. Internal Material Code
+4. OCR package text
+5. Brand + Description
+6. AI Visual Recognition
+7. Manual Search
+
+Do not use AI first when exact identifiers exist.
+
+==================================================
+75. PURCHASE ORDER MATCHING
+==================================================
+
+If invoice/delivery note includes PO:
+
+match exact PO.
+
+If PO absent:
+
+use:
+
+Supplier
+Property
+Material
+Delivery Date
+
+to suggest candidate open POs.
+
+User confirms before receiving.
+
+==================================================
+76. OVERDELIVERY
+==================================================
+
+If Received Qty > Open Qty:
+
+check configured tolerance.
+
+Possible result:
+
+Allowed
+
+or
+
+Requires Approval
+
+or
+
+Blocked
+
+Do not silently over-post.
+
+==================================================
+77. UOM
+==================================================
+
+Support:
+
+Purchase UOM
+Inventory UOM
+Recipe UOM
+Issue UOM
+
+Conversions:
+
+KG ↔ G
+L ↔ ML
+CASE ↔ EACH
+
+Conversions must come from controlled master data.
+
+Never guess conversion.
+
+==================================================
+78. EVENT / BANQUET PLANNING
+==================================================
+
+Menu planning should support:
+
+Event Name
+Event Date
+Guest Count
+Meal Period
+Venue
+Menu
+Portions
+
+Generate ingredient requirement.
+
+This is important for hospitality.
+
+==================================================
+79. RESORT / HOTEL PLANNING
+==================================================
+
+Support occupancy-driven planning.
+
+Inputs:
+
+Rooms Occupied
+Adults
+Children
+Nationality Mix
+Meal Plan
+Expected Walk-ins
+Events
+
+Use later for demand recommendation.
+
+==================================================
+80. MULTI-OUTLET CONSOLIDATION
+==================================================
+
+Allow property-level consolidation.
+
+Example:
+
+Breakfast Restaurant
+Pool Bar
+Room Service
+Banquet
+
+Each generates requirements.
+
+System can consolidate common ingredient demand for central store/procurement.
+
+==================================================
+81. PICKING
+==================================================
+
+Future mobile picking flow:
+
+Issue Request
+→ Pick List
+→ Scan Material
+→ Confirm Qty
+→ Complete Picking
+→ Goods Issue
+
+Support route later.
+
+==================================================
+82. RECEIPT QUALITY CHECK
+==================================================
+
+At receiving allow:
+
+Accepted
+Rejected
+Damaged
+Quality Hold
+
+Optional:
+
+photo
+temperature
+quality note
+
+Especially useful for:
+
+meat
+seafood
+dairy
+fresh produce
+
+==================================================
+83. TEMPERATURE CAPTURE
+==================================================
+
+Prepare optional receiving field:
+
+Temperature
+
+Configurable by material category.
+
+Do not make mandatory globally.
+
+==================================================
+84. EXPIRY ALERTS
+==================================================
+
+Dashboard and mobile:
+
+Expired
+Expiring Today
+7 Days
+30 Days
+
+Enable configurable alert thresholds.
+
+==================================================
+85. FEFO
+==================================================
+
+For batch/expiry materials:
+
+recommend:
+
+First Expiry First Out.
+
+Recommendation only unless warehouse process mandates it.
+
+==================================================
+86. OPERATIONAL WORKFLOW PRINCIPLE
+==================================================
+
+Mobile:
+
+simple operational execution.
+
+Cloud:
+
+configuration
+master data
+monitoring
+analytics
+admin
+complex review
+
+Do not overload mobile with admin functions.
+
+==================================================
+87. UI — MOBILE
+==================================================
+
+Main bottom navigation later:
+
+Home
+Receive
+Inventory
+Menu
+History
+More
+
+More:
+
+Documents
+Transfers
+Goods Issue
+Damage
+Approvals
+Settings
+About
+
+Keep white background and SILA blue visual system.
+
+==================================================
+88. UI — CLOUD
+==================================================
+
+Use white layout.
+
+Header:
+
+white
+logo left
+
+Sidebar:
+
+white
+light blue border
+
+Active navigation:
+
+pale blue background
+blue icon/text
+
+Main content:
+
+white.
+
+==================================================
+89. LOADING / ERROR / OFFLINE
+==================================================
+
+All screens must support:
+
+Loading
+Empty
+Error
+Offline
+Retry
+
+Never leave blank screen.
+
+==================================================
+90. API HEALTH
+==================================================
+
+Both Cloud and Mobile should expose backend connectivity status.
+
+GET:
+
+/api/healthz
+
+Do not constantly poll unnecessarily.
+
+==================================================
+91. DEVELOPMENT ORDER
+==================================================
+
+VERY IMPORTANT:
+
+DO NOT BUILD EVERYTHING AT ONCE.
+
+Implement in this sequence:
+
+PHASE 1
+Foundation/Auth
+Already completed.
+
+PHASE 2
+Organization + Users + Roles + Permissions
+
+PHASE 3
+Material + Ingredient + Supplier Masters
+
+PHASE 4
+Property / Store / Location
+
+PHASE 5
+Inventory / Stock Lookup
+
+PHASE 6
+Purchase Orders
+
+PHASE 7
+Receive Goods / GRN
+
+PHASE 8
+Inventory Count / Adjustment
+
+PHASE 9
+Transfer / Goods Issue
+
+PHASE 10
+Damage / Rejection / Write-Off
+
+PHASE 11
+Batch / Expiry
+
+PHASE 12
+Document / Invoice Capture
+
+PHASE 13
+Menu / Recipe Master
+
+PHASE 14
+Menu Planning + Portion Calculation
+
+PHASE 15
+Ingredient Requirement + Stock Gap
+
+PHASE 16
+Purchase Requirement
+
+PHASE 17
+Approval Engine
+
+PHASE 18
+Dashboards / Analytics
+
+PHASE 19
+Offline Mode
+
+PHASE 20
+ERP Import
+
+PHASE 21
+Live ERP Integration
+
+PHASE 22
+AI Enhancements
+
+Implement ONE phase at a time.
+
+At the end of each phase:
+
+test
+review
+commit
+STOP
+
+Do not automatically continue.
+
+==================================================
+92. PHASE GATE
+==================================================
+
+For EVERY phase:
+
+1. Inspect existing code.
+2. Reuse shared services.
+3. Add DB migration.
+4. Add backend.
+5. Add Cloud UI if applicable.
+6. Add Mobile UI if applicable.
+7. Add automated tests.
+8. Run regression tests.
+9. Test Cloud preview.
+10. Test Mobile Expo.
+11. Test API externally.
+12. Commit.
+13. Return report.
+14. STOP.
+
+==================================================
+93. NO MOCK SHORTCUTS
+==================================================
+
+Mocks are allowed only where external ERP/OCR/AI providers are not yet connected.
+
+Do not fake successful database transactions.
+
+Do not make frontend-only fake business processes.
+
+Internal SILA functionality must use actual backend + PostgreSQL.
+
+==================================================
+94. NO HARDCODING
+==================================================
+
+Do not hardcode:
+
+Customer
+Property
+Store
+Supplier
+Material
+User
+Role
+Approval thresholds
+API URL
+ERP URL
+
+Use database/configuration/environment.
+
+==================================================
+95. KEEP MOBILE SIMPLE
+==================================================
+
+Mobile users should not need to understand:
+
+ERP architecture
+API mappings
+system administration
+technical IDs
+
+Show simple operational language.
+
+Example:
+
+Receive Goods
+
+not:
+
+Execute ERP Material Document Posting.
+
+==================================================
+96. DEVELOPMENT DATA
+==================================================
+
+Create controlled development fixtures.
+
+Examples:
+
+Demo Hotel
+Main Store
+Main Kitchen
+Restaurant
+Pool Bar
+
+Demo materials:
+
+Chicken Breast
+Basmati Rice
+Tomato
+Cooking Oil
+Milk
+Water
+
+Demo supplier.
+
+Demo recipes.
+
+Do not use customer production data.
+
+==================================================
+97. PERFORMANCE
+==================================================
+
+Design API pagination.
+
+Avoid loading entire material master.
+
+Barcode lookup should be fast.
+
+Use indexes for:
+
+MaterialCode
+Barcode
+SupplierId
+PONumber
+DocumentNumber
+TransactionDate
+StoreId
+
+==================================================
+98. OBSERVABILITY
+==================================================
+
+Use:
+
+Correlation ID
+structured logs
+request duration
+error logs
+
+Do not log sensitive payloads.
+
+==================================================
+99. FUTURE INTEGRATIONS
+==================================================
+
+Prepare architecture for later integration with:
+
+SAP S/4HANA
+SAP Ariba
+Odoo
+Oracle
+POS
+PMS
+Hotel Booking
+Finance Systems
+Supplier Platforms
+SILA Fatoora
+
+Do not implement all now.
+
+==================================================
+100. FINAL PRINCIPLE
+==================================================
+
+SILA ME must become:
+
+Menu Planning
++
+Recipe Intelligence
++
+Ingredient Requirement
++
+Inventory
++
+Store Operations
++
+Receiving
++
+Procurement Requirement
++
+Document Capture
++
+Approvals
++
+Analytics
+
+in one connected hospitality platform.
+
+But development must remain incremental.
+
+Do not sacrifice the working Cloud/Mobile/backend foundation for speed.
+
+==================================================
+101. STARTING TASK
+==================================================
+
+DO NOT build all modules now.
+
+Start ONLY with:
+
+PHASE 2 — ORGANIZATION + USER ACCESS FOUNDATION
+
+Before coding, provide:
+
+1. current architecture status
+2. proposed DB tables
+3. proposed APIs
+4. Cloud screens
+5. Mobile impact
+6. migration plan
+7. tests
+8. risks
+
+Then implement Phase 2.
+
+At completion:
+
+run all tests
+
+verify Cloud
+
+verify Mobile
+
+commit
+
+return report
+
+STOP.
+
+Do not start Phase 3 automatically.

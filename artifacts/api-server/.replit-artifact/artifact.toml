@@ -1,0 +1,32 @@
+kind = "api"
+previewPath = "/api" # TODO - should be excluded from preview in the first place
+title = "SILA ME API"
+version = "1.0.0"
+id = "3B4_FFSkEVBkAeYMFRJ2e"
+
+[[services]]
+localPort = 8080
+name = "API Server"
+paths = ["/api"]
+
+[services.development]
+run = "ASPNETCORE_ENVIRONMENT=Development dotnet run --project ../../apps/api/SilaMe.Api.csproj --urls http://0.0.0.0:8080"
+
+[services.production]
+
+[services.production.build]
+args = ["dotnet", "build", "../../apps/api/SilaMe.Api.csproj"]
+
+[services.production.build.env]
+ASPNETCORE_ENVIRONMENT = "Production"
+
+[services.production.run]
+# we don't run through pnpm to make startup faster in production
+args = ["dotnet", "../../apps/api/bin/Release/net8.0/SilaMe.Api.dll"]
+
+[services.production.run.env]
+PORT = "8080"
+NODE_ENV = "production"
+
+[services.production.health.startup]
+path = "/api/healthz"

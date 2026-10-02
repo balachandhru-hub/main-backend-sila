@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "SilaMe.Api": {
+      "commandName": "Project",
+      "applicationUrl": "http://0.0.0.0:8080",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "PORT": "8080",
+        "DOTNET_USER_SECRETS_ID": "sila-me-api-local"
+      }
+    }
+  }
+}

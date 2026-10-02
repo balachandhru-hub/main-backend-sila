@@ -1,0 +1,2243 @@
+PROJECT: SILA ME
+FEATURE: MICROSOFT SHAREPOINT BACKEND CONNECTION + AUTOMATIC PDF ROUTING
+
+OBJECTIVE
+
+Build the complete Microsoft SharePoint integration in the ASP.NET Core
+backend.
+
+The Cloud administrator should provide ONLY:
+
+1. SharePoint Site URL
+2. Target Folder Path
+
+Example:
+
+SharePoint Site:
+https://customer.sharepoint.com/sites/Finance
+
+Target Folder:
+/Shared Documents/SILA ME/Invoices/MainStore
+
+Then press:
+
+CONNECT MICROSOFT
+
+From this point onward, SILA ME backend must handle everything possible
+automatically.
+
+After successful connection, also provide:
+
+TEST READ ACCESS
+TEST WRITE ACCESS
+TEST CONNECTION
+
+Later, whenever an authenticated Mobile user generates/uploads a PDF,
+the backend must automatically route the PDF to the correct validated
+SharePoint folder.
+
+DO NOT redesign Mobile.
+DO NOT change scanner/PDF/OCR/GRN logic.
+DO NOT modify bala@chervic.in.
+
+
+============================================================
+1. CRITICAL ARCHITECTURE
+============================================================
+
+The architecture must be:
+
+SILA ME CLOUD
+     │
+     │ SharePoint URL + Folder Path
+     │
+     ▼
+SILA ME ASP.NET CORE API
+     │
+     ├── Microsoft OAuth / Identity
+     ├── Microsoft Graph
+     ├── Tenant discovery
+     ├── SharePoint resolution
+     ├── Drive resolution
+     ├── Folder resolution
+     ├── Read test
+     ├── Write test
+     ├── Token protection
+     └── Connection persistence
+             │
+             ▼
+        MICROSOFT SHAREPOINT
+
+
+Later:
+
+SILA ME MOBILE
+     │
+     │ PDF
+     ▼
+SILA ME API
+     │
+     ├── Authenticate Mobile user
+     ├── Save SILA copy
+     ├── Resolve user's business context
+     ├── Resolve storage destination
+     └── Queue external transfer
+             │
+             ▼
+      MICROSOFT GRAPH
+             │
+             ▼
+         SHAREPOINT
+
+
+Mobile must NEVER authenticate to Microsoft.
+
+Mobile must NEVER receive Microsoft tokens.
+
+Mobile must NEVER determine the SharePoint destination.
+
+
+============================================================
+2. FIRST INSPECT CURRENT CODE
+============================================================
+
+Before writing code inspect the current implementation.
+
+Search for:
+
+Microsoft
+SharePoint
+Graph
+OAuth
+MSAL
+TokenEncryptionKey
+TenantId
+ClientId
+ClientSecret
+RedirectUri
+DocumentStorageConnection
+DocumentStorageDestination
+UserDocumentStorageAssignment
+StorageProvider
+ConnectMicrosoft
+MicrosoftSharePointService
+
+Inspect:
+
+apps/api
+apps/cloud
+
+Do NOT create duplicate services/entities if suitable ones already exist.
+
+Report the current Microsoft integration implementation before changing
+it.
+
+
+============================================================
+3. IMPORTANT PLATFORM CONFIGURATION
+============================================================
+
+The Cloud Add User page must NOT ask users for:
+
+TenantId
+ClientId
+ClientSecret
+RedirectUri
+TokenEncryptionKey.
+
+These are backend/platform configuration.
+
+The backend may require platform-level Microsoft Entra configuration.
+
+Use secure server-side configuration such as:
+
+Microsoft__ClientId
+Microsoft__ClientSecret
+Microsoft__RedirectUri
+Microsoft__Authority
+Microsoft__TokenEncryptionKey
+
+or the exact configuration keys already expected by the current code.
+
+FIRST inspect the actual .NET Options/configuration binding.
+
+DO NOT GUESS variable names.
+
+Report the exact required environment variable names.
+
+Do not expose their values.
+
+
+============================================================
+4. MULTI-TENANT MICROSOFT MODEL
+============================================================
+
+SILA ME is a SaaS platform serving multiple customer organizations.
+
+Design Microsoft authentication for multi-tenant customer onboarding.
+
+Do NOT require Customer TenantId to be manually entered during user
+creation.
+
+Use the configured Microsoft multi-tenant application model.
+
+After the customer administrator authenticates with Microsoft:
+
+discover the actual Microsoft TenantId from the validated Microsoft
+identity/token context.
+
+Store that TenantId against the SILA ME organization's Microsoft
+connection.
+
+Therefore:
+
+ClientId = SILA ME platform configuration
+
+ClientSecret/certificate = SILA ME platform configuration
+
+RedirectUri = SILA ME platform configuration
+
+Encryption Key = SILA ME platform configuration
+
+Customer TenantId = discovered during Microsoft authentication
+
+SharePoint Site = supplied/selected by administrator
+
+Folder = supplied/selected by administrator.
+
+
+============================================================
+5. CONNECT MICROSOFT BUTTON
+============================================================
+
+Cloud:
+
+Administration
+→ Users
+→ Add User
+→ Document Storage
+→ Microsoft
+
+Fields:
+
+SharePoint Site URL *
+
+Target Folder Path *
+
+Button:
+
+CONNECT MICROSOFT
+
+When clicked:
+
+DO NOT simply test an API.
+
+DO NOT mark CONNECTED.
+
+DO NOT fake success.
+
+Call the backend:
+
+POST /api/v1/integrations/microsoft/connect
+
+
+Request concept:
+
+{
+    "organizationId": "...",
+    "sharePointUrl": "...",
+    "folderPath": "...",
+    "draftId": "...",
+    "returnUrl": "/admin/users/new"
+}
+
+
+============================================================
+6. CONNECT ENDPOINT
+============================================================
+
+Backend must:
+
+1. Authenticate current SILA ME Cloud administrator.
+
+2. Verify account ACTIVE.
+
+3. Verify CLOUD application access.
+
+4. Verify:
+
+CONFIGURE_DOCUMENT_STORAGE
+
+authorization.
+
+5. Verify Organization scope.
+
+6. Validate SharePoint URL format.
+
+7. Validate Folder Path format.
+
+8. Create pending Microsoft connection attempt.
+
+9. Create cryptographically secure OAuth state.
+
+10. Associate state with:
+
+SILA UserId
+OrganizationId
+SharePointUrl
+FolderPath
+UserCreationDraftId
+ReturnUrl
+CreatedAt
+ExpiresAt
+
+11. Generate real Microsoft authorization URL.
+
+12. Return authorization URL to Cloud.
+
+
+Response:
+
+{
+   "status": "AUTHENTICATION_REQUIRED",
+   "authorizationUrl": "https://login.microsoftonline.com/...",
+   "connectionAttemptId": "..."
+}
+
+
+============================================================
+7. CLOUD REDIRECT
+============================================================
+
+After receiving authorizationUrl:
+
+Cloud must execute real browser navigation.
+
+Use appropriate browser redirect such as:
+
+window.location.assign(authorizationUrl)
+
+Expected:
+
+SILA ME
+   ↓
+Microsoft Login Page
+
+The browser must visibly leave SILA ME and reach Microsoft
+authentication.
+
+Do NOT use an iframe.
+
+
+============================================================
+8. MICROSOFT AUTHENTICATION
+============================================================
+
+Microsoft handles:
+
+Microsoft username
+
+password
+
+MFA
+
+conditional access
+
+organization login
+
+consent
+
+admin consent where required.
+
+SILA ME must NEVER ask for:
+
+Microsoft password
+
+Microsoft MFA code.
+
+
+============================================================
+9. CALLBACK
+============================================================
+
+Create/reuse:
+
+GET /api/v1/integrations/microsoft/callback
+
+Microsoft redirects here.
+
+Backend must validate:
+
+authorization response
+
+authorization code
+
+OAuth state
+
+state expiry
+
+correlation
+
+connection attempt
+
+SILA user
+
+organization
+
+draft
+
+Microsoft errors.
+
+Reject:
+
+missing state
+
+invalid state
+
+expired state
+
+reused state
+
+unknown state
+
+cross-organization state.
+
+State must be single-use.
+
+
+============================================================
+10. TOKEN EXCHANGE
+============================================================
+
+Backend exchanges authorization code securely.
+
+Tokens remain SERVER-SIDE.
+
+Never return:
+
+access token
+
+refresh token
+
+client secret
+
+authorization code
+
+TokenEncryptionKey
+
+to React or Mobile.
+
+Never log them.
+
+
+============================================================
+11. DISCOVER MICROSOFT TENANT
+============================================================
+
+After successful authentication:
+
+determine the authenticated Microsoft tenant.
+
+Resolve:
+
+TenantId
+
+and safe tenant/account metadata as appropriate.
+
+Associate the Microsoft tenant with:
+
+OrganizationId
+
+not merely the SILA ME user.
+
+
+============================================================
+12. SHAREPOINT SITE RESOLUTION
+============================================================
+
+Administrator supplied:
+
+https://customer.sharepoint.com/sites/Finance
+
+Do NOT trust the URL alone.
+
+Use Microsoft Graph backend integration to resolve it.
+
+Resolve:
+
+SiteId
+SiteDisplayName
+SiteWebUrl.
+
+Validate that the authenticated Microsoft connection can access the
+site.
+
+If site cannot be resolved:
+
+ConnectionStatus = SITE_VALIDATION_FAILED.
+
+Never show CONNECTED.
+
+
+============================================================
+13. DOCUMENT LIBRARY / DRIVE RESOLUTION
+============================================================
+
+The supplied path may contain:
+
+/Shared Documents/SILA ME/Invoices/MainStore
+
+Backend must determine the correct SharePoint document library.
+
+Resolve:
+
+DriveId
+DriveName.
+
+Do not blindly assume every customer uses:
+
+Shared Documents.
+
+If the first path component identifies a document library:
+
+resolve it.
+
+If there is ambiguity:
+
+return available document libraries to Cloud for selection.
+
+Do not guess.
+
+
+============================================================
+14. FOLDER RESOLUTION
+============================================================
+
+Resolve the target folder.
+
+Example:
+
+/Shared Documents/SILA ME/Invoices/MainStore
+
+Internally resolve:
+
+SiteId
+DriveId
+FolderId
+FolderPath.
+
+Validate each path component.
+
+Protect against:
+
+../
+
+path traversal
+
+invalid SharePoint characters
+
+malformed URLs
+
+cross-site references.
+
+
+============================================================
+15. FOLDER DOES NOT EXIST
+============================================================
+
+If the requested folder does not exist:
+
+return:
+
+FOLDER_NOT_FOUND
+
+and optionally provide:
+
+CREATE FOLDER
+
+only if:
+
+Microsoft permissions allow it
+
+AND
+
+SILA ME user has appropriate authorization.
+
+Do NOT silently create arbitrary folders.
+
+If creation is approved:
+
+create the folder through Microsoft Graph
+
+then resolve FolderId
+
+then continue validation.
+
+
+============================================================
+16. CONNECTION STATUS
+============================================================
+
+Use explicit status progression:
+
+NOT_CONFIGURED
+
+AUTHENTICATION_REQUIRED
+
+AUTHENTICATING
+
+AUTHENTICATED
+
+TENANT_RESOLVED
+
+SITE_RESOLVED
+
+DRIVE_RESOLVED
+
+FOLDER_RESOLVED
+
+VALIDATING_READ
+
+VALIDATING_WRITE
+
+CONNECTED
+
+CONSENT_REQUIRED
+
+AUTHENTICATION_FAILED
+
+SITE_VALIDATION_FAILED
+
+DRIVE_VALIDATION_FAILED
+
+FOLDER_NOT_FOUND
+
+READ_ACCESS_FAILED
+
+WRITE_ACCESS_FAILED
+
+EXPIRED
+
+DISCONNECTED.
+
+
+CONNECTED must mean:
+
+Microsoft Authentication PASS
+
+Tenant Resolution PASS
+
+SharePoint Site PASS
+
+Document Library PASS
+
+Folder PASS
+
+Read Access PASS
+
+Write Access PASS.
+
+
+============================================================
+17. TEST READ ACCESS
+============================================================
+
+Provide backend:
+
+POST /api/v1/integrations/microsoft/{connectionId}/test-read
+
+
+Backend:
+
+1. Validate SILA authorization.
+
+2. Validate Organization scope.
+
+3. Load secure Microsoft connection.
+
+4. Access configured SiteId.
+
+5. Access configured DriveId.
+
+6. Access configured FolderId.
+
+7. Read safe folder metadata/listing.
+
+8. Confirm read capability.
+
+Return:
+
+{
+   "readAccess": true,
+   "testedAt": "...",
+   "status": "PASS"
+}
+
+
+Do not expose token.
+
+
+============================================================
+18. TEST WRITE ACCESS
+============================================================
+
+Provide:
+
+POST /api/v1/integrations/microsoft/{connectionId}/test-write
+
+
+This test is mandatory.
+
+Backend must prove SILA ME can actually upload to the selected folder.
+
+Preferred test:
+
+create a tiny temporary file.
+
+Example filename:
+
+.sila-me-write-test-<guid>.txt
+
+Contents:
+
+SILA ME SharePoint connection validation.
+
+Then:
+
+1. Upload test file.
+
+2. Confirm Graph returned valid file metadata.
+
+3. Optionally read metadata back.
+
+4. Delete test file immediately.
+
+5. Verify deletion where practical.
+
+6. Record test result.
+
+
+Never leave test files behind intentionally.
+
+
+============================================================
+19. TEST WRITE CLEANUP FAILURE
+============================================================
+
+If upload succeeds but deletion fails:
+
+write capability exists
+
+BUT connection validation must report:
+
+PASS_WITH_CLEANUP_WARNING
+
+and create an audit/diagnostic warning.
+
+Do not hide it.
+
+
+============================================================
+20. TEST CONNECTION
+============================================================
+
+Provide one master endpoint:
+
+POST /api/v1/integrations/microsoft/{connectionId}/test
+
+
+This runs:
+
+Authentication/credential validity
+↓
+Site validation
+↓
+Drive validation
+↓
+Folder validation
+↓
+Read test
+↓
+Write test.
+
+
+Return:
+
+{
+   "connectionStatus": "CONNECTED",
+   "tenant": {
+       "id": "...safe..."
+   },
+   "site": {
+       "id": "...",
+       "displayName": "...",
+       "webUrl": "..."
+   },
+   "drive": {
+       "id": "...",
+       "name": "..."
+   },
+   "folder": {
+       "id": "...",
+       "path": "..."
+   },
+   "readAccess": true,
+   "writeAccess": true,
+   "validatedAt": "..."
+}
+
+
+Do NOT include Microsoft credentials/tokens.
+
+
+============================================================
+21. AUTOMATIC VALIDATION AFTER CALLBACK
+============================================================
+
+IMPORTANT:
+
+Do not require administrator to manually press every test button during
+normal onboarding.
+
+After Microsoft callback succeeds:
+
+automatically run:
+
+Tenant Resolution
+Site Resolution
+Drive Resolution
+Folder Resolution
+Read Test
+Write Test.
+
+The individual buttons:
+
+TEST READ
+TEST WRITE
+TEST CONNECTION
+
+are for later diagnostics/revalidation.
+
+Normal flow:
+
+CONNECT MICROSOFT
+        ↓
+Microsoft Authentication
+        ↓
+Callback
+        ↓
+Automatic Complete Validation
+        ↓
+CONNECTED.
+
+
+============================================================
+22. RETURN TO ADD USER
+============================================================
+
+After validation:
+
+redirect safely back to:
+
+Administration → Users → Add User.
+
+Restore the User Creation Draft.
+
+Show:
+
+MICROSOFT SHAREPOINT
+
+Status:
+CONNECTED ✓
+
+SharePoint:
+Finance
+
+URL:
+https://customer.sharepoint.com/sites/Finance
+
+Document Library:
+Shared Documents
+
+Folder:
+/SILA ME/Invoices/MainStore
+
+READ:
+PASS ✓
+
+WRITE:
+PASS ✓
+
+Validated:
+<timestamp>
+
+
+Buttons:
+
+TEST READ
+
+TEST WRITE
+
+TEST CONNECTION
+
+CHANGE DESTINATION
+
+DISCONNECT.
+
+
+============================================================
+23. USER CREATION FORM MUST SURVIVE OAUTH
+============================================================
+
+Because Microsoft authentication redirects away from SILA ME:
+
+preserve user creation data.
+
+Prefer backend:
+
+UserCreationDraft.
+
+Store:
+
+FirstName
+LastName
+Email
+Mobile
+OrganizationId
+PropertyIds
+StoreIds
+SystemAccess
+RoleIds
+AuthorizationOverrides
+StorageProvider
+SharePointUrl
+FolderPath
+ConnectionAttemptId.
+
+Do NOT store plaintext temporary password in the draft.
+
+After returning from Microsoft:
+
+restore draft.
+
+Then allow password generation/manual entry.
+
+
+============================================================
+24. MICROSOFT CONNECTION OWNERSHIP
+============================================================
+
+Microsoft authentication belongs primarily to:
+
+ORGANIZATION
+
+not individual Mobile user.
+
+Create/reuse:
+
+DocumentStorageConnection.
+
+Suggested:
+
+Id
+
+OrganizationId
+
+Provider
+
+ConnectionStatus
+
+MicrosoftTenantId
+
+SiteId
+
+SiteDisplayName
+
+SiteWebUrl
+
+DriveId
+
+DriveName
+
+CredentialReference
+
+ConnectedBy
+
+ConnectedAt
+
+ValidatedAt
+
+LastReadTestAt
+
+LastReadTestStatus
+
+LastWriteTestAt
+
+LastWriteTestStatus
+
+CreatedAt
+
+UpdatedAt.
+
+
+============================================================
+25. DESTINATION ENTITY
+============================================================
+
+Separate connection from folder destination.
+
+Create/reuse:
+
+DocumentStorageDestination.
+
+Fields:
+
+Id
+
+OrganizationId
+
+PropertyId nullable
+
+OperatingUnitId nullable
+
+LocationId nullable
+
+StorageConnectionId
+
+DocumentType
+
+SiteId
+
+DriveId
+
+FolderId
+
+FolderPath
+
+DisplayUrl
+
+ExternalTransferEnabled
+
+Status
+
+ValidatedAt
+
+CreatedBy
+
+CreatedAt
+
+UpdatedAt.
+
+
+============================================================
+26. USER ASSIGNMENT
+============================================================
+
+Allow:
+
+UserDocumentStorageAssignment.
+
+Fields:
+
+Id
+
+UserId
+
+DocumentStorageDestinationId
+
+Status
+
+CreatedBy
+
+CreatedAt
+
+UpdatedAt.
+
+
+But support destination inheritance.
+
+Do NOT require duplicate SharePoint configuration for every user.
+
+
+============================================================
+27. DESTINATION RESOLUTION PRIORITY
+============================================================
+
+When a PDF needs routing, resolve destination:
+
+1. USER-SPECIFIC destination
+
+else
+
+2. STORE / OPERATING UNIT destination
+
+else
+
+3. PROPERTY destination
+
+else
+
+4. ORGANIZATION default destination
+
+else
+
+5. SILA ME internal storage only.
+
+
+Return the most specific ACTIVE + CONNECTED destination.
+
+
+============================================================
+28. MOBILE PDF FLOW
+============================================================
+
+DO NOT CHANGE MOBILE SCANNER.
+
+Current Mobile flow remains:
+
+Scan Invoice
+↓
+Pages
+↓
+Generate PDF
+↓
+Upload PDF to SILA ME API.
+
+
+Once API receives PDF:
+
+1. Authenticate Mobile bearer token.
+
+2. Determine UserId from authenticated claims.
+
+3. Validate user ACTIVE.
+
+4. Validate MOBILE application access.
+
+5. Determine Organization.
+
+6. Determine Property.
+
+7. Determine Store / Operating Unit.
+
+8. Validate scope.
+
+9. Save PDF into existing SILA ME document storage.
+
+10. Continue current OCR/invoice processing.
+
+11. Resolve external document destination.
+
+12. Queue SharePoint transfer.
+
+
+============================================================
+29. NEVER TRUST MOBILE DESTINATION
+============================================================
+
+Mobile must NOT be allowed to submit:
+
+SharePointUrl
+
+SiteId
+
+DriveId
+
+FolderId
+
+MicrosoftTenantId
+
+StorageConnectionId
+
+as authority for routing.
+
+Even if sent:
+
+ignore/reject them.
+
+Backend determines destination from authenticated user + validated
+business context.
+
+
+============================================================
+30. SAVE SILA COPY FIRST
+============================================================
+
+Critical reliability rule:
+
+PDF must first be safely stored in SILA ME.
+
+Do NOT perform:
+
+Mobile → synchronous SharePoint upload only.
+
+Correct:
+
+Mobile
+↓
+SILA API
+↓
+SILA PDF STORED
+↓
+Document ID created
+↓
+External transfer queued.
+
+
+If Microsoft is down:
+
+PDF must remain safe in SILA ME.
+
+
+============================================================
+31. DOCUMENT TRANSFER JOB
+============================================================
+
+Create/reuse:
+
+DocumentTransferJob.
+
+Fields:
+
+Id
+
+DocumentId
+
+DestinationId
+
+Provider
+
+Status
+
+AttemptCount
+
+NextAttemptAt
+
+LastAttemptAt
+
+CompletedAt
+
+ExternalFileId
+
+ExternalWebUrl
+
+ExternalFileName
+
+LastErrorCode
+
+LastErrorMessageSafe
+
+CreatedAt
+
+UpdatedAt.
+
+
+Statuses:
+
+PENDING
+
+PROCESSING
+
+COMPLETED
+
+RETRY_PENDING
+
+FAILED
+
+FAILED_AUTHENTICATION
+
+SKIPPED.
+
+
+============================================================
+32. BACKGROUND TRANSFER
+============================================================
+
+Create background processing using the architecture already appropriate
+to the project.
+
+Do not introduce unnecessary infrastructure if ASP.NET hosted
+background services/job infrastructure already exists.
+
+Worker:
+
+PENDING JOB
+↓
+Load document
+↓
+Load destination
+↓
+Load Microsoft connection
+↓
+Verify connection
+↓
+Load PDF bytes/stream
+↓
+Upload using Graph
+↓
+Capture external metadata
+↓
+COMPLETED.
+
+
+============================================================
+33. MICROSOFT SHAREPOINT SERVICE
+============================================================
+
+Create/reuse:
+
+IMicrosoftSharePointService
+
+MicrosoftSharePointService.
+
+
+Responsibilities:
+
+CreateAuthorizationRequestAsync
+
+HandleCallbackAsync
+
+ResolveTenantAsync
+
+ResolveSiteAsync
+
+ResolveDriveAsync
+
+ResolveFolderAsync
+
+TestReadAsync
+
+TestWriteAsync
+
+TestConnectionAsync
+
+UploadFileAsync
+
+DeleteFileAsync
+
+GetFileMetadataAsync.
+
+
+Do not scatter Graph calls throughout controllers.
+
+
+============================================================
+34. DOCUMENT ROUTING SERVICE
+============================================================
+
+Create:
+
+IDocumentRoutingService
+
+DocumentRoutingService.
+
+
+Responsibilities:
+
+ResolveDestinationAsync(
+ userId,
+ organizationId,
+ propertyId,
+ operatingUnitId,
+ documentType
+)
+
+QueueTransferAsync(documentId, destinationId)
+
+RetryTransferAsync(jobId).
+
+
+============================================================
+35. DOCUMENT TYPE
+============================================================
+
+Current implementation:
+
+INVOICE
+
+Design extensibly for:
+
+INVOICE
+
+GRN
+
+PURCHASE_ORDER
+
+DELIVERY_NOTE
+
+INVENTORY_COUNT
+
+WASTE_DOCUMENT
+
+OTHER.
+
+
+Only implement automatic INVOICE PDF external transfer in this task
+unless existing architecture makes other types trivial without changing
+business logic.
+
+
+============================================================
+36. EXAMPLE
+============================================================
+
+Cloud creates:
+
+User:
+
+john@abc.com
+
+Organization:
+ABC Hospitality
+
+Property:
+FIVE Dubai
+
+Store:
+Main Store
+
+System:
+MOBILE
+
+Storage:
+MICROSOFT
+
+SharePoint:
+https://abc.sharepoint.com/sites/Finance
+
+Folder:
+/Shared Documents/SILA/Invoices/MainStore
+
+
+Admin presses:
+
+CONNECT MICROSOFT.
+
+
+Backend:
+
+OAuth
+→ Microsoft Login
+→ callback
+→ discovers TenantId
+→ resolves SiteId
+→ resolves DriveId
+→ resolves FolderId
+→ tests READ
+→ tests WRITE
+→ deletes test file
+→ stores connection/destination
+→ returns CONNECTED.
+
+
+Later John scans:
+
+ABC Foods Invoice INV-10025.
+
+
+Mobile creates PDF.
+
+Mobile sends PDF to SILA ME API.
+
+
+Backend:
+
+authenticated user = john@abc.com
+
+→ Organization = ABC Hospitality
+
+→ Property = FIVE Dubai
+
+→ Store = Main Store
+
+→ Document Type = INVOICE
+
+→ Resolve destination
+
+→ Microsoft
+
+→ SiteId
+
+→ DriveId
+
+→ FolderId
+
+→ Upload PDF.
+
+
+Final SharePoint location:
+
+/Shared Documents/SILA/Invoices/MainStore/
+ABCFOODS_INV-10025_20260916.pdf
+
+
+John performs ZERO Microsoft actions on Mobile.
+
+
+============================================================
+37. FILE NAMING
+============================================================
+
+Use safe business filename when extraction data is available.
+
+Example:
+
+<Supplier>_<InvoiceNumber>_<InvoiceDate>.pdf
+
+
+If unavailable:
+
+<DocumentId>_<timestamp>.pdf
+
+
+Sanitize filename for SharePoint.
+
+Prevent:
+
+path traversal
+
+invalid characters
+
+reserved names.
+
+
+============================================================
+38. IDEMPOTENCY
+============================================================
+
+A PDF must not be uploaded twice because:
+
+Mobile retries
+
+API retries
+
+background worker restarts
+
+network timeout
+
+server restart.
+
+
+Unique logical transfer:
+
+DocumentId + DestinationId.
+
+
+If existing transfer:
+
+COMPLETED
+
+do NOT upload again.
+
+
+============================================================
+39. RETRY
+============================================================
+
+If SharePoint temporarily fails:
+
+do not fail SILA document.
+
+Set:
+
+RETRY_PENDING.
+
+
+Use controlled exponential backoff.
+
+Record attempt count.
+
+After configured maximum attempts:
+
+FAILED.
+
+
+Cloud administrator must be able to:
+
+RETRY TRANSFER.
+
+
+============================================================
+40. MICROSOFT CONNECTION EXPIRY
+============================================================
+
+If Microsoft authorization becomes invalid:
+
+mark connection appropriately.
+
+Do not delete queued documents.
+
+Transfer:
+
+FAILED_AUTHENTICATION / RETRY_PENDING.
+
+
+Cloud shows:
+
+Microsoft connection requires attention.
+
+Provide:
+
+RECONNECT MICROSOFT.
+
+
+After successful reconnection:
+
+allow failed transfers to retry.
+
+
+============================================================
+41. READ/WRITE TEST AUDIT
+============================================================
+
+Audit:
+
+MICROSOFT_CONNECT_STARTED
+
+MICROSOFT_AUTH_COMPLETED
+
+MICROSOFT_TENANT_RESOLVED
+
+SHAREPOINT_SITE_RESOLVED
+
+SHAREPOINT_DRIVE_RESOLVED
+
+SHAREPOINT_FOLDER_RESOLVED
+
+SHAREPOINT_READ_TEST_STARTED
+
+SHAREPOINT_READ_TEST_PASSED
+
+SHAREPOINT_READ_TEST_FAILED
+
+SHAREPOINT_WRITE_TEST_STARTED
+
+SHAREPOINT_WRITE_TEST_PASSED
+
+SHAREPOINT_WRITE_TEST_FAILED
+
+SHAREPOINT_TEST_FILE_DELETED
+
+MICROSOFT_CONNECTION_VALIDATED
+
+MICROSOFT_CONNECTION_FAILED.
+
+
+Never log:
+
+ClientSecret
+
+access token
+
+refresh token
+
+authorization code
+
+TokenEncryptionKey
+
+password.
+
+
+============================================================
+42. PDF TRANSFER AUDIT
+============================================================
+
+Audit:
+
+DOCUMENT_STORED
+
+DOCUMENT_ROUTE_RESOLVED
+
+DOCUMENT_TRANSFER_QUEUED
+
+DOCUMENT_TRANSFER_STARTED
+
+DOCUMENT_TRANSFER_COMPLETED
+
+DOCUMENT_TRANSFER_FAILED
+
+DOCUMENT_TRANSFER_RETRY.
+
+
+Include:
+
+DocumentId
+
+UserId
+
+OrganizationId
+
+PropertyId
+
+StoreId
+
+DestinationId
+
+Provider
+
+ExternalFileId
+
+safe external path
+
+timestamp
+
+result.
+
+
+============================================================
+43. CLOUD DOCUMENT MONITORING
+============================================================
+
+Existing Cloud Document/Invoice detail should show external transfer
+information without redesigning the module.
+
+Example:
+
+DOCUMENT STORAGE
+
+SILA ME
+Stored ✓
+
+MICROSOFT SHAREPOINT
+Connected ✓
+
+Destination:
+/SILA/Invoices/MainStore
+
+Transfer:
+Completed ✓
+
+Transferred:
+16 Sep 2026 10:25
+
+File:
+ABCFOODS_INV-10025_20260916.pdf
+
+
+If failed:
+
+Transfer:
+FAILED
+
+Reason:
+Microsoft connection unavailable
+
+[ RETRY ]
+
+
+============================================================
+44. SECURITY
+============================================================
+
+Backend must enforce:
+
+CONFIGURE_DOCUMENT_STORAGE
+
+TEST_DOCUMENT_STORAGE
+
+VIEW_DOCUMENT_STORAGE_STATUS
+
+DISCONNECT_DOCUMENT_STORAGE
+
+and appropriate document permissions.
+
+
+Customer Admin can only configure their own Organization.
+
+Prevent:
+
+cross-customer connection access
+
+cross-customer destination access
+
+cross-customer PDF transfer
+
+connection ID manipulation
+
+destination ID manipulation.
+
+
+============================================================
+45. MICROSOFT PLATFORM READINESS
+============================================================
+
+Create a safe readiness endpoint/service.
+
+Return only:
+
+ClientIdConfigured
+
+CredentialConfigured
+
+RedirectUriConfigured
+
+TokenEncryptionConfigured
+
+MultiTenantConfigured
+
+GraphReady.
+
+
+Example:
+
+{
+ "clientIdConfigured": true,
+ "credentialConfigured": true,
+ "redirectUriConfigured": true,
+ "tokenEncryptionConfigured": true,
+ "multiTenantConfigured": true,
+ "graphReady": true
+}
+
+
+NEVER return actual secrets.
+
+
+============================================================
+46. TOKEN ENCRYPTION
+============================================================
+
+If current architecture persists Microsoft token material:
+
+encrypt it server-side.
+
+TokenEncryptionKey must be stable across application restarts.
+
+DO NOT:
+
+generate a new key every startup.
+
+DO NOT:
+
+store key beside encrypted token in normal database columns.
+
+DO NOT expose key.
+
+
+If project already uses ASP.NET Data Protection or an appropriate secure
+credential/token cache architecture, evaluate and reuse it rather than
+creating unnecessary custom cryptography.
+
+
+============================================================
+47. CRITICAL ACCEPTANCE TEST — CONNECT
+============================================================
+
+Test actual Cloud flow:
+
+1. Add User.
+
+2. Select Organization.
+
+3. Enter:
+
+SharePoint URL.
+
+4. Enter:
+
+Folder Path.
+
+5. Click:
+
+CONNECT MICROSOFT.
+
+
+Expected:
+
+real Microsoft authentication opens.
+
+6. Authenticate.
+
+7. Return to SILA ME.
+
+Expected backend automatically:
+
+Tenant PASS
+
+Site PASS
+
+Drive PASS
+
+Folder PASS
+
+Read PASS
+
+Write PASS
+
+Cleanup PASS.
+
+
+Cloud:
+
+CONNECTED ✓.
+
+
+============================================================
+48. CRITICAL ACCEPTANCE TEST — READ
+============================================================
+
+Press:
+
+TEST READ ACCESS.
+
+
+Expected:
+
+Backend successfully accesses configured SharePoint destination.
+
+Result:
+
+READ ACCESS
+PASS ✓.
+
+
+============================================================
+49. CRITICAL ACCEPTANCE TEST — WRITE
+============================================================
+
+Press:
+
+TEST WRITE ACCESS.
+
+
+Expected:
+
+Backend:
+
+creates temporary file
+
+verifies file
+
+deletes temporary file.
+
+
+Result:
+
+WRITE ACCESS
+PASS ✓.
+
+
+Confirm no test file remains.
+
+
+============================================================
+50. CRITICAL ACCEPTANCE TEST — MOBILE PDF
+============================================================
+
+Create:
+
+Mobile User A
+→ Destination Folder A.
+
+
+Create:
+
+Mobile User B
+→ Destination Folder B.
+
+
+Login Mobile as User A.
+
+Generate/upload PDF.
+
+
+Expected:
+
+SILA copy:
+STORED.
+
+SharePoint:
+
+Folder A:
+PDF EXISTS.
+
+Folder B:
+NO PDF.
+
+
+Login as User B.
+
+Generate PDF.
+
+
+Expected:
+
+Folder B:
+PDF EXISTS.
+
+Folder A:
+NO NEW PDF.
+
+
+============================================================
+51. FAILURE TEST
+============================================================
+
+Temporarily make SharePoint unavailable or simulate a safe transient
+Graph failure.
+
+
+Generate Mobile PDF.
+
+
+Expected:
+
+SILA PDF:
+STORED.
+
+External Transfer:
+RETRY_PENDING.
+
+
+Restore Microsoft connection.
+
+Retry.
+
+
+Expected:
+
+PDF uploaded exactly once.
+
+
+============================================================
+52. EXISTING USER PROTECTION
+============================================================
+
+DO NOT MODIFY:
+
+bala@chervic.in.
+
+
+Before work capture safe regression information.
+
+After work verify:
+
+same UserId
+
+same email
+
+same password hash using equality comparison only
+
+same status
+
+same application access
+
+same roles
+
+no authorization reduction.
+
+
+Do not print password hash.
+
+
+============================================================
+53. PROTECTED FUNCTIONALITY
+============================================================
+
+DO NOT CHANGE:
+
+Cloud login architecture
+
+Mobile login architecture
+
+Mobile scanner
+
+native scanner
+
+scan page processing
+
+PDF generation
+
+Basic OCR
+
+full OCR
+
+Invoice Review
+
+PO Match
+
+Physical Received Quantity
+
+GRN validation
+
+GRN posting
+
+inventory posting.
+
+
+This task attaches document routing AFTER existing PDF storage.
+
+
+============================================================
+54. DO NOT CLAIM FALSE SUCCESS
+============================================================
+
+Do not return PASS merely because:
+
+code compiles
+
+Microsoft URL was generated
+
+OAuth login succeeded
+
+site was found.
+
+
+CONNECTED requires:
+
+AUTHENTICATION = PASS
+
+TENANT = PASS
+
+SITE = PASS
+
+DRIVE = PASS
+
+FOLDER = PASS
+
+READ = PASS
+
+WRITE = PASS.
+
+
+PDF ROUTING PASS requires:
+
+actual test PDF successfully reached the correct SharePoint destination.
+
+
+============================================================
+55. FINAL REPORT
+============================================================
+
+Return:
+
+SILA ME MICROSOFT SHAREPOINT BACKEND
+
+CURRENT ROOT CAUSE:
+<findings>
+
+PLATFORM MICROSOFT CONFIG:
+PASS/FAIL
+
+MULTI-TENANT:
+PASS/FAIL
+
+CONNECT BUTTON:
+PASS/FAIL
+
+REAL MICROSOFT REDIRECT:
+PASS/FAIL
+
+CALLBACK:
+PASS/FAIL
+
+TENANT DISCOVERY:
+PASS/FAIL
+
+SHAREPOINT SITE RESOLUTION:
+PASS/FAIL
+
+DRIVE RESOLUTION:
+PASS/FAIL
+
+FOLDER RESOLUTION:
+PASS/FAIL
+
+READ TEST:
+PASS/FAIL
+
+WRITE TEST:
+PASS/FAIL
+
+TEST FILE CLEANUP:
+PASS/FAIL
+
+CONNECTION STATUS:
+CONNECTED / FAILED
+
+USER CREATION DRAFT RESTORE:
+PASS/FAIL
+
+DESTINATION SAVED:
+PASS/FAIL
+
+MOBILE PDF SILA STORAGE:
+PASS/FAIL
+
+DOCUMENT ROUTING:
+PASS/FAIL
+
+BACKGROUND TRANSFER:
+PASS/FAIL
+
+SHAREPOINT PDF UPLOAD:
+PASS/FAIL
+
+CORRECT USER/STORE PATH:
+PASS/FAIL
+
+IDEMPOTENCY:
+PASS/FAIL
+
+RETRY:
+PASS/FAIL
+
+MOBILE MICROSOFT LOGIN REQUIRED:
+NO
+
+MOBILE GRAPH TOKEN:
+NO
+
+CLIENT SECRET EXPOSED:
+NO
+
+TOKEN ENCRYPTION KEY EXPOSED:
+NO
+
+BALA USER MODIFIED:
+NO
+
+SCANNER MODIFIED:
+NO
+
+OCR MODIFIED:
+NO
+
+PDF GENERATION MODIFIED:
+NO
+
+GRN MODIFIED:
+NO
+
+API TESTS:
+<passed>/<failed>
+
+CLOUD TESTS:
+<passed>/<failed>
+
+FILES MODIFIED:
+<exact list>
+
+DATABASE MIGRATION:
+<name or NONE>
+
+EXTERNAL MICROSOFT CONFIGURATION STILL REQUIRED:
+<exact items or NONE>
+
+FINAL STATUS:
+PASS / BLOCKED / FAIL
+
+
+============================================================
+56. COMMIT
+============================================================
+
+Only commit when implementation is healthy.
+
+git commit -m "feat: add microsoft sharepoint backend document routing"
+
+DO NOT PUSH.
+
+STOP.
+
+Do not start another feature.

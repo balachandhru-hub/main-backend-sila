@@ -1,0 +1,849 @@
+PROJECT: SILA ME MOBILE
+
+BUG FIX ONLY — DO NOT REBUILD OR REFACTOR THE SCANNER.
+
+CURRENT ISSUES:
+
+1. CREATE PDF button is visible but not working.
+2. DELETE PAGE button is visible but not working.
+
+The scanner itself, multi-page capture, image quality, crop, rotate and page capture are working.
+
+Fix ONLY these functional issues and any directly related scanner-state problem.
+
+DO NOT TOUCH:
+- Login
+- Authentication
+- SecureStore
+- API configuration
+- Backend architecture
+- Cloud
+- Organization/access
+- PO logic
+- GRN logic
+- OCR architecture
+- SILA ME branding
+- Scanner native capture implementation
+
+==================================================
+1. FIRST DEBUG THE BUTTONS
+==================================================
+
+Do not immediately rewrite the functions.
+
+Trace both buttons from UI to final action.
+
+For CREATE PDF trace:
+
+Button
+→ onPress
+→ handler
+→ scanner state
+→ processedImageUri[]
+→ PDF service
+→ filesystem
+→ generated pdfUri
+→ navigation to invoice/basic extraction screen
+
+For DELETE PAGE trace:
+
+Delete Button
+→ onPress
+→ selected page ID
+→ confirmation if applicable
+→ scanner store
+→ remove page
+→ delete temporary files if appropriate
+→ renumber pages
+→ mark PDF dirty
+→ UI rerender
+
+Find the exact break point.
+
+==================================================
+2. CHECK BUTTON TOUCHABILITY
+==================================================
+
+First verify the problem is not UI interception.
+
+Inspect:
+
+pointerEvents
+
+absolute-positioned overlays
+
+zIndex
+
+camera overlays
+
+Pressable
+
+TouchableOpacity
+
+disabled state
+
+loading state
+
+modal layers
+
+transparent Views
+
+gesture handlers
+
+ScrollView
+
+FlatList
+
+drag/reorder components
+
+Confirm that tapping each button actually fires onPress.
+
+Temporarily add DEVELOPMENT logging:
+
+console.log("[Scanner] CREATE PDF pressed");
+
+console.log("[Scanner] DELETE PAGE pressed", pageId);
+
+Remove unnecessary logs after verification.
+
+==================================================
+3. CREATE PDF BUTTON
+==================================================
+
+The CREATE PDF button must call ONE explicit function.
+
+Example:
+
+const handleCreatePdf = async () => {
+   ...
+};
+
+Do not put complicated async PDF logic directly inside JSX.
+
+Button:
+
+<Pressable
+    onPress={handleCreatePdf}
+    disabled={isCreatingPdf || pages.length === 0}
+>
+   ...
+</Pressable>
+
+==================================================
+4. CREATE PDF VALIDATION
+==================================================
+
+When pressed verify:
+
+pages.length > 0
+
+Every page has:
+
+processedImageUri
+
+Every processedImageUri exists in filesystem.
+
+Do NOT use:
+
+thumbnailUri
+
+original review screenshot
+
+HTML
+
+expo-print
+
+screen capture
+
+ViewShot
+
+The PDF source must be:
+
+ScanSession.pages[].processedImageUri
+
+==================================================
+5. PDF CREATION
+==================================================
+
+Use the existing approved pdf-lib implementation.
+
+Expected:
+
+processedImageUri Page 1
+→ PDF Page 1
+
+processedImageUri Page 2
+→ PDF Page 2
+
+processedImageUri Page 3
+→ PDF Page 3
+
+Then:
+
+const pdfUri = ...
+
+Update scanner state:
+
+setPdfUri(pdfUri)
+
+setPdfDirty(false)
+
+==================================================
+6. URI HANDLING
+==================================================
+
+Pay particular attention to this.
+
+Native scanner may return URI/path formats differently on:
+
+iOS
+
+Android
+
+Expo fallback
+
+Examples can include:
+
+file://...
+
+content://...
+
+absolute filesystem path
+
+Do not assume every scanner result has the same URI format.
+
+Normalize page URIs before pdf-lib reads them.
+
+Create/reuse something like:
+
+normalizeLocalFileUri()
+
+or
+
+readScannerImageForPdf()
+
+Ensure pdf-lib receives valid image bytes.
+
+This is a likely source of CREATE PDF silently failing.
+
+==================================================
+7. JPG / PNG SUPPORT
+==================================================
+
+Detect actual image format.
+
+If JPEG:
+
+pdfDoc.embedJpg(...)
+
+If PNG:
+
+pdfDoc.embedPng(...)
+
+Do not blindly call embedJpg for every scanner output.
+
+If native scanner produces another format:
+
+convert it once to supported high-quality JPEG/PNG before embedding.
+
+==================================================
+8. PDF ERROR HANDLING
+==================================================
+
+Do not silently swallow errors.
+
+Wrap PDF creation:
+
+try {
+   ...
+} catch (error) {
+   ...
+}
+
+Development log should contain actual error.
+
+User should see:
+
+"PDF could not be created. Your scanned pages are safe. Please try again."
+
+Buttons:
+
+TRY AGAIN
+
+BACK TO PAGES
+
+Do not delete captured pages after PDF failure.
+
+==================================================
+9. CREATE PDF LOADING STATE
+==================================================
+
+When user presses CREATE PDF:
+
+Immediately show:
+
+Creating PDF...
+
+Disable button only while generation is genuinely running.
+
+When complete:
+
+PDF Ready
+
+Then continue automatically to:
+
+Basic Invoice Extraction / Invoice Details
+
+Do not leave the user on the same screen with no feedback.
+
+==================================================
+10. PDF NAVIGATION
+==================================================
+
+After successful generation:
+
+scanner state must contain:
+
+pdfUri
+pdfDirty = false
+pageCount
+
+Then navigate to the existing next screen.
+
+Example:
+
+router.push("/receive/invoice-review")
+
+or the actual SILA ME route.
+
+Do not navigate until PDF file existence is verified.
+
+==================================================
+11. VERIFY GENERATED FILE
+==================================================
+
+Immediately after generation verify:
+
+PDF URI exists
+
+file size > 0
+
+page count = ScanSession.pages.length
+
+If verification fails:
+
+do not proceed.
+
+Show controlled error.
+
+==================================================
+12. DELETE PAGE BUTTON
+==================================================
+
+DELETE PAGE must remove exactly the selected page.
+
+Use PAGE ID.
+
+Do NOT rely only on array index.
+
+Example:
+
+handleDeletePage(pageId)
+
+Then:
+
+pages.filter(page => page.id !== pageId)
+
+==================================================
+13. DELETE CONFIRMATION
+==================================================
+
+On DELETE:
+
+show:
+
+Delete Page 2?
+
+This page will be removed from the scanned invoice.
+
+CANCEL
+
+DELETE
+
+DELETE must actually execute the state mutation.
+
+Make sure the confirmation dialog callback is wired correctly.
+
+==================================================
+14. COMMON DELETE BUG TO CHECK
+==================================================
+
+Specifically inspect whether current code does something like:
+
+onPress={() => handleDeletePage}
+
+instead of:
+
+onPress={() => handleDeletePage(page.id)}
+
+or:
+
+onPress={handleDeletePage(page.id)}
+
+which executes during render.
+
+Correct wiring must be verified.
+
+==================================================
+15. STATE STORE
+==================================================
+
+DELETE must modify the authoritative scanner store.
+
+Do not modify only a local copy displayed by the screen.
+
+If scanner uses:
+
+Zustand
+
+Context
+
+Reducer
+
+AsyncStorage-backed store
+
+or another scanner store,
+
+call the actual store mutation.
+
+Example:
+
+removePage(pageId)
+
+==================================================
+16. DELETE PAGE STATE UPDATE
+==================================================
+
+After deleting:
+
+remove page from pages[]
+
+renumber pageNumber sequentially
+
+mark:
+
+pdfDirty = true
+
+clear old pdfUri if necessary
+
+or retain it but ensure it cannot be saved as current.
+
+Recommended:
+
+pdfUri = null
+pdfDirty = true
+
+because document content has changed.
+
+==================================================
+17. DELETE TEMPORARY FILES CAREFULLY
+==================================================
+
+Do NOT delete files before scanner state successfully updates.
+
+After state update:
+
+clean removed page:
+
+thumbnailUri
+
+processedImageUri
+
+originalImageUri
+
+ONLY if those files are owned by this scan session and are safe to remove.
+
+Do not delete shared/native source unexpectedly.
+
+==================================================
+18. DELETE LAST PAGE
+==================================================
+
+If only one page remains and user deletes it:
+
+allow deletion if intended.
+
+Then show empty scanner state:
+
+No pages scanned.
+
+Button:
+
+SCAN PAGE
+
+CREATE PDF must become disabled.
+
+Do not crash.
+
+==================================================
+19. DELETE CURRENT PAGE
+==================================================
+
+If user is viewing Page 2 of 3 and deletes Page 2:
+
+remaining:
+
+Page 1
+Page 3
+
+must become:
+
+Page 1
+Page 2
+
+Selection should move safely to the nearest remaining page.
+
+No blank preview.
+
+==================================================
+20. ASYNCSTORAGE
+==================================================
+
+Because scanner sessions persist:
+
+after DELETE:
+
+persist updated pages immediately.
+
+If deleted page reappears after navigation/app reload, the bug is NOT fixed.
+
+Test:
+
+Delete Page
+→ Back
+→ Return
+→ Deleted page must remain deleted.
+
+==================================================
+21. PDF DIRTY LOGIC
+==================================================
+
+Any of these actions:
+
+ADD PAGE
+
+DELETE PAGE
+
+RETAKE PAGE
+
+CROP PAGE
+
+ROTATE PAGE
+
+REORDER PAGE
+
+must set:
+
+pdfDirty = true
+
+Then CREATE PDF regenerates from current pages.
+
+==================================================
+22. OLD PDF PROTECTION
+==================================================
+
+Scenario:
+
+3 pages
+→ Create PDF
+→ Back
+→ Delete Page 2
+→ now 2 pages
+
+The app MUST NOT continue using the old 3-page PDF.
+
+Delete/change should invalidate existing PDF.
+
+Next CREATE PDF must generate:
+
+2-page PDF.
+
+==================================================
+23. BUTTON COMPONENT CHECK
+==================================================
+
+If CREATE PDF and DELETE share a reusable button component:
+
+inspect that component.
+
+Verify it forwards:
+
+onPress
+
+disabled
+
+accessibilityState
+
+style
+
+correctly.
+
+Do not assume the caller is the problem.
+
+==================================================
+24. SCANNER OVERLAY CHECK
+==================================================
+
+If buttons visually work but cannot be tapped:
+
+inspect parent overlays.
+
+Common issue:
+
+<View
+   style={StyleSheet.absoluteFill}
+/>
+
+sitting above controls.
+
+Correct:
+
+pointerEvents="none"
+
+for purely visual overlays.
+
+Do not disable pointer events on actual scanner controls.
+
+==================================================
+25. TEST — CREATE PDF
+==================================================
+
+MANDATORY:
+
+Scan Page 1
+Scan Page 2
+Scan Page 3
+
+Press CREATE PDF.
+
+Expected:
+
+button fires
+
+Creating PDF displayed
+
+3 processed images read
+
+3 PDF pages created
+
+PDF file exists
+
+PDF size > 0
+
+PDF page count = 3
+
+navigate to Invoice Details
+
+PASS.
+
+==================================================
+26. TEST — DELETE
+==================================================
+
+Scan:
+
+Page A
+Page B
+Page C
+
+Delete Page B.
+
+Expected screen:
+
+Page A
+Page C
+
+renumbered:
+
+Page 1
+Page 2
+
+Create PDF.
+
+Expected PDF:
+
+A
+C
+
+exactly 2 pages.
+
+==================================================
+27. TEST — DELETE AFTER PDF
+==================================================
+
+Scan:
+
+A
+B
+C
+
+Create PDF.
+
+Back to Review.
+
+Delete B.
+
+Expected:
+
+pdfDirty = true
+
+old PDF cannot be submitted.
+
+Create PDF again.
+
+Expected:
+
+A
+C
+
+2-page PDF.
+
+==================================================
+28. TEST — PERSISTENCE
+==================================================
+
+Scan:
+
+A
+B
+C
+
+Delete B.
+
+Navigate Back.
+
+Return to Review.
+
+Expected:
+
+A
+C
+
+Deleted page must NOT reappear.
+
+==================================================
+29. DO NOT CLAIM PASS FROM STATIC CODE
+==================================================
+
+Do not report:
+
+DELETE PASS
+
+or
+
+CREATE PDF PASS
+
+merely because handlers exist.
+
+At minimum verify through executable automated/component/service tests
+where possible.
+
+Native physical-device interaction that cannot be executed in Replit
+must be reported:
+
+PHYSICAL DEVICE TEST PENDING USER ACTION
+
+==================================================
+30. ADD REGRESSION TESTS
+==================================================
+
+Add tests covering:
+
+remove middle page
+
+remove last page
+
+remove only page
+
+renumber after delete
+
+pdfDirty after delete
+
+old PDF invalidated
+
+PDF created from processedImageUri
+
+3 source images = 3 PDF pages
+
+reordered source images maintain order
+
+PDF failure preserves pages
+
+==================================================
+31. DO NOT CHANGE SCANNER ENGINE
+==================================================
+
+Keep:
+
+react-native-document-scanner-plugin
+
+existing crop
+
+existing perspective correction
+
+existing image quality
+
+existing OCR
+
+existing pdf-lib architecture
+
+This task is only to make:
+
+CREATE PDF
+
+and
+
+DELETE PAGE
+
+fully operational.
+
+==================================================
+32. FINAL REPORT
+==================================================
+
+Return:
+
+1. Exact root cause of CREATE PDF failure
+2. Exact root cause of DELETE PAGE failure
+3. Files modified
+4. CREATE PDF onPress verified YES/NO
+5. PDF source processedImageUri YES/NO
+6. URI normalization fixed YES/NO
+7. JPEG/PNG handling PASS/FAIL
+8. PDF file creation PASS/FAIL
+9. 3 images = 3 PDF pages PASS/FAIL
+10. DELETE onPress verified YES/NO
+11. Correct page ID passed YES/NO
+12. Scanner store updated YES/NO
+13. AsyncStorage updated YES/NO
+14. Page renumbering PASS/FAIL
+15. pdfDirty set after delete YES/NO
+16. Old PDF invalidated YES/NO
+17. Delete-middle-page test PASS/FAIL
+18. Delete-after-PDF test PASS/FAIL
+19. Back/return deleted page stays deleted PASS/FAIL
+20. Mobile TypeScript PASS/FAIL
+21. Mobile tests passed/failed
+22. Android build/config PASS/FAIL
+23. iOS build/config PASS/FAIL
+24. Login regression PASS/FAIL
+25. Receive Stock regression PASS/FAIL
+26. Physical device test status
+
+Commit only after tests:
+
+fix: repair scanner pdf creation and page deletion
+
+STOP.
+
+DO NOT START ANY OTHER FEATURE.

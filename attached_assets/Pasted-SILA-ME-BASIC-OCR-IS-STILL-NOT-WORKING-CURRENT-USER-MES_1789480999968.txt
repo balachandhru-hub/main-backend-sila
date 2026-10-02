@@ -1,0 +1,1207 @@
+SILA ME — BASIC OCR IS STILL NOT WORKING
+
+CURRENT USER MESSAGE:
+
+"We couldn't read some invoice details automatically.
+Please review and enter the missing information.
+You can try Re-read Invoice or continue manually."
+
+This fallback message is working correctly.
+
+BUT THE BASIC OCR IS NOT.
+
+DO NOT change this into another generic fallback.
+DO NOT hide the underlying OCR error.
+
+We need to make BASIC OCR actually extract the invoice information.
+
+============================================================
+1. EXPECTED RESULT
+============================================================
+
+After:
+
+SCAN
+→ ADD PAGES
+→ CREATE PDF
+
+the app must automatically show:
+
+Reading invoice...
+
+Then populate:
+
+Supplier Name
+Supplier TRN
+Supplier Invoice Number
+Invoice Date
+Purchase Order Number
+Invoice Gross Amount
+Currency
+
+Example:
+
+Supplier Name:
+ABC FOOD TRADING LLC
+
+Supplier TRN:
+100123456700003
+
+Invoice Number:
+INV-1001
+
+Invoice Date:
+2026-09-15
+
+Purchase Order:
+4500001001
+
+Invoice Amount:
+997.50
+
+Currency:
+AED
+
+The user then reviews/corrects these values.
+
+============================================================
+2. CURRENT ENVIRONMENT
+============================================================
+
+Replit mobile preview currently runs through Expo Go.
+
+Therefore:
+
+RNMLKitTextRecognition
+
+IS NOT AVAILABLE.
+
+This is already known.
+
+DO NOT spend this task trying to make ML Kit execute inside Expo Go.
+
+Expected provider for current Replit testing:
+
+BACKEND_BASIC_OCR
+
+Native ML Kit remains configured for future Development Build.
+
+============================================================
+3. TRACE THE ACTUAL FAILURE
+============================================================
+
+Instrument the complete pipeline.
+
+Required trace:
+
+[BASIC-OCR] START
+
+[BASIC-OCR] ENVIRONMENT
+Expo Go / Development Build / Web
+
+[BASIC-OCR] PROVIDER_SELECTED
+BACKEND_BASIC_OCR
+
+[BASIC-OCR] DOCUMENT
+pageCount=<n>
+pdfUri=<scheme only>
+
+[BASIC-OCR] UPLOAD_STARTED
+
+[BASIC-OCR] UPLOAD_HTTP_STATUS
+<number>
+
+[BASIC-OCR] BACKEND_DOCUMENT_RECEIVED
+<document id if available>
+
+[BASIC-OCR] TEXT_EXTRACTION_STARTED
+
+[BASIC-OCR] TEXT_EXTRACTION_METHOD
+PDF_TEXT / BUILT_IN_OCR
+
+[BASIC-OCR] RAW_TEXT_LENGTH
+<number>
+
+[BASIC-OCR] PARSER_STARTED
+
+[BASIC-OCR] PARSER_RESULT
+{
+ supplierNamePresent,
+ supplierTrnPresent,
+ invoiceNumberPresent,
+ invoiceDatePresent,
+ poNumberPresent,
+ invoiceGrossPresent,
+ currencyPresent
+}
+
+[BASIC-OCR] RESPONSE_RECEIVED
+
+[BASIC-OCR] FORM_POPULATED
+
+If anything fails:
+
+[BASIC-OCR] FAILED_STAGE
+<exact stage>
+
+[BASIC-OCR] ERROR
+<actual development error>
+
+Do not log complete sensitive invoice contents in production.
+
+============================================================
+4. FIRST VERIFY MOBILE IS ACTUALLY CALLING BACKEND
+============================================================
+
+This is the first acceptance check.
+
+After CREATE PDF:
+
+confirm an HTTP request is actually made to the SILA ME API.
+
+Use existing authenticated Mobile API client.
+
+Do not use localhost from phone.
+
+Do not create a separate API base URL.
+
+Confirm:
+
+Authorization: Bearer <existing mobile token>
+
+is attached by the existing client.
+
+Do not log token value.
+
+If backend request is NOT happening:
+
+fix this before touching OCR/parser code.
+
+============================================================
+5. VERIFY ENDPOINT
+============================================================
+
+Find the actual existing Basic OCR endpoint.
+
+Do NOT assume the previous suggested route exists.
+
+Search backend for:
+
+basic-extract
+
+basic extraction
+
+BasicInvoice
+
+BasicOcr
+
+IOcrProvider
+
+BuiltInOcrProvider
+
+InvoiceExtraction
+
+DocumentExtraction
+
+ExtractBasic
+
+OCR
+
+Determine the REAL endpoint.
+
+Then ensure Mobile calls that exact endpoint.
+
+Do not create duplicate endpoints unless none exists.
+
+============================================================
+6. VERIFY REQUEST FORMAT
+============================================================
+
+Inspect what the backend endpoint expects.
+
+Possible:
+
+multipart/form-data PDF
+
+multipart images
+
+documentId
+
+JSON request
+
+The Mobile request MUST match the actual ASP.NET controller contract.
+
+If multipart:
+
+use the correct field name.
+
+Example:
+
+document
+
+must not accidentally be sent as:
+
+file
+
+invoice
+
+pdf
+
+attachment
+
+unless controller expects that.
+
+This is a common source of silent OCR failure.
+
+============================================================
+7. IMPORTANT EXPO GO FILE UPLOAD CHECK
+============================================================
+
+The generated PDF URI in Expo Go may not behave exactly like a native
+file:// URI.
+
+Inspect:
+
+pdfUri
+
+Determine whether it is:
+
+file://
+content://
+blob:
+data:
+http:
+https:
+
+Build the upload correctly for the current environment.
+
+Do not assume every PDF URI can be appended to FormData identically.
+
+Verify the backend receives:
+
+non-zero file
+
+correct content type:
+
+application/pdf
+
+correct filename:
+
+invoice-scan.pdf
+
+============================================================
+8. VERIFY FILE SIZE
+============================================================
+
+Before sending:
+
+log:
+
+[BASIC-OCR] PDF_SIZE_BYTES
+
+Expected:
+
+> 0
+
+Backend also logs:
+
+received file length.
+
+If:
+
+Mobile PDF = 1,500,000 bytes
+
+but
+
+Backend receives = 0 bytes
+
+then OCR is not the problem.
+
+Fix upload first.
+
+============================================================
+9. BACKEND MUST VERIFY DOCUMENT
+============================================================
+
+At backend:
+
+reject empty document with structured error:
+
+EMPTY_DOCUMENT
+
+Verify:
+
+file length
+
+MIME type
+
+PDF signature where practical.
+
+For PDF expected header:
+
+%PDF
+
+Do not send an empty/invalid browser Blob and then blame OCR.
+
+============================================================
+10. DIGITAL PDF VS SCANNED PDF
+============================================================
+
+The scanner-generated PDF consists of images.
+
+Therefore embedded PDF text will normally be absent.
+
+Pipeline:
+
+PDF
+→ try embedded text extraction
+→ insufficient/no text
+→ OCR REQUIRED
+
+Do not treat:
+
+PDF text length = 0
+
+as final extraction failure.
+
+That must trigger:
+
+BuiltInOcrProvider.
+
+============================================================
+11. CRITICAL: VERIFY BUILT-IN OCR IS REAL
+============================================================
+
+Inspect:
+
+BuiltInOcrProvider
+
+Determine what it actually does.
+
+It must NOT be:
+
+placeholder
+
+throw NotImplementedException
+
+development fake returning empty string
+
+stub returning ""
+
+mock returning sample text
+
+interface with no real implementation.
+
+Report the exact implementation/package.
+
+We need a REAL built-in OCR engine.
+
+============================================================
+12. OCR SCANNER-GENERATED PDF CORRECTLY
+============================================================
+
+If BuiltInOcrProvider accepts images rather than PDF:
+
+PDF
+→ render each PDF page to image
+→ OCR each page
+→ combine text.
+
+Do NOT pass raw PDF bytes into an image-only OCR engine.
+
+For scanner PDF:
+
+Page 1
+→ image
+→ OCR
+
+Page 2
+→ image
+→ OCR
+
+Page 3
+→ image
+→ OCR
+
+Then combine text while preserving page boundaries.
+
+============================================================
+13. BETTER OPTION — SEND PROCESSED IMAGES
+============================================================
+
+Because Mobile already has:
+
+ScanPage.processedImageUri
+
+consider the fastest Basic OCR path:
+
+Mobile
+→ upload processed scanner page images
+→ backend OCR images directly
+→ Basic Invoice Parser
+
+This avoids:
+
+Images
+→ PDF
+→ render PDF back to images
+→ OCR.
+
+PDF should still be created and retained as the official scanned
+document.
+
+But BASIC OCR may use the original high-quality processed images.
+
+Preferred current flow:
+
+processedImageUri[]
+        ↓
+Backend Basic OCR
+        ↓
+Raw Text
+        ↓
+Basic Parser
+
+AND separately:
+
+processedImageUri[]
+        ↓
+pdf-lib
+        ↓
+PDF
+
+Do not lower image quality.
+
+============================================================
+14. IF USING PAGE IMAGES
+============================================================
+
+Endpoint may accept:
+
+pages[]
+
+Each page:
+
+JPEG/PNG
+
+Maintain page order.
+
+OCR:
+
+Page 1 first
+
+Page 2...
+
+Final page...
+
+Header extraction prefers Page 1.
+
+Gross total may be on final page.
+
+============================================================
+15. IMAGE PREPROCESSING
+============================================================
+
+Before OCR, only if needed:
+
+correct orientation
+
+grayscale
+
+contrast enhancement
+
+deskew
+
+noise reduction
+
+document crop
+
+Do not aggressively threshold invoice images until text disappears.
+
+The scanner already performs perspective/crop processing.
+
+Use processed high-resolution image.
+
+============================================================
+16. RAW OCR TEXT IS THE FIRST REAL QUALITY GATE
+============================================================
+
+Before debugging the invoice parser:
+
+prove OCR produces text.
+
+Acceptance:
+
+RAW_TEXT_LENGTH > 0
+
+and development inspection shows invoice text such as:
+
+supplier
+
+TRN
+
+invoice
+
+date
+
+PO
+
+amount.
+
+If raw OCR text is empty:
+
+DO NOT modify regex/parser.
+
+Fix OCR.
+
+If raw OCR text is good but fields are blank:
+
+THEN fix parser.
+
+============================================================
+17. DEVELOPMENT OCR INSPECTION
+============================================================
+
+In Development only, create a safe debug mechanism to inspect:
+
+OCR Provider
+
+Page Count
+
+Text Length
+
+First limited OCR text preview
+
+Example:
+
+OCR Provider:
+Built-In
+
+Pages:
+2
+
+Characters:
+1842
+
+Do not expose this diagnostics panel in production.
+
+============================================================
+18. BASIC PARSER
+============================================================
+
+Only after OCR text is proven.
+
+Extract:
+
+Supplier Name
+Supplier TRN
+Invoice Number
+Invoice Date
+PO Number
+Invoice Gross
+Currency
+
+Use deterministic parser.
+
+============================================================
+19. SUPPLIER TRN
+============================================================
+
+Recognize:
+
+TRN
+Tax Registration Number
+VAT Registration Number
+VAT Reg No
+Tax Reg No
+
+UAE:
+
+15 digits.
+
+Handle OCR spacing:
+
+100 123 456 700 003
+
+normalize safely to:
+
+100123456700003
+
+Prefer number near TRN/VAT registration label.
+
+============================================================
+20. INVOICE NUMBER
+============================================================
+
+Recognize:
+
+Invoice No
+Invoice Number
+Invoice #
+Inv No
+Inv #
+Tax Invoice No
+Tax Invoice Number
+
+Do not confuse:
+
+PO
+TRN
+Delivery Note
+Customer Account.
+
+============================================================
+21. INVOICE DATE
+============================================================
+
+Recognize:
+
+Invoice Date
+Tax Invoice Date
+Date
+
+Formats:
+
+15/09/2026
+15-09-2026
+2026-09-15
+15 Sep 2026
+15 September 2026
+
+Normalize:
+
+2026-09-15.
+
+============================================================
+22. PO NUMBER
+============================================================
+
+Recognize:
+
+PO
+PO No
+PO Number
+Purchase Order
+Purchase Order No
+Customer PO
+Your PO
+
+Do not hardcode SAP-only PO formats.
+
+============================================================
+23. GROSS AMOUNT
+============================================================
+
+Priority:
+
+Grand Total
+
+Total Payable
+
+Amount Due
+
+Invoice Total
+
+Total Including VAT
+
+Gross Amount
+
+Avoid:
+
+Subtotal
+
+Net before VAT
+
+VAT amount
+
+individual line total.
+
+For multipage invoices:
+
+search final page with increased priority.
+
+============================================================
+24. CURRENCY
+============================================================
+
+Recognize:
+
+AED
+USD
+EUR
+GBP
+SAR
+QAR
+OMR
+BHD
+KWD
+MYR
+INR
+
+Do not automatically default to AED.
+
+============================================================
+25. SUPPLIER NAME
+============================================================
+
+Prefer Page 1 top/header.
+
+Use:
+
+supplier/vendor/from
+
+TRN proximity
+
+address/header proximity.
+
+Avoid:
+
+Bill To
+Ship To
+Sold To
+Customer
+
+If confidence insufficient:
+
+leave blank.
+
+============================================================
+26. RESPONSE MUST DISTINGUISH PARTIAL SUCCESS
+============================================================
+
+Do NOT consider OCR a total failure just because one field is missing.
+
+Example:
+
+Supplier Name = found
+
+TRN = found
+
+Invoice Number = found
+
+Date = found
+
+PO = missing
+
+Gross = found
+
+Currency = found
+
+Response should be:
+
+status = PARTIAL
+
+NOT:
+
+OCR_FAILED.
+
+Populate the six found values.
+
+Leave only PO blank.
+
+============================================================
+27. STATUS MODEL
+============================================================
+
+Use:
+
+SUCCESS
+
+PARTIAL
+
+FAILED
+
+SUCCESS:
+all expected fields confidently found.
+
+PARTIAL:
+raw OCR succeeded but one or more fields missing.
+
+FAILED:
+OCR could not obtain useful text or technical processing failed.
+
+Current UI message:
+
+"We couldn't read some invoice details automatically..."
+
+should correspond primarily to PARTIAL.
+
+Even in PARTIAL:
+
+ALL successfully extracted fields MUST be populated.
+
+============================================================
+28. MOBILE RESPONSE HANDLING
+============================================================
+
+Check whether current Mobile code does this incorrectly:
+
+if status !== SUCCESS:
+    discard extraction
+    show fallback
+
+That is WRONG.
+
+Correct:
+
+if SUCCESS:
+    populate fields
+
+if PARTIAL:
+    populate ALL returned fields
+    show review message
+
+if FAILED:
+    blank unknown fields
+    show manual fallback.
+
+============================================================
+29. IMPORTANT FORM BUG
+============================================================
+
+Check React Hook Form or equivalent.
+
+Possible current failure:
+
+form created:
+
+useForm({
+  defaultValues: emptyValues
+})
+
+OCR finishes later.
+
+basicExtraction updates.
+
+BUT input fields stay blank.
+
+Correct pattern:
+
+useEffect(() => {
+   if (basicExtraction) {
+      reset({
+        supplierName: basicExtraction.supplierName ?? "",
+        supplierTrn: basicExtraction.supplierTrn ?? "",
+        supplierInvoiceNumber:
+           basicExtraction.supplierInvoiceNumber ?? "",
+        invoiceDate: basicExtraction.invoiceDate ?? "",
+        purchaseOrderNumber:
+           basicExtraction.purchaseOrderNumber ?? "",
+        invoiceGross:
+           basicExtraction.invoiceGross ?? "",
+        currency:
+           basicExtraction.currency ?? ""
+      });
+   }
+}, [basicExtraction, reset]);
+
+Use the existing form architecture appropriately.
+
+============================================================
+30. RE-READ INVOICE
+============================================================
+
+RE-READ INVOICE must:
+
+keep existing PDF/pages
+
+set OCR state PROCESSING
+
+call backend Basic OCR
+
+receive result
+
+update ScanSession.basicExtraction
+
+reset/populate form
+
+return state to SUCCESS/PARTIAL/FAILED.
+
+Do not recreate scanner session.
+
+Do not require rescan.
+
+============================================================
+31. TEST WITH ACTUAL SCANNED INVOICE
+============================================================
+
+Do not test only using hardcoded OCR text.
+
+Use an actual invoice image/PDF through the same pipeline.
+
+Required proof:
+
+Backend received real document/image.
+
+OCR engine returned real text.
+
+Parser extracted actual fields.
+
+Mobile populated them.
+
+============================================================
+32. TEST MULTIPAGE
+============================================================
+
+Page 1:
+
+Supplier
+TRN
+Invoice
+Date
+PO
+
+Page 2:
+
+Items
+
+Page 3:
+
+Grand Total
+
+Expected:
+
+one combined extraction.
+
+============================================================
+33. TEST PARTIAL EXTRACTION
+============================================================
+
+Invoice contains everything except PO.
+
+Expected:
+
+Supplier populated
+TRN populated
+Invoice populated
+Date populated
+Gross populated
+Currency populated
+PO blank
+
+Show:
+
+"Some invoice details could not be read automatically.
+Please review the highlighted fields."
+
+Do NOT clear the five/six successful fields.
+
+============================================================
+34. IMPROVE USER MESSAGE
+============================================================
+
+Replace generic message when PARTIAL with:
+
+"Some invoice details could not be read automatically.
+We've filled in what we found — please review the highlighted fields."
+
+For FAILED:
+
+"We couldn't read this invoice automatically.
+Your scanned document is safe. You can try Re-read Invoice or enter
+the details manually."
+
+This makes the behavior clearer.
+
+============================================================
+35. FIELD HIGHLIGHT
+============================================================
+
+On PARTIAL:
+
+missing fields can have subtle amber indicator:
+
+Review required
+
+Successfully extracted fields remain normal.
+
+Do not show entire form as failed.
+
+============================================================
+36. DO NOT USE EXTERNAL AGENT
+============================================================
+
+For this debugging task:
+
+DO NOT configure external extraction provider.
+
+We need to prove:
+
+SILA ME Built-In Basic OCR
+
+works independently.
+
+External agent remains optional for Cloud full extraction.
+
+============================================================
+37. DO NOT USE MOCK OCR FOR ACCEPTANCE
+============================================================
+
+Mock OCR may be used in unit tests.
+
+Acceptance requires:
+
+REAL document
+→ REAL backend OCR
+→ REAL OCR text
+→ parser
+→ Mobile fields.
+
+============================================================
+38. DO NOT TOUCH
+============================================================
+
+Do not modify:
+
+scanner capture
+
+native scanner
+
+PDF generation
+
+Delete Page
+
+crop
+
+rotate
+
+image quality
+
+Mobile authentication
+
+Cloud frontend
+
+PO matching
+
+GRN
+
+inventory
+
+external agent configuration.
+
+============================================================
+39. REQUIRED FINAL REPORT
+============================================================
+
+Do NOT simply return:
+
+"Basic OCR fixed."
+
+Return:
+
+FAILED STAGE:
+<exact stage>
+
+ROOT CAUSE:
+<exact technical cause>
+
+MOBILE BASIC OCR ENDPOINT:
+<actual route>
+
+REQUEST TYPE:
+PDF / IMAGES / OTHER
+
+MOBILE FILE SIZE:
+<number>
+
+BACKEND RECEIVED FILE SIZE:
+<number>
+
+OCR PROVIDER:
+<exact implementation>
+
+OCR PACKAGE:
+<package + version>
+
+REAL OCR OR MOCK:
+REAL / MOCK
+
+PDF TEXT EXTRACTION:
+<result>
+
+OCR FALLBACK INVOKED:
+YES/NO
+
+PAGES OCR'D:
+<number>
+
+RAW OCR TEXT LENGTH:
+<number>
+
+PARSER INVOKED:
+YES/NO
+
+SUPPLIER NAME:
+<found/missing>
+
+SUPPLIER TRN:
+<found/missing>
+
+INVOICE NUMBER:
+<found/missing>
+
+INVOICE DATE:
+<found/missing>
+
+PO NUMBER:
+<found/missing>
+
+INVOICE GROSS:
+<found/missing>
+
+CURRENCY:
+<found/missing>
+
+RESPONSE STATUS:
+SUCCESS / PARTIAL / FAILED
+
+MOBILE RECEIVED VALUES:
+YES/NO
+
+SCAN SESSION UPDATED:
+YES/NO
+
+FORM RESET/POPULATION:
+YES/NO
+
+RE-READ INVOICE:
+PASS/FAIL
+
+PARTIAL EXTRACTION PRESERVES FOUND FIELDS:
+PASS/FAIL
+
+REAL SCANNED INVOICE TEST:
+PASS/FAIL
+
+EXPO GO TEST:
+PASS/FAIL
+
+NATIVE ML KIT:
+PHYSICAL DEVELOPMENT BUILD TEST PENDING USER ACTION
+
+FILES MODIFIED:
+<exact files>
+
+AUTH MODIFIED:
+NO
+
+SCANNER MODIFIED:
+NO
+
+PDF GENERATION MODIFIED:
+NO
+
+FINAL STATUS:
+BASIC OCR WORKING / BASIC OCR NOT WORKING
+
+If REAL OCR has not produced actual invoice text:
+
+DO NOT COMMIT AND DO NOT CLAIM PASS.
+
+If proven:
+
+git commit -m "fix: complete basic invoice ocr extraction pipeline"
+
+Return commit SHA.
+
+STOP.

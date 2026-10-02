@@ -1,0 +1,25 @@
+export const silaTokens = {
+  brandPrimary: '#177DB8',
+  brandPrimaryDark: '#0F5F8C',
+  brandPrimaryLight: '#EAF5FB',
+  brandGreen: '#679659',
+  borderColor: '#B8D8E8',
+  borderStrong: '#74ACCA',
+  background: '#FFFFFF',
+  surface: '#FFFFFF',
+  surfaceSubtle: '#F7FBFD',
+  textPrimary: '#102A3A',
+  textSecondary: '#5D6C75',
+  textMuted: '#7B8990',
+  success: '#2F7D55',
+  successSurface: '#EDF8F1',
+  warning: '#B7791F',
+  warningSurface: '#FFF8E8',
+  error: '#C44747',
+  errorSurface: '#FFF1F1',
+  radiusSm: 8,
+  radiusMd: 12,
+  radiusLg: 14,
+} as const;
+
+export type SilaTokens = typeof silaTokens;

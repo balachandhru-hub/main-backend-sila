@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "SILA ME Cloud"
+description = "A secure browser workspace for SILA ME operations, starting with authenticated access and a focused home dashboard."
+version = "1.0.0"
+id = "artifacts/sila-me-cloud"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22581
+
+[services.development]
+run = "pnpm --filter @workspace/sila-me-cloud run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/sila-me-cloud", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/sila-me-cloud/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22581"
+BASE_PATH = "/"

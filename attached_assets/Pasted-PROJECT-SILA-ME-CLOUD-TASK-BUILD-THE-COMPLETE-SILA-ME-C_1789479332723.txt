@@ -1,0 +1,3972 @@
+PROJECT: SILA ME CLOUD
+TASK: BUILD THE COMPLETE SILA ME CLOUD FRONTEND FOUNDATION
+
+PRODUCT:
+SILA ME
+
+FULL NAME:
+SILA ME — Menu Engineering & Operations
+
+APPLICATION:
+SILA ME Cloud
+
+============================================================
+0. PRIMARY OBJECTIVE
+============================================================
+
+Transform the existing SILA ME Cloud application into a polished,
+production-oriented enterprise hospitality application.
+
+This task is primarily FRONTEND.
+
+The existing SILA ME architecture must remain:
+
+SILA ME Cloud
+React + TypeScript + Vite
+        ↓
+Existing ASP.NET Core API
+        ↓
+PostgreSQL
+
+SILA ME Mobile uses the SAME backend separately.
+
+DO NOT:
+- rebuild the backend
+- replace ASP.NET Core
+- create another database
+- replace authentication
+- replace existing Cloud cookie authentication
+- modify Mobile
+- break organization/unit/permission architecture
+- rebuild working Invoice/GRN APIs
+- create fake backend business transactions
+
+Build a strong frontend framework that can support the complete
+SILA ME product.
+
+============================================================
+1. FIRST INSPECT THE EXISTING APPLICATION
+============================================================
+
+Before changing code inspect:
+
+apps/cloud
+
+existing routes
+
+existing layout
+
+existing login
+
+existing dashboard
+
+existing API client
+
+React Query configuration
+
+authentication/session handling
+
+organization/access context
+
+existing Invoice screens
+
+existing GRN screens
+
+existing administration screens
+
+existing components
+
+existing CSS/theme
+
+existing design tokens
+
+existing generated API clients
+
+existing permissions
+
+Do not create duplicate functionality if an implementation already exists.
+
+Return internally a map of:
+
+EXISTING
+REUSE
+IMPROVE
+NEW
+
+before implementation.
+
+============================================================
+2. PROTECT EXISTING FUNCTIONALITY
+============================================================
+
+These are frozen unless a frontend integration adjustment is required:
+
+Cloud login
+
+Cloud cookie authentication
+
+/api/auth/cloud/login
+
+/api/auth/cloud/session
+
+/api/auth/cloud/logout
+
+/api/me
+
+organization access
+
+operating unit access
+
+role/permission enforcement
+
+invoice APIs
+
+document APIs
+
+GRN APIs
+
+PO APIs
+
+backend extraction
+
+invoice_ext_data
+
+Mobile authentication
+
+Mobile scanner
+
+Mobile OCR
+
+Mobile GRN flow
+
+Do not modify backend authorization to make frontend development easier.
+
+The frontend must respect backend security.
+
+============================================================
+3. SILA ME DESIGN IDENTITY
+============================================================
+
+Use the supplied SILA ME logo as the visual source of truth.
+
+Product visual direction:
+
+WHITE
+CLEAN
+PREMIUM
+ENTERPRISE
+HOSPITALITY
+MODERN
+SPACIOUS
+DATA-DRIVEN
+
+ALL PAGE BACKGROUNDS:
+
+#FFFFFF
+
+Do NOT create:
+
+gray page backgrounds
+dark application backgrounds
+dark sidebar
+gradients
+large blue background panels
+random multicolor UI
+
+============================================================
+4. SILA BRAND COLOR
+============================================================
+
+Inspect the actual SILA ME logo asset.
+
+Extract/sample its primary light-blue color.
+
+Create centralized tokens.
+
+Example structure:
+
+--sila-primary
+--sila-primary-dark
+--sila-primary-light
+--sila-primary-50
+--sila-border
+--sila-background
+--sila-surface
+--sila-text-primary
+--sila-text-secondary
+--sila-success
+--sila-warning
+--sila-error
+--sila-info
+
+Do NOT invent an unrelated blue.
+
+Because the SILA logo blue may be too light for white button text,
+derive an ACCESSIBLE darker blue for:
+
+primary buttons
+selected states
+links where necessary
+
+Keep the original logo blue for:
+
+borders
+highlights
+icons
+active indicators
+light accents.
+
+============================================================
+5. TYPOGRAPHY
+============================================================
+
+Preferred:
+
+Inter
+
+Fallback:
+
+system-ui
+-apple-system
+BlinkMacSystemFont
+Segoe UI
+sans-serif
+
+Suggested:
+
+Main page title:
+28–32px
+
+Section heading:
+20–24px
+
+Card title:
+16–18px
+
+Body:
+14–16px
+
+Caption:
+12–13px
+
+Text colors:
+
+Primary:
+dark navy / charcoal
+
+Secondary:
+medium gray
+
+Links:
+SILA blue
+
+Do not use light-blue body text.
+
+============================================================
+6. GLOBAL APPLICATION SHELL
+============================================================
+
+Build a reusable:
+
+<SilaCloudLayout>
+
+Structure:
+
+┌─────────────────────────────────────────────────────────────┐
+│ HEADER                                                      │
+├──────────────┬──────────────────────────────────────────────┤
+│              │                                              │
+│ SIDEBAR      │              PAGE CONTENT                    │
+│              │                                              │
+│              │                                              │
+└──────────────┴──────────────────────────────────────────────┘
+
+Desktop:
+
+Header approximately 64px.
+
+Sidebar approximately 240–260px expanded.
+
+Sidebar collapsible to icon-only mode.
+
+Main content responsive.
+
+============================================================
+7. HEADER
+============================================================
+
+Header:
+
+pure white
+
+thin SILA-blue/light-blue bottom border
+
+LEFT:
+
+SILA ME logo
+
+SILA ME Cloud
+
+CENTER/CONTEXT AREA:
+
+Current Property / Operating Unit selector
+
+Example:
+
+Demo Hospitality Group
+Dubai Main Hotel
+Main Store
+
+RIGHT:
+
+Notifications
+
+Help optional
+
+User avatar/initials
+
+User name
+
+Role
+
+User menu
+
+User menu:
+
+My Profile
+Current Access
+Logout
+
+Do not put unnecessary controls in header.
+
+============================================================
+8. SIDEBAR
+============================================================
+
+Sidebar:
+
+WHITE
+
+thin light-blue right border
+
+NO DARK SIDEBAR.
+
+Navigation text:
+
+dark navy/charcoal
+
+Icons:
+
+outline icons
+
+Inactive:
+gray/navy
+
+Active:
+SILA blue
+
+Active item background:
+
+very pale SILA blue
+
+Optional:
+
+3px SILA blue left indicator.
+
+Support:
+
+expanded mode
+
+collapsed icon mode
+
+tooltips when collapsed.
+
+============================================================
+9. MAIN NAVIGATION
+============================================================
+
+Build this navigation architecture.
+
+DASHBOARD
+
+MENU ENGINEERING
+  Menus
+  Recipes
+  Ingredients
+  Costing
+  Portion Planning
+  Demand Forecast
+  Menu Performance
+
+INVENTORY
+  Stock Overview
+  Inventory Count
+  Stock Adjustments
+  Stock Transfers
+  Goods Issue
+  Damage / Write-Off
+  Batch & Expiry
+
+RECEIVING
+  Purchase Orders
+  Invoices
+  Goods Receipts
+  Receiving Exceptions
+
+PROCUREMENT
+  Material Requirements
+  Purchase Suggestions
+  Supplier Comparison
+  Reorder Planning
+
+DOCUMENTS
+  Document Inbox
+  Invoice Capture
+  Delivery Notes
+  OCR / Extraction Results
+  Document Archive
+
+APPROVALS
+  My Approvals
+  Workflow Monitor
+  Approval Configuration
+
+ANALYTICS
+  Consumption
+  Food Cost
+  Menu Performance
+  Inventory Variance
+  Waste
+  Purchase Trends
+
+MASTER DATA
+  Materials
+  Ingredients
+  Recipes
+  Menu Items
+  Suppliers
+  Supplier Materials
+  UOM
+  Categories
+  Locations
+
+ADMINISTRATION
+  Users
+  Roles & Permissions
+  Organization Structure
+  Properties & Stores
+  Document Extraction
+  Integrations
+  Configurations
+  Audit Logs
+
+============================================================
+10. PERMISSION-AWARE NAVIGATION
+============================================================
+
+Navigation MUST respect current user's permissions.
+
+Do not show admin menu to unauthorized users.
+
+Do not rely ONLY on frontend hiding.
+
+Backend remains authoritative.
+
+Frontend behavior:
+
+permission unavailable
+→ hide navigation where appropriate
+
+direct URL attempted
+→ backend authorization
+→ controlled Access Denied page.
+
+Create reusable:
+
+<PermissionGate>
+
+and:
+
+<RoutePermissionGuard>
+
+Do not scatter permission checks throughout JSX.
+
+============================================================
+11. ORGANIZATION / PROPERTY CONTEXT
+============================================================
+
+SILA ME is multi-property.
+
+Cloud UI must clearly show current context.
+
+Example hierarchy:
+
+Hospitality Group
+    ↓
+Property / Hotel
+    ↓
+Outlet / Kitchen / Store
+    ↓
+Storage Location
+
+Create a context selector.
+
+Example:
+
+Property:
+FIVE Palm Jumeirah
+
+Operating Unit:
+Main Store
+
+Changing context refreshes relevant:
+
+Dashboard
+
+Inventory
+
+PO
+
+Receiving
+
+Menu
+
+Analytics
+
+data.
+
+Never hardcode FIVE or another customer.
+
+============================================================
+12. DASHBOARD
+============================================================
+
+Create a premium SILA ME Dashboard.
+
+Top:
+
+Good Morning, <Display Name>
+
+small text:
+
+Here's what's happening across your operation today.
+
+Then context:
+
+Property
+Operating Unit
+Last refreshed
+
+============================================================
+13. DASHBOARD KPI ROW
+============================================================
+
+Create reusable KPI cards.
+
+Suggested initial KPIs:
+
+Today's Menu Items
+
+Ingredient Requirement
+
+Open Purchase Orders
+
+Pending Receipts
+
+Current Stock Value
+
+Low Stock Items
+
+Pending Approvals
+
+Invoice Exceptions
+
+Cards:
+
+white background
+
+thin SILA blue border
+
+12px radius
+
+subtle shadow
+
+small icon
+
+large metric
+
+label
+
+optional trend indicator.
+
+Do not use giant colored cards.
+
+============================================================
+14. DASHBOARD — OPERATIONAL ALERTS
+============================================================
+
+Section:
+
+Needs Attention
+
+Examples:
+
+12 Low Stock Items
+
+4 POs Awaiting Receipt
+
+3 Invoice Exceptions
+
+2 Expiring Batches
+
+5 Pending Approvals
+
+1 High Food Cost Alert
+
+Each item clickable.
+
+Use severity carefully:
+
+Red:
+critical/error
+
+Amber:
+warning
+
+Blue:
+information
+
+Green:
+healthy/completed.
+
+============================================================
+15. DASHBOARD — MENU & DEMAND
+============================================================
+
+Create:
+
+Today's Menu Plan
+
+Example columns:
+
+Meal
+Menu
+Expected Guests
+Planned Portions
+Ingredient Readiness
+Status
+
+Meals:
+
+Breakfast
+Lunch
+Dinner
+Snacks
+
+Do not hardcode production data.
+
+Use API if available.
+
+If API is not yet available:
+
+build UI with clearly marked frontend development fixtures,
+isolated from production services.
+
+============================================================
+16. DASHBOARD — INVENTORY HEALTH
+============================================================
+
+Create:
+
+Inventory Health
+
+Components:
+
+In Stock
+
+Low Stock
+
+Out of Stock
+
+Expiring Soon
+
+Excess Stock
+
+Include a simple chart if useful.
+
+Use existing chart library if installed.
+
+Do not add a large visualization library unnecessarily.
+
+============================================================
+17. DASHBOARD — PURCHASE / RECEIVING
+============================================================
+
+Create:
+
+Purchase & Receiving Overview
+
+Metrics:
+
+Open PO Value
+
+Open PO Lines
+
+Due Today
+
+Overdue
+
+Partially Received
+
+Pending GRN
+
+Recent Goods Receipts table.
+
+============================================================
+18. DASHBOARD — FOOD COST
+============================================================
+
+Create:
+
+Food Cost Overview
+
+Metrics:
+
+Planned Food Cost
+
+Actual Food Cost
+
+Variance
+
+Waste Cost
+
+Purchase Price Variance
+
+Show trend over selected period.
+
+============================================================
+19. MENU ENGINEERING — MENUS
+============================================================
+
+Route:
+
+/menu-engineering/menus
+
+Page header:
+
+Menus
+
+Actions:
+
+CREATE MENU
+
+Search
+
+Filters:
+
+Property
+Outlet
+Meal Type
+Status
+
+Table/cards:
+
+Menu Name
+Property
+Outlet
+Meal Type
+Effective From
+Effective To
+Items
+Status
+Updated At
+Actions
+
+Statuses:
+
+DRAFT
+ACTIVE
+INACTIVE
+ARCHIVED
+
+============================================================
+20. CREATE / EDIT MENU
+============================================================
+
+Use a professional drawer or full page.
+
+Fields:
+
+Menu Name
+
+Property
+
+Outlet
+
+Meal Type
+
+Cuisine optional
+
+Effective From
+
+Effective To
+
+Description
+
+Status
+
+Menu Items
+
+Allow:
+
+Add Menu Item
+
+Remove
+
+Reorder
+
+Set Portion Size
+
+Set Planned Portions.
+
+============================================================
+21. RECIPES
+============================================================
+
+Route:
+
+/menu-engineering/recipes
+
+Header:
+
+Recipes
+
+KPI summary:
+
+Total Recipes
+Active Recipes
+Average Recipe Cost
+High Cost Variance
+
+Table:
+
+Recipe Code
+Recipe Name
+Category
+Yield
+Serving Size
+Current Cost
+Cost Per Portion
+Status
+Updated
+
+Actions:
+
+CREATE RECIPE
+IMPORT
+EXPORT
+
+============================================================
+22. RECIPE DETAIL
+============================================================
+
+Recipe Detail should be one of the strongest screens.
+
+Header:
+
+Recipe Name
+Recipe Code
+Status
+
+Tabs:
+
+OVERVIEW
+
+INGREDIENTS
+
+COSTING
+
+NUTRITION
+
+ALLERGENS
+
+HISTORY
+
+Overview:
+
+Image optional
+Category
+Cuisine
+Yield
+Portion
+Preparation time
+Cooking time
+Instructions
+
+Ingredients:
+
+Ingredient
+Quantity
+UOM
+Waste %
+Net Quantity
+Unit Cost
+Total Cost
+
+Footer:
+
+TOTAL RECIPE COST
+
+COST PER PORTION
+
+============================================================
+23. RECIPE COSTING
+============================================================
+
+Show:
+
+Ingredient Cost
+
+Waste Cost
+
+Total Recipe Cost
+
+Cost Per Portion
+
+Target Selling Price
+
+Actual Selling Price
+
+Food Cost %
+
+Gross Margin %
+
+Allow configurable target food-cost percentage.
+
+Highlight excessive cost variance.
+
+============================================================
+24. INGREDIENTS
+============================================================
+
+Route:
+
+/menu-engineering/ingredients
+
+Table:
+
+Ingredient Code
+Ingredient Name
+Category
+Base UOM
+Current Stock
+Average Cost
+Preferred Supplier
+Allergen
+Status
+
+Filters:
+
+Category
+Supplier
+Stock Status
+Property
+
+============================================================
+25. PORTION PLANNING
+============================================================
+
+Route:
+
+/menu-engineering/portion-planning
+
+This is a KEY SILA ME screen.
+
+Inputs:
+
+Property
+
+Date
+
+Meal
+
+Menu
+
+Expected Guests
+
+Guest Mix optional:
+
+Adults
+Children
+
+Nationality/Guest Profile optional future capability
+
+Occupancy/Booking input when available.
+
+System calculates:
+
+Menu Item
+Recommended Portions
+Final Portions
+Ingredient Requirement
+
+User can adjust:
+
+Final Portions.
+
+============================================================
+26. INGREDIENT REQUIREMENT
+============================================================
+
+From finalized menu/portions calculate/display:
+
+Ingredient
+
+Required Qty
+
+UOM
+
+Available Stock
+
+Shortage
+
+On Order
+
+Net Requirement
+
+Recommended Action
+
+Example:
+
+Chicken Breast
+Required 80 KG
+Stock 50 KG
+On Order 10 KG
+Shortage 20 KG
+
+Action:
+
+PROCURE 20 KG
+
+This frontend should be ready to consume the corresponding API.
+
+Do not implement fake inventory calculations in UI.
+
+============================================================
+27. DEMAND FORECAST
+============================================================
+
+Route:
+
+/menu-engineering/demand-forecast
+
+Filters:
+
+Property
+Outlet
+Date Range
+Meal
+
+Show:
+
+Expected Guests
+
+Forecast Portions
+
+Historical Consumption
+
+Recommended Portions
+
+Confidence
+
+Potential Waste Risk
+
+Future integrations may include:
+
+Hotel bookings
+PMS
+Events
+Weather
+Historical consumption
+
+Build UI extensibly.
+
+============================================================
+28. MENU PERFORMANCE
+============================================================
+
+Menu Engineering analytics:
+
+Popularity
+
+Contribution Margin
+
+Food Cost
+
+Waste
+
+Consumption
+
+Suggested categories:
+
+STAR
+
+PLOWHORSE
+
+PUZZLE
+
+DOG
+
+Provide quadrant visualization if practical.
+
+Tooltip must explain classification.
+
+============================================================
+29. STOCK OVERVIEW
+============================================================
+
+Route:
+
+/inventory/stock
+
+Header:
+
+Stock Overview
+
+KPI:
+
+Total Stock Value
+Total Materials
+Low Stock
+Out of Stock
+Expiring Soon
+
+Filters:
+
+Property
+Store
+Storage Location
+Category
+Stock Status
+
+Table:
+
+Material
+Description
+Category
+Storage Location
+Available
+Reserved
+On Order
+UOM
+Average Cost
+Stock Value
+Status
+
+============================================================
+30. MATERIAL STOCK DETAIL
+============================================================
+
+Click material.
+
+Show drawer/detail page:
+
+Material
+
+Current Stock
+
+UOM
+
+Average Cost
+
+Stock Value
+
+Reorder Point
+
+Safety Stock
+
+Batch information
+
+Supplier information
+
+Tabs:
+
+STOCK
+
+TRANSACTIONS
+
+BATCHES
+
+PURCHASE HISTORY
+
+CONSUMPTION
+
+============================================================
+31. INVENTORY TRANSACTION HISTORY
+============================================================
+
+Show ledger, never editable.
+
+Columns:
+
+Date/Time
+Transaction Type
+Reference
+Material
+Quantity
+UOM
+From
+To
+User
+Status
+
+Transaction types:
+
+GRN_RECEIPT
+TRANSFER
+GOODS_ISSUE
+COUNT_ADJUSTMENT
+DAMAGE
+WRITE_OFF
+
+============================================================
+32. INVENTORY COUNT
+============================================================
+
+Route:
+
+/inventory/counts
+
+Cloud view:
+
+Count Number
+Property
+Store
+Status
+Created
+Started
+Completed
+Variance
+Created By
+
+Statuses:
+
+DRAFT
+IN_PROGRESS
+SUBMITTED
+APPROVED
+POSTED
+
+Detail:
+
+Expected Qty
+Counted Qty
+Variance
+Variance Value
+Reason
+
+============================================================
+33. STOCK TRANSFER
+============================================================
+
+Route:
+
+/inventory/transfers
+
+Header KPIs:
+
+Pending
+In Transit
+Received
+Exceptions
+
+Table:
+
+Transfer No
+From
+To
+Items
+Created
+Dispatched
+Received
+Status
+
+============================================================
+34. DAMAGE / WRITE-OFF
+============================================================
+
+Route:
+
+/inventory/damage
+
+Table:
+
+Reference
+Material
+Quantity
+Reason
+Property
+Store
+Reported By
+Approval Status
+Posted Status
+Date
+
+Reasons:
+
+Damaged
+Expired
+Spoiled
+Quality Failure
+Breakage
+Other
+
+============================================================
+35. BATCH & EXPIRY
+============================================================
+
+Route:
+
+/inventory/batches
+
+Table:
+
+Material
+Batch
+Received Date
+Expiry Date
+Days Remaining
+Quantity
+Location
+Supplier
+Status
+
+Filters:
+
+Expires Today
+7 Days
+30 Days
+Expired
+
+Use visual warning indicators.
+
+============================================================
+36. PURCHASE ORDERS
+============================================================
+
+Route:
+
+/receiving/purchase-orders
+
+Use existing PO API.
+
+KPI:
+
+Open POs
+Partially Received
+Due Today
+Overdue
+Open PO Value
+
+Table:
+
+PO Number
+Supplier
+Property
+PO Date
+Delivery Date
+Amount
+Received %
+Open Amount
+Status
+
+============================================================
+37. PURCHASE ORDER DETAIL
+============================================================
+
+Header:
+
+PO Number
+Supplier
+Status
+PO Amount
+Open Amount
+
+Tabs:
+
+ITEMS
+RECEIPTS
+INVOICES
+HISTORY
+
+Items:
+
+Item
+Material
+Description
+Ordered
+Received
+Open
+UOM
+Unit Price
+Amount
+Status
+
+This screen is read-oriented initially.
+
+Do not allow frontend to manipulate PO quantities directly.
+
+============================================================
+38. INVOICES
+============================================================
+
+Route:
+
+/receiving/invoices
+
+This screen should integrate the Phase 3 invoice functionality.
+
+KPI:
+
+Invoices Today
+Processing
+Review Required
+Matched
+GRN Pending
+Completed
+Failed
+
+Filters:
+
+Date
+Supplier
+Property
+Status
+PO
+Invoice Number
+Extraction Provider
+
+Table:
+
+Invoice Number
+Supplier
+Invoice Date
+PO
+Gross
+Currency
+Pages
+Extraction Status
+PO Match
+GRN Status
+Source
+Created
+
+Source examples:
+
+MOBILE_SCAN
+CLOUD_UPLOAD
+EMAIL
+API
+
+============================================================
+39. INVOICE DETAIL
+============================================================
+
+This is another KEY screen.
+
+Layout:
+
+LEFT / MAIN:
+
+Invoice data
+
+RIGHT:
+
+Document viewer
+
+or responsive split view.
+
+Header:
+
+Invoice Number
+Supplier
+Status
+
+Actions:
+
+VIEW PDF
+REPROCESS
+EDIT EXTRACTION
+MATCH PO
+VIEW GRN
+
+Respect permissions.
+
+============================================================
+40. INVOICE HEADER
+============================================================
+
+Display:
+
+Supplier Name
+
+Supplier TRN
+
+Invoice Number
+
+Invoice Date
+
+PO Number
+
+Invoice Gross
+
+Invoice Net
+
+Currency
+
+Document ID
+
+Page Count
+
+Source
+
+Extraction Provider
+
+Extraction Status
+
+Confidence
+
+Created
+
+============================================================
+41. INVOICE LINE ITEMS
+============================================================
+
+Table:
+
+Line No
+
+Invoice SKU
+
+Description
+
+Invoice Qty
+
+Invoice UOM
+
+Unit Price
+
+Net
+
+Tax
+
+Amount
+
+Matched Material
+
+PO Item
+
+Match Status
+
+Confidence
+
+Support statuses:
+
+MATCHED
+
+SUGGESTED
+
+UNMATCHED
+
+MANUAL.
+
+============================================================
+42. DOCUMENT VIEWER
+============================================================
+
+Use exact stored PDF returned by backend.
+
+Do NOT reconstruct PDF.
+
+Features:
+
+page navigation
+
+zoom
+
+open full screen
+
+download if permission permits
+
+show page count
+
+Responsive split view.
+
+The PDF displayed in Cloud must be the exact document captured/uploaded.
+
+============================================================
+43. EXTRACTION INFORMATION
+============================================================
+
+Show:
+
+Provider
+
+Extraction Method
+
+Processed At
+
+Confidence
+
+Fallback Used
+
+Examples:
+
+BUILT_IN
+
+EXTERNAL_AGENT
+
+PDF_TEXT
+
+OCR
+
+MOBILE_BASIC_OCR
+
+Allow authorized users to:
+
+REPROCESS
+
+EDIT EXTRACTED DATA
+
+All edits should use backend audit capability.
+
+============================================================
+44. GOODS RECEIPTS
+============================================================
+
+Route:
+
+/receiving/goods-receipts
+
+KPI:
+
+Posted Today
+Pending
+Failed
+Total Received Value
+
+Table:
+
+GRN Number
+PO Number
+Supplier
+Invoice
+Property
+Store
+Posted Date
+Items
+Received Value
+Status
+Posted By
+
+============================================================
+45. GRN DETAIL
+============================================================
+
+Header:
+
+GRN Number
+POSTED
+
+Show:
+
+Supplier
+PO
+Invoice
+Property
+Store
+Posted By
+Posted At
+
+Lines:
+
+Material
+Description
+Ordered
+Previously Received
+Invoice Qty
+Actual Received
+Accepted
+Damaged
+Rejected
+UOM
+
+Make it visually obvious:
+
+INVOICE QTY
+
+is different from:
+
+ACTUAL RECEIVED.
+
+============================================================
+46. RECEIVING EXCEPTIONS
+============================================================
+
+Route:
+
+/receiving/exceptions
+
+Show:
+
+Unmatched Supplier
+
+PO Not Found
+
+Closed PO
+
+Unmatched Material
+
+Invoice Quantity Difference
+
+Damaged Quantity
+
+Rejected Quantity
+
+OCR Failure
+
+Duplicate Invoice
+
+GRN Failure
+
+Each exception:
+
+severity
+invoice
+supplier
+PO
+property
+created
+owner
+status
+action.
+
+============================================================
+47. PROCUREMENT — MATERIAL REQUIREMENTS
+============================================================
+
+Route:
+
+/procurement/requirements
+
+Show:
+
+Material
+
+Required
+
+Available
+
+On Order
+
+Shortage
+
+Recommended Purchase
+
+Required By
+
+Property
+
+Source
+
+Source can include:
+
+MENU_PLAN
+
+REORDER_POINT
+
+MANUAL
+
+EVENT
+
+FORECAST.
+
+============================================================
+48. PURCHASE SUGGESTIONS
+============================================================
+
+Show recommendations:
+
+Material
+
+Suggested Qty
+
+UOM
+
+Preferred Supplier
+
+Last Price
+
+Expected Price
+
+Required Date
+
+Reason
+
+Confidence
+
+Actions:
+
+REVIEW
+
+APPROVE
+
+DISMISS
+
+Do not actually create PO unless backend supports it.
+
+============================================================
+49. SUPPLIER COMPARISON
+============================================================
+
+For selected material:
+
+Supplier
+
+Price
+
+Lead Time
+
+MOQ
+
+Quality Score
+
+Delivery Score
+
+Last Purchase
+
+Recommended
+
+Design for future AI recommendation.
+
+============================================================
+50. DOCUMENT INBOX
+============================================================
+
+Route:
+
+/documents/inbox
+
+Show:
+
+Document
+
+Type
+
+Source
+
+Supplier
+
+Received
+
+Pages
+
+OCR Status
+
+Extraction Status
+
+Linked Invoice
+
+Status
+
+Actions:
+
+VIEW
+
+PROCESS
+
+REPROCESS
+
+CLASSIFY.
+
+============================================================
+51. CLOUD INVOICE UPLOAD
+============================================================
+
+Allow authorized Cloud user:
+
+UPLOAD INVOICE
+
+Support:
+
+PDF
+JPG
+JPEG
+PNG
+
+Drag & drop.
+
+Show upload progress.
+
+Then:
+
+Document
+→ backend basic/full extraction
+→ Invoice Detail.
+
+Do not implement OCR in React.
+
+Cloud sends document to backend.
+
+============================================================
+52. APPROVALS
+============================================================
+
+Route:
+
+/approvals
+
+Create tabs:
+
+MY APPROVALS
+
+COMPLETED
+
+ALL / MONITOR if permission.
+
+Approval card/table:
+
+Type
+
+Reference
+
+Description
+
+Amount/Quantity
+
+Requested By
+
+Requested At
+
+Property
+
+Priority
+
+Status
+
+Actions:
+
+APPROVE
+
+REJECT
+
+VIEW DETAILS
+
+Backend must remain authoritative.
+
+============================================================
+53. MASTER DATA — MATERIALS
+============================================================
+
+Route:
+
+/master-data/materials
+
+Table:
+
+Material Code
+
+Description
+
+Category
+
+Base UOM
+
+Inventory Managed
+
+Preferred Supplier
+
+Reorder Point
+
+Safety Stock
+
+Status
+
+Actions:
+
+VIEW
+EDIT if authorized.
+
+============================================================
+54. MASTER DATA — SUPPLIERS
+============================================================
+
+Table:
+
+Supplier Code
+
+Supplier Name
+
+TRN
+
+Category
+
+Country
+
+Materials
+
+Status
+
+Last Purchase
+
+Performance
+
+============================================================
+55. SUPPLIER DETAIL
+============================================================
+
+Tabs:
+
+OVERVIEW
+
+MATERIALS
+
+PURCHASE HISTORY
+
+DELIVERY PERFORMANCE
+
+INVOICES
+
+QUALITY
+
+Show:
+
+TRN
+contact
+categories
+lead time
+payment terms where available.
+
+============================================================
+56. ANALYTICS
+============================================================
+
+Build a reusable analytics shell.
+
+Filters:
+
+Organization
+
+Property
+
+Operating Unit
+
+Date Range
+
+Category
+
+Supplier
+
+Material
+
+Menu
+
+Outlet.
+
+Filters should remain consistent across analytics pages.
+
+============================================================
+57. CONSUMPTION ANALYTICS
+============================================================
+
+Show:
+
+Total Consumption
+
+Consumption Value
+
+Top Materials
+
+Consumption Trend
+
+By Category
+
+By Property
+
+By Outlet
+
+Actual vs Planned Consumption.
+
+============================================================
+58. FOOD COST ANALYTICS
+============================================================
+
+Show:
+
+Food Cost %
+
+Recipe Cost
+
+Actual Ingredient Cost
+
+Purchase Price Variance
+
+Waste Cost
+
+Cost per Guest
+
+Cost by Meal
+
+Trend.
+
+============================================================
+59. INVENTORY VARIANCE
+============================================================
+
+Show:
+
+Expected Stock
+
+Counted Stock
+
+Variance Qty
+
+Variance Value
+
+Top Variance Materials
+
+Variance by Store
+
+Trend.
+
+============================================================
+60. WASTE ANALYTICS
+============================================================
+
+Show:
+
+Waste Quantity
+
+Waste Value
+
+Waste %
+
+Top Wasted Materials
+
+Reasons
+
+Property
+
+Outlet
+
+Trend.
+
+============================================================
+61. PURCHASE TREND
+============================================================
+
+Show:
+
+Purchase Value
+
+PO Count
+
+Average PO Value
+
+Top Suppliers
+
+Top Materials
+
+Price Trend
+
+Month-over-Month
+
+Property comparison.
+
+============================================================
+62. USERS
+============================================================
+
+Route:
+
+/admin/users
+
+Reuse Phase 2 APIs.
+
+Table:
+
+Name
+
+Email
+
+Organization
+
+Operating Unit
+
+Application Access
+
+Roles
+
+Status
+
+Last Login
+
+Actions according to permission.
+
+Create User should use existing API.
+
+Do not create frontend-only users.
+
+============================================================
+63. ROLES & PERMISSIONS
+============================================================
+
+Route:
+
+/admin/roles
+
+Show:
+
+Role
+
+Description
+
+Users
+
+Permissions
+
+Scope
+
+System Role
+
+Status
+
+Role detail:
+
+group permissions by:
+
+Menu Engineering
+
+Inventory
+
+Receiving
+
+Procurement
+
+Documents
+
+Approvals
+
+Analytics
+
+Master Data
+
+Administration.
+
+============================================================
+64. ORGANIZATION STRUCTURE
+============================================================
+
+Route:
+
+/admin/organization
+
+Display hierarchical tree.
+
+Example:
+
+Hospitality Group
+
+  Hotel / Property
+
+    Outlet
+
+    Kitchen
+
+    Store
+
+      Storage Location
+
+Allow create actions only if supported by existing APIs/permissions.
+
+============================================================
+65. DOCUMENT EXTRACTION CONFIGURATION
+============================================================
+
+Route:
+
+/admin/document-extraction
+
+Tabs:
+
+PROVIDERS
+
+DOCUMENT TYPES
+
+PROCESSING RULES
+
+HISTORY
+
+Show configured extraction agents.
+
+Columns:
+
+Name
+Document Type
+Provider
+Priority
+Status
+Last Test
+Updated
+
+For invoice:
+
+Document Type = INVOICE.
+
+Built-in OCR should remain available.
+
+External provider is optional.
+
+============================================================
+66. EXTRACTION AGENT CONFIG
+============================================================
+
+Authorized users can:
+
+ADD PROVIDER
+
+EDIT
+
+ACTIVATE / DEACTIVATE
+
+TEST CONNECTION
+
+Fields:
+
+Name
+
+Document Type
+
+Provider Type
+
+Endpoint
+
+Authentication Type
+
+Credential Reference
+
+Priority
+
+Active
+
+Do not expose raw secrets after save.
+
+============================================================
+67. AUDIT LOG
+============================================================
+
+Route:
+
+/admin/audit
+
+Table:
+
+Timestamp
+
+User
+
+Event
+
+Entity Type
+
+Entity
+
+Property
+
+Operating Unit
+
+Result
+
+IP/device metadata only if backend provides it.
+
+Filters:
+
+Date
+User
+Event
+Entity
+Result.
+
+============================================================
+68. GLOBAL SEARCH
+============================================================
+
+Create application search UI.
+
+Search potentially:
+
+PO
+
+Invoice
+
+GRN
+
+Material
+
+Supplier
+
+Recipe
+
+Menu
+
+Document.
+
+Do not perform expensive fake client-side searches over unrelated data.
+
+Use API search endpoints where available.
+
+If backend global search does not exist yet, build UI/service abstraction
+without fabricating production results.
+
+============================================================
+69. TABLE STANDARD
+============================================================
+
+Build reusable:
+
+<SilaDataTable>
+
+Features:
+
+search
+
+filter
+
+sort
+
+pagination
+
+column visibility
+
+loading
+
+empty state
+
+error state
+
+row action
+
+responsive behavior.
+
+Do not duplicate table implementation on every page.
+
+============================================================
+70. PAGE HEADER STANDARD
+============================================================
+
+Build:
+
+<SilaPageHeader>
+
+Supports:
+
+title
+
+description
+
+breadcrumbs
+
+primary action
+
+secondary actions
+
+context information.
+
+Example:
+
+Invoices
+Monitor scanned and uploaded supplier invoices.
+
+[UPLOAD INVOICE]
+
+============================================================
+71. KPI CARD STANDARD
+============================================================
+
+Build:
+
+<SilaKpiCard>
+
+Props:
+
+label
+
+value
+
+icon
+
+trend
+
+trendLabel
+
+status
+
+onClick
+
+loading.
+
+White card.
+
+Blue border.
+
+No giant colored background.
+
+============================================================
+72. STATUS BADGES
+============================================================
+
+Create centralized:
+
+<SilaStatusBadge>
+
+Map statuses consistently.
+
+Examples:
+
+ACTIVE
+POSTED
+MATCHED
+COMPLETED
+→ green
+
+DRAFT
+PROCESSING
+PENDING
+→ blue
+
+WARNING
+PARTIAL
+REVIEW_REQUIRED
+→ amber
+
+FAILED
+REJECTED
+ERROR
+→ red
+
+INACTIVE
+CANCELLED
+→ gray.
+
+============================================================
+73. FORMS
+============================================================
+
+Create consistent form components:
+
+SilaInput
+
+SilaSelect
+
+SilaDatePicker
+
+SilaTextarea
+
+SilaCheckbox
+
+SilaSwitch
+
+SilaNumberInput
+
+SilaCurrencyInput
+
+SilaFormSection
+
+SilaFormActions
+
+All:
+
+white background
+
+blue/light-blue border
+
+accessible focus state
+
+inline errors
+
+labels always visible.
+
+============================================================
+74. MODALS / DRAWERS
+============================================================
+
+Use:
+
+Drawer
+
+for quick view/edit.
+
+Use:
+
+Modal
+
+for confirmations and small workflows.
+
+Use:
+
+Full page
+
+for complex business transactions.
+
+White background.
+
+Blue border/accent.
+
+Do not use browser alert().
+
+============================================================
+75. CONFIRMATION DIALOG
+============================================================
+
+Reusable:
+
+<SilaConfirmDialog>
+
+For:
+
+Delete
+Deactivate
+Reject
+Cancel
+Reprocess
+Discard Changes
+
+Destructive actions red only where appropriate.
+
+============================================================
+76. TOASTS
+============================================================
+
+Centralized notifications:
+
+Success
+
+Information
+
+Warning
+
+Error.
+
+Examples:
+
+Invoice uploaded successfully.
+
+GRN loaded.
+
+Changes saved.
+
+Unable to process invoice.
+
+Never expose raw API stack traces.
+
+============================================================
+77. LOADING STATES
+============================================================
+
+Every API-driven screen needs:
+
+initial loading
+
+refreshing
+
+action loading
+
+error
+
+empty.
+
+Prefer skeleton loaders for tables/cards.
+
+Never show blank white screen during loading.
+
+============================================================
+78. EMPTY STATES
+============================================================
+
+Examples:
+
+No invoices found.
+
+No purchase orders require receipt.
+
+No low-stock materials.
+
+No approvals are waiting for you.
+
+Provide action where useful.
+
+============================================================
+79. ERROR HANDLING
+============================================================
+
+Create centralized API error mapping.
+
+Recognize existing structured codes such as:
+
+DOCUMENT_UNREADABLE
+
+OCR_FAILED
+
+INVOICE_EXTRACTION_FAILED
+
+SUPPLIER_NOT_FOUND
+
+PO_NOT_FOUND
+
+PO_CLOSED
+
+PO_ACCESS_DENIED
+
+PO_HAS_NO_OPEN_ITEMS
+
+INVOICE_LINE_UNMATCHED
+
+INVALID_RECEIVED_QUANTITY
+
+OVERDELIVERY_NOT_ALLOWED
+
+DUPLICATE_INVOICE
+
+GRN_POSTING_FAILED
+
+IDEMPOTENCY_CONFLICT
+
+Display user-friendly messages.
+
+Do not display raw backend exception.
+
+============================================================
+80. ACCESS DENIED
+============================================================
+
+Create polished:
+
+403 Access Denied
+
+Message:
+
+You don't have permission to access this area.
+
+Actions:
+
+GO TO DASHBOARD
+
+GO BACK.
+
+============================================================
+81. NOT FOUND
+============================================================
+
+Create:
+
+404 Page Not Found
+
+with:
+
+GO TO DASHBOARD.
+
+============================================================
+82. SESSION EXPIRED
+============================================================
+
+If Cloud session expires:
+
+clear stale frontend auth state
+
+redirect to:
+
+/login
+
+Show:
+
+Your session has expired. Please sign in again.
+
+Do not create redirect loops.
+
+============================================================
+83. RESPONSIVENESS
+============================================================
+
+Mandatory desktop widths:
+
+1920
+
+1440
+
+1280
+
+1024
+
+Tablet:
+
+768.
+
+At smaller widths:
+
+sidebar collapses
+
+tables use responsive horizontal container
+
+filters may become drawer
+
+KPI grid reduces columns.
+
+No broken layouts.
+
+============================================================
+84. DASHBOARD GRID
+============================================================
+
+Desktop:
+
+4 KPI cards per row where space allows.
+
+Medium:
+
+2.
+
+Small:
+
+1.
+
+Do not hardcode widths that cause overflow.
+
+============================================================
+85. TABLE RESPONSIVENESS
+============================================================
+
+Large enterprise tables may scroll horizontally.
+
+Keep:
+
+first key column visible if practical
+
+actions accessible
+
+headers readable.
+
+Do not squash 12 columns into unreadable widths.
+
+============================================================
+86. ACCESSIBILITY
+============================================================
+
+All interactive controls:
+
+keyboard accessible
+
+visible focus
+
+correct labels
+
+ARIA where required
+
+sufficient contrast.
+
+Icons alone require accessible label/tooltips.
+
+============================================================
+87. PERFORMANCE
+============================================================
+
+Use:
+
+route-level lazy loading
+
+React Query caching
+
+pagination
+
+debounced search
+
+memoization only where useful.
+
+Do not load every enterprise module into initial bundle unnecessarily.
+
+============================================================
+88. ROUTE STRUCTURE
+============================================================
+
+Organize routes cleanly.
+
+Suggested:
+
+/login
+
+/dashboard
+
+/menu-engineering/menus
+/menu-engineering/recipes
+/menu-engineering/ingredients
+/menu-engineering/portion-planning
+/menu-engineering/demand-forecast
+/menu-engineering/performance
+
+/inventory/stock
+/inventory/counts
+/inventory/adjustments
+/inventory/transfers
+/inventory/goods-issue
+/inventory/damage
+/inventory/batches
+
+/receiving/purchase-orders
+/receiving/purchase-orders/:id
+/receiving/invoices
+/receiving/invoices/:id
+/receiving/goods-receipts
+/receiving/goods-receipts/:id
+/receiving/exceptions
+
+/procurement/requirements
+/procurement/suggestions
+/procurement/suppliers
+/procurement/reorder
+
+/documents/inbox
+/documents/invoices
+/documents/delivery-notes
+/documents/extraction
+/documents/archive
+
+/approvals
+/approvals/:id
+
+/analytics/consumption
+/analytics/food-cost
+/analytics/menu-performance
+/analytics/inventory-variance
+/analytics/waste
+/analytics/purchases
+
+/master-data/materials
+/master-data/ingredients
+/master-data/recipes
+/master-data/menu-items
+/master-data/suppliers
+/master-data/uom
+/master-data/categories
+/master-data/locations
+
+/admin/users
+/admin/roles
+/admin/organization
+/admin/properties
+/admin/document-extraction
+/admin/integrations
+/admin/configuration
+/admin/audit
+
+============================================================
+89. FRONTEND CODE ORGANIZATION
+============================================================
+
+Prefer feature-oriented structure.
+
+Example:
+
+apps/cloud/src/
+
+  app/
+    router/
+    providers/
+    auth/
+
+  components/
+    layout/
+    navigation/
+    ui/
+    tables/
+    forms/
+    feedback/
+    charts/
+
+  features/
+    dashboard/
+    menu-engineering/
+    inventory/
+    receiving/
+    procurement/
+    documents/
+    approvals/
+    analytics/
+    master-data/
+    administration/
+
+  services/
+    api/
+
+  hooks/
+
+  theme/
+
+  types/
+
+  utils/
+
+Do not create one giant components directory with hundreds of
+unstructured files.
+
+============================================================
+90. API ACCESS
+============================================================
+
+Use existing generated API client / React Query approach where available.
+
+Do not scatter:
+
+fetch(...)
+
+through screen components.
+
+Architecture:
+
+Page
+↓
+Feature hook
+↓
+API service/generated client
+↓
+ASP.NET API.
+
+============================================================
+91. NO FAKE BUSINESS LOGIC
+============================================================
+
+Frontend may format and present data.
+
+Frontend must NOT calculate authoritative:
+
+stock balances
+
+PO open quantities
+
+GRN quantities
+
+invoice matching
+
+inventory postings
+
+approval decisions
+
+recipe inventory consumption postings.
+
+These belong in backend/domain services.
+
+============================================================
+92. DEVELOPMENT FIXTURES
+============================================================
+
+Some future SILA ME APIs may not exist yet.
+
+For those screens only:
+
+allow isolated development fixtures.
+
+Requirements:
+
+fixtures in explicit:
+
+fixtures/
+
+or:
+
+mocks/
+
+No random hardcoded arrays inside production components.
+
+Clearly mark:
+
+DEVELOPMENT ONLY.
+
+Production build must not silently show fake business data.
+
+============================================================
+93. FEATURE READINESS
+============================================================
+
+Each screen should have one status internally:
+
+CONNECTED
+
+UI_READY_API_PENDING
+
+NOT_STARTED
+
+Do not pretend API-pending screens are production functional.
+
+Document this in:
+
+SILA_ME_CLOUD_FRONTEND_READINESS.md
+
+============================================================
+94. INITIAL BUILD PRIORITY
+============================================================
+
+Do NOT try to fully implement every business workflow in one pass.
+
+Build frontend in this sequence:
+
+STEP 1
+Design system
+
+STEP 2
+Application shell
+
+STEP 3
+Navigation
+
+STEP 4
+Dashboard
+
+STEP 5
+Receiving
+- Purchase Orders
+- Invoices
+- GRNs
+- Invoice Detail/PDF
+
+STEP 6
+Inventory shell
+
+STEP 7
+Menu Engineering shell
+
+STEP 8
+Master Data shell
+
+STEP 9
+Analytics shell
+
+STEP 10
+Administration
+
+The result should have complete navigation/design architecture,
+while API-connected functionality remains honest.
+
+============================================================
+95. PHASE 1 IMPLEMENTATION FOR THIS RUN
+============================================================
+
+FOR THIS RUN implement fully:
+
+A. SILA design tokens
+
+B. Reusable UI components
+
+C. Cloud application shell
+
+D. Header
+
+E. Sidebar
+
+F. Responsive navigation
+
+G. Permission-aware navigation
+
+H. Organization/Property context UI
+
+I. Dashboard
+
+J. Purchase Order list/detail using existing APIs where available
+
+K. Invoice list/detail using existing APIs
+
+L. Exact stored PDF viewer
+
+M. GRN list/detail using existing APIs
+
+N. Users/organization screens already supported by Phase 2 APIs
+
+O. Route placeholders/shell pages for future modules
+
+Do NOT implement deep business logic for every future module yet.
+
+============================================================
+96. PLACEHOLDER SCREEN STANDARD
+============================================================
+
+For modules whose backend is not ready:
+
+DO NOT show:
+
+Coming Soon
+
+as a useless blank screen.
+
+Instead show the intended page structure:
+
+title
+
+description
+
+filter area
+
+KPI placeholders/skeleton structure
+
+table structure
+
+and a subtle development-only indicator:
+
+API integration pending
+
+ONLY in Development.
+
+No fake production metrics.
+
+============================================================
+97. LOGIN SCREEN
+============================================================
+
+Preserve existing authentication.
+
+Redesign visually if required.
+
+Pure white background.
+
+Centered SILA ME logo.
+
+Text:
+
+SILA ME Cloud
+
+Menu Engineering & Operations
+
+Fields:
+
+Email
+
+Password
+
+Primary button:
+
+SIGN IN
+
+Supporting footer:
+
+Secure enterprise access
+
+Do not display development credentials.
+
+============================================================
+98. LOGIN RESPONSIVENESS
+============================================================
+
+Card:
+
+approximately 400–440px desktop.
+
+Mobile/tablet:
+
+responsive width
+
+20–24px side margins.
+
+White card
+
+light-blue border
+
+subtle shadow
+
+12–14px radius.
+
+============================================================
+99. LOGO
+============================================================
+
+Use actual supplied SILA ME logo.
+
+Do NOT:
+
+recreate logo with text
+
+recolor
+
+stretch
+
+crop
+
+add glow
+
+add gradient
+
+change proportions.
+
+============================================================
+100. VISUAL QUALITY BAR
+============================================================
+
+The frontend must NOT look like:
+
+generic Bootstrap admin
+
+default Material UI dashboard
+
+developer prototype
+
+ERP from 2010
+
+random Tailwind template.
+
+It should look like a modern hospitality operations SaaS platform.
+
+Reference quality direction:
+
+clean
+
+minimal
+
+premium
+
+fast
+
+enterprise
+
+operational.
+
+============================================================
+101. CONSISTENCY
+============================================================
+
+Cloud and Mobile must feel like the SAME SILA ME product.
+
+Shared:
+
+logo
+
+brand blue
+
+white surfaces
+
+border language
+
+status semantics
+
+terminology
+
+business entity names.
+
+Do not make Cloud look like a completely different product.
+
+============================================================
+102. IMPORTANT TERMINOLOGY
+============================================================
+
+Use:
+
+Property
+
+Hotel
+
+Outlet
+
+Kitchen
+
+Store
+
+Storage Location
+
+Menu
+
+Recipe
+
+Ingredient
+
+Material
+
+Purchase Order
+
+Invoice
+
+Goods Receipt / GRN
+
+Inventory
+
+Supplier
+
+Approval
+
+Do not expose developer/domain class names unnecessarily.
+
+============================================================
+103. RECEIVING TERMINOLOGY
+============================================================
+
+Keep this distinction clear everywhere:
+
+INVOICE QUANTITY
+≠
+ACTUAL RECEIVED QUANTITY
+
+Invoice Detail can show invoice quantity.
+
+GRN Detail must show actual physical receipt.
+
+Never label invoice quantity as received quantity.
+
+============================================================
+104. SERVICE INVOICE
+============================================================
+
+For service invoice:
+
+show:
+
+SERVICE INVOICE
+
+and:
+
+Goods receipt not applicable.
+
+Do not show misleading:
+
+Pending GRN.
+
+============================================================
+105. STATUS CONSISTENCY
+============================================================
+
+Use human-readable labels.
+
+Example backend:
+
+REVIEW_REQUIRED
+
+Frontend:
+
+Review Required
+
+Backend:
+
+PARTIALLY_RECEIVED
+
+Frontend:
+
+Partially Received.
+
+Do not show raw enum formatting to users.
+
+============================================================
+106. DATE / NUMBER FORMATTING
+============================================================
+
+Centralize:
+
+date formatting
+
+time formatting
+
+quantity formatting
+
+currency formatting
+
+percentage formatting.
+
+Support currencies dynamically.
+
+Do not hardcode AED globally.
+
+============================================================
+107. USER PREFERENCE PREPARATION
+============================================================
+
+Architecture should allow future:
+
+timezone
+
+locale
+
+date format
+
+currency display
+
+table preferences
+
+sidebar state.
+
+Do not implement unnecessary backend settings now.
+
+============================================================
+108. BREADCRUMBS
+============================================================
+
+Use on detail pages.
+
+Example:
+
+Receiving
+>
+Invoices
+>
+INV-1001
+
+Clicking parent navigates correctly.
+
+============================================================
+109. DEEP LINK / REFRESH
+============================================================
+
+Verify:
+
+/receiving/invoices/{id}
+
+opened directly
+
+or browser refreshed
+
+still loads correctly after session validation.
+
+Do not rely entirely on navigation state.
+
+============================================================
+110. URL STATE
+============================================================
+
+For important list filters consider URL query params:
+
+?page=1
+&status=OPEN
+&supplier=...
+&from=...
+&to=...
+
+This enables refresh/bookmark.
+
+Do not put sensitive data in URL.
+
+============================================================
+111. UNSAVED CHANGES
+============================================================
+
+For edit forms:
+
+track dirty state.
+
+When user navigates away:
+
+Discard changes?
+
+CANCEL
+
+DISCARD
+
+Do not trigger for read-only pages.
+
+============================================================
+112. DOCUMENT EXTRACTION DISPLAY
+============================================================
+
+Cloud Invoice Detail should distinguish:
+
+Mobile Basic Extraction
+
+Backend Full Extraction
+
+External Agent Extraction
+
+User Correction.
+
+If backend exposes provenance, display it.
+
+Do not imply Mobile basic OCR is authoritative.
+
+============================================================
+113. INVOICE_EXT_DATA
+============================================================
+
+Where full extraction data exists:
+
+show line-level data from invoice_ext_data through proper API.
+
+Do not query database directly from React.
+
+Expected presentation includes:
+
+Supplier Name
+
+TRN
+
+Invoice Number
+
+Invoice Date
+
+PO
+
+Invoice Gross
+
+Invoice Net
+
+Item SKU
+
+Item Description
+
+Line Item Number
+
+Item Amount
+
+Item Net
+
+PO Item ID.
+
+============================================================
+114. DOCUMENT EXTRACTION ADMIN
+============================================================
+
+For configured external agents:
+
+Cloud should allow authorized users to manage configuration.
+
+But:
+
+Built-In extraction remains default/fallback.
+
+Never require an external agent just to process invoices.
+
+============================================================
+115. SECURITY REVIEW
+============================================================
+
+Search frontend for:
+
+hardcoded passwords
+
+API keys
+
+OCR keys
+
+tokens
+
+customer-specific IDs
+
+localhost production assumptions
+
+old SILA Store URLs
+
+old application names.
+
+Remove/replace inappropriate references.
+
+Do not expose server credentials through VITE_ environment variables.
+
+============================================================
+116. REGRESSION TESTS
+============================================================
+
+Verify existing:
+
+Cloud Login
+
+Session Restore
+
+Logout
+
+/api/me
+
+Dashboard
+
+Organization Scope
+
+Operating Unit Scope
+
+Invoice list
+
+Invoice detail
+
+PDF content
+
+PO list/detail
+
+GRN list/detail
+
+User administration
+
+403 handling
+
+404 handling.
+
+============================================================
+117. FRONTEND TESTS
+============================================================
+
+Add tests for critical components:
+
+PermissionGate
+
+navigation visibility
+
+sidebar collapse
+
+context selector
+
+status badge
+
+data table states
+
+API error state
+
+session expiry redirect
+
+Invoice Detail rendering
+
+GRN quantity distinction
+
+Service invoice GRN N/A state.
+
+============================================================
+118. BUILD VERIFICATION
+============================================================
+
+Run:
+
+pnpm install
+
+Cloud typecheck
+
+Cloud tests
+
+Cloud production build
+
+git diff --check
+
+Also verify API regression if any generated client changed.
+
+============================================================
+119. RESPONSIVE VISUAL VERIFICATION
+============================================================
+
+Inspect at:
+
+1920
+
+1440
+
+1280
+
+1024
+
+768
+
+Verify:
+
+no horizontal page overflow
+
+sidebar works
+
+header works
+
+tables remain usable
+
+modals fit viewport
+
+PDF viewer usable
+
+forms readable.
+
+============================================================
+120. SOURCE CONTROL
+============================================================
+
+Before work:
+
+git status --short
+
+record branch
+
+record SHA
+
+protect existing changes.
+
+After successful implementation:
+
+git diff --stat
+
+git diff --check
+
+Classify changes:
+
+DESIGN SYSTEM
+
+LAYOUT
+
+NAVIGATION
+
+DASHBOARD
+
+RECEIVING
+
+ADMIN
+
+ROUTING
+
+API INTEGRATION
+
+TESTS.
+
+Commit:
+
+feat: build sila me cloud frontend foundation
+
+Do NOT push unless explicitly requested.
+
+============================================================
+121. FINAL REPORT
+============================================================
+
+Return:
+
+SILA ME CLOUD FRONTEND
+
+DESIGN SYSTEM:
+PASS/FAIL
+
+SILA LOGO:
+PASS/FAIL
+
+EXACT PRIMARY LOGO COLOR:
+<hex>
+
+WHITE PAGE BACKGROUND:
+PASS/FAIL
+
+BLUE BORDER SYSTEM:
+PASS/FAIL
+
+APPLICATION SHELL:
+PASS/FAIL
+
+HEADER:
+PASS/FAIL
+
+SIDEBAR:
+PASS/FAIL
+
+COLLAPSIBLE SIDEBAR:
+PASS/FAIL
+
+PERMISSION NAVIGATION:
+PASS/FAIL
+
+PROPERTY CONTEXT:
+PASS/FAIL
+
+DASHBOARD:
+PASS/FAIL
+
+PO LIST:
+CONNECTED / UI_READY_API_PENDING / FAIL
+
+PO DETAIL:
+CONNECTED / UI_READY_API_PENDING / FAIL
+
+INVOICE LIST:
+CONNECTED / UI_READY_API_PENDING / FAIL
+
+INVOICE DETAIL:
+CONNECTED / UI_READY_API_PENDING / FAIL
+
+PDF VIEWER:
+CONNECTED / UI_READY_API_PENDING / FAIL
+
+GRN LIST:
+CONNECTED / UI_READY_API_PENDING / FAIL
+
+GRN DETAIL:
+CONNECTED / UI_READY_API_PENDING / FAIL
+
+USERS:
+CONNECTED / UI_READY_API_PENDING / FAIL
+
+ORGANIZATION:
+CONNECTED / UI_READY_API_PENDING / FAIL
+
+MENU ENGINEERING:
+<readiness>
+
+INVENTORY:
+<readiness>
+
+PROCUREMENT:
+<readiness>
+
+DOCUMENTS:
+<readiness>
+
+APPROVALS:
+<readiness>
+
+ANALYTICS:
+<readiness>
+
+MASTER DATA:
+<readiness>
+
+ADMINISTRATION:
+<readiness>
+
+403 PAGE:
+PASS/FAIL
+
+404 PAGE:
+PASS/FAIL
+
+SESSION EXPIRY:
+PASS/FAIL
+
+RESPONSIVE 1920:
+PASS/FAIL
+
+RESPONSIVE 1440:
+PASS/FAIL
+
+RESPONSIVE 1280:
+PASS/FAIL
+
+RESPONSIVE 1024:
+PASS/FAIL
+
+RESPONSIVE 768:
+PASS/FAIL
+
+CLOUD TYPECHECK:
+PASS/FAIL
+
+CLOUD TESTS:
+<number passed/failed>
+
+CLOUD PRODUCTION BUILD:
+PASS/FAIL
+
+AUTH CHANGED:
+YES/NO
+
+BACKEND BUSINESS LOGIC CHANGED:
+YES/NO
+
+MOBILE CHANGED:
+YES/NO
+
+DATABASE CHANGED:
+YES/NO
+
+FILES MODIFIED:
+<list>
+
+COMMIT SHA:
+<sha>
+
+FRONTEND READINESS DOCUMENT:
+SILA_ME_CLOUD_FRONTEND_READINESS.md
+
+STOP AFTER THIS FRONTEND FOUNDATION.
+
+DO NOT BEGIN THE NEXT BUSINESS FEATURE AUTOMATICALLY.

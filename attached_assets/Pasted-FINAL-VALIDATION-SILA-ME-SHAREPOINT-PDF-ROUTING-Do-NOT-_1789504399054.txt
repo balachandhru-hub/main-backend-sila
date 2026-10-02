@@ -1,0 +1,488 @@
+FINAL VALIDATION — SILA ME SHAREPOINT PDF ROUTING
+
+Do NOT add new product functionality.
+
+The automatic SharePoint routing implementation is now complete.
+
+Perform a focused validation of the existing implementation before
+we connect a real Microsoft tenant.
+
+============================================================
+1. PRESERVE CURRENT IMPLEMENTATION
+============================================================
+
+Do not redesign:
+
+Microsoft OAuth
+Microsoft callback
+DocumentStorageDestination
+DocumentTransferJob
+DocumentRoutingService
+background worker
+Mobile upload
+scanner
+PDF generation
+OCR
+GRN
+inventory.
+
+Do not modify bala@chervic.in.
+
+============================================================
+2. ADD GRAPH BOUNDARY UPLOAD TEST
+============================================================
+
+Add automated test coverage at the external Microsoft Graph boundary.
+
+The test must prove that when:
+
+DocumentId = TEST-DOCUMENT
+
+Destination contains:
+
+SiteId
+DriveId
+FolderId
+
+and the SILA document contains known PDF bytes,
+
+the background transfer worker calls the Microsoft SharePoint service
+with the correct:
+
+StorageConnection
+SiteId
+DriveId
+FolderId
+filename
+PDF stream/content.
+
+Do not mock DocumentRoutingService.
+
+Do not mock DocumentTransferJob.
+
+Do not fake internal SILA transactions.
+
+Mock ONLY the external Microsoft Graph/SharePoint boundary.
+
+============================================================
+3. VERIFY ACTUAL PDF BYTES
+============================================================
+
+Use a small valid PDF test fixture.
+
+The test must verify:
+
+uploaded content is non-empty
+
+content starts with valid PDF signature
+
+%PDF
+
+uploaded bytes correspond to the SILA stored document
+
+content was not converted to base64 text accidentally
+
+content was not replaced with metadata
+
+content was not corrupted before reaching Graph boundary.
+
+============================================================
+4. VERIFY DESTINATION
+============================================================
+
+Test:
+
+User A
+→ Destination A
+→ Drive A
+→ Folder A.
+
+Ensure worker calls:
+
+Drive A
+Folder A.
+
+Then:
+
+User B
+→ Destination B
+→ Drive B
+→ Folder B.
+
+Ensure:
+
+User B document never uses Destination A.
+
+============================================================
+5. VERIFY IDEMPOTENCY
+============================================================
+
+For:
+
+DocumentId + DestinationId
+
+trigger routing twice.
+
+Expected:
+
+ONE logical DocumentTransferJob.
+
+ONE Microsoft upload call.
+
+If transfer already COMPLETED:
+
+worker must not upload again.
+
+============================================================
+6. VERIFY RETRY
+============================================================
+
+Mock Graph transient failure.
+
+First upload:
+
+Graph → transient error.
+
+Expected:
+
+SILA document remains STORED.
+
+Transfer:
+RETRY_PENDING.
+
+Then simulate successful Graph response.
+
+Retry/process again.
+
+Expected:
+
+same transfer job becomes COMPLETED.
+
+Exactly one successful external file.
+
+============================================================
+7. VERIFY AUTH FAILURE
+============================================================
+
+Mock Microsoft authentication/authorization failure.
+
+Expected:
+
+Document remains STORED.
+
+Transfer:
+
+FAILED_AUTHENTICATION
+
+or the exact equivalent implemented status.
+
+No PDF loss.
+
+No duplicate job.
+
+============================================================
+8. VERIFY EXTERNAL METADATA
+============================================================
+
+On successful mocked upload return:
+
+ExternalFileId
+ExternalWebUrl
+ExternalFileName.
+
+Verify these are persisted against DocumentTransferJob.
+
+Then verify:
+
+GET /api/v1/documents/{documentId}/transfers
+
+returns safe external metadata.
+
+It must NOT return:
+
+access token
+refresh token
+ClientSecret
+TokenEncryptionKey.
+
+============================================================
+9. VERIFY CLOUD
+============================================================
+
+Verify existing Cloud invoice detail displays:
+
+SILA ME:
+STORED
+
+Microsoft SharePoint:
+COMPLETED
+
+Destination Path
+
+External Filename
+
+Transferred timestamp
+
+OPEN IN SHAREPOINT
+
+when ExternalWebUrl exists.
+
+For failure:
+
+FAILED / RETRY_PENDING
+
+and authorized:
+
+RETRY TRANSFER.
+
+============================================================
+10. MICROSOFT LIVE READINESS CHECK
+============================================================
+
+Inspect current backend Microsoft configuration.
+
+Report ONLY safe configuration state:
+
+ClientId configured: YES/NO
+Credential configured: YES/NO
+RedirectUri configured: YES/NO
+Token encryption configured: YES/NO
+Multi-tenant configuration: YES/NO
+Graph service ready: YES/NO
+
+DO NOT print any secret values.
+
+Also report the exact configured RedirectUri because it is not secret
+and must be registered exactly in Microsoft Entra.
+
+============================================================
+11. LIVE TEST CHECKLIST
+============================================================
+
+Do NOT falsely execute or report a real Microsoft test unless actual
+tenant configuration is available.
+
+Prepare this live acceptance sequence:
+
+A. CLOUD CONNECTION
+
+Enter:
+
+SharePoint Site URL
+Folder Path
+
+Press:
+
+CONNECT MICROSOFT.
+
+Expected:
+
+real Microsoft login page.
+
+B. CALLBACK
+
+Expected:
+
+SILA ME callback succeeds.
+
+Customer TenantId discovered.
+
+C. SHAREPOINT
+
+Expected:
+
+Site resolved
+Drive resolved
+Folder resolved.
+
+D. READ
+
+TEST READ:
+
+PASS.
+
+E. WRITE
+
+TEST WRITE:
+
+temporary test file created
+verified
+deleted.
+
+PASS.
+
+F. USER
+
+Create Mobile-enabled user with validated destination.
+
+G. MOBILE
+
+Login as that user.
+
+Scan a real test invoice.
+
+Generate PDF.
+
+Upload.
+
+H. SILA
+
+Expected:
+
+Document = STORED.
+
+I. ROUTING
+
+Expected:
+
+Destination resolved.
+
+Transfer job created.
+
+Worker processes it.
+
+J. SHAREPOINT
+
+Expected:
+
+PDF physically exists in the configured folder.
+
+K. CLOUD
+
+Expected:
+
+Transfer = COMPLETED.
+
+External filename displayed.
+
+Open in SharePoint works.
+
+============================================================
+12. DO NOT CALL ROUTING COMPLETE FROM MOCKS ALONE
+============================================================
+
+Automated Graph-boundary tests prove:
+
+IMPLEMENTATION READY.
+
+They do NOT prove:
+
+REAL MICROSOFT E2E.
+
+Use separate statuses:
+
+INTERNAL ROUTING TESTS:
+PASS/FAIL
+
+GRAPH BOUNDARY TESTS:
+PASS/FAIL
+
+REAL MICROSOFT E2E:
+PASS/PENDING/FAIL.
+
+============================================================
+13. RUN REGRESSION
+============================================================
+
+Run:
+
+API build
+API tests
+Cloud TypeScript
+Cloud production build
+Mobile TypeScript/typecheck.
+
+Mobile source diff must remain ZERO.
+
+============================================================
+14. FINAL REPORT
+============================================================
+
+Return:
+
+SILA ME SHAREPOINT FINAL READINESS
+
+API BUILD:
+PASS/FAIL
+
+API TESTS:
+x/x
+
+GRAPH UPLOAD BOUNDARY:
+PASS/FAIL
+
+PDF BYTE INTEGRITY:
+PASS/FAIL
+
+CORRECT SITE:
+PASS/FAIL
+
+CORRECT DRIVE:
+PASS/FAIL
+
+CORRECT FOLDER:
+PASS/FAIL
+
+USER A/B ISOLATION:
+PASS/FAIL
+
+TRANSFER IDEMPOTENCY:
+PASS/FAIL
+
+TRANSIENT RETRY:
+PASS/FAIL
+
+AUTH FAILURE:
+PASS/FAIL
+
+EXTERNAL METADATA:
+PASS/FAIL
+
+TRANSFER STATUS API:
+PASS/FAIL
+
+CLOUD MONITORING:
+PASS/FAIL
+
+CLOUD BUILD:
+PASS/FAIL
+
+MOBILE TYPECHECK:
+PASS/FAIL
+
+MOBILE SOURCE MODIFIED:
+NO
+
+SCANNER MODIFIED:
+NO
+
+PDF GENERATION MODIFIED:
+NO
+
+OCR MODIFIED:
+NO
+
+GRN MODIFIED:
+NO
+
+BALA USER MODIFIED:
+NO
+
+MICROSOFT PLATFORM CONFIG:
+READY/NOT READY
+
+REDIRECT URI:
+<safe actual configured value>
+
+REAL MICROSOFT E2E:
+PASS/PENDING/FAIL
+
+EXTERNAL ACTION REQUIRED:
+<exact Microsoft configuration/testing required>
+
+FINAL STATUS:
+READY FOR LIVE MICROSOFT TEST / NOT READY
+
+Do not push.
+
+Do not start another feature.

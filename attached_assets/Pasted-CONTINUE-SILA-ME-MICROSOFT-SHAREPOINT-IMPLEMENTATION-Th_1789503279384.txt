@@ -1,0 +1,1513 @@
+CONTINUE SILA ME MICROSOFT SHAREPOINT IMPLEMENTATION
+
+The previous review confirms that Microsoft OAuth and SharePoint
+connection validation already exist.
+
+DO NOT rebuild or modify the working OAuth implementation.
+
+NOW IMPLEMENT THE REMAINING DOCUMENT ROUTING SCOPE.
+
+This is NOT a future feature.
+
+It is part of the current Microsoft SharePoint requirement and must be
+implemented now.
+
+============================================================
+1. CURRENT WORKING COMPONENTS — PRESERVE
+============================================================
+
+The following are already implemented and working:
+
+- Microsoft OAuth
+- Microsoft callback
+- secure OAuth state
+- token encryption
+- organization scoping
+- Add User draft restoration
+- SharePoint site resolution
+- document library resolution
+- folder resolution
+- read validation
+- write validation
+
+DO NOT rebuild these.
+
+Reuse them.
+
+DO NOT modify:
+
+Mobile scanner
+Mobile PDF generation
+Basic OCR
+full OCR
+invoice extraction
+PO matching
+GRN
+inventory logic
+Cloud authentication
+Mobile authentication
+bala@chervic.in
+
+============================================================
+2. THIS IMPLEMENTATION MUST NOW ADD
+============================================================
+
+Implement:
+
+1. DocumentStorageDestination
+
+2. UserDocumentStorageAssignment
+
+3. DocumentTransferJob
+
+4. DocumentRoutingService
+
+5. SharePoint background transfer worker
+
+6. automatic routing after invoice PDF storage
+
+7. user/store/property/organization destination resolution
+
+8. retry handling
+
+9. idempotency
+
+10. transfer audit
+
+11. Cloud transfer monitoring
+
+12. manual Retry Transfer
+
+13. automatic reconnection-aware retry
+
+This is the required remaining implementation.
+
+============================================================
+3. BUSINESS REQUIREMENT
+============================================================
+
+Example:
+
+Cloud Admin creates:
+
+User:
+john@customer.com
+
+Organization:
+ABC Hospitality
+
+Property:
+Dubai Hotel
+
+Store:
+Main Store
+
+System:
+MOBILE
+
+Microsoft SharePoint:
+CONNECTED
+
+SharePoint:
+https://customer.sharepoint.com/sites/Finance
+
+Folder:
+/Shared Documents/SILA ME/Invoices/MainStore
+
+Later:
+
+John logs into SILA ME Mobile.
+
+John scans an invoice.
+
+Mobile generates PDF.
+
+Mobile uploads PDF through the EXISTING SILA ME API.
+
+Expected:
+
+PDF first stored safely inside SILA ME.
+
+Then backend automatically identifies:
+
+John
+ABC Hospitality
+Dubai Hotel
+Main Store
+INVOICE
+
+Backend resolves:
+
+John's effective document destination.
+
+Then backend automatically transfers the PDF to:
+
+https://customer.sharepoint.com/sites/Finance
+
+/Shared Documents/SILA ME/Invoices/MainStore
+
+John must perform ZERO Microsoft actions from Mobile.
+
+============================================================
+4. IMPORTANT — CONNECT MICROSOFT RESULT
+============================================================
+
+The existing CONNECT MICROSOFT flow currently resolves:
+
+TenantId
+SiteId
+DriveId
+FolderId
+FolderPath
+Site URL
+read access
+write access.
+
+After successful validation:
+
+DO NOT leave these values only inside the connection record.
+
+Create/reuse a validated:
+
+DocumentStorageDestination.
+
+Connection and destination are different concepts.
+
+Connection:
+
+"ABC Hospitality is authenticated to Microsoft."
+
+Destination:
+
+"Invoice PDFs for Main Store go to this specific SharePoint folder."
+
+============================================================
+5. DOCUMENT STORAGE CONNECTION
+============================================================
+
+Continue using the existing working Microsoft connection entity.
+
+Do NOT duplicate it.
+
+It should represent:
+
+Organization
+Microsoft Tenant
+authentication/credential reference
+connection status
+validated SharePoint context
+connection timestamps.
+
+Reuse existing fields wherever possible.
+
+============================================================
+6. DOCUMENT STORAGE DESTINATION
+============================================================
+
+Create:
+
+DocumentStorageDestination
+
+unless an equivalent entity already exists.
+
+Suggested fields:
+
+Id
+
+OrganizationId
+
+PropertyId nullable
+
+OperatingUnitId nullable
+
+LocationId nullable
+
+StorageConnectionId
+
+Provider
+
+DocumentType
+
+SiteId
+
+DriveId
+
+FolderId
+
+FolderPath
+
+DisplayUrl
+
+ExternalTransferEnabled
+
+Status
+
+ValidatedAt
+
+CreatedBy
+
+CreatedAt
+
+UpdatedAt
+
+Status:
+
+ACTIVE
+INACTIVE
+VALIDATION_REQUIRED.
+
+Provider:
+
+MICROSOFT
+GOOGLE
+OTHER.
+
+Current implementation:
+
+MICROSOFT.
+
+DocumentType initially:
+
+INVOICE.
+
+============================================================
+7. USER DOCUMENT STORAGE ASSIGNMENT
+============================================================
+
+Create:
+
+UserDocumentStorageAssignment
+
+unless equivalent exists.
+
+Fields:
+
+Id
+
+UserId
+
+DocumentStorageDestinationId
+
+Status
+
+CreatedBy
+
+CreatedAt
+
+UpdatedAt.
+
+This provides user-specific override.
+
+But do NOT duplicate Microsoft OAuth/token data per user.
+
+============================================================
+8. SAVE DESTINATION DURING USER CREATION
+============================================================
+
+When Add User has:
+
+Microsoft = CONNECTED
+
+and validated:
+
+SiteId
+DriveId
+FolderId
+FolderPath
+
+then when user is successfully created:
+
+associate that validated destination with the created user.
+
+Example:
+
+UserId:
+JOHN
+
+DestinationId:
+DEST-001.
+
+Do not merely store the textual SharePoint URL on User.
+
+============================================================
+9. DESTINATION INHERITANCE
+============================================================
+
+Implement effective destination resolution.
+
+Priority:
+
+1 USER
+
+2 STORE / OPERATING UNIT
+
+3 PROPERTY
+
+4 ORGANIZATION
+
+5 NONE.
+
+The first ACTIVE + VALIDATED destination matching the document type
+wins.
+
+Example:
+
+John has user-specific destination:
+
+use it.
+
+If John has none:
+
+look for Main Store destination.
+
+If none:
+
+look for Dubai Hotel destination.
+
+If none:
+
+look for ABC Hospitality default.
+
+If none:
+
+external transfer = SKIPPED.
+
+SILA ME internal document remains available.
+
+============================================================
+10. CREATE DOCUMENT ROUTING SERVICE
+============================================================
+
+Create:
+
+IDocumentRoutingService
+
+DocumentRoutingService.
+
+Primary method concept:
+
+ResolveDestinationAsync(
+    userId,
+    organizationId,
+    propertyId,
+    operatingUnitId,
+    documentType
+)
+
+Return:
+
+ResolvedDocumentDestination
+
+including:
+
+DestinationId
+Provider
+StorageConnectionId
+SiteId
+DriveId
+FolderId
+FolderPath
+ResolutionSource.
+
+ResolutionSource:
+
+USER
+STORE
+PROPERTY
+ORGANIZATION
+NONE.
+
+============================================================
+11. INTEGRATE WITH EXISTING PDF UPLOAD
+============================================================
+
+Find the EXACT existing endpoint/service where Mobile invoice PDF
+becomes successfully persisted in SILA ME.
+
+DO NOT create a parallel Mobile upload API unless absolutely required.
+
+DO NOT modify PDF generation.
+
+After the existing SILA document persistence transaction succeeds:
+
+trigger external routing.
+
+Conceptually:
+
+existingDocument = SaveDocument(...)
+
+COMMIT SILA DOCUMENT
+
+then:
+
+destination =
+DocumentRoutingService.ResolveDestinationAsync(...)
+
+if destination exists:
+
+QueueDocumentTransfer(...)
+
+Do not perform SharePoint transfer before SILA storage succeeds.
+
+============================================================
+12. AUTHENTICATED USER
+============================================================
+
+For routing:
+
+derive UserId from authenticated Mobile bearer identity.
+
+DO NOT trust:
+
+userId sent by Mobile.
+
+Backend resolves:
+
+UserId
+
+then validates:
+
+Organization
+Property
+Store/OperatingUnit
+
+against existing membership/scope.
+
+============================================================
+13. DOCUMENT CONTEXT
+============================================================
+
+Transfer job needs immutable business context.
+
+At queue time record/resolve:
+
+DocumentId
+UserId
+OrganizationId
+PropertyId
+OperatingUnitId
+DocumentType
+DestinationId.
+
+For current scanner:
+
+DocumentType = INVOICE.
+
+============================================================
+14. DOCUMENT TRANSFER JOB
+============================================================
+
+Create:
+
+DocumentTransferJob
+
+unless equivalent exists.
+
+Fields:
+
+Id
+
+DocumentId
+
+DestinationId
+
+UserId
+
+OrganizationId
+
+PropertyId nullable
+
+OperatingUnitId nullable
+
+Provider
+
+Status
+
+AttemptCount
+
+NextAttemptAt nullable
+
+LastAttemptAt nullable
+
+CompletedAt nullable
+
+ExternalFileId nullable
+
+ExternalWebUrl nullable
+
+ExternalFileName nullable
+
+LastErrorCode nullable
+
+LastErrorMessageSafe nullable
+
+CreatedAt
+
+UpdatedAt.
+
+Statuses:
+
+PENDING
+
+PROCESSING
+
+COMPLETED
+
+RETRY_PENDING
+
+FAILED
+
+FAILED_AUTHENTICATION
+
+SKIPPED.
+
+============================================================
+15. IDEMPOTENCY
+============================================================
+
+CRITICAL.
+
+Create uniqueness for logical transfer:
+
+DocumentId + DestinationId.
+
+The same PDF must not be uploaded twice because:
+
+Mobile retried
+
+API retried
+
+worker restarted
+
+HTTP response timed out
+
+server restarted.
+
+Before creating a transfer job:
+
+check existing DocumentId + DestinationId.
+
+If existing:
+
+PENDING:
+do nothing.
+
+PROCESSING:
+do nothing.
+
+COMPLETED:
+do nothing.
+
+RETRY_PENDING:
+do not create another job.
+
+FAILED:
+use explicit retry mechanism.
+
+============================================================
+16. BACKGROUND TRANSFER
+============================================================
+
+External SharePoint upload must NOT block the Mobile PDF upload request.
+
+Correct:
+
+Mobile
+→ SILA API
+→ PDF stored
+→ Document created
+→ transfer job queued
+→ Mobile receives success/document ID.
+
+Then:
+
+Background Worker
+→ transfer SharePoint PDF.
+
+Reuse existing job/background infrastructure if present.
+
+Otherwise use an appropriate ASP.NET Core hosted background service
+without adding unnecessary infrastructure.
+
+============================================================
+17. SHAREPOINT TRANSFER WORKER
+============================================================
+
+Worker processes:
+
+PENDING
+
+and due:
+
+RETRY_PENDING
+
+jobs.
+
+For each:
+
+1. atomically claim job
+
+2. status = PROCESSING
+
+3. load Document
+
+4. load Destination
+
+5. load StorageConnection
+
+6. verify destination ACTIVE
+
+7. verify connection usable
+
+8. open existing SILA PDF stream
+
+9. generate safe external filename
+
+10. call existing Microsoft SharePoint service
+
+11. upload to stored:
+
+SiteId
+DriveId
+FolderId
+
+12. capture:
+
+ExternalFileId
+ExternalWebUrl
+ExternalFileName
+
+13. status = COMPLETED
+
+14. CompletedAt = UTC now.
+
+============================================================
+18. REUSE EXISTING MICROSOFT SERVICE
+============================================================
+
+The previous implementation already has Microsoft Graph and
+SharePoint validation.
+
+DO NOT create a second Microsoft Graph implementation.
+
+Extend/reuse the existing service with something equivalent to:
+
+UploadFileAsync(
+    connection,
+    siteId,
+    driveId,
+    folderId,
+    filename,
+    stream
+)
+
+Use stored validated IDs.
+
+Do NOT resolve destination from an arbitrary Mobile URL.
+
+============================================================
+19. FILE NAME
+============================================================
+
+Preferred invoice filename:
+
+<Supplier>_<InvoiceNumber>_<InvoiceDate>.pdf
+
+Example:
+
+ABCFOODS_INV10025_20260916.pdf.
+
+If invoice extraction is not yet complete when transfer executes:
+
+use deterministic safe fallback:
+
+<DocumentId>.pdf
+
+Do not delay forever waiting for OCR.
+
+Sanitize SharePoint filename.
+
+============================================================
+20. DUPLICATE SHAREPOINT FILE
+============================================================
+
+Do NOT silently overwrite an unrelated SharePoint file.
+
+Use safe conflict handling.
+
+Preferred:
+
+if this DocumentTransferJob already has ExternalFileId:
+
+do not create another file.
+
+For genuine filename conflict with another document:
+
+append deterministic/unique suffix.
+
+Example:
+
+ABCFOODS_INV10025_20260916_<shortDocumentId>.pdf
+
+Record actual filename.
+
+============================================================
+21. RETRY
+============================================================
+
+Transient failures:
+
+Graph timeout
+429
+temporary 5xx
+network failure
+
+must result in:
+
+RETRY_PENDING.
+
+Implement controlled exponential backoff.
+
+Example concept:
+
+Attempt 1:
+~1 minute
+
+Attempt 2:
+~5 minutes
+
+Attempt 3:
+~15 minutes
+
+Attempt 4:
+~1 hour.
+
+Use sensible configurable values.
+
+Respect Microsoft Retry-After when available.
+
+Do not hammer Microsoft Graph.
+
+============================================================
+22. AUTHENTICATION FAILURE
+============================================================
+
+If Microsoft connection/token/consent is invalid:
+
+status:
+
+FAILED_AUTHENTICATION.
+
+Do NOT delete PDF.
+
+Do NOT create duplicate transfer.
+
+Cloud must show:
+
+Microsoft connection requires attention.
+
+After Microsoft reconnection:
+
+allow:
+
+RETRY TRANSFER.
+
+============================================================
+23. PERMANENT FAILURE
+============================================================
+
+Examples:
+
+folder deleted
+
+destination no longer accessible
+
+invalid destination
+
+authorization permanently removed.
+
+Do not retry endlessly.
+
+After configured maximum attempts:
+
+FAILED.
+
+Store safe error.
+
+Never store Microsoft token/error secrets.
+
+============================================================
+24. MANUAL RETRY
+============================================================
+
+Provide:
+
+POST /api/v1/document-transfers/{id}/retry
+
+Authorization required.
+
+Backend:
+
+validate organization scope
+
+validate document access
+
+validate destination
+
+ensure status allows retry
+
+reset:
+
+Status = PENDING
+NextAttemptAt = now
+
+Do NOT create another DocumentTransferJob.
+
+============================================================
+25. TRANSFER STATUS API
+============================================================
+
+Provide/reuse:
+
+GET /api/v1/documents/{documentId}/transfers
+
+Return safe data:
+
+{
+  "documentId": "...",
+  "transfers": [
+    {
+      "provider": "MICROSOFT",
+      "status": "COMPLETED",
+      "resolutionSource": "USER",
+      "folderPath": "/SILA ME/Invoices/MainStore",
+      "externalFileName": "...pdf",
+      "externalWebUrl": "...",
+      "attemptCount": 1,
+      "completedAt": "..."
+    }
+  ]
+}
+
+Never return credentials/tokens.
+
+============================================================
+26. CLOUD MONITORING
+============================================================
+
+Add minimal integration to existing:
+
+Invoice Detail
+
+and/or
+
+Document Detail.
+
+Do NOT redesign the module.
+
+Show:
+
+DOCUMENT STORAGE
+
+SILA ME
+STORED ✓
+
+External Destination
+Microsoft SharePoint
+
+Resolution:
+USER / STORE / PROPERTY / ORGANIZATION
+
+Path:
+/SILA ME/Invoices/MainStore
+
+Transfer:
+PENDING / PROCESSING / COMPLETED / RETRY PENDING / FAILED
+
+Attempts:
+<n>
+
+External File:
+<filename>
+
+Transferred:
+<timestamp>
+
+If authorized and status failed:
+
+[ RETRY TRANSFER ]
+
+If ExternalWebUrl exists:
+
+[ OPEN IN SHAREPOINT ]
+
+subject to current access rules.
+
+============================================================
+27. TRANSFER AUDIT
+============================================================
+
+Audit:
+
+DOCUMENT_ROUTE_RESOLVED
+
+DOCUMENT_TRANSFER_QUEUED
+
+DOCUMENT_TRANSFER_STARTED
+
+DOCUMENT_TRANSFER_COMPLETED
+
+DOCUMENT_TRANSFER_RETRY_SCHEDULED
+
+DOCUMENT_TRANSFER_FAILED
+
+DOCUMENT_TRANSFER_MANUAL_RETRY.
+
+Include:
+
+DocumentId
+UserId
+OrganizationId
+PropertyId
+OperatingUnitId
+DestinationId
+ResolutionSource
+Provider
+ExternalFileId if available
+Timestamp
+Result.
+
+Never audit credentials.
+
+============================================================
+28. IMPORTANT FAILURE BEHAVIOR
+============================================================
+
+If SharePoint is unavailable:
+
+MOBILE PDF UPLOAD MUST STILL SUCCEED
+
+provided SILA ME successfully stored the PDF.
+
+Example:
+
+SILA storage:
+SUCCESS
+
+SharePoint:
+FAILED TEMPORARILY
+
+Result:
+
+Document:
+AVAILABLE
+
+Transfer:
+RETRY_PENDING.
+
+Never make a temporary Microsoft outage cause the invoice PDF to be
+lost.
+
+============================================================
+29. NO DESTINATION
+============================================================
+
+If:
+
+no user destination
+
+no store destination
+
+no property destination
+
+no organization destination
+
+then:
+
+SILA PDF:
+STORED.
+
+External transfer:
+SKIPPED.
+
+Do not treat this as document failure.
+
+============================================================
+30. USER CREATION ACCEPTANCE TEST
+============================================================
+
+Create:
+
+User A
+
+Organization:
+ABC
+
+Property:
+Property A
+
+Store:
+Store A
+
+System:
+MOBILE
+
+SharePoint Destination:
+Folder A.
+
+Ensure destination association is persisted.
+
+Create:
+
+User B
+
+same/different business context
+
+SharePoint Destination:
+Folder B.
+
+Ensure destination association is persisted.
+
+============================================================
+31. MOBILE ROUTING ACCEPTANCE TEST
+============================================================
+
+Login as User A.
+
+Generate/upload invoice PDF using existing Mobile process.
+
+Expected:
+
+SILA:
+PDF STORED.
+
+Transfer Job:
+CREATED.
+
+Worker:
+COMPLETED.
+
+SharePoint:
+
+Folder A:
+PDF EXISTS.
+
+Folder B:
+NO PDF.
+
+Then User B:
+
+PDF must reach Folder B.
+
+Folder A must receive no User B PDF.
+
+============================================================
+32. STORE FALLBACK TEST
+============================================================
+
+Create Store A destination.
+
+Create User C under Store A without user-specific destination.
+
+Generate invoice.
+
+Expected:
+
+ResolutionSource:
+STORE.
+
+PDF reaches Store A destination.
+
+============================================================
+33. PROPERTY FALLBACK TEST
+============================================================
+
+No User destination.
+
+No Store destination.
+
+Property destination exists.
+
+Expected:
+
+ResolutionSource:
+PROPERTY.
+
+============================================================
+34. ORGANIZATION FALLBACK TEST
+============================================================
+
+No User.
+
+No Store.
+
+No Property.
+
+Organization default exists.
+
+Expected:
+
+ResolutionSource:
+ORGANIZATION.
+
+============================================================
+35. RETRY TEST
+============================================================
+
+Simulate safe transient Microsoft failure.
+
+Upload invoice PDF.
+
+Expected:
+
+SILA document:
+STORED.
+
+Transfer:
+RETRY_PENDING.
+
+Restore Microsoft availability.
+
+Run worker/retry.
+
+Expected:
+
+same transfer job:
+
+COMPLETED.
+
+SharePoint contains exactly ONE PDF.
+
+============================================================
+36. IDEMPOTENCY TEST
+============================================================
+
+Trigger routing twice for same:
+
+DocumentId
+DestinationId.
+
+Expected:
+
+ONE DocumentTransferJob.
+
+ONE SharePoint PDF.
+
+No duplicate.
+
+============================================================
+37. SECURITY TEST
+============================================================
+
+User A attempts to influence destination by sending:
+
+User B destinationId
+
+or:
+
+SharePointUrl
+
+SiteId
+
+DriveId
+
+FolderId.
+
+Expected:
+
+ignored or denied.
+
+Backend uses authenticated identity and validated server-side
+destination only.
+
+============================================================
+38. EXISTING MICROSOFT TESTS
+============================================================
+
+Do not remove existing:
+
+CONNECT MICROSOFT
+
+OAuth callback
+
+TEST READ
+
+TEST WRITE
+
+TEST CONNECTION.
+
+These must continue working.
+
+Routing uses the validated connection produced by that flow.
+
+============================================================
+39. BALA PROTECTION
+============================================================
+
+Do NOT modify:
+
+bala@chervic.in.
+
+No:
+
+password changes
+
+role changes
+
+authorization changes
+
+application access changes
+
+scope changes
+
+user recreation
+
+user deletion.
+
+============================================================
+40. MOBILE PROTECTION
+============================================================
+
+Expected Mobile source diff:
+
+ZERO
+
+unless an absolutely unavoidable compile/interface correction is
+required.
+
+Do not modify:
+
+scanner
+
+PDF creation
+
+OCR
+
+invoice review
+
+PO match
+
+GRN.
+
+Backend hooks into the existing document upload after PDF persistence.
+
+============================================================
+41. DATABASE MIGRATION
+============================================================
+
+Create one safe migration for only missing entities/indexes.
+
+Do NOT:
+
+drop user tables
+
+reseed users destructively
+
+truncate data
+
+recreate existing Microsoft connection data.
+
+Migration must preserve current production/development data.
+
+============================================================
+42. TESTS
+============================================================
+
+Add integration/unit tests for:
+
+destination user resolution
+
+store fallback
+
+property fallback
+
+organization fallback
+
+no destination
+
+scope enforcement
+
+job creation
+
+job idempotency
+
+completed job duplicate prevention
+
+transient retry
+
+manual retry
+
+authentication failure
+
+successful SharePoint upload using mocked external Graph boundary
+
+transfer status API.
+
+Mocks are allowed ONLY at external Microsoft Graph boundary for
+automated tests.
+
+Do not fake internal routing transactions.
+
+============================================================
+43. REAL MICROSOFT ACCEPTANCE
+============================================================
+
+If real Microsoft tenant credentials and SharePoint are available:
+
+perform actual acceptance test:
+
+CONNECT
+READ
+WRITE
+DELETE TEST FILE
+UPLOAD TEST PDF
+VERIFY PDF
+CLEAN UP TEST PDF if it is only test data.
+
+If external Microsoft credentials are unavailable:
+
+do not falsely report real SharePoint E2E PASS.
+
+Report:
+
+REAL SHAREPOINT E2E:
+PENDING EXTERNAL TENANT TEST
+
+but internal routing implementation/tests must still be completed.
+
+============================================================
+44. FINAL REPORT
+============================================================
+
+Return:
+
+SILA ME AUTOMATIC SHAREPOINT PDF ROUTING
+
+EXISTING OAUTH MODIFIED:
+NO/YES
+
+EXISTING CONNECTION VALIDATION PRESERVED:
+YES/NO
+
+DOCUMENT STORAGE DESTINATION:
+PASS/FAIL
+
+USER DESTINATION ASSIGNMENT:
+PASS/FAIL
+
+STORE DESTINATION:
+PASS/FAIL
+
+PROPERTY DESTINATION:
+PASS/FAIL
+
+ORGANIZATION DESTINATION:
+PASS/FAIL
+
+ROUTING SERVICE:
+PASS/FAIL
+
+EXISTING MOBILE PDF UPLOAD HOOK:
+PASS/FAIL
+
+SILA PDF STORED BEFORE EXTERNAL TRANSFER:
+PASS/FAIL
+
+DOCUMENT TRANSFER JOB:
+PASS/FAIL
+
+BACKGROUND WORKER:
+PASS/FAIL
+
+MICROSOFT UPLOAD SERVICE:
+PASS/FAIL
+
+USER ROUTING:
+PASS/FAIL
+
+STORE FALLBACK:
+PASS/FAIL
+
+PROPERTY FALLBACK:
+PASS/FAIL
+
+ORGANIZATION FALLBACK:
+PASS/FAIL
+
+IDEMPOTENCY:
+PASS/FAIL
+
+RETRY:
+PASS/FAIL
+
+MANUAL RETRY:
+PASS/FAIL
+
+TRANSFER AUDIT:
+PASS/FAIL
+
+CLOUD TRANSFER MONITORING:
+PASS/FAIL
+
+MOBILE MICROSOFT AUTHENTICATION:
+NOT REQUIRED
+
+MOBILE MODIFIED:
+NO/YES
+
+SCANNER MODIFIED:
+NO/YES
+
+PDF GENERATION MODIFIED:
+NO/YES
+
+OCR MODIFIED:
+NO/YES
+
+GRN MODIFIED:
+NO/YES
+
+BALA USER MODIFIED:
+NO/YES
+
+REAL SHAREPOINT READ:
+PASS/PENDING
+
+REAL SHAREPOINT WRITE:
+PASS/PENDING
+
+REAL SHAREPOINT PDF TRANSFER:
+PASS/PENDING
+
+API TESTS:
+<passed>/<failed>
+
+CLOUD BUILD:
+PASS/FAIL
+
+MOBILE TYPECHECK:
+PASS/FAIL
+
+DATABASE MIGRATION:
+<name>
+
+FILES MODIFIED:
+<exact list>
+
+FINAL STATUS:
+PASS / BLOCKED / FAIL
+
+============================================================
+45. COMMIT
+============================================================
+
+Only if implementation is healthy:
+
+git commit -m "feat: add automatic sharepoint document routing"
+
+DO NOT PUSH.
+
+STOP.
+
+Do not defer this scope as a future feature.
+Do not start another feature.

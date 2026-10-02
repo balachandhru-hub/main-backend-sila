@@ -1,0 +1,143 @@
+{
+  "id": "invoice-receiving",
+  "version": 2,
+  "name": "SILA Invoice Receiving",
+  "baselineTag": "invoice-receiving-v2",
+  "previousTags": ["invoice-receiving-v1"],
+  "restore": "git fetch --tags && git checkout invoice-receiving-v2",
+  "baselineCommitMessage": "baseline: freeze invoice receiving flow v2",
+  "docs": "docs/PROTECTED_INVOICE_FLOW.md",
+  "instruction": "Respect docs/PROTECTED_INVOICE_FLOW.md. Do not modify protected files unless the task is an explicit Invoice Receiving/OCR requirement.",
+  "flow": [
+    "Scan/Upload",
+    "OCR",
+    "Supplier Resolution",
+    "PO Matching",
+    "Invoice Review",
+    "Save and Continue",
+    "Finalize GRN"
+  ],
+  "downstreamFlow": [
+    "POST GRN",
+    "Integration Route Resolver (Company Code)",
+    "Ariba/S4/etc from saved GoodsReceiptId"
+  ],
+  "invariants": [
+    "No PO / NO-PO buttons on Invoice Review.",
+    "OCR returns all available invoice header and line fields.",
+    "Supplier ID, when available, resolves against Supplier Master. Never create a supplier from OCR.",
+    "Resolved Supplier determines eligible Open POs.",
+    "Valid OCR PO number automatically selects that PO when it is eligible.",
+    "If PO number is unavailable, use supplier + invoice lines to identify the best eligible Open PO.",
+    "If there is no confident PO match, user selects from that Supplier's eligible Open POs only.",
+    "Manual/user-confirmed values have authority over OCR values.",
+    "View Document opens the current source document.",
+    "Re-Read Invoice reprocesses the same document without creating duplicate invoice/document records.",
+    "Save and Continue persists the authoritative reviewed invoice and lines.",
+    "Save and Continue navigates ONLY to Finalize GRN.",
+    "Save and Continue does NOT post the GRN.",
+    "Finalize GRN is responsible for physical received quantity confirmation.",
+    "POST GRN and external integration happen downstream and must not modify Invoice Review/OCR logic.",
+    "Finalize GRN / prepare GRN is scoped by organization and PO company code/property. An operating unit is not required."
+  ],
+  "authorityOrder": ["MANUAL", "BACKEND_MERGED_OCR", "MOBILE_OCR"],
+  "protectedFiles": {
+    "backend": [
+      "apps/api/Controllers/OperationsController.cs",
+      "apps/api/Services/OperationalServices.cs",
+      "apps/api/Services/AdvancedInvoiceOcrService.cs",
+      "apps/api/Services/InvoiceOcrFieldReader.cs",
+      "apps/api/Services/InvoiceExtractionPipeline.cs",
+      "apps/api/DTOs/InvoiceExtractionDtos.cs",
+      "apps/api/DTOs/Phase3Dtos.cs"
+    ],
+    "mobile": [
+      "artifacts/sila-me-mobile/app/(tabs)/receive/scan.tsx",
+      "artifacts/sila-me-mobile/app/(tabs)/receive/invoice-review.tsx",
+      "artifacts/sila-me-mobile/app/(tabs)/receive/finalize-grn.tsx",
+      "artifacts/sila-me-mobile/services/invoice-review-state.ts",
+      "artifacts/sila-me-mobile/services/invoice-review-save.ts",
+      "artifacts/sila-me-mobile/services/invoice-parser.ts",
+      "artifacts/sila-me-mobile/services/mobile-ocr.ts",
+      "artifacts/sila-me-mobile/services/invoice-receiving-contract.ts",
+      "artifacts/sila-me-mobile/services/invoice-save-errors.ts",
+      "artifacts/sila-me-mobile/providers/scan-session.ts",
+      "artifacts/sila-me-mobile/providers/ScanSessionProvider.tsx",
+      "artifacts/sila-me-mobile/components/receive-ui.tsx"
+    ],
+    "downstreamConsumeSavedIdsOnly": [
+      "artifacts/sila-me-mobile/services/grn-posting.ts",
+      "apps/api/Services/AribaPostGrnAdapter.cs",
+      "apps/api/Services/IntegrationRouteResolver.cs",
+      "apps/api/Services/IntegrationRouteService.cs"
+    ],
+    "tests": [
+      "tests/SilaMe.Api.Tests/InvoiceExtractionTests.cs",
+      "tests/SilaMe.Api.Tests/AdvancedInvoiceOcrRegressionTests.cs",
+      "artifacts/sila-me-mobile/tests/scanner-regressions.test.ts"
+    ]
+  },
+  "protectedSymbols": [
+    {
+      "file": "apps/api/Services/OperationalServices.cs",
+      "protected": ["UploadInvoiceAsync", "ExtractBasicInvoiceAsync", "RunAdvancedInvoiceExtractionFileAsync", "RunAdvancedInvoiceExtractionAsync", "ToDocumentResponse"],
+      "downstream": ["PrepareGrnAsync", "PostGrnAsync"]
+    },
+    {
+      "file": "apps/api/Services/AdvancedInvoiceOcrService.cs",
+      "note": "Primary constructor must remain: public sealed class AdvancedInvoiceOcrService("
+    },
+    {
+      "file": "artifacts/sila-me-mobile/services/invoice-review-state.ts",
+      "protected": ["findUniqueSupplierMatch", "autoSelectPurchaseOrder", "shouldRenderPurchaseOrderSelector", "invoiceReviewBlockers"]
+    },
+    {
+      "file": "artifacts/sila-me-mobile/services/invoice-review-save.ts",
+      "protected": ["invoiceSaveNavigation", "performInvoiceReviewSave"]
+    }
+  ],
+  "endpoints": {
+    "invoiceReview": [
+      "POST /api/v1/documents/invoices",
+      "POST /api/v1/documents/basic-extract",
+      "POST /api/v1/invoices/advanced-extract",
+      "POST /api/v1/documents/{id}/advanced-extract",
+      "GET /api/v1/documents/{id}",
+      "GET /api/v1/documents/{id}/content",
+      "GET /api/v1/invoices/{id}",
+      "GET /api/v1/invoices/{id}/basic-extraction",
+      "GET /api/v1/suppliers",
+      "GET /api/v1/purchase-orders/search?openOnly=true&supplierId=",
+      "GET /api/v1/purchase-orders/{poNumber}"
+    ],
+    "downstream": [
+      "POST /api/v1/grns/prepare",
+      "POST /api/v1/goods-receipts/{id}/post"
+    ]
+  },
+  "contracts": {
+    "document": ["id", "filename", "contentType", "fileSizeBytes", "pageCount", "sourceChannel", "status", "createdAt", "invoiceId", "saveStatus", "nextStep", "message"],
+    "invoice": ["id", "documentId", "invoiceNumber", "invoiceDate", "supplierName", "supplierTaxNumber", "purchaseOrderNumber", "purchaseOrderId", "currency", "netAmount", "taxAmount", "grossAmount", "invoiceType", "status", "overallConfidence", "organizationId", "operatingUnitId", "operatingUnitName", "supplierId", "supplierCode", "goodsReceiptId", "lines"],
+    "invoiceLine": ["id", "lineNumber", "supplierMaterialCode", "materialId", "description", "quantity", "uom", "unitPrice", "taxRate", "taxAmount", "lineAmount", "confidence", "matchStatus", "purchaseOrderItemId"],
+    "basicOcr": ["supplierName", "supplierTrn", "supplierInvoiceNumber", "invoiceDate", "purchaseOrderNumber", "invoiceGross", "currency", "provider", "available", "status", "confidence", "rawText"],
+    "advancedHeader": ["supplierName", "supplierLegalName", "supplierTrn", "supplierAddress", "supplierEmail", "supplierPhone", "invoiceNumber", "invoiceDate", "invoiceType", "purchaseOrderNumber", "currency", "netAmount", "discountAmount", "freightAmount", "otherCharges", "taxableAmount", "taxAmount", "grossAmount", "amountDue", "paymentTerms", "dueDate"],
+    "matching": ["supplierMatched", "purchaseOrderMatched", "amountsReconciled", "lineTotalMatchesNet", "taxReconciled"]
+  },
+  "downstreamMustNotModify": [
+    "Invoice Review UI",
+    "OCR extraction",
+    "Supplier resolution",
+    "PO matching",
+    "Save and Continue navigation"
+  ],
+  "doNotDisturb": [
+    "http://localhost:5173/five/",
+    "http://localhost:5174/login",
+    "locked tenancy/database architecture",
+    "authentication/access",
+    "Integration Configuration",
+    "Integration Routing",
+    "Ariba posting",
+    "master data"
+  ]
+}

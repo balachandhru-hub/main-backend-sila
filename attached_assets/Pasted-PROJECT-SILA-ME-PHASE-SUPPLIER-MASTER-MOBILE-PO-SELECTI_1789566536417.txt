@@ -1,0 +1,2666 @@
+PROJECT: SILA ME
+PHASE: SUPPLIER MASTER + MOBILE PO SELECTION + GRN COMPARISON + ERP GRN POSTING
+
+OBJECTIVE
+
+Complete the operational Mobile receiving flow:
+
+1. Scan Invoice
+2. Mobile Basic OCR
+3. Backend Advanced OCR when required
+4. Resolve Supplier against Supplier Master
+5. Resolve/select Purchase Order
+6. Save reviewed Invoice
+7. Compare Invoice Lines against OPEN PO Lines
+8. User enters PHYSICAL RECEIVED quantities
+9. Validate GRN
+10. Submit GRN
+11. POST GRN to ERP through configured POST_GRN integration
+12. Receive ERP Material Document response
+13. Update SILA ME GRN tables
+14. Update PO/open quantities locally
+15. Show GRN success in Mobile
+16. Show GRN transaction in Cloud
+
+DO NOT IMPLEMENT INVOICE POSTING.
+
+Invoice posting is the NEXT phase.
+
+============================================================
+1. TARGET BUSINESS FLOW
+============================================================
+
+Mobile:
+
+SCAN INVOICE
+      ↓
+BASIC OCR
+      ↓
+BACKEND OCR IF REQUIRED
+      ↓
+INVOICE REVIEW
+      ↓
+SUPPLIER RESOLUTION
+      ↓
+SUPPLIER ID CONFIRMED?
+   NO ──────────────→ BLOCK SAVE & CONTINUE
+      ↓ YES
+PO EXTRACTED?
+ ┌────┴────┐
+YES        NO / INVALID
+ ↓              ↓
+Validate       Show OPEN PO dropdown
+against        for selected Supplier ID
+supplier            ↓
+ ↓             User selects PO
+ └──────────────┬────┘
+                ↓
+        SAVE INVOICE & CONTINUE
+                ↓
+        Persist Invoice + Lines
+                ↓
+        GRN COMPARISON
+                ↓
+       Invoice Lines
+            ↕
+       Open PO Lines
+                ↓
+      User enters RECEIVED QTY
+                ↓
+          VALIDATE GRN
+                ↓
+           SUBMIT GRN
+                ↓
+       POST_GRN Integration
+                ↓
+             SAP ERP
+                ↓
+      Material Document response
+                ↓
+       SILA GRN transaction
+                ↓
+      PO open quantity update
+                ↓
+          GRN SUCCESS
+
+
+============================================================
+2. SUPPLIER MASTER — NEW
+============================================================
+
+Supplier Master does not currently exist.
+
+Create it.
+
+Supplier data source initially:
+
+SAP Business Partner API.
+
+Configured through the SAME generic integration framework already
+created for GET_PO.
+
+Add Process Type:
+
+GET_SUPPLIER
+
+Classify:
+
+GET_SUPPLIER = EXTRACTABLE.
+
+
+Example source API:
+
+GET
+/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_Supplier
+
+
+Do NOT hard-code host.
+
+Resolve:
+
+Organization
++
+Entity
++
+GET_SUPPLIER
+
+through ApiIntegrationConfiguration.
+
+
+============================================================
+3. SUPPLIER API SCHEMA
+============================================================
+
+Use actual API $metadata/schema.
+
+Do not assume all fields.
+
+Allow field mapping:
+
+SAP Supplier API
+        ↓
+Supplier Master DB.
+
+Provide:
+
+LOAD API SCHEMA
+
+and:
+
+FIELD MAPPING.
+
+Only mapped fields are maintained by integration.
+
+
+============================================================
+4. SUPPLIER MASTER TABLE
+============================================================
+
+Create:
+
+Supplier
+
+or reuse equivalent if already present.
+
+Recommended fields:
+
+Id UUID
+
+OrganizationId
+
+EntityCode
+
+SupplierId
+
+BusinessPartnerId nullable
+
+SupplierName
+
+NormalizedSupplierName
+
+SupplierLegalName nullable
+
+SupplierSearchName nullable
+
+TaxNumber nullable
+
+TRN nullable
+
+Country nullable
+
+City nullable
+
+PostalCode nullable
+
+Street nullable
+
+Email nullable
+
+Phone nullable
+
+PurchasingOrganization nullable
+
+CompanyCode nullable
+
+Currency nullable
+
+PaymentTerms nullable
+
+IsBlocked
+
+IsDeleted
+
+IsActive
+
+SourceSystem
+
+SourceConfigurationId nullable
+
+SourceLastChangedAt nullable
+
+LastSyncedAt
+
+CreatedAt
+
+UpdatedAt.
+
+
+Tenant-safe unique business key:
+
+OrganizationId
+EntityCode
+SupplierId.
+
+
+Do not use Supplier Name as primary identity.
+
+SupplierId is authoritative once resolved.
+
+
+============================================================
+5. SUPPLIER ALIAS TABLE
+============================================================
+
+Supplier invoices often print a supplier name differently from ERP.
+
+Create:
+
+SupplierAlias
+
+Fields:
+
+Id
+SupplierId FK
+OrganizationId
+AliasName
+NormalizedAliasName
+Source
+Confidence
+IsConfirmed
+CreatedAt
+CreatedBy.
+
+
+Example:
+
+ERP:
+
+ABC FOOD TRADING LLC
+
+Invoice:
+
+ABC Foods Trading L.L.C.
+
+
+Once user confirms the match, optionally store confirmed alias:
+
+ABC Foods Trading L.L.C.
+→ Supplier ID 1000234.
+
+
+This improves future OCR matching.
+
+
+============================================================
+6. SUPPLIER DATA UPDATE
+============================================================
+
+Extend:
+
+Administration
+→ Integrations
+→ Data Update.
+
+
+When:
+
+Process = GET_SUPPLIER
+
+
+show actual Supplier Master records.
+
+Actions:
+
+PULL DATA
+UPLOAD EXCEL
+DOWNLOAD EXCEL
+VIEW HISTORY.
+
+
+Same pattern as GET_PO.
+
+Existing suppliers must display before API Pull.
+
+
+============================================================
+7. SUPPLIER API/EXCEL UPSERT
+============================================================
+
+Both:
+
+SAP GET_SUPPLIER
+
+and:
+
+Excel Supplier Upload
+
+must normalize into one:
+
+SupplierImportModel
+
+and use one:
+
+ISupplierImportService.
+
+
+Do not create separate Supplier tables for API and Excel.
+
+
+============================================================
+8. CLOUD SUPPLIER MASTER
+============================================================
+
+Add:
+
+MASTER DATA
+→ SUPPLIERS
+
+
+Table:
+
+Supplier ID
+Supplier Name
+Legal Name
+TRN
+Entity
+Company Code
+Purchasing Organization
+Country
+Status
+Source
+Last Synced.
+
+
+Search:
+
+Supplier ID
+Supplier Name
+TRN.
+
+
+Filters:
+
+Organization
+Entity
+Status
+Source.
+
+
+============================================================
+9. OCR SUPPLIER RESOLUTION
+============================================================
+
+After Mobile/Backend OCR extracts:
+
+Supplier Name
+
+and optionally:
+
+TRN
+
+
+do NOT consider Supplier resolved merely because OCR returned text.
+
+
+Run:
+
+ISupplierMatchingService.
+
+
+Input:
+
+OrganizationId
+EntityCode
+ExtractedSupplierName
+ExtractedTRN nullable.
+
+
+Search only Supplier Master belonging to correct:
+
+Organization
+Entity
+
+with ALL fallback only according to existing integration/master rules.
+
+
+============================================================
+10. SUPPLIER MATCHING
+============================================================
+
+Supplier matching should use:
+
+Exact normalized name
+
+Confirmed aliases
+
+TRN exact match
+
+Legal name
+
+Fuzzy normalized name
+
+where appropriate.
+
+
+TRN exact match should provide strong evidence.
+
+Supplier name normalization may safely handle:
+
+case
+punctuation
+repeated spaces
+L.L.C vs LLC
+common legal suffix formatting.
+
+
+Do not over-normalize different companies into the same supplier.
+
+
+============================================================
+11. SUPPLIER MATCH RESULT
+============================================================
+
+Return:
+
+SupplierId
+
+SupplierName
+
+MatchType
+
+Confidence
+
+Candidates.
+
+
+Example:
+
+{
+  "supplierId": "1000234",
+  "supplierName": "ABC FOOD TRADING LLC",
+  "matchType": "NAME_ALIAS",
+  "confidence": 0.96
+}
+
+
+If one strong match:
+
+preselect supplier.
+
+
+If multiple plausible matches:
+
+require user selection.
+
+
+If no match:
+
+SupplierId remains null.
+
+
+============================================================
+12. CRITICAL RULE — SUPPLIER ID REQUIRED
+============================================================
+
+SAVE INVOICE AND CONTINUE must NOT proceed without:
+
+SupplierId.
+
+
+If SupplierId = null:
+
+BLOCK.
+
+
+Message:
+
+SUPPLIER REQUIRED
+
+"We couldn't match this invoice to a supplier in the Supplier Master.
+Select the correct supplier before continuing."
+
+
+Do NOT allow only free-text Supplier Name to pass.
+
+
+Do NOT create Supplier automatically from OCR.
+
+
+============================================================
+13. MOBILE SUPPLIER FIELD
+============================================================
+
+Invoice Review should show:
+
+SUPPLIER
+
+Extracted Name:
+ABC Food Trading L.L.C.
+
+Matched Supplier:
+ABC FOOD TRADING LLC
+
+Supplier ID:
+1000234
+
+Match:
+96%
+
+
+Allow:
+
+CHANGE SUPPLIER.
+
+
+Search dialog:
+
+Supplier ID
+Supplier Name
+TRN.
+
+
+Selecting supplier stores:
+
+SupplierId
+
+and canonical:
+
+SupplierName.
+
+
+============================================================
+14. PO RESOLUTION
+============================================================
+
+After SupplierId is resolved:
+
+evaluate OCR PurchaseOrderNumber.
+
+
+CASE A:
+
+OCR PO exists
+
+AND
+
+PO belongs to same:
+
+Organization
+Entity
+SupplierId
+
+AND
+
+PO is eligible/open.
+
+Then:
+
+preselect PO.
+
+
+CASE B:
+
+OCR PO does not exist.
+
+CASE C:
+
+OCR PO belongs to another supplier.
+
+CASE D:
+
+OCR PO is closed/cancelled/not eligible.
+
+CASE E:
+
+OCR did not extract PO.
+
+
+For B/C/D/E:
+
+do NOT blindly accept OCR PO.
+
+Show PO selector.
+
+
+============================================================
+15. OPEN PO DROPDOWN
+============================================================
+
+Open PO dropdown MUST be filtered by:
+
+Organization
+
+Entity
+
+SupplierId
+
+and PO eligibility/open status.
+
+
+If SupplierId is null:
+
+DO NOT load PO dropdown.
+
+
+Return:
+
+SUPPLIER_REQUIRED.
+
+
+============================================================
+16. OPEN PO DEFINITION
+============================================================
+
+Do not determine open PO only from header status.
+
+A PO is available for GRN if it contains at least one material PO line
+with:
+
+GR expected
+
+not cancelled/deleted
+
+and:
+
+OpenReceiptQuantity > 0
+
+according to synchronized/local PO + GRN information.
+
+
+Do not show fully received POs as OPEN.
+
+
+Service-only POs should not enter material GRN flow.
+
+
+============================================================
+17. OPEN QUANTITY
+============================================================
+
+For each PO item derive/store:
+
+OrderedQuantity
+
+ReceivedQuantity
+
+OpenReceiptQuantity.
+
+
+Conceptually:
+
+OpenReceiptQuantity
+=
+OrderedQuantity
+-
+PostedAcceptedReceiptQuantity
+
+
+Use ERP synchronized GRN/material-document information where available
+plus valid local posted transactions according to existing sync
+architecture.
+
+
+Do not derive open quantity from invoice quantity.
+
+
+============================================================
+18. PO DROPDOWN UX
+============================================================
+
+After supplier selected:
+
+PURCHASE ORDER
+
+[ Select Purchase Order ▼ ]
+
+
+Options:
+
+4500012345
+3 Open Items
+AED 4,250
+12-Sep-2026
+
+4500012388
+7 Open Items
+AED 12,500
+10-Sep-2026
+
+
+Do not overload dropdown.
+
+Selecting PO can open summary.
+
+
+============================================================
+19. SAVE & CONTINUE VALIDATION
+============================================================
+
+Before Save:
+
+require:
+
+DocumentId
+
+SupplierId
+
+SupplierName
+
+InvoiceNumber
+
+InvoiceGrossAmount
+
+Selected PurchaseOrder for material PO invoice
+
+plus current configured mandatory invoice fields.
+
+
+Validate selected PO belongs to:
+
+same Organization
+same Entity
+same SupplierId.
+
+
+If not:
+
+return:
+
+PO_SUPPLIER_MISMATCH.
+
+
+============================================================
+20. SAVE INVOICE
+============================================================
+
+SAVE INVOICE AND CONTINUE:
+
+1. validate SupplierId
+2. validate PO
+3. duplicate invoice check
+4. persist reviewed Invoice
+5. persist InvoiceLines
+6. persist extraction history
+7. link Document
+8. set SupplierId
+9. set PurchaseOrderId
+10. commit
+11. return nextStep = GRN_COMPARISON.
+
+
+Do not navigate before DB commit.
+
+
+============================================================
+21. DUPLICATE INVOICE
+============================================================
+
+Continue existing duplicate protection.
+
+Exact duplicate:
+
+Organization
++
+SupplierId
++
+Normalized Invoice Number.
+
+
+Block duplicate.
+
+
+Same Document/re-read/current Invoice:
+
+UPDATE existing Invoice
+
+not duplicate.
+
+
+============================================================
+22. NEXT MOBILE SCREEN
+============================================================
+
+After successful material invoice save:
+
+navigate to:
+
+GRN COMPARISON.
+
+
+Suggested route:
+
+/receive/grn-comparison
+
+or reuse current closest route.
+
+
+Do not go back to generic PO matching if PO has already been confirmed.
+
+
+============================================================
+23. GRN COMPARISON SCREEN
+============================================================
+
+This screen is critical.
+
+
+Header:
+
+Supplier:
+ABC FOOD TRADING LLC
+1000234
+
+Invoice:
+INV-10025
+
+PO:
+4500012345
+
+Invoice Amount:
+AED 997.50
+
+
+Then line comparison table/cards.
+
+
+============================================================
+24. LINE COMPARISON
+============================================================
+
+For every invoice line attempt match against selected PO OPEN items.
+
+
+Display:
+
+PO ITEM
+
+MATERIAL
+
+DESCRIPTION
+
+PO ORDERED
+
+ALREADY RECEIVED
+
+PO OPEN
+
+INVOICE QTY
+
+PHYSICAL RECEIVED QTY
+
+ACCEPTED QTY
+
+DAMAGED QTY
+
+REJECTED QTY
+
+UOM
+
+MATCH STATUS.
+
+
+Mobile may simplify visual layout into cards.
+
+
+============================================================
+25. LINE MATCHING
+============================================================
+
+Use existing Phase 3 matching concepts where possible.
+
+Match evidence:
+
+PO Item Number
+
+Material/SKU
+
+Supplier Item Code
+
+Description similarity
+
+UOM
+
+price as secondary evidence.
+
+
+Never match only because line index is the same.
+
+
+High-confidence:
+
+preselect.
+
+
+Ambiguous:
+
+user selects PO item.
+
+
+Unmatched invoice line:
+
+cannot post receipt until resolved or excluded with valid reason
+according to business rules.
+
+
+============================================================
+26. ONLY OPEN PO LINES
+============================================================
+
+GRN comparison should normally present:
+
+OPEN RECEIVABLE PO ITEMS.
+
+
+Closed/fully received/deleted items must not accept new quantity.
+
+
+If invoice references a closed PO item:
+
+show:
+
+PO ITEM CLOSED / FULLY RECEIVED.
+
+
+Do not silently map to another line.
+
+
+============================================================
+27. QUANTITY PRINCIPLE
+============================================================
+
+Critical:
+
+Invoice Quantity
+≠
+Physical Received Quantity.
+
+
+OCR Invoice Quantity is informational.
+
+
+Store user MUST enter/confirm:
+
+PHYSICAL RECEIVED QTY.
+
+
+Then derive/allow:
+
+Accepted Qty
+Damaged Qty
+Rejected Qty.
+
+
+Example:
+
+PO Ordered:
+10
+
+Already Received:
+2
+
+PO Open:
+8
+
+Invoice Qty:
+10
+
+Physical Received:
+7
+
+Accepted:
+6
+
+Damaged:
+1
+
+Rejected:
+0.
+
+
+GRN stock increase:
+
+6 only.
+
+
+Do not automatically GRN invoice quantity.
+
+
+============================================================
+28. QUANTITY VALIDATION
+============================================================
+
+Default:
+
+PhysicalReceivedQty >= 0
+
+AcceptedQty >= 0
+
+DamagedQty >= 0
+
+RejectedQty >= 0.
+
+
+Validate:
+
+Accepted + Damaged + Rejected
+<= Physical Received
+
+according to final operational design.
+
+
+Accepted quantity must not exceed allowable PO open quantity unless
+explicit overdelivery tolerance exists.
+
+
+Do not invent tolerance.
+
+
+If no configured tolerance:
+
+AcceptedQty <= OpenReceiptQuantity.
+
+
+============================================================
+29. UOM
+============================================================
+
+PO UOM is authoritative for GRN posting unless valid configured
+conversion exists.
+
+
+If:
+
+Invoice UOM != PO UOM
+
+and no known conversion:
+
+BLOCK affected line.
+
+
+Show:
+
+UOM CONVERSION REQUIRED.
+
+
+Do not guess conversion.
+
+
+============================================================
+30. GRN TABLES — CREATE
+============================================================
+
+Create/reuse:
+
+GoodsReceipt
+
+and:
+
+GoodsReceiptLine.
+
+
+Do not call the internal table only "MaterialDocument" because a SILA
+GRN has lifecycle before ERP Material Document exists.
+
+
+============================================================
+31. GOODS RECEIPT HEADER
+============================================================
+
+Recommended:
+
+GoodsReceipt
+
+Id
+
+OrganizationId
+
+EntityCode
+
+PropertyId nullable
+
+OperatingUnitId nullable
+
+InvoiceId
+
+PurchaseOrderId
+
+SupplierId
+
+SilaGrnNumber
+
+ErpMaterialDocument nullable
+
+ErpMaterialDocumentYear nullable
+
+DocumentDate
+
+PostingDate
+
+DeliveryNote nullable
+
+HeaderText nullable
+
+Status
+
+PostingStatus
+
+SourceSystem
+
+IntegrationConfigurationId nullable
+
+IdempotencyKey
+
+CreatedBy
+
+CreatedAt
+
+SubmittedAt nullable
+
+PostedAt nullable
+
+FailedAt nullable
+
+FailureCode nullable
+
+FailureMessage nullable
+
+UpdatedAt.
+
+
+Unique:
+
+OrganizationId
+SilaGrnNumber.
+
+
+ERP document uniqueness as appropriate:
+
+Organization
+Entity
+ErpMaterialDocument
+ErpMaterialDocumentYear.
+
+
+============================================================
+32. GOODS RECEIPT LINE
+============================================================
+
+GoodsReceiptLine:
+
+Id
+
+GoodsReceiptId
+
+PurchaseOrderId
+
+PurchaseOrderItemId
+
+PurchaseOrder
+
+PurchaseOrderItem
+
+InvoiceId
+
+InvoiceLineId nullable
+
+SupplierId
+
+Material nullable
+
+MaterialDescription nullable
+
+Plant nullable
+
+StorageLocation nullable
+
+Batch nullable
+
+GoodsMovementType nullable
+
+PoOrderedQuantity
+
+PreviouslyReceivedQuantity
+
+PoOpenQuantity
+
+InvoiceQuantity nullable
+
+PhysicalReceivedQuantity
+
+AcceptedQuantity
+
+DamagedQuantity
+
+RejectedQuantity
+
+EntryUnit
+
+BaseUnit nullable
+
+QuantityInBaseUnit nullable
+
+ErpMaterialDocumentItem nullable
+
+LineStatus
+
+CreatedAt
+
+UpdatedAt.
+
+
+Use decimals for quantities.
+
+
+============================================================
+33. ERP MATERIAL DOCUMENT ALIGNMENT
+============================================================
+
+Use actual SAP API metadata/schema for:
+
+API_MATERIAL_DOCUMENT
+
+and:
+
+A_MaterialDocumentItem.
+
+
+Do NOT blindly create every SAP property as a DB column.
+
+
+However SILA GRN structure should support important ERP references such
+as:
+
+MaterialDocument
+
+MaterialDocumentYear
+
+MaterialDocumentItem
+
+GoodsMovementType
+
+Material
+
+Plant
+
+StorageLocation
+
+Batch
+
+Supplier
+
+PurchaseOrder
+
+PurchaseOrderItem
+
+QuantityInEntryUnit
+
+EntryUnit
+
+QuantityInBaseUnit where needed.
+
+
+SAP material-document data exposes material-document identifiers and
+item-level references including PO, PO item, supplier, material,
+movement type, plant/storage location and quantities.
+
+Use actual configured schema/mapping before ERP call.
+
+
+============================================================
+34. GRN STATUS
+============================================================
+
+Separate business and integration status.
+
+
+Business:
+
+DRAFT
+
+READY_TO_POST
+
+SUBMITTED
+
+POSTED
+
+FAILED
+
+CANCELLED.
+
+
+Posting:
+
+NOT_STARTED
+
+VALIDATING
+
+QUEUED
+
+POSTING
+
+POSTED
+
+FAILED.
+
+
+Do not mark GRN POSTED before ERP confirms success.
+
+
+============================================================
+35. SUBMIT GRN
+============================================================
+
+Mobile:
+
+[ SUBMIT GRN ]
+
+
+Before submission backend revalidates EVERYTHING.
+
+
+Do not trust Mobile calculations.
+
+
+Backend reloads:
+
+authenticated user
+
+Organization/Entity
+
+Invoice
+
+Supplier
+
+PO
+
+PO Items
+
+current PO open quantities
+
+GRN lines
+
+integration configuration.
+
+
+Recalculate allowable quantities.
+
+
+============================================================
+36. CONCURRENCY — CRITICAL
+============================================================
+
+PO Open Quantity could change between screen load and Submit.
+
+
+Therefore on SUBMIT:
+
+reload/revalidate open quantities.
+
+
+If another GRN consumed quantity:
+
+return:
+
+PO_OPEN_QUANTITY_CHANGED.
+
+
+Mobile shows:
+
+"PO quantities have changed. Review the updated open quantities before
+submitting."
+
+
+Never over-receive because Mobile displayed stale data.
+
+
+============================================================
+37. LOCAL GRN TRANSACTION
+============================================================
+
+On valid Submit:
+
+create/update GoodsReceipt and lines transactionally.
+
+
+Generate:
+
+SILA GRN Number.
+
+
+Example:
+
+SGRN-20260916-000123
+
+
+Use concurrency-safe sequence.
+
+
+Do not create duplicate GRNs from double tap.
+
+
+============================================================
+38. GRN IDEMPOTENCY
+============================================================
+
+Create stable IdempotencyKey.
+
+
+Repeated:
+
+SUBMIT GRN
+
+network retry
+
+Mobile timeout
+
+must NOT create another ERP goods receipt.
+
+
+One logical GRN:
+
+one SILA GRN
+
+one ERP Material Document.
+
+
+============================================================
+39. POST_GRN CONFIG RESOLUTION
+============================================================
+
+Resolve existing generic API configuration:
+
+Organization
++
+Entity
++
+ProcessType = POST_GRN.
+
+
+Specific Entity config wins.
+
+ALL fallback if no specific configuration.
+
+
+If no active/tested POST_GRN config:
+
+do NOT pretend GRN posted.
+
+
+Return:
+
+POST_GRN_CONFIGURATION_NOT_FOUND.
+
+
+============================================================
+40. POST_GRN MAPPING
+============================================================
+
+POST_GRN must also use controlled mapping.
+
+
+Source:
+
+SILA GoodsReceipt
+SILA GoodsReceiptLine
+
+
+Target:
+
+configured ERP Material Document API schema.
+
+
+Cloud Field Mapping must support outbound mapping.
+
+
+Example conceptual mappings:
+
+GoodsReceipt.PostingDate
+→ ERP PostingDate
+
+GoodsReceipt.DocumentDate
+→ ERP DocumentDate
+
+GoodsReceiptLine.PurchaseOrder
+→ ERP PurchaseOrder
+
+GoodsReceiptLine.PurchaseOrderItem
+→ ERP PurchaseOrderItem
+
+GoodsReceiptLine.Material
+→ ERP Material
+
+GoodsReceiptLine.Plant
+→ ERP Plant
+
+GoodsReceiptLine.StorageLocation
+→ ERP StorageLocation
+
+GoodsReceiptLine.AcceptedQuantity
+→ ERP QuantityInEntryUnit
+
+GoodsReceiptLine.EntryUnit
+→ ERP EntryUnit.
+
+
+Do not assume exact target property names without actual API schema.
+
+
+============================================================
+41. MOVEMENT TYPE
+============================================================
+
+For standard PO goods receipt, movement type may commonly be 101,
+but DO NOT hard-code blindly across every organization/process.
+
+
+Make movement type configurable/defaulted through:
+
+POST_GRN integration mapping/configuration
+
+or business configuration.
+
+
+If FIVE uses standard PO GR:
+
+configuration may default:
+
+101.
+
+
+Backend still validates mapping.
+
+
+============================================================
+42. CSRF / SAP WRITE REQUIREMENTS
+============================================================
+
+For SAP write APIs:
+
+handle authentication and any required:
+
+CSRF token
+
+cookies/session
+
+headers
+
+Content-Type
+
+OData error responses
+
+inside backend Integration Executor.
+
+
+Mobile must know nothing about SAP authentication.
+
+
+============================================================
+43. ERP POST
+============================================================
+
+Submit:
+
+GoodsReceipt
+        ↓
+POST_GRN handler
+        ↓
+Integration Framework
+        ↓
+SAP Material Document API.
+
+
+Use actual API operation supported by configured endpoint.
+
+
+Do not implement ERP call directly in Mobile.
+
+
+============================================================
+44. ERP SUCCESS RESPONSE
+============================================================
+
+On successful ERP goods receipt capture:
+
+MaterialDocument
+
+MaterialDocumentYear
+
+and item-level:
+
+MaterialDocumentItem
+
+where returned.
+
+
+Persist immediately.
+
+
+Example Mobile result:
+
+GRN POSTED SUCCESSFULLY
+
+SILA GRN:
+SGRN-20260916-000123
+
+ERP Material Document:
+5000012345
+
+Year:
+2026
+
+PO:
+4500012345
+
+
+============================================================
+45. ERP FAILURE
+============================================================
+
+If SAP rejects:
+
+do NOT mark POSTED.
+
+
+Persist:
+
+Status = FAILED
+
+PostingStatus = FAILED
+
+safe SAP error code/message
+
+attempt timestamp.
+
+
+Show Mobile:
+
+GRN POSTING FAILED
+
+<safe useful reason>
+
+[ RETRY ]
+
+
+Retry must use SAME SILA GRN and idempotency protection.
+
+
+Do not create another GRN.
+
+
+============================================================
+46. UNCERTAIN ERP RESPONSE
+============================================================
+
+Critical:
+
+If request is sent to SAP but network response is lost:
+
+do NOT automatically repost and risk duplicate material document.
+
+
+Status:
+
+POSTING_UNKNOWN
+
+or current equivalent.
+
+
+Reconcile through:
+
+GET_GRN
+
+or ERP lookup/idempotency/reference strategy
+
+before retrying POST.
+
+
+This is essential.
+
+
+============================================================
+47. GET_GRN
+============================================================
+
+Use configured:
+
+GET_GRN
+
+integration to synchronize/reconcile ERP material documents.
+
+
+Source:
+
+API_MATERIAL_DOCUMENT
+
+A_MaterialDocumentItem
+
+or actual configured schema.
+
+
+This supports:
+
+ERP verification
+
+material document synchronization
+
+open quantity accuracy
+
+recovery from uncertain POST result.
+
+
+============================================================
+48. GRN SYNC TABLE DATA
+============================================================
+
+Do not create a separate unrelated ERP GRN table if existing
+GoodsReceipt/GoodsReceiptLine can hold ERP identifiers.
+
+
+GET_GRN should update/reconcile:
+
+GoodsReceipt
+
+GoodsReceiptLine
+
+and PO receipt quantities.
+
+
+Maintain:
+
+SourceSystem
+
+LastSyncedAt
+
+ERP identifiers.
+
+
+============================================================
+49. UPDATE PO OPEN QUANTITY
+============================================================
+
+After confirmed GRN POSTED:
+
+update/recalculate local:
+
+ReceivedQuantity
+
+OpenReceiptQuantity
+
+for affected PO lines.
+
+
+Preferred design:
+
+derive from posted GoodsReceiptLine ledger rather than destructively
+changing history.
+
+
+If denormalized PO item fields are maintained for performance:
+
+update them transactionally/recalculate from posted receipts.
+
+
+============================================================
+50. INVENTORY
+============================================================
+
+Only ACCEPTED quantity increases inventory.
+
+
+After ERP-confirmed GRN according to current SILA inventory design:
+
+create inventory transaction:
+
+GRN_RECEIPT.
+
+
+Do not increase inventory for:
+
+Damaged
+
+Rejected.
+
+
+Do not duplicate existing Phase 3 inventory transaction logic.
+
+
+============================================================
+51. CLOUD GRN SCREEN
+============================================================
+
+Add/reuse:
+
+RECEIVING
+→ GOODS RECEIPTS.
+
+
+Show:
+
+SILA GRN
+ERP Material Document
+Year
+Supplier
+Invoice
+PO
+Entity
+Posting Date
+Items
+Accepted Quantity
+Status
+ERP Status
+Created By
+Created At
+Posted At.
+
+
+Search:
+
+SILA GRN
+ERP Material Document
+Invoice
+PO
+Supplier.
+
+
+============================================================
+52. CLOUD GRN DETAIL
+============================================================
+
+Header:
+
+SILA GRN
+
+ERP Material Document
+
+Supplier
+
+Invoice
+
+PO
+
+Entity
+
+Status.
+
+
+Tabs:
+
+OVERVIEW
+
+LINES
+
+ERP RESPONSE
+
+INTEGRATION HISTORY
+
+AUDIT.
+
+
+LINES:
+
+PO Item
+Material
+PO Open Before
+Invoice Qty
+Physical Qty
+Accepted
+Damaged
+Rejected
+UOM
+ERP Material Document Item.
+
+
+============================================================
+53. MOBILE GRN SUCCESS
+============================================================
+
+After ERP confirms success:
+
+show success page.
+
+
+Actions:
+
+VIEW GRN
+
+RECEIVE ANOTHER INVOICE
+
+HOME.
+
+
+Do not return user to editable quantity screen after POSTED.
+
+
+============================================================
+54. MOBILE HISTORY
+============================================================
+
+Existing Receive History should include:
+
+Invoice
+
+Supplier
+
+PO
+
+SILA GRN
+
+ERP Material Document
+
+Status
+
+Date.
+
+
+Allow GRN detail.
+
+
+============================================================
+55. SERVICE PO
+============================================================
+
+Preserve rule:
+
+Service PO — goods receipt is not available in SILA ME.
+
+
+If selected PO is service-only:
+
+do not open GRN comparison.
+
+
+Invoice can continue through future service invoice flow.
+
+
+Do NOT implement invoice posting now.
+
+
+============================================================
+56. MIXED INVOICE
+============================================================
+
+For MIXED invoice:
+
+only material/GR-relevant lines enter GRN comparison.
+
+
+Service lines remain on invoice but do not create material GRN lines.
+
+
+============================================================
+57. NO PO
+============================================================
+
+For this phase, material GRN requires a PO.
+
+
+If no eligible PO can be selected:
+
+BLOCK:
+
+NO ELIGIBLE PURCHASE ORDER
+
+
+Do not allow PO-less material GRN unless a future business process
+explicitly supports it.
+
+
+============================================================
+58. SUPPLIER/PO SECURITY
+============================================================
+
+Never trust Mobile SupplierId or PurchaseOrderId alone.
+
+
+Backend validates:
+
+Supplier belongs to Organization/Entity.
+
+PO belongs to Organization/Entity.
+
+PO SupplierId == Invoice SupplierId.
+
+PO line belongs to selected PO.
+
+
+Changing IDs in request must return:
+
+ACCESS_DENIED
+
+or:
+
+PO_SUPPLIER_MISMATCH.
+
+
+============================================================
+59. MASTER DATA DEPENDENCY
+============================================================
+
+Mobile GRN process depends on successful master synchronization:
+
+GET_SUPPLIER
+        ↓
+Supplier Master
+
+GET_PO
+        ↓
+PO Master.
+
+
+If supplier master has not been synchronized:
+
+show:
+
+SUPPLIER MASTER NOT AVAILABLE
+
+
+If PO master unavailable:
+
+show:
+
+PURCHASE ORDER MASTER NOT AVAILABLE.
+
+
+Do not silently fall back to uncontrolled free text.
+
+
+============================================================
+60. EXCEL MASTER DATA SUPPORT
+============================================================
+
+Supplier Master should support:
+
+Excel Download
+
+Excel Template
+
+Excel Upload
+
+Preview
+
+Commit
+
+using same Supplier upsert service.
+
+
+PO Master already follows same pattern.
+
+
+This allows operations before/alongside ERP scheduled synchronization.
+
+
+============================================================
+61. AUDIT
+============================================================
+
+Audit:
+
+SUPPLIER_MATCH_ATTEMPTED
+
+SUPPLIER_MATCHED
+
+SUPPLIER_SELECTED_MANUALLY
+
+PO_AUTO_MATCHED
+
+PO_SELECTED_MANUALLY
+
+INVOICE_SAVED
+
+GRN_COMPARISON_OPENED
+
+GRN_QUANTITY_ENTERED
+
+GRN_VALIDATION_FAILED
+
+GRN_SUBMITTED
+
+GRN_POST_STARTED
+
+GRN_POST_COMPLETED
+
+GRN_POST_FAILED
+
+GRN_POST_UNKNOWN
+
+GRN_RECONCILED
+
+GRN_RETRY_REQUESTED.
+
+
+Never log credentials.
+
+
+============================================================
+62. TEST SCENARIO — HAPPY PATH
+============================================================
+
+Supplier Master:
+
+1000234
+ABC FOOD TRADING LLC.
+
+
+PO:
+
+4500012345
+
+Supplier:
+1000234.
+
+
+Items:
+
+10
+SALMON
+Ordered 10 KG
+Previously Received 2
+Open 8.
+
+20
+TOMATO
+Ordered 20 KG
+Previously Received 0
+Open 20.
+
+
+Invoice OCR:
+
+Supplier:
+ABC Food Trading L.L.C.
+
+Invoice:
+INV-1001
+
+PO:
+4500012345.
+
+
+Expected:
+
+Supplier fuzzy/alias match:
+1000234.
+
+PO validated against supplier.
+
+Save Invoice.
+
+GRN comparison opens.
+
+
+Invoice:
+
+SALMON 7 KG
+TOMATO 15 KG.
+
+
+User enters:
+
+SALMON:
+Physical 7
+Accepted 6
+Damaged 1
+Rejected 0.
+
+TOMATO:
+Physical 15
+Accepted 15.
+
+
+Submit.
+
+
+Expected ERP posting quantities:
+
+SALMON:
+6 KG
+
+TOMATO:
+15 KG.
+
+
+ERP returns Material Document.
+
+
+SILA GRN POSTED.
+
+
+New PO open:
+
+SALMON:
+2 KG
+
+TOMATO:
+5 KG.
+
+
+============================================================
+63. TEST — OCR PO MISSING
+============================================================
+
+OCR Supplier matches:
+
+1000234.
+
+
+OCR PO:
+
+null.
+
+
+Expected:
+
+PO dropdown contains ONLY open POs for Supplier 1000234.
+
+
+User selects correct PO.
+
+
+Save & Continue enabled.
+
+
+============================================================
+64. TEST — OCR PO WRONG
+============================================================
+
+OCR:
+
+PO 4500099999.
+
+
+That PO belongs to another supplier.
+
+
+Expected:
+
+do NOT preselect.
+
+
+Show:
+
+"The PO detected on the invoice does not belong to the selected
+supplier. Select the correct open PO."
+
+
+Dropdown contains only selected supplier's open POs.
+
+
+============================================================
+65. TEST — SUPPLIER NOT RESOLVED
+============================================================
+
+OCR:
+
+XYZ FOOD.
+
+
+No Supplier Master match.
+
+
+Expected:
+
+SupplierId null.
+
+PO dropdown disabled.
+
+SAVE & CONTINUE blocked.
+
+
+User must select valid Supplier Master record.
+
+
+============================================================
+66. TEST — FULLY RECEIVED PO
+============================================================
+
+PO ordered:
+10.
+
+Posted GRNs:
+10.
+
+
+Open:
+0.
+
+
+Expected:
+
+PO not shown as OPEN.
+
+
+Cannot create another GRN.
+
+
+============================================================
+67. TEST — OVER RECEIPT
+============================================================
+
+PO Open:
+8.
+
+User Accepted:
+9.
+
+
+No configured overdelivery tolerance.
+
+
+Expected:
+
+BLOCK.
+
+
+Message:
+
+"Accepted quantity exceeds the PO open quantity of 8."
+
+
+============================================================
+68. TEST — DOUBLE SUBMIT
+============================================================
+
+User taps SUBMIT GRN twice.
+
+
+Expected:
+
+one SILA GRN.
+
+one ERP material document.
+
+No duplicate inventory transaction.
+
+
+============================================================
+69. TEST — SAP FAILURE
+============================================================
+
+SAP returns business error.
+
+
+Expected:
+
+SILA GRN retained.
+
+Posting FAILED.
+
+No inventory increase.
+
+PO open quantity not reduced as if posted.
+
+Retry available.
+
+
+============================================================
+70. TEST — NETWORK LOSS AFTER POST
+============================================================
+
+Request reaches SAP.
+
+Mobile/backend loses response.
+
+
+Expected:
+
+do NOT blindly POST again.
+
+Mark:
+
+POSTING_UNKNOWN.
+
+
+Run GET_GRN/reconciliation.
+
+Resolve existing ERP material document if it was created.
+
+
+============================================================
+71. TEST — CLOUD
+============================================================
+
+After successful GRN:
+
+Cloud:
+
+RECEIVING
+→ GOODS RECEIPTS
+
+must immediately show transaction.
+
+
+Opening GRN shows:
+
+Invoice
+Supplier
+PO
+quantities
+ERP Material Document
+ERP items
+integration history.
+
+
+============================================================
+72. DO NOT IMPLEMENT
+============================================================
+
+DO NOT implement:
+
+Invoice posting
+
+Supplier Invoice POST
+
+AP accounting posting
+
+payment
+
+automatic invoice posting after GRN.
+
+
+That is NEXT PHASE.
+
+
+============================================================
+73. DO NOT BREAK
+============================================================
+
+Preserve:
+
+Mobile Scanner
+
+PDF generation
+
+Mobile Basic OCR
+
+Backend Advanced OCR
+
+Re-read
+
+Invoice duplicate detection
+
+SharePoint PDF routing
+
+PO API/Excel Data Update
+
+Authentication/RBAC
+
+bala@chervic.in.
+
+
+============================================================
+74. FINAL ACCEPTANCE
+============================================================
+
+Task is complete only when:
+
+1. GET_SUPPLIER creates/updates Supplier Master.
+
+2. Supplier Master visible in Cloud.
+
+3. OCR supplier name resolves to Supplier ID.
+
+4. Mobile cannot continue without Supplier ID.
+
+5. PO dropdown is filtered by Supplier ID.
+
+6. OCR PO is validated against Supplier.
+
+7. User can manually select correct open PO.
+
+8. Save Invoice persists SupplierId + PO.
+
+9. Save returns GRN_COMPARISON.
+
+10. Invoice lines compare to OPEN PO lines.
+
+11. Physical quantities entered manually.
+
+12. Accepted quantity validated against current PO open quantity.
+
+13. Submit creates one SILA GRN.
+
+14. POST_GRN configuration is resolved.
+
+15. Backend posts ERP GRN.
+
+16. ERP Material Document captured.
+
+17. GoodsReceipt/GoodsReceiptLine updated.
+
+18. Cloud immediately shows GRN.
+
+19. PO open quantities update/recalculate.
+
+20. Accepted quantities update inventory exactly once.
+
+21. Mobile shows successful GRN.
+
+22. Invoice posting has NOT been implemented.
+
+
+============================================================
+75. FINAL REPORT
+============================================================
+
+Return:
+
+SILA ME SUPPLIER → PO → GRN
+
+SUPPLIER MASTER:
+PASS/FAIL
+
+GET_SUPPLIER:
+PASS/FAIL
+
+SUPPLIER FIELD MAPPING:
+PASS/FAIL
+
+SUPPLIER API PULL:
+PASS/FAIL
+
+SUPPLIER EXCEL:
+PASS/FAIL
+
+OCR SUPPLIER MATCH:
+PASS/FAIL
+
+SUPPLIER ID REQUIRED:
+PASS/FAIL
+
+OPEN PO FILTER BY SUPPLIER:
+PASS/FAIL
+
+OCR PO VALIDATION:
+PASS/FAIL
+
+MANUAL PO SELECTION:
+PASS/FAIL
+
+SAVE INVOICE:
+PASS/FAIL
+
+INVOICE DUPLICATE CHECK:
+PASS/FAIL
+
+GRN COMPARISON:
+PASS/FAIL
+
+OPEN PO LINE CALCULATION:
+PASS/FAIL
+
+INVOICE/PO LINE MATCH:
+PASS/FAIL
+
+PHYSICAL QTY:
+PASS/FAIL
+
+ACCEPTED/DAMAGED/REJECTED:
+PASS/FAIL
+
+UOM VALIDATION:
+PASS/FAIL
+
+GRN HEADER TABLE:
+PASS/FAIL
+
+GRN LINE TABLE:
+PASS/FAIL
+
+GRN IDEMPOTENCY:
+PASS/FAIL
+
+POST_GRN CONFIG:
+PASS/FAIL
+
+ERP GRN POST:
+PASS/FAIL
+
+ERP MATERIAL DOCUMENT:
+<test value / NOT TESTED>
+
+GET_GRN RECONCILIATION:
+PASS/FAIL
+
+PO OPEN QTY UPDATE:
+PASS/FAIL
+
+INVENTORY GRN_RECEIPT:
+PASS/FAIL
+
+CLOUD GRN:
+PASS/FAIL
+
+MOBILE GRN SUCCESS:
+PASS/FAIL
+
+SERVICE PO BLOCK:
+PASS/FAIL
+
+DOUBLE SUBMIT:
+PASS/FAIL
+
+POSTING_UNKNOWN PROTECTION:
+PASS/FAIL
+
+INVOICE POSTING IMPLEMENTED:
+NO
+
+API TESTS:
+x/x
+
+MOBILE TYPECHECK:
+PASS/FAIL
+
+CLOUD BUILD:
+PASS/FAIL
+
+BALA USER MODIFIED:
+NO
+
+FINAL STATUS:
+PASS / BLOCKED / FAIL
+
+
+============================================================
+76. COMMIT
+============================================================
+
+Only after end-to-end DB verification:
+
+git commit -m "feat: add supplier po matching and mobile grn posting"
+
+DO NOT PUSH.
+
+STOP.
+
+DO NOT START INVOICE POSTING.

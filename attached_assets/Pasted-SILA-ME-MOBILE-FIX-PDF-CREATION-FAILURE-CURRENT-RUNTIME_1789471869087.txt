@@ -1,0 +1,678 @@
+SILA ME MOBILE — FIX PDF CREATION FAILURE
+
+CURRENT RUNTIME ERROR:
+
+[Scanner] PDF creation failed
+
+getInfoAsync(...)
+readImageBytes(...)
+buildScanPdfBytes(...)
+
+The failure occurs while PDF generation tries to read the scanned
+page image.
+
+IMPORTANT:
+
+DO NOT rewrite the scanner.
+DO NOT change pdf-lib.
+DO NOT change login/auth/backend/cloud/GRN/OCR.
+
+Fix the image URI/file-reading layer used by PDF generation.
+
+==================================================
+1. ROOT CAUSE INVESTIGATION
+==================================================
+
+The stack proves the failure path is:
+
+CREATE PDF
+→ buildScanPdfBytes()
+→ readImageBytes()
+→ getInfoAsync()
+→ FAILURE
+
+Therefore inspect:
+
+readImageBytes()
+
+and every caller.
+
+Before calling getInfoAsync(), log DEVELOPMENT-ONLY:
+
+console.log("[PDF-DEBUG] image", {
+  pageId,
+  processedImageUri,
+  uriPrefix: processedImageUri?.substring(0, 40),
+  platform: Platform.OS
+});
+
+We need to know whether processedImageUri is:
+
+file://
+content://
+blob:
+data:
+http://
+https://
+or plain native path.
+
+DO NOT call getInfoAsync blindly.
+
+==================================================
+2. CREATE A URI-AWARE IMAGE READER
+==================================================
+
+Refactor readImageBytes() so it supports the actual URI type.
+
+Conceptually:
+
+async function readImageBytes(uri: string): Promise<Uint8Array> {
+
+    if (!uri) {
+        throw new Error("EMPTY_IMAGE_URI");
+    }
+
+    // WEB / HTTP / BLOB
+    if (
+        uri.startsWith("blob:") ||
+        uri.startsWith("http://") ||
+        uri.startsWith("https://")
+    ) {
+        const response = await fetch(uri);
+
+        if (!response.ok && !uri.startsWith("blob:")) {
+            throw new Error(
+              `IMAGE_FETCH_FAILED:${response.status}`
+            );
+        }
+
+        const buffer = await response.arrayBuffer();
+
+        return new Uint8Array(buffer);
+    }
+
+    // DATA URI
+    if (uri.startsWith("data:")) {
+        decode the base64 payload safely
+        and return Uint8Array.
+    }
+
+    // NATIVE LOCAL FILE
+    if (uri.startsWith("file://")) {
+        read through the supported Expo FileSystem API.
+        return Uint8Array.
+    }
+
+    // ANDROID CONTENT URI
+    if (uri.startsWith("content://")) {
+        first copy/materialize it into app cache as a file:// URI
+        using the supported Expo/native file API,
+        then read the cached file bytes.
+    }
+
+    // PLAIN ABSOLUTE NATIVE PATH
+    if (uri.startsWith("/")) {
+        normalize to file:// if required
+        then read.
+    }
+
+    throw new Error(
+      `UNSUPPORTED_IMAGE_URI_SCHEME:${uri.substring(0, 30)}`
+    );
+}
+
+Use the APIs appropriate to the CURRENT installed Expo SDK.
+
+Do not blindly paste deprecated Expo FileSystem code.
+
+==================================================
+3. VERY IMPORTANT — WEB PREVIEW
+==================================================
+
+Current error is visible through:
+
+expo.sisko.replit.dev
+
+Therefore explicitly test Platform.OS === "web".
+
+On WEB:
+
+DO NOT use getInfoAsync() for:
+
+blob:
+http:
+https:
+data:
+
+Use browser-compatible fetch/ArrayBuffer handling.
+
+Example concept:
+
+const response = await fetch(uri);
+const arrayBuffer = await response.arrayBuffer();
+return new Uint8Array(arrayBuffer);
+
+This is likely the immediate reason PDF creation fails in Replit
+Preview.
+
+==================================================
+4. NATIVE DEVICE PATH
+==================================================
+
+Do NOT fix Web by breaking iPhone/Android.
+
+For native:
+
+file://
+→ Expo FileSystem/native file reader
+
+content://
+→ materialize/copy into app cache
+→ file://
+→ read
+
+Native scanner page:
+
+react-native-document-scanner-plugin
+
+must continue using the original high-quality:
+
+processedImageUri
+
+==================================================
+5. CHECK EXPO FILESYSTEM VERSION
+==================================================
+
+Inspect:
+
+Expo SDK version
+expo-file-system version
+
+Determine whether current code is mixing:
+
+legacy expo-file-system API
+
+with
+
+new Expo File/FileSystem API.
+
+The stack shows:
+
+getInfoAsync
+
+so explicitly determine whether getInfoAsync is supported in the
+currently imported module.
+
+Check the actual import.
+
+For example, investigate whether code is importing:
+
+expo-file-system
+
+versus
+
+expo-file-system/legacy
+
+while calling a legacy API.
+
+DO NOT guess.
+
+Fix according to the installed Expo SDK.
+
+==================================================
+6. LOG EXACT FAILURE
+==================================================
+
+Current logging appears to hide the useful error details.
+
+Change development error logging to:
+
+console.error(
+  "[Scanner] PDF creation failed",
+  {
+    message:
+      error instanceof Error
+        ? error.message
+        : String(error),
+
+    stack:
+      error instanceof Error
+        ? error.stack
+        : undefined,
+
+    platform: Platform.OS,
+
+    pageCount: pages.length,
+
+    pageUris: pages.map(p => ({
+      id: p.id,
+      processedImageUri: p.processedImageUri
+    }))
+  }
+);
+
+Do not expose this verbose information in production UI.
+
+==================================================
+7. DO NOT USE getInfoAsync AS A PREREQUISITE
+==================================================
+
+If the current implementation does:
+
+const info =
+  await FileSystem.getInfoAsync(uri);
+
+if (!info.exists) ...
+
+for EVERY URI:
+
+REMOVE this universal assumption.
+
+A blob/http/data URL is not necessarily an Expo FileSystem file.
+
+File existence checking must be URI-specific.
+
+==================================================
+8. MIME / IMAGE TYPE DETECTION
+==================================================
+
+After reading bytes, determine whether image is:
+
+JPEG
+PNG
+
+Do not rely only on filename extension.
+
+Native scanner paths may not always have a useful extension.
+
+Inspect magic bytes.
+
+JPEG:
+
+FF D8 FF
+
+PNG:
+
+89 50 4E 47 0D 0A 1A 0A
+
+Then:
+
+JPEG
+→ pdfDoc.embedJpg(bytes)
+
+PNG
+→ pdfDoc.embedPng(bytes)
+
+Unsupported format:
+
+convert to high-quality JPEG before PDF embedding.
+
+==================================================
+9. PDF CREATION PIPELINE
+==================================================
+
+Required:
+
+for each page in ScanSession.pages:
+
+    uri = page.processedImageUri
+
+    bytes = await readImageBytes(uri)
+
+    detect image type
+
+    embed image
+
+    create ONE PDF page
+
+    preserve aspect ratio
+
+After all pages:
+
+pdfDoc.save()
+
+Then write/download/store resulting PDF appropriately for:
+
+WEB
+
+and
+
+NATIVE.
+
+==================================================
+10. PDF OUTPUT ALSO NEEDS PLATFORM-AWARE HANDLING
+==================================================
+
+Inspect how the final PDF bytes are being saved.
+
+Native:
+
+write PDF to app document/cache filesystem.
+
+Web:
+
+do not assume native filesystem APIs.
+
+Create a Blob:
+
+new Blob(
+  [pdfBytes],
+  { type: "application/pdf" }
+)
+
+Create an object URL where appropriate:
+
+URL.createObjectURL(pdfBlob)
+
+Store that as the temporary web pdfUri.
+
+Therefore BOTH:
+
+INPUT IMAGE READING
+
+and
+
+OUTPUT PDF WRITING
+
+must be platform-aware.
+
+==================================================
+11. DO NOT LOWER IMAGE QUALITY
+==================================================
+
+This bug is not an image-resolution problem.
+
+Keep:
+
+native scanner high quality
+
+processed JPEG quality 0.92
+
+original processed image dimensions
+
+Do NOT compress images further just to fix PDF creation.
+
+==================================================
+12. DO NOT RETURN TO expo-print
+==================================================
+
+Absolutely DO NOT solve this by restoring:
+
+expo-print
+HTML
+screen rendering
+ViewShot
+screenshot PDF.
+
+Continue using:
+
+processed image bytes
+→ pdf-lib
+→ real PDF pages.
+
+==================================================
+13. WEB FALLBACK TEST
+==================================================
+
+MANDATORY TEST IN REPLIT PREVIEW:
+
+Capture/import:
+
+Page A
+Page B
+Page C
+
+Before CREATE PDF log URI schemes.
+
+Expected examples might be:
+
+blob:
+data:
+https:
+
+Press CREATE PDF.
+
+Verify:
+
+all 3 image byte arrays loaded
+
+PDF generated
+
+PDF page count = 3
+
+PDF preview opens
+
+No getInfoAsync failure.
+
+==================================================
+14. NATIVE PATH UNIT TEST
+==================================================
+
+Test readImageBytes() against mocked/fixture forms:
+
+file://...
+
+content://...
+
+blob:...
+
+data:image/jpeg;base64,...
+
+https://...
+
+Verify the correct reader branch is selected.
+
+==================================================
+15. TEST JPEG
+==================================================
+
+Provide JPEG fixture.
+
+Expected:
+
+read bytes
+detect JPEG
+embedJpg
+PDF created.
+
+==================================================
+16. TEST PNG
+==================================================
+
+Provide PNG fixture.
+
+Expected:
+
+read bytes
+detect PNG
+embedPng
+PDF created.
+
+==================================================
+17. PAGE-SPECIFIC ERROR
+==================================================
+
+If one page cannot be read, report which page.
+
+Example:
+
+"Unable to read scanned Page 2. Retake or remove this page."
+
+Do not just show:
+
+PDF creation failed.
+
+Preserve all other pages.
+
+==================================================
+18. PDF BUTTON STATE
+==================================================
+
+On CREATE PDF:
+
+Creating PDF...
+
+If success:
+
+PDF Ready
+
+If failure:
+
+PDF could not be created.
+
+Your scanned pages are safe.
+
+Buttons:
+
+TRY AGAIN
+BACK TO PAGES
+
+Do not clear ScanSession.
+
+==================================================
+19. DO NOT MODIFY DELETE PAGE IN THIS CHANGE
+==================================================
+
+The Delete Page issue is separate.
+
+Do not mix another Delete Page rewrite into this PDF fix.
+
+First make PDF creation reliable.
+
+==================================================
+20. VERIFY CURRENT NATIVE SCANNER
+==================================================
+
+Keep:
+
+react-native-document-scanner-plugin 2.0.4
+
+Native scanner behavior must remain unchanged.
+
+Web/Replit Preview may continue using basic camera fallback.
+
+==================================================
+21. TEST EXISTING 3-PAGE PDF
+==================================================
+
+Create three pages.
+
+Verify:
+
+Page 1 source = processedImageUri A
+Page 2 source = processedImageUri B
+Page 3 source = processedImageUri C
+
+PDF:
+
+3 pages
+
+No HTML
+
+No screenshots
+
+No thumbnail collage.
+
+==================================================
+22. REGRESSION
+==================================================
+
+Run:
+
+Mobile TypeScript
+Mobile tests
+Expo Doctor
+Web/Expo static bundle
+Android config/build where available
+iOS config/build where available
+
+Do not touch API or Cloud unless needed for regression testing.
+
+==================================================
+23. FINAL REPORT
+==================================================
+
+Return:
+
+ROOT CAUSE:
+<exact getInfoAsync failure>
+
+EXPO SDK:
+<version>
+
+EXPO FILE SYSTEM:
+<version>
+
+CURRENT IMPORT:
+<exact import>
+
+FAILED URI:
+<scheme, not sensitive full path>
+
+FAILED PLATFORM:
+web / ios / android
+
+URI HANDLING AFTER FIX:
+
+file:// = <method>
+content:// = <method>
+blob: = <method>
+data: = <method>
+http/https = <method>
+
+JPEG BYTE READING:
+PASS/FAIL
+
+PNG BYTE READING:
+PASS/FAIL
+
+WEB IMAGE READING:
+PASS/FAIL
+
+NATIVE FILE READING:
+PASS/FAIL
+
+3-PAGE PDF:
+PASS/FAIL
+
+PDF PAGE COUNT:
+<number>
+
+PDF SOURCE:
+processedImageUri
+
+EXPO-PRINT USED:
+NO
+
+SCREENSHOT USED:
+NO
+
+IMAGE QUALITY CHANGED:
+NO
+
+MOBILE TYPESCRIPT:
+PASS/FAIL
+
+MOBILE TESTS:
+<result>
+
+EXPO DOCTOR:
+<result>
+
+PHYSICAL DEVICE TEST:
+PASS/FAIL or
+PHYSICAL DEVICE TEST PENDING USER ACTION
+
+FILES MODIFIED:
+<exact list>
+
+FINAL STATUS:
+PDF CREATION FIXED / PDF CREATION NOT FIXED
+
+If fixed commit:
+
+fix: support scanner image uri types in pdf generation
+
+Return commit SHA.
+
+STOP.

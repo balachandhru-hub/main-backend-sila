@@ -1,0 +1,1448 @@
+CRITICAL FIX — SILA ME USER CREATION MICROSOFT SHAREPOINT AUTHENTICATION
+
+CURRENT DEFECT:
+
+Administration → Users → Add User
+
+When Document Storage = Microsoft is selected, the application is NOT
+triggering Microsoft authentication.
+
+Therefore:
+
+- SharePoint cannot be authenticated
+- SharePoint URL/path cannot be validated
+- SILA ME cannot confirm access to the destination
+- Storage is being configured without proving that SILA ME can actually
+  upload files there
+
+THIS IS A BLOCKING DEFECT.
+
+DO NOT mark Microsoft storage as configured based only on a typed URL.
+
+============================================================
+1. REQUIRED BUSINESS FLOW
+============================================================
+
+The required flow is:
+
+ADD USER
+   ↓
+Personal Information
+   ↓
+Organization / Property / Store
+   ↓
+Cloud / Mobile / Both
+   ↓
+Roles
+   ↓
+Authorizations
+   ↓
+Document Storage
+   ↓
+Select MICROSOFT
+   ↓
+Enter/select SharePoint Site / URL
+   ↓
+CONNECT MICROSOFT
+   ↓
+REDIRECT TO MICROSOFT
+   ↓
+Microsoft Sign-In
+   ↓
+Microsoft Consent / Authorization
+   ↓
+Callback to SILA ME Backend
+   ↓
+Validate Microsoft response
+   ↓
+Resolve SharePoint Site
+   ↓
+Resolve Document Library / Drive
+   ↓
+Select/validate Folder
+   ↓
+TEST READ/WRITE ACCESS
+   ↓
+Return to Add User
+   ↓
+MICROSOFT CONNECTED
+   ↓
+Validated SharePoint URL/path displayed
+   ↓
+CREATE USER
+
+Microsoft must NOT show CONNECTED before this process succeeds.
+
+============================================================
+2. DO NOT IMPLEMENT FAKE AUTHENTICATION
+============================================================
+
+Do NOT:
+
+accept SharePoint URL and immediately save it
+
+hardcode CONNECTED
+
+mock Microsoft success
+
+perform OAuth only in React
+
+put Microsoft client secret in Vite
+
+put Microsoft secret in browser storage
+
+put access token in localStorage
+
+put refresh token in localStorage
+
+store token in User table
+
+log tokens
+
+send tokens to Mobile.
+
+Microsoft integration must be backend controlled.
+
+============================================================
+3. USE MICROSOFT IDENTITY PLATFORM + MICROSOFT GRAPH
+============================================================
+
+Implement the Microsoft authorization flow using the supported
+Microsoft identity platform OAuth 2.0 authorization-code flow.
+
+The ASP.NET backend owns:
+
+authorization request
+
+state/correlation
+
+callback validation
+
+token acquisition/server-side token handling
+
+Microsoft Graph calls
+
+SharePoint site validation
+
+Drive/library validation
+
+folder validation
+
+connection testing.
+
+Cloud only initiates the process and displays the result.
+
+============================================================
+4. FIRST INSPECT CURRENT IMPLEMENTATION
+============================================================
+
+Before changing code inspect:
+
+apps/cloud
+
+apps/api
+
+existing Add User page
+
+storage provider selector
+
+Microsoft fields
+
+integration services
+
+authentication services
+
+configuration
+
+database entities
+
+DocumentStorageConnection
+
+UserDocumentStorageAssignment
+
+or equivalent existing entities.
+
+Search for:
+
+MICROSOFT
+SHAREPOINT
+GRAPH
+OAUTH
+MSAL
+DocumentStorage
+StorageProvider
+SharePointUrl
+SiteId
+DriveId
+FolderId.
+
+Do NOT build duplicate integration infrastructure if one already exists.
+
+Document findings before changing code.
+
+============================================================
+5. REQUIRED MICROSOFT CONFIGURATION
+============================================================
+
+Backend configuration should support environment variables/secrets such
+as:
+
+Microsoft__TenantId
+
+Microsoft__ClientId
+
+Microsoft__ClientSecret
+
+Microsoft__RedirectUri
+
+Do NOT put ClientSecret in:
+
+appsettings.json committed to Git
+
+VITE_*
+
+EXPO_PUBLIC_*
+
+frontend source
+
+database plaintext configuration.
+
+Use Replit Secrets / environment configuration.
+
+============================================================
+6. REDIRECT URI
+============================================================
+
+Create a stable backend callback endpoint, for example:
+
+GET /api/v1/integrations/microsoft/callback
+
+The configured Microsoft redirect URI must point to the PUBLIC HTTPS
+backend callback URL.
+
+Do NOT use:
+
+localhost
+
+127.0.0.1
+
+Vite port 5173
+
+Expo URL
+
+Mobile URL
+
+as the production Microsoft redirect URI.
+
+The exact callback URL must match the redirect URI registered for the
+Microsoft application.
+
+============================================================
+7. START MICROSOFT CONNECTION API
+============================================================
+
+Create/reuse an authenticated backend endpoint similar to:
+
+POST /api/v1/integrations/microsoft/connect
+
+Request:
+
+{
+  "organizationId": "...",
+  "returnUrl": "/admin/users/new",
+  "draftId": "..."
+}
+
+Backend must:
+
+authenticate current SILA ME administrator
+
+check CONFIGURE_DOCUMENT_STORAGE
+
+validate organization scope
+
+create cryptographically secure state
+
+associate state with:
+
+current administrator
+organization
+draftId
+returnUrl
+expiry
+
+then generate the Microsoft authorization URL.
+
+Return:
+
+{
+  "authorizationUrl": "...",
+  "state": "..."
+}
+
+The frontend then redirects the browser.
+
+Never allow arbitrary external returnUrl values.
+
+============================================================
+8. MICROSOFT LOGIN
+============================================================
+
+When user clicks:
+
+CONNECT MICROSOFT
+
+browser MUST navigate to the real Microsoft login/consent page.
+
+The administrator authenticates with the Microsoft account that has
+access to the required SharePoint environment.
+
+After Microsoft authentication:
+
+Microsoft redirects ONLY to the SILA ME backend callback.
+
+============================================================
+9. MICROSOFT CALLBACK
+============================================================
+
+Backend callback must validate:
+
+authorization code
+
+state
+
+state expiry
+
+correlation
+
+requesting SILA ME user
+
+organization
+
+draft
+
+Microsoft error response.
+
+Reject:
+
+missing state
+
+invalid state
+
+expired state
+
+reused state
+
+unknown state.
+
+State must be one-time use.
+
+============================================================
+10. MICROSOFT PERMISSIONS
+============================================================
+
+Use the MINIMUM Microsoft Graph permissions required for the actual
+document-storage requirement.
+
+The requirement is:
+
+SILA ME must be able to transfer authorized PDFs/files into the selected
+SharePoint destination.
+
+Do NOT request broad tenant-wide privileges merely because they are
+easier.
+
+Design for least privilege.
+
+If the organization's Microsoft policy requires administrator consent,
+show that state clearly rather than pretending the connection failed.
+
+============================================================
+11. AFTER MICROSOFT AUTHENTICATION
+============================================================
+
+Do NOT immediately mark connection as VALIDATED.
+
+First establish:
+
+WHO authenticated
+
+WHICH tenant
+
+WHICH SharePoint site
+
+WHICH document library/drive
+
+WHICH folder/path
+
+WHAT access SILA ME actually has.
+
+============================================================
+12. SHAREPOINT SITE INPUT
+============================================================
+
+After authentication allow:
+
+SharePoint Site URL
+
+Example UI:
+
+SharePoint Site
+[ https://customer.sharepoint.com/sites/Finance ]
+
+or provide site selection/search if Graph access supports it.
+
+Do not require ordinary users to understand Graph IDs.
+
+The UI may use URLs/names.
+
+Backend resolves these into:
+
+TenantId
+SiteId
+DriveId
+FolderId
+
+where applicable.
+
+============================================================
+13. RESOLVE SHAREPOINT SITE
+============================================================
+
+Backend must use Microsoft Graph to validate the selected SharePoint
+site.
+
+Do not trust the typed URL.
+
+Resolve the actual site and obtain safe metadata such as:
+
+SiteId
+DisplayName
+WebUrl.
+
+If site cannot be resolved:
+
+status = VALIDATION_FAILED.
+
+Do not save as connected.
+
+============================================================
+14. DOCUMENT LIBRARY SELECTION
+============================================================
+
+Once site is validated:
+
+retrieve accessible document libraries/drives.
+
+Cloud displays:
+
+Document Library
+[ Documents ▼ ]
+
+or other available libraries.
+
+Administrator selects one.
+
+Store its DriveId.
+
+Do not assume every SharePoint site uses exactly the same library name.
+
+============================================================
+15. FOLDER / PATH SELECTION
+============================================================
+
+Then allow destination folder selection.
+
+Example:
+
+Documents
+   └ SILA ME
+       └ Invoices
+           └ Main Store
+
+Provide:
+
+BROWSE FOLDERS
+
+and optionally:
+
+CREATE FOLDER
+
+only if Microsoft permission and SILA ME authorization allow it.
+
+The selected destination must resolve to a real folder.
+
+Store:
+
+FolderId
+
+and human-readable path.
+
+============================================================
+16. ACCESS TEST IS MANDATORY
+============================================================
+
+THIS IS CRITICAL.
+
+Authentication success alone is NOT sufficient.
+
+SILA ME must test whether it can access the selected destination.
+
+Provide:
+
+TEST CONNECTION
+
+Backend should verify:
+
+site readable
+
+drive/library readable
+
+folder accessible
+
+and ability required for future file transfer.
+
+If write capability is required for PDF transfer, verify the configured
+application can perform the required write operation.
+
+Prefer a safe validation mechanism.
+
+If a temporary validation file is required:
+
+create a uniquely named tiny test file
+
+verify success
+
+delete it immediately
+
+audit the operation.
+
+Do not leave test files behind.
+
+============================================================
+17. CONNECTION STATUS MODEL
+============================================================
+
+Use explicit statuses:
+
+NOT_CONFIGURED
+
+AUTHENTICATION_REQUIRED
+
+AUTHENTICATING
+
+AUTHENTICATED
+
+SITE_SELECTION_REQUIRED
+
+LIBRARY_SELECTION_REQUIRED
+
+FOLDER_SELECTION_REQUIRED
+
+VALIDATING
+
+CONNECTED
+
+CONSENT_REQUIRED
+
+EXPIRED
+
+VALIDATION_FAILED
+
+DISCONNECTED.
+
+CONNECTED means:
+
+Microsoft authentication succeeded
+AND
+SharePoint site resolved
+AND
+document library resolved
+AND
+folder resolved
+AND
+required access test passed.
+
+Nothing less.
+
+============================================================
+18. ADD USER UI
+============================================================
+
+In:
+
+Administration
+→ Users
+→ Add User
+→ Document Storage
+
+When provider = MICROSOFT:
+
+show a proper connection card.
+
+MICROSOFT SHAREPOINT
+
+Connection Status:
+NOT CONNECTED
+
+[ CONNECT MICROSOFT ]
+
+After authentication:
+
+Microsoft Account:
+<safe display information>
+
+Tenant:
+<safe tenant display>
+
+SharePoint Site:
+[ Select / Enter ]
+
+Document Library:
+[ Select ]
+
+Folder:
+[ Browse / Select ]
+
+[ TEST CONNECTION ]
+
+Only after successful validation:
+
+Status:
+
+CONNECTED ✓
+
+SharePoint:
+<Customer SharePoint Site>
+
+Library:
+Documents
+
+Folder:
+/SILA ME/Invoices/Main Store
+
+Validated:
+<timestamp>
+
+============================================================
+19. CREATE USER VALIDATION
+============================================================
+
+If Storage Provider = MICROSOFT:
+
+CREATE USER must NOT treat the Microsoft storage assignment as active
+unless connection status = CONNECTED.
+
+If validation has not completed:
+
+show:
+
+"Microsoft SharePoint access must be authenticated and validated before
+this storage destination can be assigned."
+
+Provide:
+
+CONNECT MICROSOFT
+
+or
+
+SELECT NO EXTERNAL PDF TRANSFER.
+
+Do not silently continue with an invalid Microsoft destination.
+
+============================================================
+20. IMPORTANT — USER FORM MUST SURVIVE MICROSOFT REDIRECT
+============================================================
+
+Current Add User data must NOT disappear when browser redirects to
+Microsoft.
+
+Preserve:
+
+First Name
+Last Name
+Email
+Mobile
+Organization
+Property
+Store
+System
+Roles
+Authorization changes
+Storage Provider
+
+using a secure server-side:
+
+UserCreationDraft
+
+or equivalent temporary draft.
+
+DO NOT persist plaintext temporary password in localStorage,
+sessionStorage or database.
+
+After Microsoft callback:
+
+redirect back to something like:
+
+/admin/users/new?draft=<safe-id>&microsoft=connected
+
+Restore the form.
+
+Password can be generated/entered after returning from Microsoft if
+necessary.
+
+============================================================
+21. BETTER LONG-TERM ARCHITECTURE
+============================================================
+
+Do NOT create a new OAuth connection for every SILA ME user if the same
+customer SharePoint tenant/site is reused.
+
+Architecture:
+
+ORGANIZATION
+     ↓
+MICROSOFT CONNECTION
+     ↓
+SHAREPOINT SITE
+     ↓
+DOCUMENT LIBRARY
+     ↓
+FOLDERS
+     ↓
+USER STORAGE ASSIGNMENT
+
+Example:
+
+ABC Hospitality
+      ↓
+Microsoft Connection #1
+      ↓
+ABC SharePoint
+      ↓
+Documents
+      ├ Property A / Main Store
+      ├ Property A / Outlet 1
+      └ Property B / Main Store
+
+Then Add User can select an already validated destination.
+
+============================================================
+22. EXISTING CONNECTION
+============================================================
+
+If Organization already has a valid Microsoft connection:
+
+do NOT force OAuth again.
+
+Add User should show:
+
+Microsoft SharePoint
+
+Organization Connection:
+CONNECTED ✓
+
+Destination:
+[ Select SharePoint destination ▼ ]
+
+Options must come only from validated destinations available to the
+selected organization.
+
+Also provide, if authorized:
+
+MANAGE CONNECTION.
+
+============================================================
+23. NO EXISTING CONNECTION
+============================================================
+
+If Organization has no Microsoft connection:
+
+show:
+
+No validated Microsoft SharePoint connection exists for this
+organization.
+
+[ CONNECT MICROSOFT ]
+
+This button MUST start the real OAuth flow.
+
+============================================================
+24. DATABASE MODEL
+============================================================
+
+Prefer organization-level connection entity:
+
+DocumentStorageConnection
+
+Fields:
+
+Id
+
+OrganizationId
+
+Provider
+
+Name
+
+ConnectionStatus
+
+TenantId
+
+SiteId
+
+SiteDisplayName
+
+SiteWebUrl
+
+DriveId
+
+DriveName
+
+RootFolderId nullable
+
+RootFolderPath nullable
+
+CredentialReference
+
+ConnectedBy
+
+ConnectedAt
+
+ValidatedAt
+
+LastTestedAt
+
+LastTestStatus
+
+CreatedAt
+
+UpdatedAt.
+
+Do NOT store raw Microsoft access/refresh token in normal readable
+columns.
+
+Use secure server-side token/credential storage appropriate to the
+Microsoft authentication implementation.
+
+============================================================
+25. USER STORAGE ASSIGNMENT
+============================================================
+
+UserDocumentStorageAssignment:
+
+Id
+
+UserId
+
+DocumentStorageConnectionId
+
+Provider
+
+SiteId
+
+DriveId
+
+FolderId
+
+FolderPath
+
+DestinationUrl
+
+ExternalTransferEnabled
+
+Status
+
+ValidatedAt
+
+CreatedBy
+
+CreatedAt
+
+UpdatedAt.
+
+This is an assignment.
+
+It is NOT the OAuth credential.
+
+============================================================
+26. MICROSOFT GRAPH SERVICE
+============================================================
+
+Create/reuse a backend abstraction such as:
+
+IMicrosoftSharePointService
+
+MicrosoftSharePointService
+
+Responsibilities:
+
+BuildAuthorizationUrl
+
+HandleCallback
+
+GetConnectionStatus
+
+ResolveSite
+
+ListDocumentLibraries
+
+ListFolders
+
+ValidateFolder
+
+TestConnection
+
+UploadDocument
+
+DeleteValidationFile
+
+Refresh/reacquire authorization as appropriate.
+
+Controllers should remain thin.
+
+============================================================
+27. FUTURE ACTUAL PDF TRANSFER
+============================================================
+
+The architecture must support:
+
+Mobile Scanner
+     ↓
+SILA ME API
+     ↓
+SILA ME document stored
+     ↓
+OCR / invoice processing
+     ↓
+Document routing
+     ↓
+MicrosoftSharePointService
+     ↓
+Validated Site
+     ↓
+Validated Library
+     ↓
+Assigned Folder
+     ↓
+PDF uploaded.
+
+DO NOT make Mobile directly communicate with SharePoint.
+
+============================================================
+28. STORAGE ACCESS MUST BE SERVER-SIDE
+============================================================
+
+Mobile must never receive:
+
+Microsoft Client Secret
+
+OAuth refresh token
+
+Graph access token
+
+SharePoint credentials.
+
+Cloud browser must also not receive these.
+
+Only SILA ME backend performs Graph file operations.
+
+============================================================
+29. AUTHORIZATION REQUIREMENTS
+============================================================
+
+Starting Microsoft connection:
+
+CONFIGURE_DOCUMENT_STORAGE
+
+Testing:
+
+TEST_DOCUMENT_STORAGE
+
+Viewing status:
+
+VIEW_DOCUMENT_STORAGE_STATUS
+
+Disconnecting:
+
+DISCONNECT_DOCUMENT_STORAGE.
+
+Customer Admin can perform these only within their own organization.
+
+Super Admin can operate according to platform scope.
+
+============================================================
+30. MULTI-TENANT PROTECTION
+============================================================
+
+Organization A Microsoft connection must NEVER be usable by
+Organization B.
+
+Even if someone changes:
+
+organizationId
+
+connectionId
+
+siteId
+
+driveId
+
+folderId
+
+in browser/API request.
+
+Backend verifies ownership and scope.
+
+============================================================
+31. MICROSOFT CALLBACK SECURITY
+============================================================
+
+Protect against:
+
+CSRF
+
+state replay
+
+open redirects
+
+callback replay
+
+cross-organization connection
+
+cross-user draft restoration.
+
+Authorization state must expire.
+
+Return URL must be allow-listed/internal.
+
+============================================================
+32. DO NOT DISTURB BALA USER
+============================================================
+
+Absolutely do not modify existing:
+
+bala@chervic.in
+
+user.
+
+Do not:
+
+reset password
+
+change ID
+
+change role
+
+change application access
+
+change authorization
+
+change scope
+
+deactivate
+
+reseed.
+
+This Microsoft fix must not require recreating existing users.
+
+============================================================
+33. DO NOT DISTURB MOBILE
+============================================================
+
+DO NOT MODIFY:
+
+apps/mobile scanner
+
+native document scanner
+
+OCR
+
+Basic OCR
+
+PDF generation
+
+Invoice Review
+
+PO matching
+
+Physical Received Quantity
+
+GRN
+
+inventory posting.
+
+This is:
+
+Cloud Add User
++
+Backend Microsoft SharePoint integration.
+
+============================================================
+34. MANDATORY DIAGNOSTIC LOGGING
+============================================================
+
+Add safe structured logs:
+
+[MS-SP] CONNECT_REQUESTED
+
+[MS-SP] AUTH_URL_CREATED
+
+[MS-SP] CALLBACK_RECEIVED
+
+[MS-SP] STATE_VALIDATED
+
+[MS-SP] TOKEN_ACQUIRED
+
+[MS-SP] SITE_RESOLVED
+
+[MS-SP] DRIVE_RESOLVED
+
+[MS-SP] FOLDER_RESOLVED
+
+[MS-SP] ACCESS_TEST_STARTED
+
+[MS-SP] ACCESS_TEST_PASSED
+
+[MS-SP] ACCESS_TEST_FAILED
+
+[MS-SP] CONNECTION_SAVED
+
+Never log:
+
+authorization code
+
+access token
+
+refresh token
+
+client secret
+
+password.
+
+============================================================
+35. FIRST DEBUG CURRENT FAILURE
+============================================================
+
+Before implementation identify why CONNECT MICROSOFT currently does
+nothing.
+
+Trace:
+
+BUTTON CLICK
+    ↓
+React handler
+    ↓
+API call
+    ↓
+ASP.NET endpoint
+    ↓
+Authorization URL generation
+    ↓
+window redirect.
+
+Add temporary development traces:
+
+[MS-SP-TRACE] CONNECT_BUTTON_CLICKED
+
+[MS-SP-TRACE] CONNECT_API_REQUEST
+
+[MS-SP-TRACE] CONNECT_API_RESPONSE
+
+[MS-SP-TRACE] REDIRECTING_TO_MICROSOFT
+
+If first trace does not appear:
+
+frontend event issue.
+
+If first appears but API trace does not:
+
+frontend handler/API client issue.
+
+If backend is never reached:
+
+routing/proxy issue.
+
+If backend returns no URL:
+
+Microsoft configuration/backend issue.
+
+If URL exists but browser does not redirect:
+
+frontend redirect issue.
+
+DO NOT merely patch around the symptom.
+
+============================================================
+36. CONFIGURATION DIAGNOSTICS
+============================================================
+
+Create safe backend readiness check for Microsoft integration.
+
+It may report:
+
+Tenant configured:
+YES/NO
+
+Client ID configured:
+YES/NO
+
+Client Secret configured:
+YES/NO
+
+Redirect URI configured:
+YES/NO
+
+Redirect URI:
+safe URL
+
+Graph integration ready:
+YES/NO.
+
+NEVER return secret value.
+
+If configuration is incomplete:
+
+CONNECT MICROSOFT button should show:
+
+Microsoft integration requires configuration.
+
+Do not silently fail.
+
+============================================================
+37. MICROSOFT APP REGISTRATION REQUIREMENT
+============================================================
+
+At the end, if external Microsoft Entra configuration is required,
+report EXACTLY what the administrator must configure:
+
+Application / Client ID
+
+Tenant model
+
+Redirect URI
+
+required Microsoft Graph delegated/application permissions
+
+whether admin consent is required
+
+client secret/certificate requirement
+
+environment variable names.
+
+Do not invent IDs.
+
+Do not hardcode fake credentials.
+
+============================================================
+38. MANDATORY ACCEPTANCE TEST
+============================================================
+
+This feature is NOT complete until the flow reaches the real Microsoft
+authentication page when CONNECT MICROSOFT is clicked.
+
+Test:
+
+1. Open Add User
+
+2. Fill user details
+
+3. Select Organization
+
+4. Select Property
+
+5. Select Store
+
+6. Select Cloud/Mobile/Both
+
+7. Select Role
+
+8. Select MICROSOFT
+
+9. Click CONNECT MICROSOFT
+
+EXPECTED:
+
+Browser leaves SILA ME and reaches Microsoft authentication.
+
+10. Authenticate
+
+11. Microsoft callback reaches SILA ME
+
+12. User form is restored
+
+13. Select/validate SharePoint site
+
+14. Select document library
+
+15. Select folder/path
+
+16. TEST CONNECTION
+
+17. Backend confirms required access
+
+18. Status becomes CONNECTED
+
+19. Validated SharePoint URL/path appears
+
+20. Create User
+
+21. User Detail shows assigned destination.
+
+If Microsoft tenant credentials/consent are not available for steps
+10 onward:
+
+DO NOT mark complete.
+
+Report exact external configuration still required.
+
+But step 9 MUST at least generate a legitimate Microsoft authorization
+redirect once application registration configuration is present.
+
+============================================================
+39. NEGATIVE TESTS
+============================================================
+
+Test:
+
+invalid SharePoint URL
+
+SharePoint site user cannot access
+
+library unavailable
+
+folder unavailable
+
+write denied
+
+Microsoft login cancelled
+
+Microsoft consent denied
+
+expired state
+
+reused state
+
+wrong organization
+
+callback refresh/replay
+
+connection expired
+
+external transfer disabled
+
+NA selected.
+
+None may result in false CONNECTED.
+
+============================================================
+40. FINAL REPORT
+============================================================
+
+Return:
+
+MICROSOFT SHAREPOINT USER CREATION FIX
+
+ROOT CAUSE:
+<exact reason Microsoft authentication was not triggered>
+
+CONNECT BUTTON:
+PASS/FAIL
+
+BACKEND CONNECT ENDPOINT:
+PASS/FAIL
+
+MICROSOFT AUTHORIZATION URL:
+PASS/FAIL
+
+REAL MICROSOFT REDIRECT:
+PASS/FAIL
+
+CALLBACK:
+PASS/FAIL/PENDING EXTERNAL LOGIN
+
+STATE VALIDATION:
+PASS/FAIL
+
+TOKEN HANDLING SERVER-SIDE:
+PASS/FAIL
+
+SHAREPOINT SITE RESOLUTION:
+PASS/FAIL/PENDING
+
+DOCUMENT LIBRARY:
+PASS/FAIL/PENDING
+
+FOLDER SELECTION:
+PASS/FAIL/PENDING
+
+READ ACCESS:
+PASS/FAIL/PENDING
+
+WRITE ACCESS:
+PASS/FAIL/PENDING
+
+TEST CONNECTION:
+PASS/FAIL/PENDING
+
+VALIDATED SHAREPOINT URL:
+PASS/FAIL/PENDING
+
+ADD USER FORM RESTORED AFTER OAUTH:
+PASS/FAIL
+
+STORAGE ASSIGNMENT:
+PASS/FAIL/PENDING
+
+NO FALSE CONNECTED STATE:
+PASS/FAIL
+
+CLIENT SECRET EXPOSED TO FRONTEND:
+NO/YES
+
+GRAPH TOKEN EXPOSED TO FRONTEND:
+NO/YES
+
+BALA USER MODIFIED:
+NO/YES
+
+MOBILE MODIFIED:
+NO/YES
+
+SCANNER MODIFIED:
+NO/YES
+
+OCR MODIFIED:
+NO/YES
+
+PDF GENERATION MODIFIED:
+NO/YES
+
+GRN LOGIC MODIFIED:
+NO/YES
+
+MICROSOFT EXTERNAL CONFIGURATION REQUIRED:
+<exact list or NONE>
+
+FINAL STATUS:
+
+PASS
+or
+BLOCKED BY MICROSOFT CONFIGURATION
+or
+FAIL
+
+Do not report PASS if authentication, SharePoint validation or required
+write-access validation has not actually been proven.
+
+============================================================
+41. COMMIT
+============================================================
+
+Only after implementation is healthy:
+
+git commit -m "fix: require microsoft sharepoint authentication for user storage"
+
+DO NOT PUSH.
+
+STOP.

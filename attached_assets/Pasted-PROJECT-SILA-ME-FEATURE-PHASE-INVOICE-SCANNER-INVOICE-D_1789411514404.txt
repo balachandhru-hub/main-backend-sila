@@ -1,0 +1,2573 @@
+PROJECT: SILA ME
+
+FEATURE PHASE:
+INVOICE SCANNER + INVOICE DATA EXTRACTION + PO MATCHING + GRN POSTING
+
+OBJECTIVE:
+Add the first complete operational transaction feature to the existing SILA ME platform.
+
+Existing architecture must remain:
+
+- SILA ME Cloud — React / TypeScript / Vite
+- SILA ME Mobile — Expo / React Native / TypeScript
+- SILA ME API — ASP.NET Core Web API / C#
+- PostgreSQL
+- Entity Framework Core
+- Existing organization/access-control foundation
+- Existing Cloud cookie authentication
+- Existing Mobile bearer-token authentication
+- Existing shared user/organization/operating-unit access model
+
+DO NOT rebuild the foundation.
+
+DO NOT change the authentication architecture.
+
+DO NOT create another backend.
+
+Use the existing .NET backend and PostgreSQL database.
+
+==================================================
+1. BUSINESS OBJECTIVE
+==================================================
+
+Implement this end-to-end flow:
+
+Store Manager
+→ Open SILA ME Mobile
+→ Scan Invoice
+→ Upload invoice images/PDF
+→ Backend processes document
+→ Extract invoice text/data
+→ Identify supplier
+→ Extract PO number
+→ Extract invoice header
+→ Extract invoice line items
+→ Match invoice to PO
+→ Match invoice lines to PO lines
+→ Store Manager reviews data
+→ Store Manager confirms physical received quantities
+→ Validate against PO
+→ Review GRN
+→ Post GRN
+→ Update PO received/open quantities
+→ Update local inventory
+→ Create inventory ledger
+→ Display GRN in Mobile
+→ Display Invoice and GRN in Cloud
+
+IMPORTANT:
+
+INVOICE QUANTITY IS NOT AUTOMATICALLY THE GRN QUANTITY.
+
+Invoice scanner may extract:
+
+Invoice Qty = 50 KG
+
+But Store Manager may physically receive:
+
+48 KG
+
+GRN must post:
+
+48 KG
+
+NOT:
+
+50 KG
+
+Physical received quantity confirmed by the Store Manager is authoritative for GRN posting.
+
+==================================================
+2. DOCUMENT EXTRACTION ARCHITECTURE
+==================================================
+
+Do NOT attempt to extract invoice data only inside the Mobile app.
+
+Mobile is responsible for:
+
+- camera capture
+- gallery/file selection
+- document preview
+- upload
+- user review
+- corrections
+- physical quantity confirmation
+
+The .NET backend is responsible for:
+
+- document storage
+- PDF inspection
+- embedded text extraction
+- OCR
+- structured invoice extraction
+- supplier matching
+- PO matching
+- line matching
+- GRN validation
+- GRN posting
+- inventory update
+
+Architecture:
+
+SILA ME Mobile
+      |
+      | Image / PDF
+      v
+ASP.NET Core API
+      |
+      v
+Document Processing
+      |
+      +-----------------------------+
+      |                             |
+      v                             v
+Digital PDF                    Scanned/Image
+Embedded Text                  OCR Required
+      |                             |
+      +-------------+---------------+
+                    |
+                    v
+         Invoice Extraction Service
+                    |
+                    v
+         Structured Invoice JSON
+                    |
+                    v
+              PO Matching
+                    |
+                    v
+         Mobile User Confirmation
+                    |
+                    v
+             GRN Validation
+                    |
+                    v
+              GRN Posting
+                    |
+                    v
+          Inventory Transaction
+
+==================================================
+3. EXTRACTION STRATEGY
+==================================================
+
+There are three document scenarios.
+
+CASE A:
+Digital PDF with embedded text.
+
+Do not OCR unnecessarily.
+
+Use PDF text extraction first.
+
+CASE B:
+Scanned PDF.
+
+Perform OCR page-by-page.
+
+CASE C:
+Mobile camera image.
+
+Perform OCR.
+
+Create these abstractions:
+
+IDocumentTextExtractor
+
+IPdfTextExtractor
+
+IOcrProvider
+
+IInvoiceExtractionService
+
+IInvoiceNormalizationService
+
+Suggested flow:
+
+Document
+→ Detect document type
+→ Detect embedded text
+→ Extract text directly OR OCR
+→ Normalize extracted text
+→ Produce structured Invoice DTO
+
+==================================================
+4. OCR PROVIDER ABSTRACTION
+==================================================
+
+Create:
+
+IOcrProvider
+
+Method concept:
+
+Task<OcrResult> ExtractAsync(
+    DocumentFile document,
+    CancellationToken cancellationToken
+)
+
+Do not hardwire business flow to one OCR vendor.
+
+Prepare adapters for future use such as:
+
+AzureDocumentIntelligenceOcrProvider
+GoogleDocumentAiOcrProvider
+AwsTextractOcrProvider
+
+For development, if no real OCR credentials exist:
+
+create:
+
+DevelopmentOcrProvider
+
+BUT:
+
+Clearly mark it as development/mock.
+
+Do not fake GRN, PO matching, database, inventory, or transaction logic.
+
+Only OCR may be mocked when provider credentials are unavailable.
+
+==================================================
+5. INVOICE EXTRACTION SERVICE
+==================================================
+
+Create:
+
+IInvoiceExtractionService
+
+Responsibility:
+
+Convert raw OCR/PDF text into structured invoice data.
+
+Extract:
+
+Invoice Header
+
+- Invoice Number
+- Invoice Date
+- Supplier Name
+- Supplier Tax Number
+- Supplier Address if available
+- PO Number
+- Currency
+- Net Amount
+- Tax Amount
+- Gross Amount
+
+Invoice Lines
+
+- Line Number
+- Supplier Material Code
+- Material Code if available
+- Description
+- Quantity
+- UOM
+- Unit Price
+- Tax Rate
+- Tax Amount
+- Line Amount
+
+Return confidence score where possible.
+
+==================================================
+6. NORMALIZED INVOICE OUTPUT
+==================================================
+
+Use a normalized DTO equivalent to:
+
+{
+  "invoiceNumber": "INV-1001",
+  "invoiceDate": "2026-09-14",
+  "supplier": {
+    "name": "ABC Food Trading LLC",
+    "taxNumber": "100123456700003"
+  },
+  "poNumber": "4500001001",
+  "currency": "AED",
+  "netAmount": 12450.00,
+  "taxAmount": 622.50,
+  "grossAmount": 13072.50,
+  "lines": [
+    {
+      "lineNumber": 1,
+      "supplierMaterialCode": "SUP-001",
+      "materialCode": null,
+      "description": "Chicken Breast",
+      "quantity": 50,
+      "uom": "KG",
+      "unitPrice": 22.50,
+      "taxRate": 5,
+      "taxAmount": 56.25,
+      "lineAmount": 1125.00
+    }
+  ]
+}
+
+==================================================
+7. DATABASE TABLES
+==================================================
+
+Create the following tables using EF Core migrations.
+
+Reuse existing:
+
+Users
+Organizations
+OperatingUnits
+Permissions
+Roles
+RoleAssignments
+Memberships
+Sessions
+
+Add only the new business tables below.
+
+==================================================
+8. TABLE: suppliers
+==================================================
+
+Fields:
+
+id UUID PK
+organization_id UUID FK
+supplier_code varchar(100)
+name varchar(250)
+normalized_name varchar(250)
+tax_number varchar(100) nullable
+email varchar(250) nullable
+phone varchar(100) nullable
+status varchar(30)
+source_system varchar(50) nullable
+external_id varchar(200) nullable
+created_at timestamptz
+updated_at timestamptz
+
+Indexes:
+
+organization_id
+supplier_code
+normalized_name
+tax_number
+
+Unique:
+
+organization_id + supplier_code
+where appropriate
+
+==================================================
+9. TABLE: materials
+==================================================
+
+Fields:
+
+id UUID PK
+organization_id UUID FK
+material_code varchar(100)
+description varchar(500)
+normalized_description varchar(500)
+base_uom varchar(50)
+category varchar(150) nullable
+status varchar(30)
+source_system varchar(50) nullable
+external_id varchar(200) nullable
+created_at timestamptz
+updated_at timestamptz
+
+Indexes:
+
+organization_id
+material_code
+normalized_description
+
+Unique:
+
+organization_id + material_code
+
+==================================================
+10. TABLE: supplier_materials
+==================================================
+
+Fields:
+
+id UUID PK
+organization_id UUID FK
+supplier_id UUID FK
+material_id UUID FK
+supplier_material_code varchar(150) nullable
+supplier_description varchar(500) nullable
+purchase_uom varchar(50) nullable
+created_at timestamptz
+updated_at timestamptz
+
+Indexes:
+
+supplier_id
+material_id
+supplier_material_code
+
+==================================================
+11. TABLE: documents
+==================================================
+
+Fields:
+
+id UUID PK
+organization_id UUID FK
+operating_unit_id UUID FK nullable
+uploaded_by_user_id UUID FK
+document_type varchar(50)
+original_filename varchar(500)
+content_type varchar(150)
+file_size_bytes bigint
+storage_provider varchar(50)
+storage_reference text
+page_count int nullable
+status varchar(50)
+source_channel varchar(50)
+created_at timestamptz
+updated_at timestamptz
+
+Document Type:
+
+INVOICE
+DELIVERY_NOTE
+
+Status:
+
+UPLOADED
+PROCESSING
+PROCESSED
+FAILED
+
+Source Channel:
+
+MOBILE_CAMERA
+MOBILE_UPLOAD
+CLOUD_UPLOAD
+
+Do NOT store document bytes or base64 in PostgreSQL.
+
+==================================================
+12. TABLE: document_pages
+==================================================
+
+Fields:
+
+id UUID PK
+document_id UUID FK
+page_number int
+storage_reference text nullable
+rotation_degrees int default 0
+ocr_status varchar(50) nullable
+created_at timestamptz
+
+Unique:
+
+document_id + page_number
+
+==================================================
+13. TABLE: document_extractions
+==================================================
+
+Fields:
+
+id UUID PK
+document_id UUID FK
+extraction_type varchar(50)
+provider varchar(100)
+raw_text text nullable
+provider_reference varchar(500) nullable
+confidence numeric nullable
+processing_started_at timestamptz nullable
+processing_completed_at timestamptz nullable
+status varchar(50)
+error_code varchar(100) nullable
+error_message text nullable
+created_at timestamptz
+
+Extraction Types:
+
+PDF_TEXT
+OCR
+INVOICE_STRUCTURED
+
+==================================================
+14. TABLE: invoices
+==================================================
+
+Fields:
+
+id UUID PK
+organization_id UUID FK
+operating_unit_id UUID FK nullable
+document_id UUID FK
+supplier_id UUID FK nullable
+invoice_number varchar(150)
+invoice_date date nullable
+supplier_name_raw varchar(500) nullable
+supplier_tax_number_raw varchar(150) nullable
+po_number_raw varchar(150) nullable
+purchase_order_id UUID nullable
+currency varchar(10) nullable
+net_amount numeric(18,4) nullable
+tax_amount numeric(18,4) nullable
+gross_amount numeric(18,4) nullable
+invoice_type varchar(30)
+status varchar(50)
+overall_confidence numeric nullable
+created_by_user_id UUID FK
+created_at timestamptz
+updated_at timestamptz
+
+Invoice Type:
+
+MATERIAL
+SERVICE
+MIXED
+UNKNOWN
+
+Statuses:
+
+UPLOADED
+PROCESSING
+REVIEW_REQUIRED
+PO_MATCHED
+READY_FOR_GRN
+GRN_POSTED
+OCR_FAILED
+FAILED
+
+Indexes:
+
+organization_id
+invoice_number
+supplier_id
+purchase_order_id
+status
+invoice_date
+
+==================================================
+15. TABLE: invoice_lines
+==================================================
+
+Fields:
+
+id UUID PK
+invoice_id UUID FK
+line_number int
+supplier_material_code varchar(150) nullable
+material_id UUID FK nullable
+material_code_raw varchar(150) nullable
+description_raw varchar(1000)
+quantity numeric(18,4) nullable
+uom varchar(50) nullable
+unit_price numeric(18,4) nullable
+tax_rate numeric(10,4) nullable
+tax_amount numeric(18,4) nullable
+line_amount numeric(18,4) nullable
+confidence numeric nullable
+match_status varchar(30)
+purchase_order_item_id UUID nullable
+created_at timestamptz
+updated_at timestamptz
+
+Match Status:
+
+MATCHED
+SUGGESTED
+UNMATCHED
+
+==================================================
+16. TABLE: purchase_orders
+==================================================
+
+Fields:
+
+id UUID PK
+organization_id UUID FK
+operating_unit_id UUID FK nullable
+supplier_id UUID FK
+po_number varchar(150)
+po_date date nullable
+delivery_date date nullable
+currency varchar(10)
+status varchar(30)
+source_system varchar(50)
+external_id varchar(200) nullable
+created_at timestamptz
+updated_at timestamptz
+
+Statuses:
+
+OPEN
+PARTIALLY_RECEIVED
+CLOSED
+CANCELLED
+
+Unique:
+
+organization_id + po_number
+
+Indexes:
+
+supplier_id
+operating_unit_id
+status
+
+==================================================
+17. TABLE: purchase_order_items
+==================================================
+
+Fields:
+
+id UUID PK
+purchase_order_id UUID FK
+line_number int
+material_id UUID FK nullable
+material_code varchar(150)
+description varchar(1000)
+ordered_quantity numeric(18,4)
+received_quantity numeric(18,4) default 0
+open_quantity numeric(18,4)
+uom varchar(50)
+unit_price numeric(18,4) nullable
+status varchar(30)
+created_at timestamptz
+updated_at timestamptz
+
+Statuses:
+
+OPEN
+PARTIALLY_RECEIVED
+CLOSED
+CANCELLED
+
+Unique:
+
+purchase_order_id + line_number
+
+==================================================
+18. TABLE: goods_receipts
+==================================================
+
+Fields:
+
+id UUID PK
+organization_id UUID FK
+operating_unit_id UUID FK
+grn_number varchar(150)
+purchase_order_id UUID FK
+invoice_id UUID FK nullable
+supplier_id UUID FK
+receipt_date timestamptz
+status varchar(30)
+posting_provider varchar(100)
+external_reference varchar(200) nullable
+created_by_user_id UUID FK
+created_at timestamptz
+posted_at timestamptz nullable
+failure_code varchar(100) nullable
+failure_message text nullable
+
+Statuses:
+
+DRAFT
+READY_TO_POST
+POSTING
+POSTED
+FAILED
+CANCELLED
+
+Unique:
+
+organization_id + grn_number
+
+==================================================
+19. TABLE: goods_receipt_lines
+==================================================
+
+Fields:
+
+id UUID PK
+goods_receipt_id UUID FK
+purchase_order_item_id UUID FK
+material_id UUID FK nullable
+material_code varchar(150)
+description varchar(1000)
+open_quantity_before numeric(18,4)
+invoice_quantity numeric(18,4) nullable
+received_quantity numeric(18,4)
+accepted_quantity numeric(18,4)
+damaged_quantity numeric(18,4) default 0
+rejected_quantity numeric(18,4) default 0
+uom varchar(50)
+batch_number varchar(150) nullable
+expiry_date date nullable
+created_at timestamptz
+
+==================================================
+20. TABLE: stock_balances
+==================================================
+
+Fields:
+
+id UUID PK
+organization_id UUID FK
+operating_unit_id UUID FK
+material_id UUID FK nullable
+material_code varchar(150)
+quantity numeric(18,4)
+uom varchar(50)
+updated_at timestamptz
+
+Unique:
+
+organization_id
++ operating_unit_id
++ material_code
++ uom
+
+==================================================
+21. TABLE: inventory_transactions
+==================================================
+
+Fields:
+
+id UUID PK
+organization_id UUID FK
+operating_unit_id UUID FK
+material_id UUID FK nullable
+material_code varchar(150)
+transaction_type varchar(50)
+reference_type varchar(50)
+reference_id UUID
+quantity numeric(18,4)
+uom varchar(50)
+created_by_user_id UUID FK
+created_at timestamptz
+
+Transaction Type:
+
+GRN_RECEIPT
+
+Reference Type:
+
+GOODS_RECEIPT
+
+Indexes:
+
+material_code
+operating_unit_id
+created_at
+reference_id
+
+==================================================
+22. TABLE: idempotency_records
+==================================================
+
+Fields:
+
+id UUID PK
+organization_id UUID FK
+user_id UUID FK
+idempotency_key varchar(200)
+operation varchar(100)
+request_hash varchar(200) nullable
+response_reference varchar(200) nullable
+status varchar(30)
+created_at timestamptz
+expires_at timestamptz nullable
+
+Unique:
+
+organization_id + user_id + idempotency_key + operation
+
+==================================================
+23. TABLE: audit_events
+==================================================
+
+If an audit table already exists, reuse it.
+
+Otherwise create:
+
+id UUID PK
+organization_id UUID FK nullable
+operating_unit_id UUID FK nullable
+user_id UUID FK nullable
+event_type varchar(100)
+entity_type varchar(100)
+entity_id UUID nullable
+reference varchar(200) nullable
+metadata_json jsonb nullable
+created_at timestamptz
+
+Do not store passwords/tokens/secrets.
+
+==================================================
+24. EF CORE MIGRATION
+==================================================
+
+Create one migration such as:
+
+Phase3InvoiceScannerGrn
+
+Migration must:
+
+- create all required tables
+- create foreign keys
+- create indexes
+- create unique constraints
+- preserve existing Phase 2 data
+
+Do not reset database.
+
+Do not drop existing organization/access tables.
+
+==================================================
+25. DOCUMENT STORAGE SERVICE
+==================================================
+
+Create:
+
+IDocumentStorageService
+
+Methods conceptually:
+
+StoreAsync(...)
+GetAsync(...)
+DeleteAsync(...)
+
+For development:
+
+use safe configured local storage if no cloud object storage exists.
+
+Do not couple business code to local filesystem.
+
+Future providers may include:
+
+Azure Blob
+S3
+SharePoint
+
+==================================================
+26. PDF TEXT EXTRACTION
+==================================================
+
+Create:
+
+IPdfTextExtractor
+
+For PDFs:
+
+First determine whether usable embedded text exists.
+
+If yes:
+
+extract text directly.
+
+Set extraction type:
+
+PDF_TEXT
+
+If no usable embedded text:
+
+send PDF/pages to OCR.
+
+Do not OCR every PDF unnecessarily.
+
+==================================================
+27. OCR
+==================================================
+
+For:
+
+JPG
+JPEG
+PNG
+scanned PDF
+
+call:
+
+IOcrProvider
+
+Persist:
+
+provider
+status
+raw text
+confidence
+timing
+
+Do not expose provider secrets to frontend.
+
+==================================================
+28. SUPPLIER MATCHING
+==================================================
+
+After invoice extraction:
+
+match supplier using priority:
+
+1. Tax number exact match
+2. Supplier code if present
+3. Normalized supplier name
+4. User confirmation
+
+Do not silently choose uncertain supplier.
+
+Return candidate suggestions when required.
+
+==================================================
+29. PO MATCHING
+==================================================
+
+PO matching priority:
+
+1. Exact PO number extracted from invoice
+2. User-entered PO number
+3. Supplier + operating unit + open PO
+4. Supplier + invoice line materials
+5. Manual PO selection
+
+If exact match:
+
+load PO automatically but still display for confirmation.
+
+If multiple candidates:
+
+display candidate PO list.
+
+==================================================
+30. PO SECURITY
+==================================================
+
+Never return PO only because user knows PO number.
+
+Verify:
+
+organization access
+operating-unit access
+VIEW_PURCHASE_ORDER permission
+
+Out-of-scope:
+
+403
+
+==================================================
+31. LINE MATCHING
+==================================================
+
+Invoice line → PO line matching priority:
+
+1. Material code exact
+2. Supplier material code
+3. Existing supplier-material mapping
+4. Normalized description similarity
+5. Manual user selection
+
+Match Status:
+
+MATCHED
+SUGGESTED
+UNMATCHED
+
+SUGGESTED requires user confirmation.
+
+UNMATCHED cannot be posted into GRN until resolved.
+
+==================================================
+32. MOBILE FEATURE
+==================================================
+
+Add SILA ME Mobile home feature tile:
+
+SCAN INVOICE & RECEIVE
+
+Icon should match SILA ME visual system.
+
+White background.
+Blue border.
+Blue icon.
+Dark text.
+
+==================================================
+33. MOBILE ROUTES
+==================================================
+
+Create:
+
+/receive
+/receive/scan
+/receive/document-preview
+/receive/invoice-review
+/receive/supplier-match
+/receive/po-match
+/receive/line-match
+/receive/quantities
+/receive/grn-review
+/receive/grn-result
+/receive/history
+/receive/history/[id]
+
+Use Expo Router.
+
+==================================================
+34. MOBILE SCAN SCREEN
+==================================================
+
+Screen:
+
+Scan Invoice
+
+Actions:
+
+SCAN WITH CAMERA
+UPLOAD IMAGE
+UPLOAD PDF
+
+Support:
+
+single page
+multi-page
+
+For multi-page:
+
+show thumbnails.
+
+Allow:
+
+Retake
+Delete
+Rotate
+Reorder
+Add Page
+
+Do not make image editing overly complicated.
+
+==================================================
+35. MOBILE DOCUMENT PROCESSING SCREEN
+==================================================
+
+After upload show:
+
+Processing Invoice
+
+Progress states:
+
+Uploading
+Reading document
+Extracting invoice
+Matching supplier
+Finding PO
+
+Do not display raw technical logs.
+
+If failure:
+
+show concise operational message.
+
+Example:
+
+We could not read this invoice clearly.
+
+Actions:
+
+Retry
+Review Manually
+Upload Again
+
+==================================================
+36. MOBILE INVOICE REVIEW
+==================================================
+
+Display editable extracted fields:
+
+Supplier
+Invoice Number
+Invoice Date
+PO Number
+Currency
+Net Amount
+Tax Amount
+Gross Amount
+
+Then Invoice Lines:
+
+Description
+Qty
+UOM
+Price
+Tax
+Amount
+
+Highlight low-confidence fields.
+
+Example:
+
+Needs Review
+
+Allow user correction before continuing.
+
+==================================================
+37. MOBILE PO MATCH
+==================================================
+
+Show:
+
+Extracted PO:
+4500001001
+
+Matched PO:
+4500001001
+
+Supplier:
+ABC Food Trading
+
+Status:
+OPEN
+
+Open Lines:
+3
+
+Actions:
+
+USE THIS PO
+SEARCH ANOTHER PO
+
+If no PO extracted:
+
+show PO search directly.
+
+==================================================
+38. MOBILE LINE MATCHING
+==================================================
+
+For every invoice line show:
+
+Invoice:
+Chicken Breast
+50 KG
+
+Matched PO Line:
+10 — Chicken Breast
+Open: 80 KG
+
+Status:
+Matched
+
+If Suggested:
+
+User must tap:
+
+CONFIRM MATCH
+
+If Unmatched:
+
+SELECT PO LINE
+
+Do not proceed while required material lines remain unmatched.
+
+==================================================
+39. MOBILE PHYSICAL RECEIVING
+==================================================
+
+This is the most important operational screen.
+
+Display each PO line:
+
+Chicken Breast
+
+Ordered:
+100 KG
+
+Previously Received:
+20 KG
+
+Open:
+80 KG
+
+Invoice Qty:
+50 KG
+
+ACTUAL RECEIVED:
+[ editable field ]
+
+Accepted:
+[ optional/editable ]
+
+Damaged:
+[ optional ]
+
+Rejected:
+[ optional ]
+
+UOM:
+KG
+
+The Store Manager must review Actual Received.
+
+==================================================
+40. QUANTITY DEFAULTING
+==================================================
+
+For convenience:
+
+Actual Received may initially default to invoice quantity.
+
+BUT:
+
+The UI must clearly distinguish:
+
+Invoice Quantity
+
+from:
+
+Actual Received Quantity
+
+Require user review before proceeding.
+
+Do not silently post the default.
+
+==================================================
+41. QUANTITY VALIDATION
+==================================================
+
+Rules:
+
+ActualReceivedQty >= 0
+
+DamagedQty >= 0
+
+RejectedQty >= 0
+
+AcceptedQty >= 0
+
+Accepted + Damaged + Rejected
+must not exceed Actual Received.
+
+For first version:
+
+Actual Received > PO Open Quantity
+
+BLOCK.
+
+Error:
+
+Received quantity exceeds the remaining PO quantity.
+
+No overdelivery approval yet.
+
+==================================================
+42. UOM VALIDATION
+==================================================
+
+GRN must use PO UOM.
+
+If invoice UOM differs:
+
+display:
+
+Invoice UOM: CASE
+PO UOM: EACH
+
+Message:
+
+Enter the physically received quantity in PO unit EACH.
+
+Do not automatically convert unless a valid configured conversion exists.
+
+For this phase:
+
+no guessed UOM conversion.
+
+==================================================
+43. SERVICE INVOICE BEHAVIOUR
+==================================================
+
+If invoice type:
+
+SERVICE
+
+Display:
+
+Service invoice detected.
+
+Goods receipt is not applicable.
+
+Allow:
+
+Save Invoice
+View Invoice
+
+Do not create stock transaction.
+
+Do not create GRN.
+
+==================================================
+44. MIXED INVOICE
+==================================================
+
+If invoice contains:
+
+material + service lines
+
+classify:
+
+MIXED
+
+Only matched material PO lines may proceed to GRN.
+
+Service lines stay on invoice only.
+
+==================================================
+45. GRN REVIEW SCREEN
+==================================================
+
+Display:
+
+Supplier
+Invoice
+PO
+Operating Unit
+Receipt Date
+
+Lines:
+
+Material
+Invoice Qty
+Actual Received
+Accepted
+Damaged
+Rejected
+UOM
+
+Warnings:
+
+Partial receipt
+UOM mismatch resolved
+Unmatched items
+etc.
+
+Button:
+
+POST GRN
+
+Require explicit press.
+
+==================================================
+46. GRN POSTING API
+==================================================
+
+Create:
+
+POST /api/v1/grns
+
+Headers:
+
+Authorization
+Idempotency-Key
+
+Body includes:
+
+invoiceId
+purchaseOrderId
+operatingUnitId
+receiptDate
+lines
+
+Each line:
+
+purchaseOrderItemId
+receivedQuantity
+acceptedQuantity
+damagedQuantity
+rejectedQuantity
+batchNumber optional
+expiryDate optional
+
+==================================================
+47. SERVER-SIDE GRN VALIDATION
+==================================================
+
+Never trust frontend validation alone.
+
+Backend must re-read:
+
+User
+Organization scope
+Operating unit access
+PO
+PO status
+PO items
+Current open quantity
+Invoice
+Invoice/PO relationship
+
+Then validate:
+
+POST_GRN permission
+PO OPEN/PARTIALLY_RECEIVED
+Invoice accessible
+Lines belong to PO
+Quantities valid
+No overdelivery
+No unresolved material lines
+UOM valid
+Invoice not already fully processed
+Idempotency key
+
+==================================================
+48. GRN POSTING PROVIDER
+==================================================
+
+Create:
+
+IGrnPostingProvider
+
+Development implementation:
+
+LocalGrnPostingProvider
+
+Future:
+
+SapS4GrnPostingProvider
+OdooGrnPostingProvider
+OracleGrnPostingProvider
+
+Do not integrate ERP yet.
+
+==================================================
+49. ATOMIC GRN TRANSACTION
+==================================================
+
+Local GRN posting must happen inside one DB transaction.
+
+Transaction includes:
+
+1. Create GoodsReceipt
+2. Create GoodsReceiptLines
+3. Update PO item received quantity
+4. Update PO item open quantity
+5. Update PO line status
+6. Update PO header status
+7. Update StockBalance
+8. Create InventoryTransaction
+9. Update Invoice status
+10. Create Audit Events
+
+If any step fails:
+
+ROLLBACK EVERYTHING.
+
+No partial posting.
+
+==================================================
+50. PO QUANTITY UPDATE
+==================================================
+
+Example:
+
+Ordered:
+100
+
+Previously Received:
+20
+
+Open:
+80
+
+Actual Received:
+48
+
+After posting:
+
+Received:
+68
+
+Open:
+32
+
+Status:
+
+PARTIALLY_RECEIVED
+
+When Open becomes 0:
+
+PO Item = CLOSED
+
+If all PO items closed:
+
+PO Header = CLOSED
+
+==================================================
+51. STOCK UPDATE
+==================================================
+
+Only Accepted Quantity increases normal stock.
+
+Example:
+
+Actual Received:
+50
+
+Accepted:
+48
+
+Damaged:
+1
+
+Rejected:
+1
+
+Stock Increase:
+
+48
+
+Do NOT add damaged/rejected quantity to normal available stock.
+
+==================================================
+52. INVENTORY LEDGER
+==================================================
+
+For every accepted GRN line:
+
+Create InventoryTransaction:
+
+Type:
+GRN_RECEIPT
+
+Quantity:
+accepted qty
+
+Reference:
+GoodsReceipt ID
+
+Never modify stock without ledger.
+
+==================================================
+53. GRN NUMBER
+==================================================
+
+Generate internal number such as:
+
+GRN-20260914-00001
+
+Generation must be concurrency safe.
+
+Do not generate by:
+
+count + 1
+
+without locking/sequence protection.
+
+Use a safe sequence mechanism.
+
+==================================================
+54. IDEMPOTENCY
+==================================================
+
+Mobile network can fail after submit.
+
+Support:
+
+Idempotency-Key
+
+If same user sends same key for GRN posting:
+
+do NOT create another GRN.
+
+Return previously created result where safe.
+
+==================================================
+55. DUPLICATE INVOICE PROTECTION
+==================================================
+
+Detect exact likely duplicate using:
+
+Organization
+Supplier
+Invoice Number
+
+Optionally invoice date.
+
+If duplicate found:
+
+Block processing and display:
+
+This invoice appears to have already been uploaded.
+
+Show existing invoice reference.
+
+Do not silently create duplicates.
+
+==================================================
+56. CLOUD MENU
+==================================================
+
+Add menu section:
+
+RECEIVING
+
+Submenus:
+
+Invoices
+Goods Receipts
+
+Use existing SILA ME Cloud layout.
+
+==================================================
+57. CLOUD INVOICE LIST
+==================================================
+
+Columns:
+
+Invoice Number
+Supplier
+PO
+Invoice Date
+Operating Unit
+Currency
+Gross Amount
+Status
+Uploaded By
+Created At
+
+Filters:
+
+Supplier
+PO
+Status
+Date
+Operating Unit
+
+Click opens detail.
+
+==================================================
+58. CLOUD INVOICE DETAIL
+==================================================
+
+Sections:
+
+Invoice Header
+
+Document Preview / Download
+
+Extraction Status
+
+Supplier Match
+
+PO Match
+
+Invoice Lines
+
+Line Match Status
+
+GRN Reference
+
+Audit Timeline
+
+Show raw OCR only to admin/debug users if absolutely needed.
+
+Do not expose it by default.
+
+==================================================
+59. CLOUD GOODS RECEIPTS LIST
+==================================================
+
+Columns:
+
+GRN Number
+PO
+Invoice
+Supplier
+Operating Unit
+Receipt Date
+Status
+Created By
+Posted At
+
+Filters:
+
+Date
+Supplier
+PO
+Status
+Operating Unit
+
+==================================================
+60. CLOUD GRN DETAIL
+==================================================
+
+Display:
+
+GRN Number
+Status
+Supplier
+PO
+Invoice
+Operating Unit
+Created By
+Receipt Date
+Posted At
+
+Lines:
+
+Material
+PO Line
+Open Before
+Invoice Qty
+Received
+Accepted
+Damaged
+Rejected
+UOM
+
+Inventory Impact:
+
+Material
+Quantity Added
+
+Audit Timeline
+
+==================================================
+61. MOBILE HISTORY
+==================================================
+
+Add:
+
+Receive History
+
+Fields:
+
+GRN Number
+PO
+Supplier
+Invoice
+Date
+Status
+
+Tap:
+
+show GRN details.
+
+==================================================
+62. PERMISSIONS
+==================================================
+
+Add:
+
+SCAN_INVOICE
+UPLOAD_INVOICE
+VIEW_INVOICE
+EDIT_INVOICE
+VIEW_PURCHASE_ORDER
+MATCH_PURCHASE_ORDER
+POST_GRN
+VIEW_GRN
+
+Assign sensible defaults.
+
+Store Manager:
+
+SCAN_INVOICE
+UPLOAD_INVOICE
+VIEW_INVOICE
+EDIT_INVOICE
+VIEW_PURCHASE_ORDER
+MATCH_PURCHASE_ORDER
+POST_GRN
+VIEW_GRN
+
+Viewer:
+
+VIEW_INVOICE
+VIEW_PURCHASE_ORDER
+VIEW_GRN
+
+Super Admin:
+
+all
+
+Do not automatically grant POST_GRN to Viewer.
+
+==================================================
+63. AUTHORIZATION
+==================================================
+
+Every endpoint must enforce:
+
+authentication
+
+organization scope
+
+operating-unit scope
+
+permission
+
+A user must not access another organization’s:
+
+documents
+invoices
+POs
+GRNs
+inventory
+
+Do not trust IDs provided by frontend without server validation.
+
+==================================================
+64. API ENDPOINTS
+==================================================
+
+Implement clean endpoints.
+
+DOCUMENTS:
+
+POST /api/v1/documents/invoices
+
+GET /api/v1/documents/{id}
+
+GET /api/v1/documents/{id}/status
+
+INVOICE:
+
+POST /api/v1/invoices/{id}/process
+
+GET /api/v1/invoices
+
+GET /api/v1/invoices/{id}
+
+PUT /api/v1/invoices/{id}
+
+POST /api/v1/invoices/{id}/match-supplier
+
+POST /api/v1/invoices/{id}/match-po
+
+POST /api/v1/invoices/{id}/match-lines
+
+PURCHASE ORDERS:
+
+GET /api/v1/purchase-orders/{poNumber}
+
+GET /api/v1/purchase-orders/search
+
+GRN:
+
+POST /api/v1/grns/validate
+
+POST /api/v1/grns
+
+GET /api/v1/grns
+
+GET /api/v1/grns/{id}
+
+GET /api/v1/grns/by-number/{grnNumber}
+
+==================================================
+65. .NET SERVICES
+==================================================
+
+Create or extend:
+
+IDocumentStorageService
+
+IDocumentService
+
+IPdfTextExtractor
+
+IOcrProvider
+
+IInvoiceExtractionService
+
+IInvoiceNormalizationService
+
+ISupplierMatchingService
+
+IInvoiceService
+
+IPurchaseOrderService
+
+IInvoicePoMatchingService
+
+IInvoiceLineMatchingService
+
+IGrnValidationService
+
+IGrnService
+
+IGrnPostingProvider
+
+IInventoryService
+
+IIdempotencyService
+
+IAuditService
+
+Keep Controllers thin.
+
+==================================================
+66. BACKGROUND PROCESSING
+==================================================
+
+Invoice extraction may take several seconds.
+
+Do not block Mobile unnecessarily.
+
+Preferred:
+
+Upload document
+
+Return:
+
+DocumentId
+InvoiceId
+Status = PROCESSING
+
+Then process asynchronously or through controlled background task.
+
+Mobile polls:
+
+GET document/invoice status
+
+Possible statuses:
+
+PROCESSING
+REVIEW_REQUIRED
+FAILED
+
+Do not poll aggressively.
+
+A short controlled interval is sufficient.
+
+==================================================
+67. MOBILE PROCESSING BEHAVIOUR
+==================================================
+
+While extraction runs show:
+
+Reading your invoice...
+
+Status steps:
+
+Uploading
+Reading document
+Extracting data
+Matching supplier
+Finding PO
+
+Once ready:
+
+automatically open Invoice Review.
+
+==================================================
+68. ERROR HANDLING
+==================================================
+
+Examples:
+
+DOCUMENT_UNREADABLE
+
+OCR_FAILED
+
+INVOICE_EXTRACTION_FAILED
+
+SUPPLIER_NOT_FOUND
+
+PO_NOT_FOUND
+
+PO_CLOSED
+
+PO_ACCESS_DENIED
+
+PO_HAS_NO_OPEN_ITEMS
+
+INVOICE_LINE_UNMATCHED
+
+INVALID_RECEIVED_QUANTITY
+
+OVERDELIVERY_NOT_ALLOWED
+
+DUPLICATE_INVOICE
+
+GRN_POSTING_FAILED
+
+IDEMPOTENCY_CONFLICT
+
+Return structured API errors.
+
+Never expose stack traces.
+
+==================================================
+69. FILE SECURITY
+==================================================
+
+Allow:
+
+PDF
+PNG
+JPG
+JPEG
+
+Reject:
+
+executables
+scripts
+unsupported archives
+
+Validate:
+
+MIME type
+file extension
+file size
+
+Use safe generated storage names.
+
+Do not trust uploaded filename.
+
+==================================================
+70. MOBILE SECURITY
+==================================================
+
+Do not store:
+
+OCR key
+storage secret
+database secret
+ERP secret
+
+in Expo environment accessible to app.
+
+Only Mobile API base URL is public.
+
+==================================================
+71. AUDIT EVENTS
+==================================================
+
+Create events for:
+
+INVOICE_UPLOADED
+
+INVOICE_OCR_STARTED
+
+INVOICE_OCR_COMPLETED
+
+INVOICE_EXTRACTION_COMPLETED
+
+INVOICE_UPDATED
+
+SUPPLIER_MATCHED
+
+PO_MATCHED
+
+INVOICE_LINE_MATCHED
+
+GRN_VALIDATED
+
+GRN_POST_STARTED
+
+GRN_POSTED
+
+GRN_POST_FAILED
+
+Include:
+
+user
+organization
+operating unit
+entity reference
+timestamp
+
+==================================================
+72. DEVELOPMENT DATA
+==================================================
+
+Seed a controlled demo scenario.
+
+Organization:
+
+Demo Hospitality Group
+
+Operating Unit:
+
+Demo Hotel Main Store
+
+Supplier:
+
+Demo Hospitality Supplier
+
+PO:
+
+4500001001
+
+PO Lines:
+
+Line 10
+Chicken Breast
+100 KG
+
+Line 20
+Basmati Rice
+200 KG
+
+Line 30
+Cooking Oil
+50 L
+
+Invoice:
+
+INV-1001
+
+Invoice Lines:
+
+Chicken Breast
+50 KG
+
+Basmati Rice
+80 KG
+
+Cooking Oil
+20 L
+
+Expected physical receipt test:
+
+Chicken Breast:
+48 KG
+
+Basmati Rice:
+80 KG
+
+Cooking Oil:
+18 L
+
+Expected posted stock:
+
++48 KG Chicken
+
++80 KG Rice
+
++18 L Oil
+
+==================================================
+73. CLOUD GUI
+==================================================
+
+Preserve SILA ME design:
+
+ALL PAGE BACKGROUNDS:
+WHITE
+
+Borders:
+SILA light blue
+
+Text:
+dark navy/charcoal
+
+Primary actions:
+accessible SILA blue
+
+Tables:
+white
+
+Cards:
+white + blue borders
+
+Do not create gray application backgrounds.
+
+==================================================
+74. MOBILE GUI
+==================================================
+
+Preserve SILA ME design.
+
+All screens:
+
+white background
+
+blue/light-blue borders
+
+dark text
+
+large touch-friendly controls
+
+Main Post GRN button:
+
+brand blue
+
+Keep operational screens simple.
+
+==================================================
+75. AUTOMATED BACKEND TESTS
+==================================================
+
+Add tests for:
+
+Document upload
+
+Unsupported file rejected
+
+PDF text extraction route
+
+OCR route
+
+Invoice header creation
+
+Invoice line creation
+
+Supplier tax-number match
+
+Supplier name match
+
+Duplicate invoice detection
+
+PO exact lookup
+
+PO search
+
+PO scope enforcement
+
+Invoice→PO match
+
+Invoice line exact material match
+
+Invoice line supplier-material match
+
+Suggested description match
+
+Unmatched line validation
+
+Partial GRN
+
+Overdelivery rejection
+
+Invoice quantity different from physical quantity
+
+Accepted quantity stock update
+
+Damaged/rejected not added to stock
+
+PO received quantity update
+
+PO open quantity update
+
+PO close behavior
+
+GRN number uniqueness
+
+Inventory transaction creation
+
+Atomic rollback
+
+Idempotent retry
+
+401 unauthenticated
+
+403 wrong scope
+
+403 missing POST_GRN permission
+
+Service invoice GRN rejected
+
+==================================================
+76. CRITICAL TEST
+==================================================
+
+The following test is mandatory:
+
+Invoice says:
+
+Chicken = 50 KG
+
+Store Manager enters:
+
+Actual Received = 48 KG
+
+After GRN:
+
+GoodsReceiptLine.ReceivedQuantity = 48
+
+PO received quantity increases by 48
+
+PO open quantity decreases by 48
+
+Stock increases by accepted quantity only
+
+System must NOT post 50 just because OCR extracted 50.
+
+==================================================
+77. E2E TEST
+==================================================
+
+Run:
+
+1. Login to SILA ME Mobile
+2. Open Scan Invoice & Receive
+3. Upload demo invoice
+4. Invoice processing starts
+5. Extraction completes
+6. Review supplier
+7. Review invoice number
+8. Review PO
+9. Review line data
+10. Confirm PO
+11. Confirm line mappings
+12. Enter:
+    Chicken 48
+    Rice 80
+    Oil 18
+13. Open GRN Review
+14. Post GRN
+15. Receive GRN number
+16. Verify status POSTED
+17. Verify PO quantities
+18. Verify stock balances
+19. Verify inventory transactions
+20. Verify Mobile Receive History
+21. Login Cloud
+22. Verify Invoice list
+23. Open invoice
+24. Verify linked GRN
+25. Open Goods Receipts
+26. Open GRN
+27. Verify 48 / 80 / 18 quantities
+28. Verify audit events
+
+==================================================
+78. DO NOT ADD YET
+==================================================
+
+Do NOT build:
+
+SAP GRN posting
+
+Odoo GRN posting
+
+Oracle GRN posting
+
+GRN approval
+
+Overdelivery approval
+
+Invoice AP posting
+
+Payment processing
+
+4-way finance match
+
+Menu Engineering
+
+Inventory Count
+
+Stock Transfer
+
+Goods Issue
+
+Supplier onboarding
+
+Purchase requisition
+
+Advanced AI image recognition
+
+WhatsApp
+
+Teams
+
+SharePoint
+
+Keep this feature focused.
+
+==================================================
+79. IMPLEMENTATION ORDER
+==================================================
+
+Implement in this order:
+
+1. Inspect current code
+2. Reuse Phase 2 organization/access model
+3. Design entities
+4. Create EF migration
+5. Add development seed data
+6. Add document storage service
+7. Add PDF text extraction
+8. Add OCR abstraction
+9. Add invoice extraction
+10. Add supplier matching
+11. Add PO models/services
+12. Add PO matching
+13. Add line matching
+14. Add GRN entities/services
+15. Add stock balance
+16. Add inventory ledger
+17. Add idempotency
+18. Add permissions
+19. Add API endpoints
+20. Update OpenAPI
+21. Regenerate shared API clients
+22. Add Mobile screens
+23. Add Cloud screens
+24. Add tests
+25. Run database migration
+26. Run API tests
+27. Run Cloud build/typecheck
+28. Run Mobile typecheck/Expo validation
+29. Run E2E test
+30. Commit
+31. STOP
+
+==================================================
+80. BEFORE CODING
+==================================================
+
+Before implementation, output a concise design review:
+
+A. Existing Phase 2 components reused
+
+B. Tables to be added
+
+C. EF relationships
+
+D. New permissions
+
+E. New APIs
+
+F. Mobile screens
+
+G. Cloud screens
+
+H. OCR/extraction strategy
+
+I. GRN transaction logic
+
+J. Risks/blockers
+
+Then implement without asking for confirmation unless a genuine blocker exists.
+
+==================================================
+81. SOURCE CONTROL
+==================================================
+
+After everything passes:
+
+git status --short
+
+git diff --check
+
+Commit:
+
+feat: add invoice scanner extraction and grn posting
+
+Return full SHA.
+
+Do not push unless explicitly requested.
+
+==================================================
+82. FINAL REPORT
+==================================================
+
+Return:
+
+A. DATABASE
+
+1. Migration name
+2. Tables created
+3. Foreign keys created
+4. Indexes created
+5. Demo Supplier seeded YES/NO
+6. Demo PO seeded YES/NO
+7. Demo Materials seeded YES/NO
+
+B. DOCUMENT
+
+8. Mobile camera upload PASS/FAIL/NOT RUN
+9. Image upload PASS/FAIL
+10. PDF upload PASS/FAIL
+11. Multi-page document PASS/FAIL
+12. Storage service PASS/FAIL
+
+C. EXTRACTION
+
+13. Embedded PDF text extraction PASS/FAIL
+14. OCR provider configured
+15. OCR result persistence PASS/FAIL
+16. Header extraction PASS/FAIL
+17. Line extraction PASS/FAIL
+18. User correction PASS/FAIL
+
+D. SUPPLIER / PO
+
+19. Supplier match PASS/FAIL
+20. Exact PO match PASS/FAIL
+21. Manual PO search PASS/FAIL
+22. PO authorization PASS/FAIL
+23. Line matching PASS/FAIL
+24. Unmatched line validation PASS/FAIL
+
+E. GRN
+
+25. Physical qty confirmation PASS/FAIL
+26. Partial receipt PASS/FAIL
+27. Overdelivery blocking PASS/FAIL
+28. GRN creation PASS/FAIL
+29. GRN number generation PASS/FAIL
+30. Idempotency PASS/FAIL
+31. Atomic transaction PASS/FAIL
+32. PO received qty updated PASS/FAIL
+33. PO open qty updated PASS/FAIL
+34. Stock updated PASS/FAIL
+35. Damaged/rejected excluded from available stock PASS/FAIL
+36. Inventory ledger created PASS/FAIL
+
+F. MOBILE
+
+37. Scan Invoice & Receive tile PASS/FAIL
+38. Scanner/upload screen PASS/FAIL
+39. Processing screen PASS/FAIL
+40. Invoice Review PASS/FAIL
+41. PO Match PASS/FAIL
+42. Line Match PASS/FAIL
+43. Physical Quantity screen PASS/FAIL
+44. GRN Review PASS/FAIL
+45. GRN Result PASS/FAIL
+46. Receive History PASS/FAIL
+
+G. CLOUD
+
+47. Invoice list PASS/FAIL
+48. Invoice detail PASS/FAIL
+49. GRN list PASS/FAIL
+50. GRN detail PASS/FAIL
+51. Audit timeline PASS/FAIL
+
+H. TESTING
+
+52. dotnet build
+53. dotnet test total
+54. dotnet test failures
+55. Cloud typecheck
+56. Cloud build
+57. Mobile typecheck
+58. Expo validation
+
+I. CRITICAL BUSINESS TEST
+
+59. Invoice Chicken Qty = 50
+60. Physical Received Chicken = 48
+61. GRN posted 48 PASS/FAIL
+62. PO reduced by 48 PASS/FAIL
+63. Stock increased by 48 PASS/FAIL
+64. System did NOT blindly post invoice quantity PASS/FAIL
+
+J. DECISION
+
+65. Invoice Scanner ready YES/NO
+66. Invoice extraction ready YES/NO
+67. PO matching ready YES/NO
+68. GRN posting ready YES/NO
+69. Cloud monitoring ready YES/NO
+70. Mobile operational flow ready YES/NO
+71. Ready for real OCR provider integration YES/NO
+72. Ready for physical-store pilot YES/NO
+73. Remaining blockers
+
+STOP.
+
+DO NOT START ANOTHER FEATURE.

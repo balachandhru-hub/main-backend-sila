@@ -1,0 +1,14 @@
+import { Link } from 'wouter';
+import { PackageCheck, Search } from 'lucide-react';
+import { useState } from 'react';
+import { getGetGrnsQueryKey, useGetGrns } from '@workspace/api-client-react';
+import { SilaPageHeader, SilaDataTable, StatusBadge, QueryError } from '@/components/sila-ui';
+import { formatDate } from '@/lib/formatters';
+const request = { credentials: 'include' as const };
+
+export default function Grns() {
+  const query = useGetGrns({ request, query: { queryKey: getGetGrnsQueryKey(), retry: false } });
+  const [search, setSearch] = useState('');
+  const rows = (query.data ?? []).filter((grn) => `${grn.grnNumber} ${grn.supplierName} ${grn.purchaseOrderNumber} ${(grn as typeof grn & { erpMaterialDocument?: string }).erpMaterialDocument ?? ''}`.toLowerCase().includes(search.toLowerCase()));
+  return <><SilaPageHeader eyebrow="Receiving" title="Goods receipts" description="Confirm what physically arrived. Receipt quantities are never inferred from invoice quantities." actions={<button className="sila-button sila-button--primary" type="button" disabled data-testid="button-create-grn"><PackageCheck size={14} /> New goods receipt</button>} /><div className="sila-filter-row"><input className="sila-input" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search GRN, PO, supplier, or ERP material document" aria-label="Search goods receipts" data-testid="input-search-grns" /><button className="sila-button" type="button" data-testid="button-search-grns"><Search size={14} /> Search</button></div>{query.isError ? <QueryError onRetry={() => query.refetch()} /> : <SilaDataTable loading={query.isPending} empty={!query.isPending && rows.length === 0} emptyTitle="No goods receipts found" emptyDescription="Posted receiving activity from the operation will appear here."><table className="sila-table"><thead><tr><th>GRN</th><th>Supplier</th><th>Purchase order</th><th>ERP material document</th><th>Received at</th><th>Lines</th><th>Status</th></tr></thead><tbody>{rows.map((grn) => { const erp = grn as typeof grn & { erpMaterialDocument?: string; erpPostingStatus?: string }; return <tr key={grn.id}><td><Link className="sila-table__primary" href={`/receiving/goods-receipts/${grn.id}`} data-testid={`link-grn-${grn.id}`}>{grn.grnNumber}</Link><span className="sila-table__secondary">{grn.operatingUnitName}</span></td><td>{grn.supplierName}</td><td>{grn.purchaseOrderNumber}</td><td>{erp.erpMaterialDocument ?? '—'}</td><td>{formatDate(grn.receiptDate)}</td><td>{grn.lines.length}</td><td><StatusBadge value={erp.erpPostingStatus ?? grn.status} /></td></tr>; })}</tbody></table></SilaDataTable>}</>;
+}

@@ -1,0 +1,1916 @@
+PROJECT: SILA ME
+
+CHANGE REQUEST:
+REFACTOR INVOICE EXTRACTION INTO:
+
+1. MOBILE BASIC INVOICE READING
+2. CLOUD/BACKEND COMPLETE INVOICE EXTRACTION
+3. BUILT-IN OCR AS DEFAULT
+4. OPTIONAL EXTERNAL OCR/AI AGENT CONFIGURATION
+5. NEW invoice_ext_data TABLE FOR COMPLETE EXTRACTED DATA
+
+IMPORTANT:
+
+This is an enhancement to the already implemented:
+
+Invoice Scanner
+Purchase Order Matching
+GRN Posting
+
+Do NOT rebuild Phase 3.
+
+Preserve:
+
+- Existing authentication
+- Organization scope
+- Operating-unit scope
+- Invoice upload
+- PO matching
+- GRN posting
+- Stock updates
+- Inventory ledger
+- Idempotency
+- Audit
+- Existing Cloud and Mobile application
+
+==================================================
+1. TARGET ARCHITECTURE
+==================================================
+
+The required architecture is:
+
+SILA ME MOBILE
+    |
+    | Camera / Image / PDF
+    |
+    v
+SILA ME .NET BACKEND
+    |
+    +---- BUILT-IN OCR / DOCUMENT READER
+    |          |
+    |          +--> BASIC EXTRACTION
+    |          |      Supplier Name
+    |          |      Supplier TRN
+    |          |      Supplier Invoice Number
+    |          |      Invoice Date
+    |          |      Purchase Order Number
+    |          |      Invoice Gross Amount
+    |          |
+    |          +--> FULL EXTRACTION
+    |                 Invoice Header
+    |                 Invoice Totals
+    |                 All Invoice Lines
+    |
+    |
+    +---- OPTIONAL EXTERNAL AGENT ROUTER
+               |
+               +--> Only when configured and ACTIVE
+                    for Document Type = INVOICE
+
+The system must always have a working built-in extraction path.
+
+External OCR/AI must NOT be mandatory.
+
+==================================================
+2. IMPORTANT PRINCIPLE
+==================================================
+
+The Mobile application must NOT contain:
+
+- External OCR credentials
+- AI API tokens
+- Provider secrets
+- OCR service passwords
+
+Mobile sends:
+
+image
+PDF
+camera scan
+
+to the SILA ME backend.
+
+The backend performs extraction.
+
+Mobile displays the BASIC extraction result.
+
+==================================================
+3. MOBILE BASIC EXTRACTION
+==================================================
+
+For Mobile, extract only these fields:
+
+Supplier Name
+
+Supplier TRN
+
+Supplier Invoice Number
+
+Invoice Date
+
+Purchase Order Number
+
+Invoice Gross Amount
+
+Return a lightweight response such as:
+
+{
+  "documentId": "...",
+  "supplierName": "ABC Food Trading LLC",
+  "supplierTrn": "100123456700003",
+  "supplierInvoiceNumber": "INV-1001",
+  "invoiceDate": "2026-09-14",
+  "purchaseOrderNumber": "4500001001",
+  "invoiceGross": 12500.00,
+  "currency": "AED",
+  "status": "REVIEW_REQUIRED"
+}
+
+These fields must be editable by the Store Manager before proceeding.
+
+==================================================
+4. MOBILE FLOW
+==================================================
+
+Mobile flow must remain very simple:
+
+SCAN INVOICE
+
+→ Upload/Camera/PDF
+
+→ Reading Invoice...
+
+→ Display Basic Invoice Information
+
+Supplier:
+ABC Food Trading LLC
+
+TRN:
+100123456700003
+
+Invoice:
+INV-1001
+
+Invoice Date:
+14-Sep-2026
+
+PO:
+4500001001
+
+Invoice Amount:
+AED 12,500.00
+
+→ CONFIRM / EDIT
+
+→ Find PO
+
+→ Retrieve PO Items
+
+→ Confirm Physical Quantities
+
+→ Review GRN
+
+→ Post GRN
+
+Do NOT show complete invoice-line extraction on Mobile unless required for PO/GRN assistance.
+
+Mobile is an operational receiving application.
+
+==================================================
+5. MOBILE SCREEN
+==================================================
+
+Create/refactor:
+
+Invoice Basic Review
+
+Fields:
+
+Supplier Name
+Supplier TRN
+Supplier Invoice Number
+Invoice Date
+Purchase Order Number
+Invoice Gross Amount
+
+Buttons:
+
+EDIT
+
+CONFIRM & FIND PO
+
+RESCAN
+
+Keep:
+
+white background
+blue border
+dark navy text
+SILA blue primary button
+
+==================================================
+6. BUILT-IN OCR REQUIREMENT
+==================================================
+
+SILA ME must contain its own default OCR/document-reading implementation.
+
+Create:
+
+IBuiltInOcrService
+
+or reuse/refactor:
+
+IOcrProvider
+
+with implementation:
+
+BuiltInOcrProvider
+
+This is the DEFAULT provider.
+
+The built-in provider must execute within the SILA ME backend environment.
+
+Do NOT require:
+
+Azure Document Intelligence
+Google Document AI
+AWS Textract
+OpenAI
+Gemini
+Claude
+or any remote AI/OCR provider
+
+for normal processing.
+
+==================================================
+7. BUILT-IN OCR PACKAGE
+==================================================
+
+Use an appropriate .NET-compatible OCR implementation/library available in the project/runtime.
+
+Architecture must allow:
+
+Image
+→ preprocessing
+→ OCR
+→ text blocks
+
+PDF
+→ embedded text extraction first
+→ if insufficient text:
+   render/process page
+→ OCR
+
+The implementation should be isolated behind:
+
+IOcrProvider
+
+Do not place OCR logic directly inside Controllers.
+
+==================================================
+8. BASIC EXTRACTION SERVICE
+==================================================
+
+Create:
+
+IBasicInvoiceExtractionService
+
+Responsibility:
+
+Take:
+
+OCR text
+PDF text
+layout/text blocks
+
+and identify:
+
+Supplier Name
+Supplier TRN
+Supplier Invoice Number
+Invoice Date
+Purchase Order Number
+Invoice Gross
+
+Use:
+
+- labels
+- patterns
+- regex
+- invoice layout heuristics
+- field scoring
+- nearby text relationships
+
+Do NOT require external LLM.
+
+==================================================
+9. UAE TRN EXTRACTION
+==================================================
+
+Support TRN extraction.
+
+Look for labels such as:
+
+TRN
+VAT TRN
+Tax Registration Number
+VAT Registration Number
+
+Store extracted value as text.
+
+Do not assume every supplier is UAE-based.
+
+Do not make the database field numeric.
+
+==================================================
+10. INVOICE NUMBER EXTRACTION
+==================================================
+
+Recognize common labels:
+
+Invoice Number
+Invoice No
+Invoice #
+Tax Invoice No
+Tax Invoice Number
+Inv No
+Document No
+
+Avoid confusing:
+
+PO Number
+Delivery Note
+Customer Number
+TRN
+
+==================================================
+11. PO NUMBER EXTRACTION
+==================================================
+
+Recognize:
+
+PO Number
+PO No
+Purchase Order
+Purchase Order Number
+Customer PO
+Order Ref
+
+Do not automatically treat any large number as PO.
+
+Use format/label confidence.
+
+==================================================
+12. INVOICE DATE EXTRACTION
+==================================================
+
+Recognize:
+
+Invoice Date
+Tax Invoice Date
+Document Date
+Date
+
+Normalize into ISO date internally.
+
+Preserve raw extracted value if necessary for troubleshooting.
+
+==================================================
+13. GROSS AMOUNT EXTRACTION
+==================================================
+
+Recognize:
+
+Grand Total
+Gross Total
+Invoice Total
+Total Amount
+Amount Due
+Total Including VAT
+Total Incl VAT
+
+Avoid confusing:
+
+Subtotal
+Net Amount
+VAT Amount
+Line Amount
+
+Return currency when identifiable.
+
+==================================================
+14. CLOUD FULL EXTRACTION
+==================================================
+
+For every uploaded invoice, Cloud/backend processing must attempt full extraction.
+
+Full extraction includes:
+
+HEADER:
+
+docid
+
+supplier_name
+
+supplier_trn
+
+supplier_invoice_number
+
+invoice_date
+
+purchase_order_number
+
+invoice_gross
+
+invoice_net
+
+LINE DATA:
+
+item_sku_id
+
+item_amount
+
+item_net
+
+item_description
+
+line_item_number
+
+po_item_id
+
+Because one invoice contains many lines, DO NOT design invoice_ext_data as one single row per invoice unless repeated header values are intentionally stored per line.
+
+Use one row per invoice line.
+
+==================================================
+15. TABLE: invoice_ext_data
+==================================================
+
+Create table:
+
+invoice_ext_data
+
+Recommended schema:
+
+id UUID PRIMARY KEY
+
+docid UUID NOT NULL
+
+organization_id UUID NOT NULL
+
+operating_unit_id UUID NULL
+
+supplier_name varchar(500) NULL
+
+supplier_trn varchar(150) NULL
+
+supplier_invoice_number varchar(150) NULL
+
+invoice_date date NULL
+
+purchase_order_number varchar(150) NULL
+
+invoice_gross numeric(18,4) NULL
+
+invoice_net numeric(18,4) NULL
+
+currency varchar(10) NULL
+
+item_sku_id varchar(200) NULL
+
+item_amount numeric(18,4) NULL
+
+item_net numeric(18,4) NULL
+
+item_description varchar(1500) NULL
+
+line_item_number varchar(100) NULL
+
+po_item_id UUID NULL
+
+source_provider varchar(100) NOT NULL
+
+extraction_method varchar(50) NOT NULL
+
+extraction_confidence numeric(10,4) NULL
+
+created_at timestamptz NOT NULL
+
+updated_at timestamptz NOT NULL
+
+==================================================
+16. invoice_ext_data RELATIONSHIPS
+==================================================
+
+docid:
+
+FK → documents.id
+
+po_item_id:
+
+FK → purchase_order_items.id
+nullable because matching may not yet be completed.
+
+organization_id:
+
+FK → organizations.id
+
+operating_unit_id:
+
+FK → operating_units.id
+
+Add indexes:
+
+docid
+
+organization_id
+
+supplier_invoice_number
+
+purchase_order_number
+
+supplier_trn
+
+item_sku_id
+
+po_item_id
+
+==================================================
+17. HEADER-ONLY INVOICE
+==================================================
+
+If OCR extracts invoice header but no lines:
+
+still create an invoice_ext_data record.
+
+Line fields may remain NULL.
+
+If lines are later extracted:
+
+replace/update into proper line rows.
+
+Do not lose header information.
+
+==================================================
+18. MULTI-LINE INVOICE EXAMPLE
+==================================================
+
+Example invoice:
+
+INV-1001
+
+Supplier:
+ABC Foods
+
+PO:
+4500001001
+
+Gross:
+1,000
+
+Net:
+952.38
+
+Lines:
+
+10 Chicken Breast 500
+20 Rice 300
+30 Oil 152.38
+
+invoice_ext_data contains:
+
+ROW 1
+
+docid = X
+supplier = ABC Foods
+invoice = INV-1001
+PO = 4500001001
+gross = 1000
+net = 952.38
+item_sku_id = CHK001
+item_amount = 500
+item_description = Chicken Breast
+line_item_number = 10
+
+ROW 2
+
+same header
+item_sku_id = RICE001
+item_amount = 300
+item_description = Basmati Rice
+line_item_number = 20
+
+ROW 3
+
+same header
+item_sku_id = OIL001
+item_amount = 152.38
+item_description = Cooking Oil
+line_item_number = 30
+
+==================================================
+19. CLOUD FULL EXTRACTION PIPELINE
+==================================================
+
+Processing flow:
+
+Document Upload
+
+→ Determine Document Type
+
+→ Resolve Extraction Provider
+
+→ Read PDF embedded text where applicable
+
+→ OCR where needed
+
+→ Header Extraction
+
+→ Line/Table Extraction
+
+→ Normalize
+
+→ Store invoice
+
+→ Store invoice_ext_data
+
+→ Supplier Match
+
+→ PO Match
+
+→ PO Line Match
+
+→ Populate po_item_id
+
+→ Ready for operational receiving
+
+==================================================
+20. EXTERNAL AGENT CONFIGURATION
+==================================================
+
+Add a Cloud configuration section:
+
+ADMIN
+→ DOCUMENT EXTRACTION
+→ AGENT CONFIGURATION
+
+Purpose:
+
+Allow administrator to configure optional external extraction providers.
+
+==================================================
+21. TABLE: extraction_agent_configs
+==================================================
+
+Create table:
+
+extraction_agent_configs
+
+Fields:
+
+id UUID PK
+
+organization_id UUID FK nullable
+
+name varchar(200)
+
+document_type varchar(50)
+
+provider_type varchar(100)
+
+endpoint_url text nullable
+
+authentication_type varchar(50)
+
+credential_reference text nullable
+
+configuration_json jsonb nullable
+
+priority int default 100
+
+is_active boolean
+
+created_by_user_id UUID FK
+
+created_at timestamptz
+
+updated_at timestamptz
+
+Do NOT store plaintext secret tokens when avoidable.
+
+Use secure secret storage/configuration abstraction.
+
+==================================================
+22. DOCUMENT TYPE CONFIGURATION
+==================================================
+
+Initially support:
+
+INVOICE
+
+Architecture must later support:
+
+DELIVERY_NOTE
+
+CREDIT_NOTE
+
+PURCHASE_ORDER
+
+RECEIPT
+
+CONTRACT
+
+but do NOT implement those workflows now.
+
+==================================================
+23. EXTERNAL PROVIDER TYPES
+==================================================
+
+Provider types should be configurable rather than hardcoded into frontend.
+
+Examples:
+
+AZURE_DOCUMENT_INTELLIGENCE
+
+GOOGLE_DOCUMENT_AI
+
+AWS_TEXTRACT
+
+CUSTOM_REST
+
+AI_AGENT
+
+OTHER
+
+The default provider remains:
+
+BUILT_IN
+
+==================================================
+24. AUTHENTICATION TYPES
+==================================================
+
+Allow configuration metadata for:
+
+NONE
+
+API_KEY
+
+BEARER_TOKEN
+
+BASIC
+
+OAUTH2
+
+CUSTOM
+
+Do not expose secret values after initial save.
+
+Mask them in Cloud.
+
+Example:
+
+••••••••9FD2
+
+==================================================
+25. AGENT CONFIGURATION SCREEN
+==================================================
+
+Cloud screen:
+
+Agent Configuration
+
+Fields:
+
+Configuration Name
+
+Document Type
+
+Provider Type
+
+Endpoint URL
+
+Authentication Type
+
+API Key / Token / Credential
+
+Priority
+
+Active
+
+Actions:
+
+TEST CONNECTION
+
+SAVE
+
+ACTIVATE
+
+DEACTIVATE
+
+EDIT
+
+==================================================
+26. PROVIDER ROUTING LOGIC
+==================================================
+
+Create:
+
+IExtractionProviderResolver
+
+Logic:
+
+For incoming document:
+
+1. Determine Organization
+2. Determine Document Type
+3. Look for ACTIVE extraction configuration
+4. Match:
+   organization + document type
+5. Sort by priority
+6. If valid active external provider exists:
+      use configured external provider
+7. Otherwise:
+      use BUILT_IN OCR
+
+CRITICAL:
+
+No external configuration
+must NEVER prevent invoice processing.
+
+Fallback:
+
+BUILT_IN OCR
+
+==================================================
+27. REQUIRED PROVIDER DECISION
+==================================================
+
+Pseudo logic:
+
+provider =
+    activeExternalAgentFor(
+        organization,
+        documentType
+    )
+    ?? BuiltInOcrProvider;
+
+==================================================
+28. FALLBACK BEHAVIOUR
+==================================================
+
+If external provider is configured but fails:
+
+support configurable fallback.
+
+For initial version:
+
+External Provider Fails
+→ log provider failure
+→ automatically attempt Built-In OCR
+
+Unless administrator explicitly disables fallback in future.
+
+Do not fail invoice unnecessarily when built-in OCR can process it.
+
+==================================================
+29. EXTRACTION PROVIDER AUDIT
+==================================================
+
+For every extraction record:
+
+store:
+
+provider selected
+
+built-in/external
+
+processing time
+
+success/failure
+
+confidence
+
+fallback used YES/NO
+
+error category
+
+Do not store external authentication token in logs.
+
+==================================================
+30. CLOUD EXTRACTION VIEW
+==================================================
+
+Invoice Detail page should show:
+
+Extraction Information
+
+Provider:
+Built-In OCR
+
+or:
+
+External — Azure Document Intelligence
+
+Status:
+Completed
+
+Confidence:
+92%
+
+Fallback Used:
+No
+
+Extracted Header:
+
+Supplier
+TRN
+Invoice Number
+Invoice Date
+PO
+Gross
+Net
+
+Then:
+
+Extracted Lines
+
+table:
+
+Line
+SKU
+Description
+Amount
+Net
+PO Item
+
+==================================================
+31. CLOUD invoice_ext_data VIEW
+==================================================
+
+Create an admin/technical view inside Invoice Detail.
+
+Do not make a standalone technical database-table-looking UI unless useful.
+
+Display:
+
+LINE
+SKU
+DESCRIPTION
+ITEM AMOUNT
+ITEM NET
+PO ITEM
+
+Header fields appear once above.
+
+==================================================
+32. CLOUD CORRECTION
+==================================================
+
+Cloud user with permission can correct:
+
+Supplier Name
+TRN
+Invoice Number
+Invoice Date
+PO Number
+Gross
+Net
+
+and line:
+
+SKU
+Description
+Amount
+Net
+Line Number
+PO Item Mapping
+
+Corrections must update normalized extracted data.
+
+Keep original extraction/audit history.
+
+==================================================
+33. SOURCE OF FIELD
+==================================================
+
+Where practical, maintain metadata indicating:
+
+OCR
+
+PDF_TEXT
+
+EXTERNAL_AGENT
+
+USER_CORRECTED
+
+This can either be field metadata JSON or extraction history.
+
+Do not overwrite extraction provenance silently.
+
+==================================================
+34. CLOUD PERMISSIONS
+==================================================
+
+Add permissions:
+
+VIEW_EXTRACTION
+
+EDIT_EXTRACTION
+
+VIEW_AGENT_CONFIG
+
+MANAGE_AGENT_CONFIG
+
+TEST_AGENT_CONFIG
+
+Suggested:
+
+Store Manager:
+no agent configuration permissions
+
+Property Admin:
+VIEW_EXTRACTION
+EDIT_EXTRACTION
+
+Super Admin:
+all
+
+==================================================
+35. BASIC EXTRACTION API
+==================================================
+
+Provide endpoint conceptually:
+
+GET /api/v1/invoices/{id}/basic-extraction
+
+Returns only:
+
+documentId
+supplierName
+supplierTrn
+supplierInvoiceNumber
+invoiceDate
+purchaseOrderNumber
+invoiceGross
+currency
+status
+
+Designed for Mobile.
+
+==================================================
+36. FULL EXTRACTION API
+==================================================
+
+Provide:
+
+GET /api/v1/invoices/{id}/extraction
+
+Returns:
+
+header
+line items
+provider
+confidence
+PO mappings
+
+Cloud only based on permissions.
+
+==================================================
+37. REPROCESS API
+==================================================
+
+Cloud needs:
+
+POST /api/v1/invoices/{id}/reprocess
+
+Optional input:
+
+providerConfigId
+
+Use cases:
+
+Re-run built-in OCR
+
+or
+
+Re-run with configured external provider.
+
+Never automatically create duplicate invoice records.
+
+Reprocessing updates extraction data/version safely.
+
+==================================================
+38. TEST CONNECTION API
+==================================================
+
+Create:
+
+POST /api/v1/extraction-agents/{id}/test
+
+Response:
+
+SUCCESS
+
+or
+
+FAILED
+
+plus safe message.
+
+Never return credentials.
+
+==================================================
+39. BUILT-IN OCR PREPROCESSING
+==================================================
+
+Improve built-in OCR input quality through basic image preprocessing where practical:
+
+auto orientation
+
+rotation correction
+
+contrast enhancement
+
+grayscale
+
+noise reduction
+
+deskew
+
+page segmentation
+
+Do not make Mobile perform all preprocessing.
+
+Backend owns OCR preparation.
+
+==================================================
+40. TABLE EXTRACTION
+==================================================
+
+The built-in invoice extractor must attempt to identify invoice line tables.
+
+Typical column patterns:
+
+Item
+SKU
+Product Code
+Description
+Qty
+Quantity
+UOM
+Unit
+Unit Price
+Rate
+Net
+Tax
+Amount
+Total
+
+For this requested table store:
+
+item_sku_id
+
+item_amount
+
+item_net
+
+item_description
+
+line_item_number
+
+po_item_id
+
+Do not invent missing values.
+
+Use NULL when extraction is uncertain/unavailable.
+
+==================================================
+41. PO ITEM MATCHING
+==================================================
+
+After extracting line data:
+
+attempt mapping to PO item.
+
+Priority:
+
+1. Invoice SKU = PO Material Code
+2. Supplier Material Code mapping
+3. Exact normalized description
+4. Existing Phase 3 matching logic
+5. User selection
+
+If matched:
+
+populate:
+
+invoice_ext_data.po_item_id
+
+If not:
+
+leave NULL.
+
+Never fabricate PO item ID.
+
+==================================================
+42. MOBILE DOES NOT NEED ALL LINE DETAILS
+==================================================
+
+IMPORTANT:
+
+Do not overload the Mobile application.
+
+Mobile basic invoice screen needs only:
+
+Supplier Name
+Supplier TRN
+Supplier Invoice Number
+Invoice Date
+PO Number
+Gross Amount
+
+Once PO is found:
+
+Mobile can use PO lines from the PO itself for GRN processing.
+
+The detailed invoice line extraction remains primarily a Cloud/backend capability.
+
+==================================================
+43. GRN BEHAVIOUR
+==================================================
+
+Do not change the existing GRN principle.
+
+OCR may read:
+
+Invoice Qty = 50
+
+But Store Manager confirms:
+
+Received Qty = 48
+
+Post:
+
+48
+
+Never automatically use invoice quantity as physical receipt.
+
+==================================================
+44. DOCUMENT PROCESSING STATUS
+==================================================
+
+Use statuses such as:
+
+UPLOADED
+
+READING
+
+BASIC_EXTRACTION_COMPLETE
+
+FULL_EXTRACTION_PROCESSING
+
+FULL_EXTRACTION_COMPLETE
+
+REVIEW_REQUIRED
+
+FAILED
+
+GRN_READY
+
+GRN_POSTED
+
+Mobile does not need to wait for every Cloud-level extraction field if the basic information is ready.
+
+==================================================
+45. IMPORTANT PERFORMANCE DESIGN
+==================================================
+
+Mobile needs fast response.
+
+Therefore:
+
+FIRST PASS:
+
+Basic extraction
+
+Return:
+
+Supplier
+TRN
+Invoice
+Date
+PO
+Gross
+
+Then continue:
+
+FULL EXTRACTION
+
+in backend.
+
+Mobile can continue operational workflow where safe.
+
+Do not force Store Manager to wait for all invoice-line table extraction if PO has already been identified.
+
+==================================================
+46. PROCESS MODEL
+==================================================
+
+Recommended:
+
+UPLOAD
+   |
+   v
+FAST BASIC EXTRACTION
+   |
+   +------> MOBILE REVIEW
+   |
+   v
+FULL BACKGROUND EXTRACTION
+   |
+   v
+invoice_ext_data
+   |
+   v
+CLOUD REVIEW / ANALYTICS
+
+==================================================
+47. DATABASE MIGRATION
+==================================================
+
+Create new EF Core migration:
+
+Phase3InvoiceExtractionEnhancement
+
+or next available migration naming convention.
+
+Add:
+
+invoice_ext_data
+
+extraction_agent_configs
+
+required extraction metadata fields/tables
+
+Do NOT drop:
+
+documents
+invoices
+invoice_lines
+purchase_orders
+goods_receipts
+stock
+existing Phase 3 tables
+
+==================================================
+48. EXISTING DATA
+==================================================
+
+Existing invoices must continue working.
+
+Do not require invoice_ext_data rows for historic invoices unless reprocessed.
+
+New invoices:
+
+always attempt to populate invoice_ext_data.
+
+==================================================
+49. SECURITY
+==================================================
+
+External credentials must be protected.
+
+Do not expose them via:
+
+GET APIs
+
+Mobile
+
+browser JavaScript responses
+
+logs
+
+audit metadata
+
+Prefer server-side encryption/secret storage.
+
+Cloud should only receive masked credential indicator.
+
+==================================================
+50. AUDIT EVENTS
+==================================================
+
+Add:
+
+BASIC_EXTRACTION_STARTED
+
+BASIC_EXTRACTION_COMPLETED
+
+FULL_EXTRACTION_STARTED
+
+FULL_EXTRACTION_COMPLETED
+
+EXTERNAL_AGENT_SELECTED
+
+BUILTIN_OCR_SELECTED
+
+EXTERNAL_AGENT_FAILED
+
+BUILTIN_OCR_FALLBACK
+
+EXTRACTION_CORRECTED
+
+INVOICE_REPROCESSED
+
+AGENT_CONFIG_CREATED
+
+AGENT_CONFIG_UPDATED
+
+AGENT_CONFIG_ACTIVATED
+
+AGENT_CONFIG_DEACTIVATED
+
+AGENT_CONNECTION_TESTED
+
+==================================================
+51. CLOUD ADMIN MENU
+==================================================
+
+Under:
+
+ADMIN
+
+add:
+
+Document Extraction
+
+Inside:
+
+Agent Configuration
+
+Extraction Settings
+
+For now Extraction Settings may simply show:
+
+Default Provider:
+Built-In OCR
+
+External Fallback:
+Built-In OCR
+
+Configured Document Types
+
+==================================================
+52. PROVIDER DISPLAY
+==================================================
+
+Example configuration:
+
+Name:
+Invoice Azure OCR
+
+Document Type:
+INVOICE
+
+Provider:
+Azure Document Intelligence
+
+Authentication:
+API Key
+
+Status:
+ACTIVE
+
+Priority:
+1
+
+Fallback:
+Built-In OCR
+
+==================================================
+53. DEFAULT STATE
+==================================================
+
+Fresh installation must work with:
+
+ZERO external agent configurations.
+
+Expected:
+
+Invoice uploaded
+
+→ Built-In OCR
+
+→ Basic extraction
+
+→ Full extraction
+
+→ invoice_ext_data populated
+
+External integrations are optional enhancements.
+
+==================================================
+54. AUTOMATED TESTS
+==================================================
+
+Add tests:
+
+Built-in OCR selected when no config exists
+
+External provider selected for INVOICE when active
+
+External provider not selected for another document type
+
+Inactive provider ignored
+
+Lowest/highest configured priority selection according to defined rule
+
+External failure falls back to built-in
+
+No credentials exposed
+
+Basic extraction returns only required fields
+
+Supplier name extraction
+
+TRN extraction
+
+Invoice number extraction
+
+Invoice date extraction
+
+PO number extraction
+
+Gross extraction
+
+Full extraction creates invoice_ext_data rows
+
+Multi-line invoice creates multiple rows
+
+Header-only invoice creates valid record
+
+PO item matching populates po_item_id
+
+Unknown PO item remains NULL
+
+Cloud correction updates normalized values
+
+Audit created
+
+Organization scope enforced
+
+==================================================
+55. MANDATORY TEST INVOICE
+==================================================
+
+Use a representative invoice with:
+
+Supplier:
+
+Demo Hospitality Supplier
+
+TRN:
+
+100123456700003
+
+Invoice:
+
+INV-1001
+
+Invoice Date:
+
+14-Sep-2026
+
+PO:
+
+4500001001
+
+Net:
+
+950.00
+
+Gross:
+
+997.50
+
+Lines:
+
+10
+SKU CHK001
+Chicken Breast
+500.00
+
+20
+SKU RICE001
+Basmati Rice
+300.00
+
+30
+SKU OIL001
+Cooking Oil
+150.00
+
+==================================================
+56. EXPECTED MOBILE RESULT
+==================================================
+
+Mobile must return:
+
+Supplier:
+Demo Hospitality Supplier
+
+TRN:
+100123456700003
+
+Invoice:
+INV-1001
+
+Date:
+14-Sep-2026
+
+PO:
+4500001001
+
+Invoice Amount:
+997.50
+
+Mobile does NOT need to display all invoice_ext_data.
+
+==================================================
+57. EXPECTED CLOUD RESULT
+==================================================
+
+Cloud must show header:
+
+Supplier:
+Demo Hospitality Supplier
+
+TRN:
+100123456700003
+
+Invoice:
+INV-1001
+
+Date:
+14-Sep-2026
+
+PO:
+4500001001
+
+Gross:
+997.50
+
+Net:
+950.00
+
+Extracted Lines:
+
+10
+CHK001
+Chicken Breast
+500.00
+
+20
+RICE001
+Basmati Rice
+300.00
+
+30
+OIL001
+Cooking Oil
+150.00
+
+and corresponding:
+
+invoice_ext_data records.
+
+==================================================
+58. DO NOT BUILD
+==================================================
+
+Do NOT add:
+
+AP posting
+
+Payment
+
+SAP integration
+
+Odoo integration
+
+Oracle integration
+
+4-way matching
+
+AI autonomous GRN
+
+Auto physical quantity
+
+Menu Engineering
+
+Other SILA ME modules
+
+This task is specifically invoice extraction architecture.
+
+==================================================
+59. IMPLEMENTATION ORDER
+==================================================
+
+1. Inspect existing Phase 3 invoice implementation
+
+2. Reuse current document/invoice tables where appropriate
+
+3. Add built-in OCR provider
+
+4. Add basic extraction service
+
+5. Add full extraction service
+
+6. Add invoice_ext_data entity/table
+
+7. Add agent configuration entity/table
+
+8. Add provider resolver
+
+9. Add built-in fallback
+
+10. Add credential protection
+
+11. Add APIs
+
+12. Add Mobile Basic Invoice Review
+
+13. Add Cloud Full Extraction display
+
+14. Add Cloud Agent Configuration
+
+15. Add reprocess capability
+
+16. Add permissions
+
+17. Add audit
+
+18. Add tests
+
+19. Create EF migration
+
+20. Run migration
+
+21. Build API
+
+22. Run API tests
+
+23. Cloud typecheck/build
+
+24. Mobile typecheck/build
+
+25. Run E2E
+
+26. Commit
+
+27. STOP
+
+==================================================
+60. BEFORE CODING
+==================================================
+
+Before implementing, report:
+
+1. Existing components being reused
+
+2. Changes required to existing Phase 3 extraction
+
+3. Built-in OCR package/approach selected
+
+4. Basic extraction logic
+
+5. Full extraction logic
+
+6. invoice_ext_data design
+
+7. Agent configuration design
+
+8. Credential protection strategy
+
+9. Provider selection/fallback logic
+
+10. Database migration plan
+
+Then implement.
+
+==================================================
+61. SOURCE CONTROL
+==================================================
+
+After verification:
+
+git status --short
+
+git diff --check
+
+Commit:
+
+feat: add built-in invoice extraction and configurable ocr agents
+
+Return full commit SHA.
+
+Do not push unless explicitly requested.
+
+==================================================
+62. FINAL REPORT
+==================================================
+
+Return:
+
+A. BUILT-IN OCR
+
+1. Built-in OCR package
+2. Image OCR PASS/FAIL
+3. Scanned PDF OCR PASS/FAIL
+4. Digital PDF text extraction PASS/FAIL
+5. External dependency required YES/NO
+
+Expected:
+NO
+
+B. MOBILE BASIC EXTRACTION
+
+6. Supplier Name PASS/FAIL
+7. Supplier TRN PASS/FAIL
+8. Supplier Invoice Number PASS/FAIL
+9. Invoice Date PASS/FAIL
+10. PO Number PASS/FAIL
+11. Gross Amount PASS/FAIL
+12. Edit/Confirm screen PASS/FAIL
+
+C. FULL EXTRACTION
+
+13. Header extraction PASS/FAIL
+14. Net Amount PASS/FAIL
+15. Line Item Number PASS/FAIL
+16. SKU PASS/FAIL
+17. Item Description PASS/FAIL
+18. Item Amount PASS/FAIL
+19. Item Net PASS/FAIL
+20. PO Item mapping PASS/FAIL
+
+D. DATABASE
+
+21. Migration
+22. invoice_ext_data created YES/NO
+23. extraction_agent_configs created YES/NO
+24. Indexes PASS/FAIL
+25. Existing Phase 3 data preserved YES/NO
+
+E. AGENT CONFIGURATION
+
+26. Built-In default PASS/FAIL
+27. External configuration UI PASS/FAIL
+28. Document type routing PASS/FAIL
+29. Token/authentication configuration PASS/FAIL
+30. Credentials masked PASS/FAIL
+31. External provider selection PASS/FAIL
+32. Built-in fallback PASS/FAIL
+33. Test connection PASS/FAIL
+
+F. CLOUD
+
+34. Full extracted invoice view PASS/FAIL
+35. Extracted lines PASS/FAIL
+36. Provider status displayed PASS/FAIL
+37. Correction capability PASS/FAIL
+38. Reprocess capability PASS/FAIL
+
+G. TESTING
+
+39. dotnet build
+40. dotnet tests passed
+41. dotnet tests failed
+42. Cloud typecheck
+43. Cloud build
+44. Mobile typecheck
+45. Expo build
+
+H. E2E
+
+46. Image invoice → basic Mobile data PASS/FAIL
+47. PDF → basic Mobile data PASS/FAIL
+48. Full extraction → invoice_ext_data PASS/FAIL
+49. Default Built-In OCR used PASS/FAIL
+50. External agent selected when configured PASS/FAIL
+51. External failure → Built-In fallback PASS/FAIL
+52. Existing GRN flow regression PASS/FAIL
+
+I. FINAL DECISION
+
+53. Mobile basic invoice reading ready YES/NO
+54. Cloud full extraction ready YES/NO
+55. Built-in OCR operational YES/NO
+56. External agent configuration ready YES/NO
+57. Existing GRN flow unaffected YES/NO
+58. Remaining blockers
+
+STOP.
+
+DO NOT START ANOTHER SILA ME FEATURE.

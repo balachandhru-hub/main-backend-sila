@@ -1,0 +1,1287 @@
+==================================================
+SILA ME — GLOBAL GUI / UX DESIGN SYSTEM
+APPLIES TO CLOUD + MOBILE
+==================================================
+
+IMPORTANT:
+
+The attached SILA ME logo is the visual source of truth.
+
+The Cloud and Mobile applications must look like ONE product family.
+
+Do NOT create separate visual identities for Cloud and Mobile.
+
+The design should be:
+
+- clean
+- white
+- premium
+- modern
+- enterprise
+- hospitality-oriented
+- simple
+- spacious
+- mobile friendly
+- consistent
+
+The SILA ME logo must drive the primary color palette.
+
+The logo contains a light-blue / blue visual identity.
+
+Extract/sample the actual primary colors from the supplied logo instead of inventing unrelated colors.
+
+Do NOT change the logo colors.
+
+
+==================================================
+1. GLOBAL BACKGROUND
+==================================================
+
+ALL application pages must use:
+
+WHITE background.
+
+Primary page background:
+
+#FFFFFF
+
+Do NOT use:
+
+- gray full-page backgrounds
+- blue full-page backgrounds
+- gradients as page backgrounds
+- dark application backgrounds
+- colored panels covering large portions of pages
+
+Cloud:
+
+body background = white
+
+Mobile:
+
+screen background = white
+
+The entire product should feel bright and clean.
+
+
+==================================================
+2. PRIMARY COLOR SYSTEM
+==================================================
+
+Use the attached SILA ME logo to derive the exact brand blue.
+
+Create design tokens such as:
+
+--sila-primary
+--sila-primary-light
+--sila-primary-dark
+--sila-border
+--sila-text
+--sila-text-secondary
+--sila-background
+--sila-surface
+--sila-error
+--sila-success
+--sila-warning
+
+Do not hardcode random blue shades throughout components.
+
+Use ONE centralized theme.
+
+Suggested visual intent:
+
+Primary:
+SILA logo light blue
+
+Primary Dark:
+slightly darker version of logo blue for readable text/buttons
+
+Primary Light:
+very pale logo-blue background for selected/hover states
+
+Border:
+logo blue with suitable opacity
+
+Page Background:
+white
+
+Surface/Card:
+white
+
+Main Text:
+dark navy / dark charcoal
+
+Secondary Text:
+neutral gray
+
+Use the actual logo color as the reference.
+
+
+==================================================
+3. COLOR ACCESSIBILITY
+==================================================
+
+Because the SILA logo uses light blue:
+
+DO NOT use very light-blue text on white where readability becomes poor.
+
+Use:
+
+dark navy / charcoal for normal text
+
+Use logo blue for:
+
+- active menu
+- links
+- borders
+- icons
+- highlights
+- selected states
+- primary actions where contrast is sufficient
+
+If the exact logo blue is too light for a primary button background:
+
+use a slightly darker derived brand-blue for button background
+
+while keeping the logo itself unchanged.
+
+Button text must have proper visual contrast.
+
+
+==================================================
+4. LOGO USAGE
+==================================================
+
+Use the attached SILA ME logo.
+
+Cloud login:
+logo centered above application name.
+
+Cloud navigation:
+logo top-left.
+
+Mobile login:
+logo centered near top.
+
+Mobile Home:
+logo or compact SILA ME brand mark in header.
+
+Do not:
+
+- stretch logo
+- recolor logo
+- crop logo badly
+- place logo on conflicting colored backgrounds
+- create a new logo
+- add effects/shadows to the logo
+- distort aspect ratio
+
+Use transparent/white logo background as appropriate.
+
+
+==================================================
+5. BORDER DESIGN
+==================================================
+
+Borders should follow the SILA blue identity.
+
+Use thin blue or light-blue borders.
+
+Typical:
+
+1px solid brand blue with reduced opacity
+
+Examples of components requiring blue-border treatment:
+
+- login form
+- input fields
+- cards
+- data containers
+- modal dialogs
+- menus
+- dropdowns
+- search controls
+- filter boxes
+
+Avoid strong black borders.
+
+Avoid heavy dark gray borders.
+
+
+==================================================
+6. CARDS
+==================================================
+
+Cards must be:
+
+background: white
+
+border:
+thin SILA blue/light-blue
+
+border radius:
+10–14px
+
+shadow:
+very subtle only
+
+Do not create heavy floating shadows.
+
+Cloud example:
+
+┌──────────────────────────────┐
+│                              │
+│       White Card             │
+│                              │
+└──────────────────────────────┘
+ Light SILA Blue Border
+
+Cards should feel clean rather than decorative.
+
+
+==================================================
+7. INPUT FIELDS
+==================================================
+
+Input fields:
+
+background:
+white
+
+text:
+dark navy/charcoal
+
+border:
+light SILA blue
+
+border radius:
+8–10px
+
+Normal:
+
+light blue border
+
+Focus:
+
+stronger SILA blue border
+
+Optional subtle focus ring:
+
+logo blue at low opacity
+
+Placeholder:
+
+medium gray
+
+Error:
+
+red border + error text
+
+Do NOT make input backgrounds gray.
+
+
+==================================================
+8. PRIMARY BUTTONS
+==================================================
+
+Primary actions such as:
+
+Login
+Save
+Continue
+Confirm
+Submit
+
+Use:
+
+background:
+brand blue or darker accessible SILA blue
+
+text:
+white
+
+border:
+same blue
+
+border radius:
+8–10px
+
+Hover on web:
+
+slightly darker blue
+
+Pressed on mobile:
+
+slightly darker blue / reduced opacity
+
+Disabled:
+
+pale blue-gray background
+muted text
+no aggressive contrast
+
+
+==================================================
+9. SECONDARY BUTTONS
+==================================================
+
+Secondary actions:
+
+background:
+white
+
+text:
+SILA blue
+
+border:
+SILA blue
+
+Examples:
+
+Cancel
+Back
+Edit
+View
+
+Hover:
+
+very light SILA-blue background.
+
+Do not use gray-filled secondary buttons unless functionally required.
+
+
+==================================================
+10. DESTRUCTIVE BUTTONS
+==================================================
+
+Only destructive actions should use red.
+
+Examples:
+
+Delete
+Remove
+Deactivate
+
+Do not use red for normal navigation/actions.
+
+
+==================================================
+11. TEXT SYSTEM
+==================================================
+
+Main heading:
+
+dark navy / near-black
+
+Secondary headings:
+
+dark navy
+
+Body:
+
+dark charcoal
+
+Supporting text:
+
+neutral medium gray
+
+Links:
+
+SILA blue
+
+Avoid light blue for paragraph text.
+
+Suggested hierarchy:
+
+Page title:
+28–32px Cloud
+24–28px Mobile
+
+Section title:
+20–24px
+
+Card title:
+16–18px
+
+Body:
+14–16px
+
+Caption:
+12–13px
+
+Maintain readable line-height.
+
+
+==================================================
+12. TYPOGRAPHY
+==================================================
+
+Use one clean modern sans-serif family.
+
+Preferred:
+
+Inter
+
+If unavailable use:
+
+system UI stack
+
+Cloud and Mobile typography should feel consistent.
+
+Avoid decorative fonts.
+
+
+==================================================
+13. CLOUD APP HEADER
+==================================================
+
+Cloud header:
+
+WHITE background.
+
+Bottom border:
+
+thin SILA blue/light-blue.
+
+Left:
+
+SILA ME logo
+
+Optional text:
+
+SILA ME
+
+Right:
+
+User name/profile
+Logout/profile menu
+
+Do not create a large colored header.
+
+
+==================================================
+14. CLOUD SIDEBAR
+==================================================
+
+When navigation is introduced later:
+
+Sidebar background:
+
+WHITE
+
+Right border:
+
+light SILA blue
+
+Menu text:
+
+dark navy
+
+Icons:
+
+SILA blue or dark navy
+
+Active item:
+
+very light SILA-blue background
+SILA blue text/icon
+optional 3px SILA blue left indicator
+
+Hover:
+
+pale blue background
+
+Do NOT make the entire sidebar dark blue.
+
+
+==================================================
+15. CLOUD CONTENT AREA
+==================================================
+
+Main content background:
+
+WHITE.
+
+Use spacing and borders to distinguish sections instead of gray background blocks.
+
+Recommended desktop structure:
+
+Header
+----------------------------------------
+Sidebar | Page Content
+        |
+        | Page Title
+        |
+        | Cards
+        |
+        | Content
+
+Page should remain visually light.
+
+
+==================================================
+16. CLOUD LOGIN PAGE
+==================================================
+
+The Cloud login page should be very simple.
+
+Entire background:
+
+WHITE.
+
+Centered login container.
+
+Structure:
+
+             SILA ME LOGO
+
+             SILA ME Cloud
+       Menu Engineering & Operations
+
+       ┌─────────────────────────┐
+       │ Email                   │
+       │                         │
+       │ Password                │
+       │                         │
+       │        Sign In          │
+       └─────────────────────────┘
+
+Border:
+
+SILA blue.
+
+No large blue background.
+
+No split-screen stock photos.
+
+No gradients.
+
+No decorative dashboard graphics.
+
+Keep it premium and minimal.
+
+
+==================================================
+17. MOBILE LOGIN PAGE
+==================================================
+
+Entire mobile screen:
+
+WHITE.
+
+Structure:
+
+SILA ME logo
+
+SILA ME
+
+Menu Engineering & Operations
+
+Email
+
+Password
+
+LOGIN
+
+Keep controls large enough for mobile touch.
+
+Primary login button can span almost full screen width.
+
+Use comfortable side margin:
+
+20–24px.
+
+Avoid unnecessary graphics.
+
+
+==================================================
+18. MOBILE HEADER
+==================================================
+
+Mobile screens should use:
+
+white header
+
+SILA blue bottom border or subtle divider.
+
+Page title:
+
+dark navy
+
+Icons:
+
+SILA blue / dark navy.
+
+Do not use an oversized blue app bar.
+
+
+==================================================
+19. MOBILE BOTTOM NAVIGATION
+==================================================
+
+When bottom navigation is added later:
+
+background:
+WHITE
+
+top border:
+light SILA blue
+
+inactive:
+
+gray text/icon
+
+active:
+
+SILA blue icon
+SILA blue label
+
+Do not use a solid-blue bottom navigation background.
+
+
+==================================================
+20. ICONOGRAPHY
+==================================================
+
+Use one consistent icon library.
+
+Icons should be:
+
+simple
+outlined where suitable
+modern
+clean
+
+Default:
+
+dark navy / gray
+
+Interactive/active:
+
+SILA blue
+
+Avoid multiple icon styles.
+
+
+==================================================
+21. MENU BEHAVIOUR — CLOUD
+==================================================
+
+Menus must support:
+
+hover
+
+selected state
+
+keyboard focus
+
+active route indication
+
+tooltips where icons are not obvious
+
+Desktop sidebar may collapse later.
+
+For Phase 0 keep navigation minimal.
+
+Do not overbuild the menu.
+
+
+==================================================
+22. MENU BEHAVIOUR — MOBILE
+==================================================
+
+Mobile interactions must be touch-first.
+
+Minimum practical touch target:
+
+44px approximately.
+
+Buttons must not be too close together.
+
+Do not reproduce desktop sidebar navigation on mobile.
+
+Use mobile-native navigation patterns.
+
+
+==================================================
+23. RESPONSIVENESS — CLOUD
+==================================================
+
+Cloud application should support:
+
+desktop
+laptop
+tablet
+
+The Phase 0 Login and Dashboard must render correctly at:
+
+1920px
+1440px
+1280px
+1024px
+768px
+
+Avoid fixed-width layouts that break.
+
+
+==================================================
+24. RESPONSIVENESS — MOBILE
+==================================================
+
+Test at least common widths around:
+
+320px
+360px
+390px
+414px
+430px
+
+Avoid:
+
+horizontal scrolling
+clipped buttons
+text overflow
+logo overflow
+
+
+==================================================
+25. STATUS INDICATORS
+==================================================
+
+Success:
+
+green icon/text with very pale green surface if required.
+
+Warning:
+
+amber.
+
+Error:
+
+red.
+
+Information:
+
+SILA blue.
+
+Do not use excessive colored containers.
+
+
+==================================================
+26. LOADING BEHAVIOUR
+==================================================
+
+Both apps need consistent loading states.
+
+For API activity:
+
+show small spinner/progress indication.
+
+Disable action button while submitting.
+
+Example Login:
+
+Normal:
+
+Sign In
+
+During request:
+
+spinner + Signing in...
+
+Prevent multiple submissions.
+
+Do not show blank screen while API request runs.
+
+
+==================================================
+27. ERROR BEHAVIOUR
+==================================================
+
+Login errors should display directly below or above the login controls.
+
+Example:
+
+Invalid email or password.
+
+Use:
+
+small red icon
+red text
+very pale red background if required
+
+Do not use browser alerts.
+
+Do not expose:
+
+stack traces
+HTTP internals
+database errors
+exception text
+
+
+==================================================
+28. SUCCESS BEHAVIOUR
+==================================================
+
+Use small inline confirmation/toast where appropriate.
+
+Example:
+
+Profile updated successfully.
+
+Do not use modal dialogs for every successful action.
+
+
+==================================================
+29. EMPTY STATES
+==================================================
+
+Future empty screens should not appear broken.
+
+Example:
+
+No records available yet.
+
+Provide:
+
+simple icon
+short text
+optional action
+
+Use white background.
+
+Do not add decorative stock illustrations unless approved.
+
+
+==================================================
+30. MODALS
+==================================================
+
+Cloud:
+
+white modal
+blue border
+subtle shadow
+dark heading
+white background
+
+Mobile:
+
+prefer proper mobile sheet/screen patterns where appropriate.
+
+Avoid overly large modal windows.
+
+
+==================================================
+31. TABLE DESIGN — CLOUD
+==================================================
+
+When tables are added:
+
+table background:
+white
+
+header:
+very pale SILA-blue tint OR white with blue bottom border
+
+text:
+dark
+
+row border:
+very light blue-gray
+
+hover:
+very pale blue
+
+Do not create dark table headers unless specifically requested later.
+
+
+==================================================
+32. FORM BEHAVIOUR
+==================================================
+
+Forms should have:
+
+clear labels
+required indicators
+inline validation
+consistent spacing
+
+Do not rely only on placeholders.
+
+Required example:
+
+Email *
+
+Input
+
+Validation:
+
+Please enter a valid email address.
+
+
+==================================================
+33. AUTHENTICATED DASHBOARD — PHASE 0
+==================================================
+
+Cloud Dashboard:
+
+WHITE background.
+
+Header:
+SILA ME logo
+user/profile
+
+Main section:
+
+Welcome, <Display Name>
+
+Then simple cards:
+
+┌─────────────────────────┐
+│ Backend Status          │
+│ ● Connected             │
+└─────────────────────────┘
+
+┌─────────────────────────┐
+│ Application             │
+│ SILA ME Cloud           │
+└─────────────────────────┘
+
+┌─────────────────────────┐
+│ User                    │
+│ email@example.com       │
+└─────────────────────────┘
+
+Cards:
+white with blue border.
+
+
+Mobile Home:
+
+WHITE background.
+
+Header:
+SILA ME
+
+Welcome, <Display Name>
+
+Cards:
+
+Backend Status
+Connected
+
+Application
+SILA ME Mobile
+
+Account
+email@example.com
+
+Logout
+
+Again:
+white cards + blue borders.
+
+
+==================================================
+34. SHARED DESIGN TOKENS
+==================================================
+
+Create a shared design specification.
+
+Example:
+
+packages/design-tokens/
+
+or another suitable shared location.
+
+At minimum define:
+
+brandPrimary
+brandPrimaryDark
+brandPrimaryLight
+borderColor
+background
+surface
+textPrimary
+textSecondary
+success
+warning
+error
+
+Cloud may consume CSS variables/theme.
+
+Mobile may consume TypeScript theme object.
+
+Both MUST derive values from the same source/design specification.
+
+Do not allow visual drift.
+
+
+==================================================
+35. CLOUD CSS VARIABLES
+==================================================
+
+Implement equivalent variables such as:
+
+:root {
+  --sila-bg: #ffffff;
+  --sila-surface: #ffffff;
+  --sila-primary: <EXTRACT FROM LOGO>;
+  --sila-primary-dark: <DERIVED ACCESSIBLE BLUE>;
+  --sila-primary-light: <DERIVED PALE BLUE>;
+  --sila-border: <DERIVED LIGHT BLUE>;
+  --sila-text-primary: <DARK NAVY>;
+  --sila-text-secondary: <MEDIUM GRAY>;
+}
+
+Do not leave placeholder values after analyzing logo.
+
+
+==================================================
+36. MOBILE THEME
+==================================================
+
+Create one theme module such as:
+
+apps/mobile/src/theme/theme.ts
+
+Example conceptual structure:
+
+export const colors = {
+  background: "#FFFFFF",
+  surface: "#FFFFFF",
+  primary: "...",
+  primaryDark: "...",
+  primaryLight: "...",
+  border: "...",
+  textPrimary: "...",
+  textSecondary: "...",
+  success: "...",
+  warning: "...",
+  error: "..."
+};
+
+All screens should use theme tokens.
+
+Do not scatter color literals throughout files.
+
+
+==================================================
+37. BUTTON COMPONENTS
+==================================================
+
+Create reusable button variants:
+
+PrimaryButton
+
+SecondaryButton
+
+TextButton
+
+DangerButton
+
+Ensure same behavior across all Cloud screens.
+
+Create equivalent reusable mobile components.
+
+Do not style every button independently.
+
+
+==================================================
+38. INPUT COMPONENTS
+==================================================
+
+Create reusable:
+
+Cloud:
+TextInput/FormField
+
+Mobile:
+TextField/FormField
+
+Support:
+
+label
+placeholder
+error
+disabled
+password visibility
+focus
+
+Maintain same visual style.
+
+
+==================================================
+39. LOGO ASSET MANAGEMENT
+==================================================
+
+Use the supplied SILA ME logo as the master asset.
+
+Create properly sized application copies/assets only where technically necessary.
+
+For Mobile:
+
+configure:
+
+app icon
+splash branding if appropriate
+
+BUT:
+
+Do not redesign the logo.
+
+Do not make major icon changes in Phase 0 without approval.
+
+
+==================================================
+40. ACCESSIBILITY
+==================================================
+
+Check:
+
+text contrast
+
+button contrast
+
+keyboard focus on Cloud
+
+touch sizes on Mobile
+
+screen-reader labels for important controls
+
+password visibility control accessibility
+
+Do not sacrifice readability just to match the light-blue logo.
+
+
+==================================================
+41. GUI CONSISTENCY TEST
+==================================================
+
+Compare Cloud Login and Mobile Login.
+
+They should clearly look like the same SILA ME product.
+
+Compare Cloud Dashboard and Mobile Home.
+
+Verify:
+
+WHITE background on both
+
+same logo
+
+same primary blue
+
+same typography personality
+
+same border style
+
+same buttons
+
+same card appearance
+
+same status colors
+
+same general spacing philosophy.
+
+
+==================================================
+42. NO UNAPPROVED UI FRAMEWORK LOOK
+==================================================
+
+If using a UI component library:
+
+do not leave its default branding/styles.
+
+Theme it completely to SILA ME.
+
+Avoid UI that visibly looks like:
+
+default Bootstrap
+default Material
+default Ant Design
+default Chakra
+default Shadcn
+
+The user should see:
+
+SILA ME
+
+not the underlying component library.
+
+
+==================================================
+43. GUI QUALITY GATE
+==================================================
+
+Before declaring Phase 0 complete, visually test:
+
+CLOUD:
+
+Login
+Dashboard
+Loading state
+Invalid login
+Successful login
+Refresh
+Logout
+
+MOBILE:
+
+Login
+Home
+Loading state
+Invalid login
+Successful login
+Logout
+keyboard open state
+small-screen layout
+
+Verify:
+
+NO gray page backgrounds.
+
+NO dark page backgrounds.
+
+NO random color palette.
+
+NO mismatched Cloud/Mobile design.
+
+NO black heavy borders.
+
+NO large blue panels.
+
+NO gradient backgrounds.
+
+NO broken logo.
+
+NO low-contrast light-blue text.
+
+
+==================================================
+44. FINAL GUI REPORT
+==================================================
+
+Add this section to the Phase 0 final report:
+
+H. GUI / UX
+
+59. Attached SILA ME logo used YES/NO
+60. Exact logo primary color sampled YES/NO
+61. Cloud background white YES/NO
+62. Mobile background white YES/NO
+63. Cloud borders SILA blue YES/NO
+64. Mobile borders SILA blue YES/NO
+65. Shared design tokens created YES/NO
+66. Cloud/Mobile palette consistent YES/NO
+67. Primary button contrast checked YES/NO
+68. Input focus/error states implemented YES/NO
+69. Loading states implemented YES/NO
+70. Responsive Cloud login tested YES/NO
+71. Responsive Cloud dashboard tested YES/NO
+72. Mobile small-screen layout tested YES/NO
+73. Mobile keyboard behavior tested YES/NO
+74. Logo distortion/recoloring absent YES/NO
+75. Cloud/Mobile visually belong to same SILA ME product YES/NO

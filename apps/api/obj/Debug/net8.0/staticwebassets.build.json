@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "qSqDw0rdsgRUPGgT1TrEzC6/K4QLPb3nf+9HFdHmonM=",
+  "Source": "SilaMe.Api",
+  "BasePath": "_content/SilaMe.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

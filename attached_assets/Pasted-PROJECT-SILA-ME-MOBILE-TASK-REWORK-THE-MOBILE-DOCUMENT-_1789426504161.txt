@@ -1,0 +1,1170 @@
+PROJECT: SILA ME MOBILE
+
+TASK:
+REWORK THE MOBILE DOCUMENT SCANNER TO PRODUCE HIGH-QUALITY MULTI-PAGE PDFS FROM THE ORIGINAL CAPTURED PAGE IMAGES.
+
+CURRENT PROBLEM:
+
+The app currently allows multiple pages, but PDF output quality is poor.
+
+It appears the PDF is being generated from a screenshot/render of the page-review screen that contains multiple invoice thumbnails/images.
+
+THIS IS WRONG.
+
+The generated PDF must NOT contain:
+
+- screenshots of the mobile UI
+- page-review screen
+- thumbnails
+- buttons
+- margins from the React Native view
+- multiple document pages flattened into one screenshot
+
+The generated PDF must contain the ACTUAL SCANNED DOCUMENT PAGES.
+
+==================================================
+1. TARGET EXPERIENCE
+==================================================
+
+The scanner should behave similar to the native iPhone document scanner.
+
+Flow:
+
+Open Scanner
+→ Scan Page 1
+→ Detect/correct document
+→ Store original processed Page 1 image
+→ Add Page
+→ Scan Page 2
+→ Store original processed Page 2 image
+→ Add Page
+→ Scan Page 3
+→ Review thumbnails
+→ Done / Create PDF
+→ Generate ONE PDF from Page 1 + Page 2 + Page 3 source images
+→ PDF immediately available
+→ Run basic OCR
+→ Display invoice basic details
+→ Save
+
+Do NOT take any screenshot of a React Native screen to create the PDF.
+
+==================================================
+2. CRITICAL PDF RULE
+==================================================
+
+PDF generation input must be:
+
+ScanSession.pages[].processedImageUri
+
+NOT:
+
+ViewShot
+Screenshot
+React Native component capture
+thumbnail image
+combined preview image
+
+Each source image becomes exactly one PDF page.
+
+Example:
+
+processed-page-001.jpg
+→ PDF page 1
+
+processed-page-002.jpg
+→ PDF page 2
+
+processed-page-003.jpg
+→ PDF page 3
+
+Result:
+
+invoice-<scanSessionId>.pdf
+
+==================================================
+3. REMOVE WRONG IMPLEMENTATION
+==================================================
+
+Search the existing implementation for any use of:
+
+react-native-view-shot
+captureRef
+captureScreen
+ViewShot
+screenshot
+DOM canvas capture
+html-to-image
+screen snapshot
+
+being used to create invoice PDF pages.
+
+If any such mechanism is used for PDF generation:
+
+REMOVE IT FROM THE PDF GENERATION PATH.
+
+It may remain for unrelated UI uses only.
+
+==================================================
+4. PAGE DATA MODEL
+==================================================
+
+Each scanned page must be represented independently.
+
+Use something like:
+
+type ScanPage = {
+  id: string;
+  pageNumber: number;
+
+  originalImageUri: string;
+  processedImageUri: string;
+  thumbnailUri?: string;
+
+  width: number;
+  height: number;
+
+  rotation: 0 | 90 | 180 | 270;
+
+  crop?: {
+    topLeft: Point;
+    topRight: Point;
+    bottomLeft: Point;
+    bottomRight: Point;
+  };
+
+  ocrText?: string;
+
+  createdAt: string;
+};
+
+IMPORTANT:
+
+thumbnailUri is ONLY for screen preview.
+
+PDF generation must use processedImageUri.
+
+Never use thumbnailUri to build PDF.
+
+==================================================
+5. IMAGE QUALITY
+==================================================
+
+Captured invoice pages must remain high quality.
+
+Target:
+
+long edge approximately 2000–3000 px after processing where practical.
+
+Do not downscale to thumbnail size.
+
+JPEG quality:
+
+approximately 0.85–0.95.
+
+Do not repeatedly JPEG-compress the same image.
+
+Preferred:
+
+camera capture
+→ one processing pass
+→ final processed page image
+→ PDF
+
+Avoid:
+
+capture
+→ compress
+→ preview screenshot
+→ compress again
+→ PDF
+
+==================================================
+6. CAMERA CAPTURE SETTINGS
+==================================================
+
+Use the highest practical document-quality camera output.
+
+Do not use thumbnail/preview resolution as the captured image.
+
+Where camera API allows:
+
+use high picture quality.
+
+Correct EXIF orientation.
+
+Store actual captured dimensions.
+
+Do not resize solely based on mobile screen dimensions.
+
+==================================================
+7. DOCUMENT PROCESSING
+==================================================
+
+For each page after capture:
+
+1. Correct orientation
+2. Detect/correct crop where supported
+3. Deskew/perspective correct where available
+4. Improve contrast moderately
+5. Preserve readable text
+6. Save processed document image separately
+
+Do not add UI borders/background to the processed image.
+
+The output should contain DOCUMENT ONLY.
+
+==================================================
+8. AUTO DOCUMENT EDGE DETECTION
+==================================================
+
+If current scanner package supports document edge detection:
+
+ENABLE IT.
+
+Preferred scanner experience:
+
+camera detects rectangular document
+→ highlights edges
+→ user captures
+→ automatic perspective correction
+
+Allow manual crop correction if available.
+
+If current Expo camera implementation cannot provide this properly, evaluate a maintained native document-scanner module.
+
+Do not fake document detection using screenshot cropping.
+
+==================================================
+9. SCANNER MODE
+==================================================
+
+Build a dedicated DOCUMENT SCANNER.
+
+It should not behave like a normal photo gallery.
+
+Camera display can show:
+
+document edge overlay
+capture button
+flash
+auto/manual indicator
+page count
+
+After capture:
+
+show processed document page.
+
+Actions:
+
+KEEP SCAN
+RETAKE
+CROP
+ROTATE
+
+Then:
+
+ADD PAGE
+DONE
+
+==================================================
+10. PAGE-BY-PAGE SESSION
+==================================================
+
+Do not regenerate PDF after every capture unless needed.
+
+Keep:
+
+ScanSession
+  pages[]
+
+Each ADD PAGE simply appends another processed page.
+
+Example:
+
+pages:
+[
+  page001,
+  page002,
+  page003
+]
+
+When user presses DONE:
+
+generate PDF directly from these files.
+
+==================================================
+11. THUMBNAILS
+==================================================
+
+The Review Pages screen should use smaller thumbnails for performance.
+
+But keep separate references:
+
+original/processed image:
+high resolution
+
+thumbnail:
+screen preview only
+
+Never overwrite processed image with thumbnail.
+
+==================================================
+12. PDF GENERATION
+==================================================
+
+Implement a true image-to-PDF generator.
+
+Do NOT use HTML rendering of the screen.
+
+For every ScanPage:
+
+1. Read processedImageUri
+2. Determine image width/height
+3. Create one PDF page
+4. Preserve document aspect ratio
+5. Fit page without clipping
+6. Embed high-quality image
+7. Continue next page
+
+Generate:
+
+application/pdf
+
+==================================================
+13. PDF PAGE SIZE
+==================================================
+
+Preserve natural document orientation.
+
+Portrait source:
+portrait PDF page
+
+Landscape source:
+landscape PDF page
+
+Prefer A4 fitting if required by library, but preserve aspect ratio.
+
+Do not stretch invoice image.
+
+Do not crop text at edges.
+
+==================================================
+14. IMAGE TO PDF OPTIONS
+==================================================
+
+Inspect the current project and choose the best maintained solution.
+
+Possible implementation approaches:
+
+- native image-to-PDF package
+- pdf-lib if compatible and memory-safe
+- a native document scanner SDK that already returns PDF
+- Expo/native filesystem + PDF library
+
+Preference:
+
+If the scanner SDK itself can generate a proper scanned PDF from original captures, use that.
+
+Otherwise generate with pdf-lib/native image-to-PDF package.
+
+DO NOT generate PDF through a rendered HTML/React screen.
+
+==================================================
+15. iPHONE-LIKE SCANNER APPROACH
+==================================================
+
+Strongly prefer an architecture equivalent to:
+
+Native Document Scanner
+→ Scanned Pages
+→ Native/Direct PDF
+
+rather than:
+
+Expo Camera
+→ React Screen
+→ Screenshot
+→ PDF
+
+If proper scanner quality requires an Expo Development Build/native module:
+
+USE THE NATIVE MODULE.
+
+Do not limit the solution to Expo Go if Expo Go is causing poor scanner quality.
+
+==================================================
+16. PDF GENERATION TIMING
+==================================================
+
+Expected interaction:
+
+Capture Page 1
+Capture Page 2
+Capture Page 3
+Press DONE
+
+Then immediately:
+
+"Creating PDF..."
+
+Generate one PDF.
+
+Once generated:
+
+show:
+
+Invoice Scan
+3 pages
+PDF Ready
+
+Then automatically run:
+
+basic OCR
+
+Then show:
+
+Invoice Details
+
+No additional "take screenshot" or "create document from preview" step.
+
+==================================================
+17. PDF PREVIEW
+==================================================
+
+After PDF is generated:
+
+show a proper PDF preview if available.
+
+If full PDF viewer is not available:
+
+show page thumbnails and:
+
+PDF Generated Successfully
+3 Pages
+2.8 MB
+
+But the underlying file must already be the proper PDF.
+
+==================================================
+18. OCR SOURCE
+==================================================
+
+OCR should preferably use:
+
+processed high-resolution page images
+
+NOT:
+
+review-screen screenshots
+
+NOT:
+
+tiny thumbnail images
+
+NOT:
+
+low-resolution PDF preview.
+
+For Mobile basic OCR:
+
+loop through ScanSession.pages in order.
+
+Run OCR against processedImageUri.
+
+Aggregate text.
+
+Then extract:
+
+Supplier Name
+Supplier TRN
+Supplier Invoice Number
+Invoice Date
+Purchase Order Number
+Invoice Gross Amount
+
+==================================================
+19. IMAGE PROCESSING PROFILES
+==================================================
+
+Add document enhancement modes if practical:
+
+ORIGINAL
+COLOR
+GRAYSCALE
+DOCUMENT / HIGH CONTRAST
+
+Default:
+
+DOCUMENT or COLOR depending on quality tests.
+
+Avoid overly aggressive thresholding that removes faint invoice text.
+
+==================================================
+20. ORIGINAL VS PROCESSED IMAGE
+==================================================
+
+Keep:
+
+originalImageUri
+
+and
+
+processedImageUri
+
+until Save completes.
+
+This allows user to:
+
+recrop
+rotate
+reprocess
+
+without quality degradation.
+
+==================================================
+21. ROTATION
+==================================================
+
+Rotate must operate on source/processed image itself.
+
+Do not rotate only the displayed React image.
+
+After rotation:
+
+update processedImageUri or rotation metadata
+
+PDF must reflect the rotation.
+
+==================================================
+22. CROP
+==================================================
+
+Crop must generate a new high-quality processed image.
+
+Do not implement crop only through CSS/container clipping.
+
+The actual image file must be cropped.
+
+==================================================
+23. REORDER
+==================================================
+
+Reordering changes:
+
+ScanSession.pages array.
+
+The PDF generator must iterate the new array order.
+
+Example:
+
+Before:
+1, 2, 3
+
+After:
+1, 3, 2
+
+PDF must be:
+
+Page 1
+Page 3
+Page 2
+
+==================================================
+24. PAGE ADDITION
+==================================================
+
+User flow after capturing a page should be very fast.
+
+After KEEP SCAN:
+
+Show:
+
+Page 1 Saved
+
+Buttons:
+
++ ADD PAGE
+DONE
+
+ADD PAGE:
+opens scanner immediately.
+
+Do not force user through multiple unrelated screens each time.
+
+==================================================
+25. CONTINUOUS SCANNING
+==================================================
+
+If the selected scanner SDK supports continuous/multi-page document scanning:
+
+ENABLE IT.
+
+This is preferred.
+
+Example:
+
+Scan page
+→ page accepted
+→ camera remains ready for next page
+→ page count increases
+→ user presses Done when finished.
+
+This is closest to iPhone scanner behavior.
+
+==================================================
+26. QUALITY VALIDATION
+==================================================
+
+For each processed page calculate basic quality metrics where practical:
+
+width
+height
+file size
+
+Warn if page is extremely low resolution.
+
+Example:
+
+"This page may be difficult to read. Retake?"
+
+Do not automatically reject a readable document.
+
+==================================================
+27. BLUR DETECTION OPTIONAL
+==================================================
+
+If feasible with available library:
+
+detect severe blur.
+
+Show:
+
+"Page appears blurry."
+
+Actions:
+
+RETAKE
+KEEP ANYWAY
+
+Do not block implementation if reliable blur detection requires major work.
+
+==================================================
+28. CAMERA FOCUS
+==================================================
+
+Use autofocus where supported.
+
+Prefer document-focused capture.
+
+Allow tap-to-focus if camera library supports it.
+
+==================================================
+29. PERMISSIONS
+==================================================
+
+Handle:
+
+camera permission denied
+
+photos permission denied
+
+with clear action.
+
+Do not produce blank screen.
+
+==================================================
+30. MEMORY SAFETY
+==================================================
+
+Multi-page invoice images can consume significant memory.
+
+Do not load all full-resolution images simultaneously into React components.
+
+Use:
+
+file URIs
+
+thumbnails for list UI
+
+process pages sequentially for PDF generation.
+
+Avoid base64 where possible.
+
+==================================================
+31. PDF GENERATION MEMORY
+==================================================
+
+For large page counts:
+
+process sequentially.
+
+Do not convert every 4–8 MB image to Base64 and keep them all in JS state simultaneously if avoidable.
+
+Dispose/free temporary buffers.
+
+==================================================
+32. PDF SIZE
+==================================================
+
+Target reasonable invoice PDF size.
+
+Example:
+
+3 pages:
+roughly 1–5 MB depending on camera/document.
+
+Do not aim for 20+ MB unless necessary.
+
+Do not force <1 MB at the cost of unreadable text.
+
+==================================================
+33. SAVE PROCESS
+==================================================
+
+When user reaches Invoice Details and presses SAVE:
+
+upload the already-created proper PDF.
+
+Do NOT create another PDF during Save.
+
+The PDF generated after scanning is the source PDF.
+
+Flow:
+
+DONE SCANNING
+→ CREATE PDF
+→ BASIC OCR
+→ REVIEW BASIC FIELDS
+→ SAVE EXISTING PDF
+
+==================================================
+34. BACKEND
+==================================================
+
+No major backend change should be required.
+
+Existing backend receives:
+
+PDF
+page count
+basic invoice data
+scan session ID
+
+Ensure it stores the generated PDF exactly as received.
+
+Do not reconstruct PDF from screenshots on backend.
+
+==================================================
+35. CLOUD DOCUMENT VIEW
+==================================================
+
+Cloud must show the same generated scanned PDF.
+
+When opened in Cloud:
+
+Page 1 must show full invoice page.
+
+Page 2 full page.
+
+Page 3 full page.
+
+No mobile UI.
+
+No thumbnails collage.
+
+No screenshot borders.
+
+==================================================
+36. ADD PDF QUALITY METADATA
+==================================================
+
+Optionally send:
+
+pageCount
+pdfSizeBytes
+scannerSource = MOBILE_DOCUMENT_SCANNER
+
+Do not need to store every page image on server unless required.
+
+The PDF remains primary document.
+
+==================================================
+37. NAVIGATION IMPROVEMENT
+==================================================
+
+While reworking scanner:
+
+fix the scanner screen hierarchy.
+
+Recommended simplified flow:
+
+/receive
+→ /receive/scanner
+→ /receive/scanner/review
+→ /receive/scanner/invoice-details
+→ /receive/po-match
+→ /receive/quantities
+→ /receive/grn-review
+
+Reduce unnecessary intermediary screens.
+
+==================================================
+38. BACK BUTTONS
+==================================================
+
+Make every visible back arrow functional.
+
+Scanner:
+Back → Receive
+
+Review:
+Back → Scanner, preserving pages
+
+Invoice Details:
+Back → Review, preserving PDF/pages
+
+PO:
+Back → Invoice Details
+
+Quantities:
+Back → PO
+
+GRN Review:
+Back → Quantities
+
+If unsaved scanner session exists:
+
+confirm before discard.
+
+==================================================
+39. BACK MUST NOT RECREATE PDF
+==================================================
+
+If user goes:
+
+Invoice Details
+→ Back
+→ Review
+→ Invoice Details
+
+reuse current PDF if pages have not changed.
+
+If page order/crop/rotation changed:
+
+mark PDF dirty
+
+regenerate once when Done.
+
+==================================================
+40. SCAN SESSION STATE
+==================================================
+
+Use state:
+
+scanSessionId
+pages
+pdfUri
+pdfDirty
+ocrResult
+basicFields
+
+When:
+
+page added
+deleted
+rotated
+cropped
+reordered
+
+set:
+
+pdfDirty = true
+
+When PDF generated:
+
+pdfDirty = false
+
+==================================================
+41. ACCEPTANCE TEST — QUALITY
+==================================================
+
+Use an actual printed invoice.
+
+Scan Page 1.
+
+Verify:
+
+original text is sharp.
+
+Generate PDF.
+
+Open PDF at 200–300% zoom.
+
+Text must remain readable.
+
+The PDF must not show:
+
+Mobile header
+buttons
+thumbnails
+page count controls
+screen margins
+scanner review UI
+
+==================================================
+42. ACCEPTANCE TEST — 3 PAGES
+==================================================
+
+Scan:
+
+Page 1
+Page 2
+Page 3
+
+Press Done.
+
+Expected:
+
+one PDF
+
+PDF page count = 3
+
+PDF page 1 = original processed scan 1
+
+PDF page 2 = original processed scan 2
+
+PDF page 3 = original processed scan 3
+
+No collage.
+
+No screenshot.
+
+==================================================
+43. ACCEPTANCE TEST — REORDER
+==================================================
+
+Scan:
+
+A
+B
+C
+
+Reorder:
+
+A
+C
+B
+
+Generate PDF.
+
+PDF must contain:
+
+A
+C
+B
+
+as independent pages.
+
+==================================================
+44. ACCEPTANCE TEST — ROTATE
+==================================================
+
+Scan landscape/upside-down page.
+
+Rotate.
+
+Generate PDF.
+
+PDF must show corrected page orientation.
+
+==================================================
+45. ACCEPTANCE TEST — OCR
+==================================================
+
+OCR must use high-resolution processed page files.
+
+Verify extraction of:
+
+Supplier Name
+Supplier TRN
+Supplier Invoice Number
+Invoice Date
+Purchase Order Number
+Invoice Gross Amount
+
+Compare OCR result before/after scanner quality changes.
+
+==================================================
+46. ACCEPTANCE TEST — CLOUD
+==================================================
+
+Save scanned invoice.
+
+Open same document in Cloud.
+
+Verify:
+
+same PDF
+same page count
+same page ordering
+readable resolution
+no scanner UI embedded
+
+==================================================
+47. IMPLEMENTATION INVESTIGATION FIRST
+==================================================
+
+Before changing code, inspect and report:
+
+1. Current camera package
+2. Current scanner package if any
+3. Current PDF generation package
+4. Whether ViewShot/screenshot is being used
+5. Exact reason PDF contains review screen
+6. Current captured image resolution
+7. Current processed image resolution
+8. Whether image thumbnails replace originals
+9. Current Expo version
+10. Whether a native document scanner can be introduced
+11. Whether Expo Development Build is required
+
+Then implement.
+
+Do NOT stop after report.
+
+==================================================
+48. PREFERRED TECHNOLOGY DECISION
+==================================================
+
+If existing generic camera + JS PDF approach cannot deliver
+iPhone-scanner-like quality, replace the scan capture layer with a
+maintained native document scanner module.
+
+Priority:
+
+1. Native document scanner capable of edge detection / multi-page capture
+2. High-resolution page output
+3. Direct/high-quality PDF support
+4. Offline/on-device operation
+5. Android + iOS
+6. Expo Development Build compatibility
+
+Quality is more important than keeping Expo Go.
+
+==================================================
+49. DO NOT BREAK
+==================================================
+
+Do not break:
+
+Mobile login
+Phase 2 authorization
+Invoice basic extraction
+PO matching
+Physical quantity entry
+GRN posting
+Receive History
+Cloud invoices
+invoice_ext_data
+Backend OCR
+Agent configuration
+
+==================================================
+50. BUILD / TEST
+==================================================
+
+After changes run:
+
+Mobile TypeScript check
+
+Expo/native configuration validation
+
+Android build where environment allows
+
+iOS config validation where environment allows
+
+API regression tests
+
+Cloud regression build
+
+==================================================
+51. FINAL REPORT
+==================================================
+
+Return:
+
+A. ROOT CAUSE
+
+1. Why old PDF quality was poor
+2. Whether screenshot/ViewShot was used
+3. Whether thumbnails were used incorrectly
+
+B. NEW SCANNER
+
+4. Scanner library/package
+5. Native scanner YES/NO
+6. Auto document detection YES/NO
+7. Perspective correction YES/NO
+8. Crop YES/NO
+9. Rotate YES/NO
+10. Multi-page continuous scanning YES/NO
+11. Development Build required YES/NO
+
+C. QUALITY
+
+12. Original capture resolution
+13. Processed page resolution
+14. JPEG quality/compression
+15. Thumbnail kept separate YES/NO
+16. OCR uses processed full-resolution page YES/NO
+
+D. PDF
+
+17. PDF generation library
+18. PDF generated directly from source images YES/NO
+19. One image = one PDF page YES/NO
+20. Screenshot generation removed YES/NO
+21. Page ordering PASS/FAIL
+22. Rotation reflected PASS/FAIL
+23. 3-page PDF PASS/FAIL
+24. PDF zoom readability PASS/FAIL
+25. No UI in PDF PASS/FAIL
+
+E. FLOW
+
+26. Add Page PASS/FAIL
+27. Continuous scan PASS/FAIL
+28. Review thumbnails PASS/FAIL
+29. Done automatically creates PDF PASS/FAIL
+30. Basic OCR starts after PDF PASS/FAIL
+31. Basic invoice review PASS/FAIL
+32. Save uploads existing PDF PASS/FAIL
+
+F. CLOUD
+
+33. Exact scanned PDF stored PASS/FAIL
+34. Cloud PDF viewer shows real pages PASS/FAIL
+35. Page count preserved PASS/FAIL
+36. Full backend extraction PASS/FAIL
+
+G. NAVIGATION
+
+37. Scanner Back PASS/FAIL
+38. Review Back PASS/FAIL
+39. Invoice Details Back PASS/FAIL
+40. PO Back PASS/FAIL
+41. Quantities Back PASS/FAIL
+42. Unsaved session preserved PASS/FAIL
+
+H. DECISION
+
+43. Scanner now behaves like document scanner YES/NO
+44. Screenshot-based PDF generation fully removed YES/NO
+45. PDF quality suitable for invoice OCR YES/NO
+46. Ready for physical-store test YES/NO
+47. Remaining blockers
+
+STOP.
+
+DO NOT START ANOTHER FEATURE.

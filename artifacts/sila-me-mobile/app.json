@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "SILA Store",
+    "slug": "silastore",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "silastore",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.silastore.app"
+    },
+    "android": {
+      "package": "com.silastore.app"
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-camera",
+      "expo-image-picker",
+      "expo-sharing",
+      [
+        "react-native-document-scanner-plugin",
+        {
+          "cameraPermission": "SILA needs camera access to scan invoice documents."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

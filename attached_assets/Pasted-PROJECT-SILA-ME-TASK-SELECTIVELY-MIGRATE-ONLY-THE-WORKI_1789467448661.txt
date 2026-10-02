@@ -1,0 +1,1297 @@
+PROJECT: SILA ME
+
+TASK:
+SELECTIVELY MIGRATE ONLY THE WORKING MOBILE DOCUMENT SCANNER
+FROM THE EXISTING SILA STORE GITHUB REPOSITORY INTO SILA ME.
+
+SOURCE REPOSITORY:
+
+https://github.com/balachandhru-hub/sila-platform
+
+SOURCE PRODUCT:
+SILA Store
+
+TARGET PRODUCT:
+SILA ME Mobile
+
+IMPORTANT:
+
+THIS IS NOT AN APPLICATION MERGE.
+
+DO NOT COPY SILA STORE LOGIN, AUTHENTICATION, BACKEND, DATABASE,
+NAVIGATION SHELL, HOME PAGE, API CLIENT, ENVIRONMENT CONFIGURATION,
+OR BUSINESS WORKFLOWS.
+
+WE ONLY WANT THE WORKING SILA STORE DOCUMENT SCANNER CAPABILITY.
+
+==================================================
+1. FIRST — PROTECT CURRENT SILA ME
+==================================================
+
+Before touching code:
+
+Run:
+
+git status --short
+git branch --show-current
+git rev-parse HEAD
+
+Run existing SILA ME baseline tests:
+
+- Mobile TypeScript check
+- Mobile tests
+- API build
+- API tests
+- Cloud build
+
+Record the current results.
+
+Create a safety branch:
+
+git branch backup-before-sila-store-scanner-migration
+
+If there are valid uncommitted SILA ME changes, create a checkpoint
+commit before migration.
+
+DO NOT RESET OR DISCARD CURRENT SILA ME WORK.
+
+==================================================
+2. ABSOLUTELY FROZEN SILA ME AREAS
+==================================================
+
+DO NOT CHANGE OR REPLACE:
+
+- SILA ME Login
+- Authentication workflow
+- Mobile bearer authentication
+- SecureStore authentication
+- Session restoration
+- Logout
+- /api/me
+- User model
+- Organization access
+- Operating-unit access
+- Roles
+- Permissions
+- Existing API base URL
+- Existing SILA ME API client
+- ASP.NET Core backend architecture
+- PostgreSQL configuration
+- Cloud login
+- Cloud application architecture
+- SILA ME branding
+- SILA ME Home
+- Existing PO logic
+- Existing GRN logic
+- Inventory posting
+- invoice_ext_data
+- Extraction-agent configuration
+
+Scanner migration must be isolated.
+
+==================================================
+3. CLONE SILA STORE AS DONOR SOURCE
+==================================================
+
+Clone the source repository into a TEMPORARY directory OUTSIDE the
+active SILA ME source tree.
+
+Example:
+
+mkdir -p /tmp/sila-store-donor
+
+git clone --depth 1 \
+  https://github.com/balachandhru-hub/sila-platform.git \
+  /tmp/sila-store-donor
+
+DO NOT:
+
+git pull SILA Store into SILA ME
+
+DO NOT:
+
+merge SILA Store branch into SILA ME
+
+DO NOT:
+
+add SILA Store as an application dependency
+
+DO NOT:
+
+copy the entire repository.
+
+It is only a donor codebase.
+
+==================================================
+4. DISCOVER THE ACTUAL SILA STORE SCANNER
+==================================================
+
+Do NOT assume where the scanner is located.
+
+Search the cloned repository.
+
+Search for terms including:
+
+scanner
+scan
+document scanner
+invoice scanner
+camera
+cameraView
+takePicture
+capture
+add page
+multi page
+crop
+cropped
+rotate
+perspective
+document detection
+edge detection
+pdf
+pdf-lib
+expo-print
+OCR
+text recognition
+ML Kit
+invoice
+receive
+GRN
+thumbnail
+image manipulator
+filesystem
+
+Also inspect:
+
+package.json files
+
+pnpm workspace
+
+artifacts/
+
+lib/
+
+mobile applications
+
+shared packages
+
+hooks
+
+services
+
+utilities
+
+components
+
+screens
+
+native configuration
+
+app.json
+
+app.config.*
+
+Android/iOS configuration where present.
+
+==================================================
+5. FIND THE SILA STORE SCANNER ENTRY POINT
+==================================================
+
+Identify the EXACT screen the SILA Store user opens when scanning
+an invoice/document.
+
+Trace the code FROM THE UI DOWNWARD.
+
+Example:
+
+Scanner Screen
+
+→ scanner hook
+
+→ native scanner
+
+→ page processing
+
+→ image manipulation
+
+→ page state
+
+→ thumbnail generation
+
+→ OCR
+
+→ PDF creation
+
+→ final scanner result
+
+Do not copy anything yet.
+
+First understand the complete dependency chain.
+
+==================================================
+6. IDENTIFY WORKING SCANNER FEATURES
+==================================================
+
+Determine how SILA Store implements:
+
+1. Camera scanning
+
+2. Automatic document detection
+
+3. Edge detection
+
+4. Perspective correction
+
+5. Crop
+
+6. Rotate
+
+7. Retake
+
+8. Add Page
+
+9. Delete Page
+
+10. Reorder Pages
+
+11. Multi-page scanning
+
+12. Continuous scanning
+
+13. Original image storage
+
+14. Processed image storage
+
+15. Thumbnail generation
+
+16. PDF generation
+
+17. OCR
+
+18. Temporary-file cleanup
+
+19. Scanner session persistence
+
+20. Back navigation
+
+==================================================
+7. IMPORTANT — DO NOT ASSUME CURRENT SILA ME
+IMPLEMENTATION IS BETTER
+==================================================
+
+The purpose of this exercise is specifically because the SILA Store
+scanner worked well.
+
+Therefore:
+
+Do NOT automatically preserve the current SILA ME implementation of:
+
+react-native-document-scanner-plugin
+
+pdf-lib
+
+image processing
+
+scanner state
+
+OCR
+
+if SILA Store uses a different implementation that produces better
+results.
+
+COMPARE FIRST.
+
+Use the proven SILA Store implementation wherever technically
+compatible.
+
+==================================================
+8. CREATE SCANNER MIGRATION MANIFEST
+==================================================
+
+Before coding, generate a temporary report:
+
+SILA_STORE_SCANNER_MIGRATION_MANIFEST.md
+
+It must contain:
+
+SOURCE FILE
+
+PURPOSE
+
+DEPENDENCIES
+
+TARGET FILE
+
+ACTION
+
+Where ACTION is:
+
+COPY
+
+ADAPT
+
+REUSE SILA ME
+
+DO NOT COPY
+
+Example:
+
+SILA Store scanner screen
+→ COPY/ADAPT
+
+SILA Store PDF utility
+→ COPY
+
+SILA Store image utility
+→ COPY
+
+SILA Store auth service
+→ DO NOT COPY
+
+SILA Store API client
+→ DO NOT COPY
+
+SILA Store Home
+→ DO NOT COPY
+
+==================================================
+9. IDENTIFY PACKAGE DEPENDENCIES
+==================================================
+
+Compare SILA Store scanner dependencies with SILA ME.
+
+For every scanner dependency report:
+
+PACKAGE
+
+SILA STORE VERSION
+
+SILA ME VERSION
+
+ACTION
+
+Possible actions:
+
+REUSE
+
+ADD
+
+UPGRADE
+
+ADAPT
+
+DO NOT COPY
+
+Pay particular attention to:
+
+document scanner
+
+camera
+
+image manipulation
+
+filesystem
+
+PDF
+
+OCR
+
+drag/reorder
+
+permissions
+
+native modules
+
+==================================================
+10. DO NOT COPY package.json
+==================================================
+
+Never copy SILA Store package.json over SILA ME.
+
+Only add specific packages actually required by the scanner.
+
+Likewise:
+
+DO NOT replace pnpm-lock.yaml wholesale.
+
+Install only required dependencies through the existing SILA ME
+workspace/package manager.
+
+==================================================
+11. NATIVE CONFIGURATION
+==================================================
+
+Inspect whether SILA Store scanner relies on:
+
+Expo config plugins
+
+iOS camera permissions
+
+Android camera permissions
+
+Photo library permissions
+
+native OCR
+
+native scanner
+
+Info.plist changes
+
+AndroidManifest changes
+
+Pod configuration
+
+Gradle configuration
+
+Copy/adapt ONLY scanner-related configuration.
+
+Never replace the SILA ME:
+
+bundle identifier
+
+Android package
+
+app name
+
+icon
+
+splash
+
+deep links
+
+authentication settings
+
+environment settings.
+
+==================================================
+12. TARGET MODULE
+==================================================
+
+Move the scanner into an isolated SILA ME feature.
+
+Preferred target:
+
+apps/mobile/src/features/document-scanner/
+
+Organize as appropriate:
+
+document-scanner/
+
+  components/
+
+  screens/
+
+  hooks/
+
+  services/
+
+  state/
+
+  utils/
+
+  types/
+
+Do not scatter donor code throughout unrelated SILA ME folders.
+
+==================================================
+13. PRESERVE DONOR LOGIC
+==================================================
+
+When the SILA Store implementation is working:
+
+prefer minimal adaptation.
+
+Do NOT rewrite it simply to make the code look different.
+
+Adapt only what is necessary for:
+
+- SILA ME route integration
+- SILA ME theme
+- SILA ME TypeScript configuration
+- current Expo SDK
+- current React Native version
+- SILA ME scanner output contract
+
+==================================================
+14. SCANNER MUST BE SELF-CONTAINED
+==================================================
+
+The migrated scanner must NOT know anything about:
+
+SILA Store login
+
+SILA Store user
+
+SILA Store organization
+
+SILA Store backend
+
+SILA Store API URLs
+
+SILA Store GRN
+
+SILA Store inventory
+
+Scanner responsibility ends with:
+
+SCAN DOCUMENT
+→ PROCESS PAGES
+→ CREATE PDF
+→ BASIC OCR
+→ RETURN RESULT
+
+==================================================
+15. REQUIRED OUTPUT CONTRACT
+==================================================
+
+Adapt the donor scanner to return:
+
+{
+  scanSessionId: string,
+
+  documentType: "INVOICE",
+
+  pages: [
+    {
+      pageNumber: 1,
+      originalImageUri: "...",
+      processedImageUri: "...",
+      thumbnailUri: "...",
+      width: 2480,
+      height: 3508,
+      rotation: 0
+    }
+  ],
+
+  pageCount: 1,
+
+  pdfUri: "...",
+
+  pdfSizeBytes: 1234567,
+
+  basicExtraction: {
+    supplierName: "...",
+    supplierTrn: "...",
+    supplierInvoiceNumber: "...",
+    invoiceDate: "...",
+    purchaseOrderNumber: "...",
+    invoiceGross: 997.50,
+    currency: "AED"
+  }
+}
+
+==================================================
+16. SILA ME OWNS EVERYTHING AFTER SCANNING
+==================================================
+
+After scanner returns its result:
+
+SILA ME takes over.
+
+Flow:
+
+SILA ME Login
+→ SILA ME Home
+→ Receive Stock
+→ MIGRATED SILA STORE SCANNER
+→ Scanner Result
+→ SILA ME Invoice Review
+→ SILA ME Save API
+→ SILA ME Backend
+→ Full Invoice Extraction
+→ invoice_ext_data
+→ PO Match
+→ Physical Quantity
+→ GRN
+
+DO NOT COPY SILA Store logic after the scanner result.
+
+==================================================
+17. PDF IMPLEMENTATION
+==================================================
+
+This is particularly important.
+
+Inspect exactly how SILA Store creates its high-quality PDF.
+
+If SILA Store already has a proven implementation:
+
+MOVE THAT IMPLEMENTATION.
+
+Do not keep SILA ME's current PDF implementation merely because it
+already exists.
+
+Compare output quality.
+
+The required rule remains:
+
+ONE ORIGINAL/PROCESSED SCANNED PAGE
+=
+ONE PDF PAGE.
+
+Never generate PDF from:
+
+React screen
+
+HTML review layout
+
+screenshot
+
+thumbnail collage.
+
+==================================================
+18. IMAGE QUALITY
+==================================================
+
+Preserve SILA Store scanner quality settings.
+
+Identify:
+
+capture quality
+
+original resolution
+
+crop quality
+
+JPEG compression
+
+perspective correction
+
+document enhancement
+
+image resize
+
+thumbnail generation
+
+Do not change these settings until physical comparison is complete.
+
+==================================================
+19. ORIGINAL / PROCESSED / THUMBNAIL
+==================================================
+
+If SILA Store uses separate representations, preserve them.
+
+Required target model:
+
+originalImageUri
+
+processedImageUri
+
+thumbnailUri
+
+PDF:
+
+uses processedImageUri.
+
+OCR:
+
+uses processedImageUri.
+
+UI review:
+
+uses thumbnailUri where appropriate.
+
+==================================================
+20. MULTI-PAGE SCANNER
+==================================================
+
+Preserve SILA Store's existing multi-page behavior.
+
+Expected:
+
+Scan Page 1
+→ Add Page
+→ Scan Page 2
+→ Add Page
+→ Scan Page 3
+→ Done
+→ ONE 3-page PDF.
+
+If SILA Store has continuous native scanning:
+
+preserve it.
+
+==================================================
+21. OCR
+==================================================
+
+Inspect SILA Store OCR.
+
+If SILA Store has working local/on-device OCR:
+
+migrate the OCR code and its required dependency.
+
+Do NOT migrate any SILA Store server/API authentication with it.
+
+Mobile basic OCR only needs:
+
+Supplier Name
+
+Supplier TRN
+
+Supplier Invoice Number
+
+Invoice Date
+
+Purchase Order Number
+
+Invoice Gross
+
+Currency.
+
+==================================================
+22. SILA ME BASIC EXTRACTION
+==================================================
+
+If SILA Store OCR returns raw text rather than structured fields:
+
+reuse donor OCR
+
+but connect OCR output to SILA ME's existing:
+
+Basic Invoice Parser.
+
+Do not unnecessarily duplicate parsing logic.
+
+==================================================
+23. BRANDING
+==================================================
+
+Functionality comes from SILA Store.
+
+Branding remains SILA ME.
+
+Replace only presentation elements such as:
+
+SILA Store title
+SILA Store logo
+SILA Store colors
+
+with existing SILA ME design tokens.
+
+Do not alter scanner algorithms while rebranding.
+
+==================================================
+24. NAVIGATION
+==================================================
+
+Do NOT copy SILA Store navigator.
+
+Integrate scanner screens into the existing SILA ME Expo Router.
+
+The existing authenticated SILA ME navigation remains the root.
+
+Required:
+
+Receive Stock
+→ Scanner
+
+Scanner Done
+→ Invoice Review
+
+Back from Scanner
+→ Receive Stock
+
+Back from Review
+→ Scanner Review
+
+==================================================
+25. BACK BUTTONS
+==================================================
+
+Reuse donor scanner back/session logic where it is better.
+
+But integrate it through SILA ME Expo Router.
+
+Every back button must work.
+
+Captured pages must survive navigation until:
+
+Save
+
+or
+
+explicit Discard.
+
+==================================================
+26. SCANNER SESSION
+==================================================
+
+If SILA Store has a proven scanner-session implementation:
+
+migrate it.
+
+Do not migrate unrelated SILA Store global application state.
+
+Scanner state must be isolated.
+
+==================================================
+27. DO NOT TOUCH SILA ME LOGIN
+==================================================
+
+MANDATORY CODE REVIEW RULE:
+
+If the migration diff modifies files responsible for:
+
+login
+
+auth provider
+
+session
+
+SecureStore auth
+
+/api/me
+
+logout
+
+API authentication interceptor
+
+STOP.
+
+Revert those migration changes.
+
+Scanner migration does not require authentication changes.
+
+==================================================
+28. DO NOT TOUCH SILA ME BACKEND UNLESS NECESSARY
+==================================================
+
+The scanner should return the existing SILA ME-compatible output.
+
+Use the existing Mobile Save endpoint.
+
+No backend redesign.
+
+No database redesign.
+
+No new auth mechanism.
+
+No new login API.
+
+==================================================
+29. KEEP CURRENT SILA ME SCANNER TEMPORARILY
+==================================================
+
+Do not delete the current scanner immediately.
+
+Keep both implementations temporarily.
+
+Example internal feature flag:
+
+SCANNER_IMPLEMENTATION =
+  "CURRENT"
+  or
+  "SILA_STORE_MIGRATED"
+
+Default during testing:
+
+SILA_STORE_MIGRATED
+
+This gives rollback safety.
+
+==================================================
+30. DONOR CODE PROVENANCE
+==================================================
+
+Add comments only where useful:
+
+Migrated/adapted from SILA Store scanner.
+
+Do not add unnecessary comments to every line.
+
+Maintain the original logical structure where practical.
+
+==================================================
+31. TEST THE DONOR SCANNER FIRST
+==================================================
+
+Before modifying donor code heavily, determine whether its scanner
+implementation can still be built with the current SILA ME Expo SDK.
+
+If incompatibilities exist:
+
+document them.
+
+Adapt the minimum required.
+
+Do not replace the entire scanner merely because one dependency needs
+a version update.
+
+==================================================
+32. PHYSICAL BUILD REQUIREMENT
+==================================================
+
+If donor scanner uses native functionality:
+
+configure the SILA ME Development Build accordingly.
+
+Expo Go compatibility is NOT a requirement.
+
+Scanner quality is more important.
+
+==================================================
+33. MANDATORY REGRESSION — BEFORE/AFTER
+==================================================
+
+BEFORE migration record:
+
+Login
+Session Restore
+Home
+Receive Stock
+Logout
+API Authentication
+
+AFTER migration run exactly the same tests.
+
+All must remain PASS.
+
+==================================================
+34. MANDATORY SCANNER COMPARISON
+==================================================
+
+Where automated/local comparison is possible, compare:
+
+SILA STORE ORIGINAL SCANNER
+
+vs
+
+SILA ME CURRENT SCANNER
+
+vs
+
+SILA ME MIGRATED SCANNER.
+
+Compare:
+
+page resolution
+
+file size
+
+crop
+
+orientation
+
+PDF generation
+
+page count
+
+OCR input quality
+
+Do not declare migration successful only because it compiles.
+
+==================================================
+35. PHYSICAL ACCEPTANCE TEST
+==================================================
+
+Prepare the migrated scanner for this physical test:
+
+Take a real 3-page invoice.
+
+Page 1
+→ scan
+
+Page 2
+→ scan
+
+Page 3
+→ scan
+
+Done.
+
+Expected:
+
+ONE PDF
+
+3 pages
+
+correct order
+
+proper crop
+
+proper perspective correction
+
+sharp text
+
+no UI elements
+
+no collage
+
+no screenshot
+
+At 200–300% zoom:
+
+invoice text should remain readable.
+
+==================================================
+36. BASIC OCR ACCEPTANCE
+==================================================
+
+After PDF generation extract:
+
+Supplier Name
+
+Supplier TRN
+
+Supplier Invoice Number
+
+Invoice Date
+
+PO Number
+
+Gross Amount
+
+Display these in existing SILA ME Invoice Review.
+
+User can correct them.
+
+==================================================
+37. SAVE ACCEPTANCE
+==================================================
+
+Press:
+
+SAVE
+
+Verify:
+
+existing SILA ME authentication used
+
+existing SILA ME API used
+
+PDF uploaded
+
+document created
+
+invoice created/updated
+
+full backend extraction triggered
+
+invoice_ext_data processing starts.
+
+==================================================
+38. GRN REGRESSION
+==================================================
+
+After scanner migration verify:
+
+PO Match
+
+→ Physical Received Quantity
+
+→ GRN Review
+
+→ GRN Post
+
+still works.
+
+The scanner migration must not alter the GRN business rule.
+
+==================================================
+39. SECURITY CHECK
+==================================================
+
+Search all migrated files for:
+
+SILA Store API URLs
+
+tokens
+
+API keys
+
+passwords
+
+secrets
+
+old environment variables
+
+old auth headers
+
+old user IDs
+
+hardcoded customer IDs.
+
+NONE should migrate.
+
+==================================================
+40. DIFF REVIEW
+==================================================
+
+Before commit:
+
+git diff --stat
+
+git diff --check
+
+Review every modified file.
+
+Classify each changed file:
+
+SCANNER
+
+SCANNER DEPENDENCY
+
+SCANNER CONFIGURATION
+
+SILA ME INTEGRATION
+
+If a changed file cannot fit one of those categories:
+
+investigate why it changed.
+
+Do not commit unrelated changes.
+
+==================================================
+41. FINAL MIGRATION COMMIT
+==================================================
+
+After successful verification:
+
+git add only scanner-related migration changes
+
+Commit:
+
+feat: migrate proven sila store scanner into sila me
+
+Return full commit SHA.
+
+DO NOT PUSH unless explicitly requested.
+
+==================================================
+42. DO NOT DELETE DONOR CLONE UNTIL VERIFICATION
+==================================================
+
+Keep:
+
+/tmp/sila-store-donor
+
+until comparison/testing/report is finished.
+
+It may then be removed.
+
+Do not add it to SILA ME Git repository.
+
+==================================================
+43. FINAL REPORT
+==================================================
+
+Return:
+
+A. DONOR DISCOVERY
+
+1. Exact SILA Store scanner path
+2. Scanner entry component
+3. Camera/scanner library
+4. PDF library
+5. OCR library
+6. Image-processing library
+7. Scanner-state implementation
+8. Native dependencies
+
+B. MIGRATION
+
+9. Files copied
+10. Files adapted
+11. Files reused from SILA ME
+12. Dependencies added
+13. Dependencies upgraded
+14. Expo/native config changes
+15. Auth files changed YES/NO
+16. Backend files changed YES/NO
+17. Database changes YES/NO
+
+Expected:
+
+Auth files changed = NO
+
+Database changes = NO
+
+Backend changes should normally = NO
+
+C. SCANNER
+
+18. Native scanner PASS/FAIL
+19. Edge detection PASS/FAIL
+20. Perspective correction PASS/FAIL
+21. Crop PASS/FAIL
+22. Rotate PASS/FAIL
+23. Retake PASS/FAIL
+24. Add Page PASS/FAIL
+25. Delete Page PASS/FAIL
+26. Reorder PASS/FAIL
+27. Multi-page PASS/FAIL
+28. PDF PASS/FAIL
+29. OCR PASS/FAIL
+
+D. PDF QUALITY
+
+30. PDF uses actual processed images YES/NO
+31. One scan = one PDF page YES/NO
+32. Screenshot/HTML PDF generation present YES/NO
+
+Expected:
+NO
+
+33. Thumbnail used as PDF source YES/NO
+
+Expected:
+NO
+
+34. 3-page PDF PASS/FAIL
+35. Correct ordering PASS/FAIL
+36. Original resolution preserved PASS/FAIL
+
+E. SILA ME INTEGRATION
+
+37. Scanner launches from Receive Stock PASS/FAIL
+38. Scanner result returned PASS/FAIL
+39. Basic Invoice Review PASS/FAIL
+40. Existing Save API PASS/FAIL
+41. Backend extraction PASS/FAIL
+42. invoice_ext_data PASS/FAIL
+43. PO Match PASS/FAIL
+44. Physical Qty PASS/FAIL
+45. GRN PASS/FAIL
+
+F. PROTECTED WORKFLOWS
+
+46. Login PASS/FAIL
+47. Session Restore PASS/FAIL
+48. Logout PASS/FAIL
+49. SecureStore auth unchanged YES/NO
+50. API authentication unchanged YES/NO
+51. Organization access unchanged YES/NO
+52. Permissions unchanged YES/NO
+53. Cloud unchanged YES/NO
+
+G. BUILD
+
+54. Mobile tests
+55. Mobile TypeScript
+56. Expo Doctor
+57. Android build/config
+58. iOS build/config
+59. API tests
+60. Cloud build
+61. git diff --check
+
+H. COMPARISON
+
+62. SILA Store scanner quality
+63. Old SILA ME scanner quality
+64. Migrated SILA ME scanner quality
+65. Migrated scanner equal/better than SILA Store YES/NO
+
+I. FINAL DECISION
+
+66. SILA Store scanner actually migrated YES/NO
+67. Migration isolated from login/auth YES/NO
+68. Safe to make migrated scanner default YES/NO
+69. Safe to remove old SILA ME scanner YES/NO
+70. Physical device UAT required YES/NO
+71. Remaining blockers
+
+STOP.
+
+DO NOT START ANOTHER FEATURE.

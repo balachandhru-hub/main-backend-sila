@@ -1,0 +1,3467 @@
+PROJECT: SILA ME
+TASK: IMPLEMENT COMPLETE USER, ROLE, AUTHORIZATION, SCOPE AND
+DOCUMENT-STORAGE ACCESS MODEL FOR SILA ME CLOUD + SILA ME MOBILE
+
+THIS IS AN EXTENSION OF THE CURRENT SILA ME APPLICATION.
+
+DO NOT REBUILD THE APPLICATION.
+
+============================================================
+0. CRITICAL PROTECTION — EXISTING ADMIN USER
+============================================================
+
+THE EXISTING DATABASE USER:
+
+bala@chervic.in
+
+IS PROTECTED.
+
+DO NOT:
+
+DELETE IT
+RECREATE IT
+RESEED IT
+CHANGE ITS EMAIL
+CHANGE ITS PASSWORD HASH
+RESET ITS PASSWORD
+DEACTIVATE IT
+CHANGE ITS APPLICATION ACCESS
+REMOVE ITS ROLES
+REMOVE ITS AUTHORIZATIONS
+REMOVE ITS ORGANIZATION ACCESS
+REMOVE ITS SCOPE
+CHANGE ITS EXISTING USER ID
+CREATE A DUPLICATE USER WITH THE SAME EMAIL.
+
+Before ANY migration/seeding/change:
+
+locate:
+
+bala@chervic.in
+
+record:
+
+User ID
+Email
+Status
+Application Access
+Roles
+Authorization overrides
+Organization memberships
+Scope assignments
+
+WITHOUT logging:
+
+password hash
+session token
+secrets.
+
+After implementation verify all protected values remain intact.
+
+FINAL REPORT MUST SAY:
+
+BALA USER FOUND BEFORE CHANGE:
+YES/NO
+
+BALA USER ID BEFORE:
+<id>
+
+BALA USER ID AFTER:
+<id>
+
+BALA EMAIL UNCHANGED:
+YES/NO
+
+BALA STATUS UNCHANGED:
+YES/NO
+
+BALA PASSWORD UNCHANGED:
+YES/NO
+
+BALA APPLICATION ACCESS UNCHANGED:
+YES/NO
+
+BALA ROLE ACCESS UNCHANGED:
+YES/NO
+
+BALA AUTHORIZATION ACCESS UNCHANGED:
+YES/NO
+
+BALA USER PROTECTION:
+PASS/FAIL
+
+If this cannot be guaranteed:
+
+STOP BEFORE DATABASE MUTATION.
+
+============================================================
+1. EXISTING ARCHITECTURE
+============================================================
+
+SILA ME has TWO applications:
+
+SILA ME CLOUD
+
+and
+
+SILA ME MOBILE.
+
+Both use:
+
+ONE ASP.NET Core backend
+ONE PostgreSQL database
+ONE user identity
+ONE RBAC framework.
+
+Authorization model:
+
+USER
+  ↓
+ACCOUNT STATUS
+  ↓
+APPLICATION ACCESS
+  ↓
+ORGANIZATION
+  ↓
+PROPERTY / STORE / OPERATING UNIT / LOCATION SCOPE
+  ↓
+ROLE(S)
+  ↓
+ROLE AUTHORIZATIONS
+  ↓
+USER AUTHORIZATION OVERRIDES
+  ↓
+EFFECTIVE AUTHORIZATIONS
+  ↓
+ALLOW / DENY
+
+Do NOT create independent authorization systems for Cloud and Mobile.
+
+============================================================
+2. THREE SEPARATE SECURITY CONCEPTS
+============================================================
+
+Never mix:
+
+APPLICATION ACCESS
+
+ROLE
+
+SCOPE.
+
+APPLICATION ACCESS answers:
+
+Where can the user login?
+
+CLOUD
+MOBILE
+BOTH
+
+ROLE answers:
+
+What does the user normally do?
+
+SCOPE answers:
+
+Where can the user do it?
+
+Example:
+
+User:
+John
+
+System:
+MOBILE
+
+Role:
+RECEIVING_OPERATOR
+
+Organization:
+ABC Hospitality
+
+Property:
+Property A
+
+Store:
+Main Store
+
+Authorization:
+POST_GRN
+
+Therefore John can post GRNs only inside his authorized scope.
+
+============================================================
+3. DEFAULT SYSTEM ROLES
+============================================================
+
+Create/maintain these generic SYSTEM roles:
+
+01 SUPER_ADMIN
+
+02 PLATFORM_ADMIN
+
+03 CUSTOMER_ADMIN
+
+04 CUSTOMER_SUPPORT_CONSULTANT
+
+05 OPERATIONS_ADMIN
+
+06 OPERATIONS_MANAGER
+
+07 MENU_MANAGER
+
+08 INVENTORY_MANAGER
+
+09 PROCUREMENT_MANAGER
+
+10 RECEIVING_MANAGER
+
+11 STORE_OPERATOR
+
+12 RECEIVING_OPERATOR
+
+13 INVENTORY_OPERATOR
+
+14 APPROVER
+
+15 FINANCE_REVIEWER
+
+16 ANALYST
+
+17 AUDITOR
+
+18 VIEWER
+
+These are DEFAULT roles.
+
+Architecture must also support CUSTOMER-CREATED CUSTOM ROLES.
+
+============================================================
+4. SUPER ADMIN
+============================================================
+
+Code:
+
+SUPER_ADMIN
+
+Application:
+
+CLOUD
+and MOBILE where needed.
+
+Scope:
+
+PLATFORM.
+
+Purpose:
+
+Highest SILA ME internal administrative role.
+
+Can administer:
+
+customers
+organizations
+properties
+stores
+users
+application access
+roles
+authorizations
+scope
+integrations
+document extraction
+storage configuration
+support access
+platform configuration
+audit.
+
+SUPER_ADMIN is not assignable by ordinary Customer Admin.
+
+============================================================
+5. PLATFORM ADMIN
+============================================================
+
+Code:
+
+PLATFORM_ADMIN
+
+Primary application:
+
+CLOUD.
+
+Purpose:
+
+SILA technical/platform administration.
+
+Typical access:
+
+platform configuration
+integration configuration
+OCR/extraction configuration
+storage integrations
+technical diagnostics
+system health
+audit
+support troubleshooting.
+
+Do not automatically make PLATFORM_ADMIN equivalent to SUPER_ADMIN.
+
+============================================================
+6. CUSTOMER ADMIN
+============================================================
+
+Code:
+
+CUSTOMER_ADMIN
+
+Primary:
+
+CLOUD.
+
+Mobile:
+
+optional.
+
+Scope:
+
+ONE CUSTOMER ORGANIZATION.
+
+Purpose:
+
+Highest customer-side administrator.
+
+May manage within their authorized organization:
+
+properties
+stores
+operating units
+locations
+users
+Cloud/Mobile access
+roles
+custom roles
+authorizations
+scope
+customer configuration
+storage destinations
+customer integrations
+audit.
+
+Must NEVER cross customer boundaries.
+
+============================================================
+7. CUSTOMER SUPPORT CONSULTANT
+============================================================
+
+Code:
+
+CUSTOMER_SUPPORT_CONSULTANT
+
+Primary:
+
+CLOUD.
+
+Purpose:
+
+SILA support/implementation consultant.
+
+Access must be based on:
+
+assigned customer
++
+scope
++
+authorizations
++
+optional start/end date.
+
+Default should be diagnostic/read-oriented.
+
+Must NOT automatically:
+
+post GRN
+change stock
+approve customer transactions
+change financial transactions
+change customer roles
+access all customers.
+
+Support access must be auditable.
+
+============================================================
+8. OPERATIONS ADMIN
+============================================================
+
+Code:
+
+OPERATIONS_ADMIN
+
+Applications:
+
+CLOUD
+MOBILE.
+
+Purpose:
+
+Configure and supervise operational functions.
+
+Typical modules:
+
+Menu Engineering
+Inventory
+Purchasing
+Receiving
+Documents
+Approvals
+Operational Master Data.
+
+============================================================
+9. OPERATIONS MANAGER
+============================================================
+
+Code:
+
+OPERATIONS_MANAGER
+
+Applications:
+
+CLOUD
+MOBILE.
+
+Purpose:
+
+Overall operational control within assigned scope.
+
+Typical:
+
+dashboard
+menus
+inventory
+PO
+receiving
+invoices
+GRN
+exceptions
+approvals
+analytics.
+
+============================================================
+10. MENU MANAGER
+============================================================
+
+Code:
+
+MENU_MANAGER
+
+Primary:
+
+CLOUD.
+
+Typical:
+
+menus
+recipes
+ingredients
+portion planning
+demand forecast
+ingredient requirements
+menu performance
+food cost.
+
+============================================================
+11. INVENTORY MANAGER
+============================================================
+
+Code:
+
+INVENTORY_MANAGER
+
+Applications:
+
+CLOUD
+MOBILE.
+
+Typical:
+
+inventory
+counts
+adjustments
+transfers
+goods issue
+damage
+waste
+batch
+expiry
+inventory analytics.
+
+============================================================
+12. PROCUREMENT MANAGER
+============================================================
+
+Code:
+
+PROCUREMENT_MANAGER
+
+Primary:
+
+CLOUD.
+
+Typical:
+
+material requirements
+purchase suggestions
+purchase orders
+suppliers
+supplier materials
+price history
+purchase analytics.
+
+============================================================
+13. RECEIVING MANAGER
+============================================================
+
+Code:
+
+RECEIVING_MANAGER
+
+Applications:
+
+CLOUD
+MOBILE.
+
+Typical:
+
+PO visibility
+invoice scanning
+invoice upload
+OCR review
+supplier matching
+PO matching
+line matching
+received quantities
+GRN validation
+GRN posting
+receiving exceptions.
+
+============================================================
+14. STORE OPERATOR
+============================================================
+
+Code:
+
+STORE_OPERATOR
+
+Primary:
+
+MOBILE.
+
+Purpose:
+
+General operational execution.
+
+Potential:
+
+receiving
+inventory count
+stock transfer
+goods issue
+damage/waste
+batch/expiry.
+
+Exact capabilities depend on authorization assignment.
+
+============================================================
+15. RECEIVING OPERATOR
+============================================================
+
+Code:
+
+RECEIVING_OPERATOR
+
+Primary:
+
+MOBILE.
+
+Default responsibilities:
+
+view PO
+scan invoice
+run Basic OCR
+review invoice
+match supplier
+match PO
+match lines
+enter physical quantities
+create GRN
+validate GRN
+view receiving history.
+
+POST_GRN should be separately controllable.
+
+============================================================
+16. INVENTORY OPERATOR
+============================================================
+
+Code:
+
+INVENTORY_OPERATOR
+
+Primary:
+
+MOBILE.
+
+Typical:
+
+view stock
+inventory count
+stock transfer
+goods issue
+damage
+waste
+batch/expiry.
+
+============================================================
+17. APPROVER
+============================================================
+
+Code:
+
+APPROVER
+
+Applications:
+
+CLOUD
+MOBILE.
+
+Typical:
+
+view approval
+approve
+reject
+return for correction
+approval history.
+
+Actual approval must also respect:
+
+scope
+workflow
+approval level
+amount/other thresholds where applicable.
+
+============================================================
+18. FINANCE REVIEWER
+============================================================
+
+Code:
+
+FINANCE_REVIEWER
+
+Primary:
+
+CLOUD.
+
+Typical:
+
+invoice
+PDF
+OCR/extraction
+supplier
+PO
+GRN
+matching
+financial exceptions
+finance analytics.
+
+Do not automatically grant physical inventory posting.
+
+============================================================
+19. ANALYST
+============================================================
+
+Code:
+
+ANALYST
+
+Primary:
+
+CLOUD.
+
+Read-oriented:
+
+dashboard
+menu analytics
+consumption
+food cost
+inventory
+waste
+purchase analytics
+reports.
+
+============================================================
+20. AUDITOR
+============================================================
+
+Code:
+
+AUDITOR
+
+Primary:
+
+CLOUD.
+
+Read-only:
+
+documents
+PO
+invoice
+GRN
+inventory ledger
+approval history
+extraction history
+audit logs
+user access history.
+
+No transactional posting.
+
+============================================================
+21. VIEWER
+============================================================
+
+Code:
+
+VIEWER
+
+Applications:
+
+CLOUD and/or MOBILE.
+
+Generic read-only access within assigned scope.
+
+============================================================
+22. ROLE IS ONLY A DEFAULT AUTHORIZATION PACKAGE
+============================================================
+
+DO NOT hardcode business logic such as:
+
+if role == RECEIVING_MANAGER:
+    allow POST_GRN
+
+Instead:
+
+POST_GRN endpoint requires:
+
+POST_GRN authorization.
+
+Role merely supplies default authorizations.
+
+============================================================
+23. AUTHORIZATION MODEL
+============================================================
+
+Effective authorizations:
+
+ROLE AUTHORIZATIONS
++
+USER ADDITIONAL AUTHORIZATIONS
+-
+USER REMOVED AUTHORIZATIONS
+
+Then restrict by:
+
+APPLICATION
++
+ORGANIZATION
++
+PROPERTY
++
+STORE / OPERATING UNIT
++
+LOCATION
++
+SPECIAL SUPPORT/APPROVAL CONDITIONS.
+
+============================================================
+24. MULTIPLE ROLES
+============================================================
+
+A user may have multiple roles.
+
+Example:
+
+INVENTORY_MANAGER
++
+APPROVER.
+
+Role authorization result:
+
+UNION of authorizations.
+
+Then apply user-level overrides.
+
+============================================================
+25. EXPLICIT USER DENY
+============================================================
+
+User DENY overrides all role grants.
+
+Example:
+
+Role A grants POST_GRN.
+
+Role B also grants POST_GRN.
+
+User override:
+
+DENY POST_GRN.
+
+Effective:
+
+POST_GRN = DENIED.
+
+============================================================
+26. AUTHORIZATION MASTER
+============================================================
+
+Authorization fields:
+
+Id
+Code
+Name
+Description
+Module
+SubModule
+Application
+RiskLevel
+IsSystemAuthorization
+IsActive
+CreatedAt
+UpdatedAt.
+
+Application:
+
+CLOUD
+MOBILE
+BOTH.
+
+Risk:
+
+LOW
+MEDIUM
+HIGH
+CRITICAL.
+
+============================================================
+27. PLATFORM / CUSTOMER AUTHORIZATIONS
+============================================================
+
+Include:
+
+VIEW_PLATFORM
+MANAGE_PLATFORM
+
+VIEW_CUSTOMER
+CREATE_CUSTOMER
+EDIT_CUSTOMER
+ACTIVATE_CUSTOMER
+DEACTIVATE_CUSTOMER
+
+VIEW_SUPPORT_ACCESS
+GRANT_SUPPORT_ACCESS
+REVOKE_SUPPORT_ACCESS
+ACCESS_CUSTOMER_SUPPORT_MODE.
+
+============================================================
+28. ORGANIZATION AUTHORIZATIONS
+============================================================
+
+Include:
+
+VIEW_ORGANIZATION
+EDIT_ORGANIZATION
+
+VIEW_PROPERTY
+CREATE_PROPERTY
+EDIT_PROPERTY
+
+VIEW_OPERATING_UNIT
+CREATE_OPERATING_UNIT
+EDIT_OPERATING_UNIT
+
+VIEW_LOCATION
+MANAGE_LOCATION.
+
+============================================================
+29. USER / ROLE AUTHORIZATIONS
+============================================================
+
+Include:
+
+VIEW_USER
+CREATE_USER
+EDIT_USER
+ACTIVATE_USER
+DEACTIVATE_USER
+
+MANAGE_APPLICATION_ACCESS
+
+VIEW_ROLE
+CREATE_ROLE
+EDIT_ROLE
+ASSIGN_ROLE
+
+ASSIGN_SCOPE
+
+VIEW_PERMISSION
+MANAGE_PERMISSION.
+
+============================================================
+30. DASHBOARD AUTHORIZATIONS
+============================================================
+
+VIEW_DASHBOARD
+VIEW_OPERATION_ALERTS
+VIEW_KPI.
+
+============================================================
+31. MENU ENGINEERING AUTHORIZATIONS
+============================================================
+
+VIEW_MENU
+CREATE_MENU
+EDIT_MENU
+FINALIZE_MENU
+COPY_MENU
+ARCHIVE_MENU
+
+VIEW_MENU_PLAN
+CREATE_MENU_PLAN
+EDIT_MENU_PLAN
+FINALIZE_MENU_PLAN
+
+VIEW_RECIPE
+CREATE_RECIPE
+EDIT_RECIPE
+DUPLICATE_RECIPE
+ARCHIVE_RECIPE
+VIEW_RECIPE_COST
+EDIT_RECIPE_COST
+
+VIEW_INGREDIENT
+CREATE_INGREDIENT
+EDIT_INGREDIENT
+
+VIEW_PORTION_PLAN
+CREATE_PORTION_PLAN
+EDIT_PORTION_PLAN
+FINALIZE_PORTION_PLAN
+
+VIEW_DEMAND_FORECAST
+GENERATE_DEMAND_FORECAST
+
+VIEW_INGREDIENT_REQUIREMENT
+GENERATE_INGREDIENT_REQUIREMENT
+
+VIEW_MENU_PERFORMANCE.
+
+============================================================
+32. MATERIAL / INVENTORY AUTHORIZATIONS
+============================================================
+
+VIEW_MATERIAL
+CREATE_MATERIAL
+EDIT_MATERIAL
+ACTIVATE_MATERIAL
+
+VIEW_INVENTORY
+VIEW_STOCK_BALANCE
+VIEW_STOCK_TRANSACTION
+
+VIEW_INVENTORY_COUNT
+CREATE_INVENTORY_COUNT
+ENTER_INVENTORY_COUNT
+SUBMIT_INVENTORY_COUNT
+APPROVE_INVENTORY_COUNT
+POST_INVENTORY_COUNT
+
+VIEW_STOCK_ADJUSTMENT
+CREATE_STOCK_ADJUSTMENT
+APPROVE_STOCK_ADJUSTMENT
+POST_STOCK_ADJUSTMENT
+
+VIEW_STOCK_TRANSFER
+CREATE_STOCK_TRANSFER
+APPROVE_STOCK_TRANSFER
+DISPATCH_STOCK_TRANSFER
+RECEIVE_STOCK_TRANSFER
+
+VIEW_GOODS_ISSUE
+CREATE_GOODS_ISSUE
+APPROVE_GOODS_ISSUE
+POST_GOODS_ISSUE
+
+VIEW_WASTE
+CREATE_WASTE
+CREATE_DAMAGE_RECORD
+APPROVE_WASTE
+POST_WASTE
+
+VIEW_BATCH
+VIEW_EXPIRY
+MANAGE_BATCH.
+
+============================================================
+33. PROCUREMENT AUTHORIZATIONS
+============================================================
+
+VIEW_MATERIAL_REQUIREMENT
+
+VIEW_PURCHASE_SUGGESTION
+REVIEW_PURCHASE_SUGGESTION
+APPROVE_PURCHASE_SUGGESTION
+
+VIEW_PURCHASE_ORDER
+VIEW_PO_PRICE
+VIEW_PO_HISTORY
+
+VIEW_SUPPLIER
+CREATE_SUPPLIER
+EDIT_SUPPLIER
+
+VIEW_SUPPLIER_MATERIAL
+MANAGE_SUPPLIER_MATERIAL.
+
+============================================================
+34. RECEIVING AUTHORIZATIONS
+============================================================
+
+VIEW_RECEIVING
+
+ENTER_RECEIVED_QUANTITY
+ENTER_ACCEPTED_QUANTITY
+ENTER_DAMAGED_QUANTITY
+ENTER_REJECTED_QUANTITY
+
+VIEW_RECEIVING_EXCEPTION
+RESOLVE_RECEIVING_EXCEPTION.
+
+============================================================
+35. DOCUMENT / SCANNER AUTHORIZATIONS
+============================================================
+
+Business-level permissions:
+
+VIEW_DOCUMENT
+UPLOAD_DOCUMENT
+DOWNLOAD_DOCUMENT
+ARCHIVE_DOCUMENT
+
+SCAN_INVOICE
+RUN_BASIC_OCR
+REREAD_INVOICE
+
+VIEW_EXTRACTION
+EDIT_EXTRACTION
+VIEW_EXTRACTION_HISTORY
+
+MANAGE_OCR_PROVIDER.
+
+Do NOT necessarily expose:
+
+Add Scan Page
+Delete Scan Page
+Rotate
+Create PDF
+
+as separate administrator permissions.
+
+These can be capabilities underneath:
+
+SCAN_INVOICE.
+
+============================================================
+36. INVOICE AUTHORIZATIONS
+============================================================
+
+VIEW_INVOICE
+UPLOAD_INVOICE
+EDIT_INVOICE
+REPROCESS_INVOICE
+
+MATCH_SUPPLIER
+MATCH_PURCHASE_ORDER
+MATCH_INVOICE_LINE
+
+VIEW_INVOICE_EXCEPTION
+RESOLVE_INVOICE_EXCEPTION.
+
+============================================================
+37. GRN AUTHORIZATIONS
+============================================================
+
+VIEW_GRN
+CREATE_GRN
+EDIT_GRN
+VALIDATE_GRN
+POST_GRN
+CANCEL_GRN
+VIEW_GRN_HISTORY.
+
+============================================================
+38. APPROVAL AUTHORIZATIONS
+============================================================
+
+VIEW_APPROVAL
+APPROVE
+REJECT
+RETURN_FOR_CORRECTION
+VIEW_APPROVAL_HISTORY
+
+VIEW_WORKFLOW
+MANAGE_WORKFLOW.
+
+============================================================
+39. ANALYTICS / REPORTING
+============================================================
+
+VIEW_ANALYTICS
+
+VIEW_MENU_ANALYTICS
+VIEW_CONSUMPTION_ANALYTICS
+VIEW_FOOD_COST_ANALYTICS
+VIEW_INVENTORY_ANALYTICS
+VIEW_WASTE_ANALYTICS
+VIEW_PURCHASE_ANALYTICS
+
+VIEW_REPORT
+EXPORT_REPORT.
+
+============================================================
+40. INTEGRATION / CONFIGURATION / AUDIT
+============================================================
+
+VIEW_INTEGRATION
+MANAGE_INTEGRATION
+TEST_INTEGRATION
+VIEW_INTEGRATION_LOG
+
+VIEW_CONFIGURATION
+EDIT_CONFIGURATION
+
+VIEW_AUDIT_LOG
+VIEW_SECURITY_AUDIT
+EXPORT_AUDIT_LOG
+
+VIEW_SYSTEM_DIAGNOSTICS
+VIEW_SYSTEM_HEALTH.
+
+============================================================
+41. DOCUMENT STORAGE AUTHORIZATIONS
+============================================================
+
+Add:
+
+VIEW_DOCUMENT_STORAGE
+CONFIGURE_DOCUMENT_STORAGE
+VALIDATE_DOCUMENT_STORAGE
+DISCONNECT_DOCUMENT_STORAGE
+TEST_DOCUMENT_STORAGE
+VIEW_DOCUMENT_STORAGE_STATUS.
+
+These control external document destinations.
+
+============================================================
+42. HIGH-RISK AUTHORIZATIONS
+============================================================
+
+Flag at minimum:
+
+MANAGE_PLATFORM
+
+CREATE_CUSTOMER
+DEACTIVATE_CUSTOMER
+
+MANAGE_PERMISSION
+ASSIGN_ROLE
+MANAGE_APPLICATION_ACCESS
+
+GRANT_SUPPORT_ACCESS
+
+POST_GRN
+POST_INVENTORY_COUNT
+POST_STOCK_ADJUSTMENT
+POST_GOODS_ISSUE
+POST_WASTE
+
+APPROVE
+
+MANAGE_INTEGRATION
+MANAGE_OCR_PROVIDER
+CONFIGURE_DOCUMENT_STORAGE
+DISCONNECT_DOCUMENT_STORAGE.
+
+High-risk assignment/removal requires confirmation and audit.
+
+============================================================
+43. ROLE DEFAULTS ARE EDITABLE TEMPLATES
+============================================================
+
+Role:
+
+default authorization package.
+
+User:
+
+may receive additional authorization or explicit denial.
+
+Do NOT copy every role permission into the User table.
+
+Keep inheritance dynamic.
+
+============================================================
+44. USER AUTHORIZATION OVERRIDE
+============================================================
+
+Use/introduce:
+
+UserAuthorizationOverride
+
+Fields:
+
+Id
+UserId
+AuthorizationId
+OverrideType
+Reason
+EffectiveFrom
+EffectiveTo
+CreatedAt
+CreatedBy
+UpdatedAt.
+
+OverrideType:
+
+GRANT
+DENY.
+
+============================================================
+45. USER CREATION — QUICK CLOUD FIX
+============================================================
+
+Now implement the required Cloud user creation experience.
+
+Route:
+
+/admin/users/new
+
+or integrate into existing:
+
+Administration
+→ Users
+→ ADD USER.
+
+Do NOT disturb existing Users functionality.
+
+============================================================
+46. ADD USER FORM — REQUIRED FIELDS
+============================================================
+
+Create sections:
+
+PERSONAL INFORMATION
+
+First Name *
+Last Name *
+Email ID *
+Mobile Number *
+
+ACCESS
+
+Organization *
+Property *
+Store / Operating Unit *
+System Access *
+Roles *
+Authorizations
+
+INITIAL PASSWORD
+
+Temporary Password
+
+DOCUMENT STORAGE
+
+Storage Provider
+Storage Configuration / Validation.
+
+============================================================
+47. FIRST NAME
+============================================================
+
+Field:
+
+First Name
+
+Required.
+
+Trim leading/trailing spaces.
+
+Use sensible length validation.
+
+Do not combine First/Last Name only into DisplayName at the database
+level if separate fields can be supported safely.
+
+DisplayName may be derived:
+
+FirstName + " " + LastName.
+
+============================================================
+48. LAST NAME
+============================================================
+
+Required.
+
+Same validation principles.
+
+============================================================
+49. EMAIL
+============================================================
+
+Required.
+
+Validate email format.
+
+Normalize for uniqueness.
+
+Email uniqueness should be case-insensitive.
+
+Never allow duplicate:
+
+bala@chervic.in
+
+or any other existing normalized email.
+
+============================================================
+50. MOBILE NUMBER
+============================================================
+
+Required.
+
+Store in international-friendly format.
+
+UI should support:
+
+country code
++
+number.
+
+Prefer normalization to E.164 where possible.
+
+Do not assume UAE numbers only.
+
+============================================================
+51. TEMPORARY PASSWORD
+============================================================
+
+Field:
+
+Temporary Password.
+
+System provides two choices:
+
+GENERATE PASSWORD
+
+or
+
+ENTER MANUALLY.
+
+Default:
+
+Generate automatically.
+
+Generate using cryptographically secure randomness.
+
+Do NOT use:
+
+Math.random()
+
+timestamp
+
+email
+
+mobile number
+
+predictable pattern.
+
+Password must satisfy configured password policy.
+
+============================================================
+52. GENERATED PASSWORD DISPLAY
+============================================================
+
+When generated:
+
+show it ONCE to authorized creator.
+
+Actions:
+
+COPY
+
+REGENERATE.
+
+Never store plaintext password.
+
+Backend stores only password hash.
+
+Do not put generated password in logs/audit.
+
+============================================================
+53. MANUAL TEMP PASSWORD
+============================================================
+
+Allow administrator to enter a temporary password manually.
+
+Apply same password policy.
+
+Use:
+
+Password
+Confirm Password.
+
+Never expose it again after user creation.
+
+============================================================
+54. PASSWORD CHANGE
+============================================================
+
+Prepare/support:
+
+MustChangePassword = true
+
+for newly created users.
+
+If current authentication model does not yet support forced password
+change:
+
+store/prepare the flag safely and report:
+
+PASSWORD CHANGE FLOW API/UI PENDING
+
+rather than breaking login.
+
+============================================================
+55. ORGANIZATION SELECTION
+============================================================
+
+Required:
+
+Organization ID.
+
+UI should NOT expect ordinary administrator to manually type a UUID.
+
+Provide searchable dropdown:
+
+Organization Name
+Organization Code
+
+and internally store:
+
+OrganizationId.
+
+Customer Admin:
+
+organization must be fixed to their own organization where applicable.
+
+Super Admin:
+
+may select authorized customer/organization.
+
+============================================================
+56. PROPERTY SELECTION
+============================================================
+
+Required as applicable:
+
+Org-Property Selection.
+
+Property dropdown must depend on selected Organization.
+
+Organization A selected
+→ show only properties under Organization A.
+
+Do not expose another organization's properties.
+
+Support one or multiple properties if current scope model permits.
+
+If business model requires a primary property:
+
+allow Primary Property designation.
+
+============================================================
+57. STORE / OPERATING UNIT SELECTION
+============================================================
+
+Required as applicable:
+
+Org-Store Selection.
+
+Store dropdown depends on:
+
+Organization
++
+Property.
+
+Only authorized stores/operating units should appear.
+
+Support multi-select if user can operate across multiple stores.
+
+Do not hardcode Store as the only unit type.
+
+Backend may use:
+
+OperatingUnit
+
+with types such as:
+
+STORE
+KITCHEN
+OUTLET
+WAREHOUSE
+OTHER.
+
+UI can display appropriate business label.
+
+============================================================
+58. SYSTEM SELECTION
+============================================================
+
+Required.
+
+Options:
+
+CLOUD
+
+MOBILE
+
+BOTH.
+
+Display as:
+
+Cloud
+
+Mobile
+
+Cloud + Mobile.
+
+Persist using existing UserApplicationAccess architecture.
+
+============================================================
+59. ROLE FILTERING BY SYSTEM
+============================================================
+
+This is required.
+
+When:
+
+CLOUD
+
+is selected:
+
+show roles applicable to Cloud.
+
+When:
+
+MOBILE
+
+is selected:
+
+show roles applicable to Mobile.
+
+When:
+
+BOTH
+
+is selected:
+
+show roles applicable to either/both applications as appropriate.
+
+Do NOT hardcode this solely in React.
+
+Role metadata should specify application applicability.
+
+============================================================
+60. ROLE MULTI-SELECTION
+============================================================
+
+Roles must be searchable multi-select.
+
+Display:
+
+Role Name
+
+Short Description
+
+Application
+
+Default Authorization Count.
+
+Example:
+
+Receiving Operator
+Mobile
+12 default authorizations.
+
+Inventory Manager
+Cloud + Mobile
+23 default authorizations.
+
+============================================================
+61. ROLE SELECTION → AUTHORIZATION PREVIEW
+============================================================
+
+As roles are selected:
+
+calculate inherited authorizations.
+
+Show:
+
+DEFAULT AUTHORIZATIONS
+
+grouped by module.
+
+Example:
+
+Receiving
+12
+
+Inventory
+8
+
+Documents
+4.
+
+Allow expansion.
+
+============================================================
+62. AUTHORIZATION FIELD
+============================================================
+
+Required functionality:
+
+Administrator can select additional authorizations from a searchable
+dropdown and ADD them.
+
+They can also remove/deny inherited authorizations if permitted.
+
+UI:
+
+AUTHORIZATIONS
+
+[ Search authorization... ▼ ] [ADD]
+
+Selected/effective authorizations below.
+
+Group dropdown by:
+
+Dashboard
+Menu Engineering
+Inventory
+Procurement
+Receiving
+Documents
+Invoices
+GRN
+Approvals
+Analytics
+Master Data
+Administration
+Integration
+Storage.
+
+============================================================
+63. AUTHORIZATION DISPLAY
+============================================================
+
+For every authorization display:
+
+Name
+Code
+Module
+Application
+Risk
+Source
+Status.
+
+Example:
+
+Post Goods Receipt
+
+POST_GRN
+
+Receiving
+
+Cloud + Mobile
+
+HIGH
+
+Added
+
+GRANTED.
+
+============================================================
+64. ROLE AUTHORIZATION SOURCE
+============================================================
+
+Show source:
+
+ROLE
+
+ADDED
+
+REMOVED.
+
+Example:
+
+View Invoice
+Granted by:
+Receiving Operator
+
+Post GRN
+Added specifically to user
+
+Post Inventory Count
+Removed from inherited role.
+
+============================================================
+65. ADD/REMOVE AUTHORIZATIONS DURING USER CREATION
+============================================================
+
+Before saving user:
+
+allow administrator to customize effective access.
+
+Example:
+
+Role:
+Receiving Operator
+
+Default:
+POST_GRN not granted.
+
+Administrator adds:
+
+POST_GRN.
+
+Create:
+
+UserAuthorizationOverride = GRANT.
+
+Another example:
+
+Role:
+Inventory Manager
+
+Default:
+POST_INVENTORY_COUNT.
+
+Administrator removes:
+
+POST_INVENTORY_COUNT.
+
+Create:
+
+UserAuthorizationOverride = DENY.
+
+============================================================
+66. AUTHORIZATION ADMINISTRATION SECURITY
+============================================================
+
+The creating administrator may only assign:
+
+roles
+authorizations
+scopes
+systems
+
+that they are themselves permitted to administer.
+
+Customer Admin must NEVER assign:
+
+SUPER_ADMIN
+PLATFORM_ADMIN
+
+platform-wide permissions
+
+cross-customer access
+
+SILA internal support privileges.
+
+Backend must enforce this.
+
+============================================================
+67. DOCUMENT STORAGE PROVIDER
+============================================================
+
+Add required selection:
+
+Document Storage / PDF Transfer.
+
+Options:
+
+MICROSOFT
+
+GOOGLE
+
+OTHER
+
+NA.
+
+Display:
+
+Microsoft SharePoint / OneDrive
+
+Google
+
+Other
+
+No External PDF Transfer.
+
+Internally use:
+
+MICROSOFT
+GOOGLE
+OTHER
+NONE.
+
+============================================================
+68. NA / NONE
+============================================================
+
+If:
+
+NA
+
+is selected:
+
+do not ask for storage URL.
+
+Store:
+
+Provider = NONE
+
+ExternalTransferEnabled = false.
+
+Meaning:
+
+PDF/document remains in normal SILA ME storage according to current
+application behavior.
+
+No external PDF transfer is required.
+
+============================================================
+69. MICROSOFT
+============================================================
+
+If:
+
+Microsoft
+
+selected:
+
+do NOT simply ask for an arbitrary URL and mark it validated.
+
+Show:
+
+Microsoft Document Storage
+
+Connection Status:
+NOT CONNECTED
+
+Button:
+
+CONNECT MICROSOFT.
+
+If customer has supplied SharePoint information before connection,
+allow appropriate Site/SharePoint identifier input if needed by the
+configured integration flow.
+
+============================================================
+70. MICROSOFT AUTHORIZATION FLOW
+============================================================
+
+Use a proper backend-driven Microsoft authorization/validation flow.
+
+Conceptually:
+
+SILA ME Cloud
+      ↓
+CONNECT MICROSOFT
+      ↓
+ASP.NET Backend creates authorization request/state
+      ↓
+Browser redirected to Microsoft identity/authorization endpoint
+      ↓
+User signs in / approves required access
+      ↓
+Microsoft callback to SILA ME backend
+      ↓
+Backend validates state/callback
+      ↓
+Backend validates target SharePoint site / document location
+      ↓
+Store validated metadata
+      ↓
+Redirect back to SILA ME Cloud
+      ↓
+Status = CONNECTED
+      ↓
+Display validated SharePoint URL.
+
+Do NOT implement Microsoft authentication purely in React.
+
+============================================================
+71. MICROSOFT DATA TO STORE
+============================================================
+
+Store only what is appropriate.
+
+Potential metadata:
+
+Provider = MICROSOFT
+
+ConnectionStatus
+
+TenantId if applicable
+
+SiteId
+
+DriveId if applicable
+
+FolderId if applicable
+
+DisplayUrl / SharePointUrl
+
+DisplayName
+
+ValidatedAt
+
+ValidatedBy
+
+ExternalTransferEnabled.
+
+Tokens/secrets must be stored securely server-side if required by the
+integration architecture.
+
+Never expose them through Cloud API.
+
+============================================================
+72. SHAREPOINT ID
+============================================================
+
+The user's requirement says:
+
+when Microsoft is selected ask for SharePoint ID.
+
+Implement this safely.
+
+Label:
+
+SharePoint Site / Site ID
+
+with helper:
+
+"Enter/select the SharePoint site to be used for this user's
+document storage."
+
+But validation must happen server-side.
+
+Do not accept a typed ID as proof of connectivity.
+
+============================================================
+73. MICROSOFT VALIDATION RESULT
+============================================================
+
+After successful validation display:
+
+Microsoft SharePoint
+
+CONNECTED ✓
+
+Site:
+<display name>
+
+SharePoint URL:
+<validated URL>
+
+Validated:
+<date/time>
+
+Button:
+
+TEST CONNECTION
+
+CHANGE
+
+DISCONNECT
+
+subject to authorization.
+
+============================================================
+74. MICROSOFT FAILURE
+============================================================
+
+If validation fails:
+
+do NOT save it as Connected.
+
+Show:
+
+Microsoft connection could not be validated.
+
+Reason should be user-safe.
+
+Actions:
+
+TRY AGAIN
+
+CHANGE CONFIGURATION.
+
+Do not expose:
+
+access token
+client secret
+raw Microsoft exception.
+
+============================================================
+75. GOOGLE
+============================================================
+
+If:
+
+Google
+
+selected:
+
+prepare the same provider abstraction.
+
+Do not fake connection.
+
+If Google integration is not implemented:
+
+show:
+
+Google document storage integration is not configured.
+
+Mark:
+
+UI_READY_API_PENDING
+
+unless existing backend support is available.
+
+Architecture must allow proper Google authorization later.
+
+============================================================
+76. OTHER
+============================================================
+
+If:
+
+Other
+
+selected:
+
+do not assume SharePoint.
+
+Fields can include:
+
+Provider Name
+
+Destination Type
+
+Destination URL / Identifier
+
+optional configuration reference.
+
+Do NOT collect raw credentials casually in the user form.
+
+If backend integration is not available:
+
+allow configuration metadata only if safe and mark connection
+UNVALIDATED / API_PENDING.
+
+============================================================
+77. IMPORTANT — STORAGE CONFIGURATION OWNERSHIP
+============================================================
+
+Architecturally, do NOT duplicate Microsoft credentials for every user.
+
+Separate:
+
+Storage Connection
+
+from:
+
+User Storage Assignment.
+
+Example:
+
+Customer Microsoft Connection
+        ↓
+Validated SharePoint Site
+        ↓
+Folder/Destination
+        ↓
+User Assignment.
+
+This allows multiple users to use the same validated Microsoft
+connection safely.
+
+============================================================
+78. USER STORAGE ASSIGNMENT
+============================================================
+
+Recommended entity:
+
+UserDocumentStorageAssignment
+
+Fields:
+
+Id
+
+UserId
+
+Provider
+
+StorageConnectionId nullable
+
+SiteId nullable
+
+DriveId nullable
+
+FolderId nullable
+
+DestinationUrl nullable
+
+ExternalTransferEnabled
+
+Status
+
+ValidatedAt
+
+CreatedAt
+
+CreatedBy
+
+UpdatedAt.
+
+Do not store passwords or OAuth secrets here.
+
+============================================================
+79. STORAGE CONNECTION ENTITY
+============================================================
+
+If not already available, design:
+
+DocumentStorageConnection
+
+Fields:
+
+Id
+
+OrganizationId
+
+Provider
+
+Name
+
+ConnectionStatus
+
+TenantIdentifier nullable
+
+SiteIdentifier nullable
+
+DriveIdentifier nullable
+
+DisplayUrl nullable
+
+CredentialReference nullable
+
+ValidatedAt nullable
+
+ValidatedBy nullable
+
+CreatedAt
+
+CreatedBy
+
+UpdatedAt.
+
+CredentialReference must point to secure server-side secret handling.
+
+Never return credential material to frontend.
+
+============================================================
+80. USER CREATION + MICROSOFT REDIRECT PROBLEM
+============================================================
+
+IMPORTANT:
+
+Microsoft authorization redirects the browser away from the form.
+
+Do not lose the partially entered Add User form.
+
+Before redirect:
+
+persist a safe draft on backend
+
+OR
+
+persist only non-secret form state safely and recover it after
+callback.
+
+DO NOT persist plaintext temporary password in browser localStorage.
+
+Preferred:
+
+create server-side user-creation draft WITHOUT password plaintext,
+then recover form after Microsoft callback.
+
+Alternatively validate/select an existing organization-level storage
+connection rather than initiating OAuth inside the final user Save.
+
+Choose the safest architecture compatible with current application.
+
+============================================================
+81. PREFERRED STORAGE UX
+============================================================
+
+Best design:
+
+Organization Admin first configures:
+
+Administration
+→ Integrations / Document Storage
+→ Microsoft
+
+and validates the organization's SharePoint connection ONCE.
+
+Then Add User form:
+
+Storage Provider:
+Microsoft
+
+Storage Location:
+[Validated SharePoint destinations ▼]
+
+This is safer than performing OAuth for every user.
+
+However, the Add User form must still support:
+
+CONNECT / VALIDATE MICROSOFT
+
+if no valid connection exists and the administrator is authorized.
+
+============================================================
+82. PDF/DOCUMENT TRANSFER RULE
+============================================================
+
+When a user has:
+
+ExternalTransferEnabled = true
+
+and a validated destination:
+
+documents/files created for that user/process may be transferred to
+the assigned destination according to backend document-routing rules.
+
+Do NOT implement actual PDF transfer inside React.
+
+Cloud only configures destination.
+
+Backend performs transfer.
+
+============================================================
+83. DO NOT BREAK CURRENT DOCUMENT STORAGE
+============================================================
+
+Existing SILA ME document storage remains authoritative.
+
+External SharePoint/Google/Other transfer is an additional destination
+feature.
+
+Do not modify scanner PDF generation.
+
+Do not make Mobile upload directly to SharePoint.
+
+Correct architecture:
+
+MOBILE
+   ↓
+SILA ME API
+   ↓
+SILA ME document storage
+   ↓
+validated external destination if enabled.
+
+This preserves reliability, security and auditability.
+
+============================================================
+84. ADD USER SCREEN LAYOUT
+============================================================
+
+Build a polished Cloud page:
+
+Administration / Users / Add User
+
+Title:
+
+Add User
+
+Subtitle:
+
+Create a user and configure application, role, authorization and
+document access.
+
+Sections:
+
+1 PERSONAL INFORMATION
+
+2 ORGANIZATION & SCOPE
+
+3 SYSTEM ACCESS
+
+4 ROLES
+
+5 AUTHORIZATIONS
+
+6 INITIAL PASSWORD
+
+7 DOCUMENT STORAGE
+
+8 REVIEW & CREATE.
+
+============================================================
+85. STEP 1 — PERSONAL INFORMATION
+============================================================
+
+Fields:
+
+First Name *
+
+Last Name *
+
+Email ID *
+
+Mobile Number *.
+
+============================================================
+86. STEP 2 — ORGANIZATION & SCOPE
+============================================================
+
+Fields:
+
+Organization *
+
+Property *
+
+Store / Operating Unit *
+
+Additional Locations optional.
+
+Use dependent dropdowns.
+
+============================================================
+87. STEP 3 — SYSTEM ACCESS
+============================================================
+
+Cards or segmented control:
+
+CLOUD
+
+MOBILE
+
+BOTH.
+
+Show concise description.
+
+============================================================
+88. STEP 4 — ROLES
+============================================================
+
+Role list automatically changes based on System Access.
+
+Searchable multi-select.
+
+Display:
+
+Role
+Description
+Application.
+
+============================================================
+89. STEP 5 — AUTHORIZATIONS
+============================================================
+
+Show:
+
+INHERITED FROM ROLES
+
+ADDITIONAL
+
+REMOVED
+
+EFFECTIVE.
+
+Provide:
+
+ADD AUTHORIZATION
+
+REMOVE AUTHORIZATION
+
+RESTORE DEFAULT.
+
+============================================================
+90. STEP 6 — INITIAL PASSWORD
+============================================================
+
+Choice:
+
+GENERATE AUTOMATICALLY
+
+ENTER MANUALLY.
+
+If generated:
+
+GENERATE
+
+COPY
+
+REGENERATE.
+
+Do not display after creation.
+
+============================================================
+91. STEP 7 — DOCUMENT STORAGE
+============================================================
+
+Provider:
+
+Microsoft
+Google
+Other
+NA.
+
+MICROSOFT:
+
+Validated Connection dropdown
+
+SharePoint Site/ID where appropriate
+
+CONNECT MICROSOFT
+
+TEST CONNECTION
+
+Connection Status.
+
+GOOGLE:
+
+validated connection when available.
+
+OTHER:
+
+safe generic configuration.
+
+NA:
+
+No external PDF transfer.
+
+============================================================
+92. STEP 8 — REVIEW
+============================================================
+
+Before creation show:
+
+PERSON
+
+First Name
+Last Name
+Email
+Mobile
+
+ACCESS
+
+Organization
+Properties
+Stores
+
+SYSTEM
+
+Cloud / Mobile / Both
+
+ROLES
+
+selected roles
+
+AUTHORIZATIONS
+
+Inherited: <count>
+
+Added: <count>
+
+Removed: <count>
+
+Effective: <count>
+
+High Risk: <count>
+
+STORAGE
+
+Provider
+Destination
+Validation Status.
+
+Button:
+
+CREATE USER.
+
+============================================================
+93. HIGH-RISK AUTHORIZATION WARNING
+============================================================
+
+If selected user has high-risk authorizations:
+
+show:
+
+This user will receive privileged authorizations.
+
+Expandable list.
+
+Require explicit confirmation before CREATE USER.
+
+============================================================
+94. USER CREATION TRANSACTION
+============================================================
+
+User creation should be atomic where practical.
+
+Do not leave partially configured active users when:
+
+role assignment fails
+
+scope assignment fails
+
+application access fails.
+
+Storage external validation may be separate, but user/storage status
+must clearly represent pending state.
+
+============================================================
+95. DUPLICATE USER
+============================================================
+
+Before creation:
+
+check normalized email.
+
+If exists:
+
+do NOT create another user.
+
+Return:
+
+USER_ALREADY_EXISTS.
+
+Friendly UI:
+
+A user with this email already exists.
+
+VIEW USER.
+
+This protects bala@chervic.in and every other account.
+
+============================================================
+96. USER STATUS
+============================================================
+
+Support:
+
+ACTIVE
+
+INACTIVE
+
+optionally:
+
+PENDING_ACTIVATION
+
+if current architecture permits.
+
+Do not silently change existing user statuses.
+
+============================================================
+97. USER DETAIL AFTER CREATION
+============================================================
+
+After success redirect:
+
+/admin/users/{id}
+
+Tabs:
+
+OVERVIEW
+
+APPLICATION ACCESS
+
+ROLES
+
+AUTHORIZATIONS
+
+SCOPE
+
+DOCUMENT STORAGE
+
+AUDIT.
+
+============================================================
+98. USER DETAIL — OVERVIEW
+============================================================
+
+Display:
+
+Name
+
+Email
+
+Mobile
+
+Status
+
+Organization
+
+Properties
+
+Stores
+
+Cloud Access
+
+Mobile Access
+
+Created
+
+Last Login.
+
+============================================================
+99. APPLICATION ACCESS TAB
+============================================================
+
+Show:
+
+CLOUD
+
+ACTIVE / INACTIVE
+
+MOBILE
+
+ACTIVE / INACTIVE.
+
+Authorized admin can change access.
+
+Changes audited.
+
+============================================================
+100. ROLES TAB
+============================================================
+
+Show:
+
+Assigned Roles
+
+Application
+
+Scope
+
+Assigned By
+
+Assigned At.
+
+Actions:
+
+ADD ROLE
+
+REMOVE ROLE.
+
+============================================================
+101. AUTHORIZATIONS TAB
+============================================================
+
+Group by module.
+
+Filters:
+
+ALL
+CLOUD
+MOBILE
+BOTH
+GRANTED
+DENIED
+MODIFIED
+HIGH RISK.
+
+Columns:
+
+Authorization
+
+Code
+
+Module
+
+Application
+
+Risk
+
+Source
+
+Effective Status.
+
+============================================================
+102. EFFECTIVE ACCESS PREVIEW
+============================================================
+
+Add:
+
+VIEW EFFECTIVE ACCESS.
+
+Display:
+
+APPLICATIONS
+
+CLOUD ✓
+MOBILE ✓
+
+SCOPE
+
+Organization
+Property
+Store
+
+ROLES
+
+list
+
+AUTHORIZATIONS
+
+Dashboard
+Menu Engineering
+Inventory
+Procurement
+Receiving
+Documents
+Approvals
+Analytics
+Administration.
+
+Allow drilldown to exact codes.
+
+============================================================
+103. DOCUMENT STORAGE TAB
+============================================================
+
+Show:
+
+Provider
+
+Connection
+
+Destination
+
+Status
+
+External Transfer
+
+Validated At
+
+Last Transfer optional if backend supports.
+
+Actions subject to authorization:
+
+CHANGE
+
+TEST CONNECTION
+
+DISCONNECT.
+
+============================================================
+104. ROLE MANAGEMENT
+============================================================
+
+Administration
+→ Roles.
+
+Separate:
+
+SYSTEM ROLES
+
+CUSTOM ROLES.
+
+Role detail:
+
+Overview
+
+Application
+
+Default Authorizations
+
+Users
+
+Audit.
+
+Editing role authorization changes default access for all users with
+that role except explicit user overrides.
+
+============================================================
+105. CUSTOM ROLE
+============================================================
+
+Authorized Customer Admin may create customer-scoped custom roles.
+
+Example:
+
+Senior Store Operator.
+
+Select:
+
+Application
+
+Default Authorizations.
+
+Do not permit Customer Admin to create platform-level custom roles.
+
+============================================================
+106. AUTHORIZATION MASTER UI
+============================================================
+
+Administration
+→ Authorization Master.
+
+Search/filter by:
+
+Module
+
+Application
+
+Risk
+
+Active.
+
+Ordinary Customer Admin should normally VIEW assignable
+authorizations, not redefine system authorization semantics.
+
+============================================================
+107. AUTHORIZATION CACHE
+============================================================
+
+If effective access is cached:
+
+invalidate immediately when:
+
+application access changes
+
+role assigned/removed
+
+role authorization changes
+
+user override changes
+
+scope changes
+
+account status changes
+
+support grant changes.
+
+============================================================
+108. BACKEND ENFORCEMENT
+============================================================
+
+Frontend permission checks are only UX.
+
+Backend remains authoritative.
+
+Every protected endpoint checks:
+
+authenticated user
+
+active account
+
+application
+
+organization
+
+scope
+
+required authorization.
+
+Never trust:
+
+hidden button
+
+disabled field
+
+role name
+
+OrganizationId supplied by frontend alone.
+
+============================================================
+109. MULTI-TENANT SECURITY TEST
+============================================================
+
+Mandatory:
+
+Customer Admin A attempts to create user in Customer B.
+
+DENIED.
+
+Customer Admin A modifies OrganizationId request manually.
+
+DENIED.
+
+Receiving Operator changes StoreId to unauthorized store.
+
+DENIED.
+
+Support Consultant accesses unassigned customer.
+
+DENIED.
+
+============================================================
+110. BALA REGRESSION TEST
+============================================================
+
+After migration/seeding:
+
+login using existing:
+
+bala@chervic.in
+
+must still behave exactly as before unless there was an explicit
+pre-existing issue unrelated to this change.
+
+Verify:
+
+user exists
+
+same User ID
+
+same password hash via safe equality comparison only
+
+same status
+
+same application access
+
+same roles
+
+same effective access or no unintended reduction.
+
+Do NOT print password hash.
+
+============================================================
+111. EXISTING LOGIN PROTECTION
+============================================================
+
+Do not change current Cloud authentication architecture.
+
+Do not change Mobile bearer authentication.
+
+Do not reset existing sessions unless technically unavoidable.
+
+If migration requires session invalidation:
+
+report it before claiming completion.
+
+============================================================
+112. MOBILE PROTECTION
+============================================================
+
+DO NOT MODIFY:
+
+scanner
+
+OCR
+
+PDF generation
+
+Receive Stock
+
+Invoice Review
+
+PO Match
+
+GRN
+
+inventory posting.
+
+Mobile should only benefit from authorization checks/navigation
+visibility where current architecture already supports them.
+
+Do NOT redesign Mobile in this task.
+
+============================================================
+113. AUDIT
+============================================================
+
+Audit at minimum:
+
+USER_CREATED
+
+USER_EDITED
+
+USER_ACTIVATED
+
+USER_DEACTIVATED
+
+APPLICATION_ACCESS_GRANTED
+
+APPLICATION_ACCESS_REVOKED
+
+ROLE_ASSIGNED
+
+ROLE_REMOVED
+
+AUTHORIZATION_GRANTED
+
+AUTHORIZATION_DENIED
+
+AUTHORIZATION_OVERRIDE_REMOVED
+
+SCOPE_ASSIGNED
+
+SCOPE_REMOVED
+
+STORAGE_ASSIGNED
+
+STORAGE_CHANGED
+
+STORAGE_VALIDATION_STARTED
+
+STORAGE_VALIDATED
+
+STORAGE_VALIDATION_FAILED
+
+STORAGE_DISCONNECTED
+
+SUPPORT_ACCESS_GRANTED
+
+SUPPORT_ACCESS_REVOKED.
+
+============================================================
+114. AUDIT FIELDS
+============================================================
+
+Record:
+
+Event
+
+Target User
+
+Organization
+
+Property/Unit where relevant
+
+Old State
+
+New State
+
+Changed By
+
+Changed At
+
+Reason where applicable
+
+Result.
+
+Never audit:
+
+plaintext password
+
+password hash
+
+OAuth access token
+
+refresh token
+
+client secret.
+
+============================================================
+115. SEEDING
+============================================================
+
+System roles and authorization master must be seeded idempotently.
+
+DO NOT:
+
+delete all roles
+
+delete all authorizations
+
+delete/recreate users
+
+truncate tables.
+
+Use safe upsert/migration strategy.
+
+Existing assignments must survive.
+
+Especially:
+
+bala@chervic.in.
+
+============================================================
+116. REQUIRED TESTS
+============================================================
+
+Test:
+
+Create Cloud-only user
+
+Create Mobile-only user
+
+Create Both user
+
+Role filtering by Cloud
+
+Role filtering by Mobile
+
+Role filtering by Both
+
+Multiple roles
+
+Default role authorizations
+
+Additional authorization
+
+Removed authorization
+
+Explicit DENY overrides multiple role grants
+
+Organization scope
+
+Property scope
+
+Store scope
+
+Customer isolation
+
+Duplicate email
+
+Generated temp password
+
+Manual temp password
+
+Microsoft selected
+
+NA storage selected
+
+Unauthorized high-risk grant
+
+Customer Admin cannot assign SUPER_ADMIN
+
+Customer Admin cannot access another organization
+
+Bala protected user regression.
+
+============================================================
+117. MICROSOFT TESTS
+============================================================
+
+Do NOT fake Microsoft success.
+
+Test:
+
+Microsoft selected
+
+connection flow starts
+
+state/callback protected
+
+failed validation stays disconnected
+
+successful validation stores only safe metadata
+
+frontend receives no secret/token
+
+validated URL displayed
+
+user form survives redirect or uses existing validated connection.
+
+If live Microsoft credentials/configuration are unavailable:
+
+mark:
+
+MICROSOFT LIVE VALIDATION PENDING CONFIGURATION
+
+Do not hardcode fake Connected status.
+
+============================================================
+118. UI VALIDATION
+============================================================
+
+Actually test Cloud:
+
+Administration
+→ Users
+→ Add User.
+
+Verify:
+
+First Name
+
+Last Name
+
+Email
+
+Mobile
+
+Temp Password
+
+Organization
+
+Property
+
+Store
+
+System
+
+Roles
+
+Authorizations
+
+Storage Provider
+
+Microsoft conditional fields
+
+NA behavior
+
+Review
+
+Create.
+
+============================================================
+119. FINAL REPORT
+============================================================
+
+Return:
+
+SILA ME USER / RBAC IMPLEMENTATION
+
+SYSTEM ROLES:
+18
+
+AUTHORIZATION MASTER:
+<number>
+
+CLOUD AUTHORIZATIONS:
+<number>
+
+MOBILE AUTHORIZATIONS:
+<number>
+
+BOTH:
+<number>
+
+CUSTOM ROLES SUPPORTED:
+YES/NO
+
+USER AUTHORIZATION OVERRIDES:
+PASS/FAIL
+
+EXPLICIT DENY:
+PASS/FAIL
+
+SCOPE:
+PASS/FAIL
+
+MULTI-TENANT ENFORCEMENT:
+PASS/FAIL
+
+ADD USER:
+
+FIRST NAME:
+PASS/FAIL
+
+LAST NAME:
+PASS/FAIL
+
+EMAIL:
+PASS/FAIL
+
+MOBILE:
+PASS/FAIL
+
+GENERATED TEMP PASSWORD:
+PASS/FAIL
+
+MANUAL TEMP PASSWORD:
+PASS/FAIL
+
+ORGANIZATION:
+PASS/FAIL
+
+PROPERTY:
+PASS/FAIL
+
+STORE:
+PASS/FAIL
+
+SYSTEM CLOUD:
+PASS/FAIL
+
+SYSTEM MOBILE:
+PASS/FAIL
+
+SYSTEM BOTH:
+PASS/FAIL
+
+DYNAMIC ROLE FILTER:
+PASS/FAIL
+
+ROLE MULTISELECT:
+PASS/FAIL
+
+AUTHORIZATION DROPDOWN:
+PASS/FAIL
+
+ADD AUTHORIZATION:
+PASS/FAIL
+
+REMOVE AUTHORIZATION:
+PASS/FAIL
+
+EFFECTIVE ACCESS PREVIEW:
+PASS/FAIL
+
+DOCUMENT STORAGE:
+
+MICROSOFT:
+CONNECTED / PENDING CONFIGURATION / FAIL
+
+MICROSOFT VALIDATION:
+PASS/PENDING/FAIL
+
+SHAREPOINT ID/SITE:
+PASS/FAIL
+
+SHAREPOINT URL AFTER VALIDATION:
+PASS/PENDING/FAIL
+
+GOOGLE:
+CONNECTED / UI_READY_API_PENDING / FAIL
+
+OTHER:
+PASS/FAIL
+
+NA:
+PASS/FAIL
+
+EXTERNAL PDF TRANSFER CONFIG:
+PASS/FAIL
+
+BALA PROTECTION:
+
+BALA USER FOUND BEFORE:
+YES/NO
+
+BALA USER FOUND AFTER:
+YES/NO
+
+BALA USER ID UNCHANGED:
+YES/NO
+
+BALA EMAIL UNCHANGED:
+YES/NO
+
+BALA PASSWORD HASH UNCHANGED:
+YES/NO
+
+BALA STATUS UNCHANGED:
+YES/NO
+
+BALA APP ACCESS UNCHANGED:
+YES/NO
+
+BALA ROLES UNCHANGED:
+YES/NO
+
+BALA EFFECTIVE ACCESS NOT REDUCED:
+YES/NO
+
+BALA LOGIN REGRESSION:
+PASS/FAIL
+
+PROTECTED APPLICATIONS:
+
+CLOUD LOGIN MODIFIED:
+NO/YES
+
+MOBILE LOGIN MODIFIED:
+NO/YES
+
+SCANNER MODIFIED:
+NO/YES
+
+OCR MODIFIED:
+NO/YES
+
+PDF GENERATION MODIFIED:
+NO/YES
+
+GRN BUSINESS LOGIC MODIFIED:
+NO/YES
+
+INVENTORY BUSINESS LOGIC MODIFIED:
+NO/YES
+
+DATABASE MIGRATION:
+<name>
+
+API TESTS:
+<passed>/<failed>
+
+CLOUD TESTS:
+<passed>/<failed>
+
+CLOUD TYPECHECK:
+PASS/FAIL
+
+CLOUD BUILD:
+PASS/FAIL
+
+MOBILE TYPECHECK:
+PASS/FAIL
+
+FILES MODIFIED:
+<exact list>
+
+FINAL STATUS:
+PASS/FAIL
+
+============================================================
+120. COMMIT
+============================================================
+
+ONLY if:
+
+bala@chervic.in is protected
+
+existing login still works
+
+existing scanner/OCR/PDF/GRN are untouched
+
+tests pass.
+
+Commit:
+
+git commit -m "feat: add sila me user roles authorizations and storage access"
+
+DO NOT PUSH.
+
+Return commit SHA.
+
+STOP.
+
+DO NOT START ANOTHER FEATURE.

@@ -1,0 +1,1101 @@
+SILA ME MOBILE — CRITICAL BUG FIX
+
+ONLY ONE BUG:
+
+DELETE PAGE BUTTON IN THE MOBILE INVOICE SCANNER IS STILL NOT WORKING.
+
+DO NOT CHANGE ANY OTHER FEATURE.
+
+The scanner works.
+Multi-page scanning works.
+PDF generation works.
+Image quality works.
+Crop/rotate works.
+
+DELETE PAGE DOES NOT WORK.
+
+DO NOT REFACTOR THE SCANNER.
+DO NOT REPLACE THE SCANNER PACKAGE.
+DO NOT TOUCH LOGIN/AUTH/API/CLOUD/BACKEND/GRN/OCR.
+
+==================================================
+1. IMPORTANT: DO NOT ASSUME THE PREVIOUS FIX WORKED
+==================================================
+
+Previous attempts claimed Delete Page was fixed.
+
+IT IS NOT FIXED ON THE ACTUAL APP.
+
+Therefore do not inspect the code and simply report:
+
+"handler looks correct"
+
+or:
+
+"test passes"
+
+We need to identify why tapping DELETE on the actual page does not
+remove the page.
+
+Trace the real runtime interaction.
+
+==================================================
+2. FIND THE ACTUAL DELETE BUTTON USER IS PRESSING
+==================================================
+
+There may be multiple:
+
+Delete buttons
+trash icons
+page cards
+review components
+scanner implementations
+legacy scanner
+migrated scanner
+web fallback scanner
+native scanner
+
+First identify EXACTLY which component renders the Delete button
+visible to the user.
+
+Search for:
+
+DELETE PAGE
+Delete Page
+Delete
+deletePage
+removePage
+handleDelete
+handleDeletePage
+trash
+Trash
+Trash2
+onDelete
+removeScanPage
+
+Also identify whether SILA ME currently contains:
+
+CURRENT scanner
+LEGACY scanner
+SILA STORE MIGRATED scanner
+WEB fallback scanner
+NATIVE scanner
+
+Determine which one is actually mounted at runtime.
+
+DO NOT FIX AN UNUSED COMPONENT.
+
+==================================================
+3. ADD TEMPORARY RUNTIME TRACE
+==================================================
+
+On the ACTUAL visible Delete button add:
+
+console.log(
+  "[DELETE-TRACE] BUTTON_PRESSED",
+  {
+    pageId,
+    pageNumber,
+    pagesCount: pages.length
+  }
+);
+
+The FIRST requirement is proving that tapping the button produces:
+
+[DELETE-TRACE] BUTTON_PRESSED
+
+If it does NOT:
+
+STOP debugging scanner state.
+
+The problem is UI/touch interception.
+
+Fix the touch event first.
+
+==================================================
+4. IF BUTTON_PRESSED DOES NOT FIRE
+==================================================
+
+Inspect the complete visual hierarchy around the Delete button.
+
+Look specifically for:
+
+pointerEvents
+absoluteFill
+position: absolute
+zIndex
+elevation
+camera overlay
+gesture detector
+PanGestureHandler
+GestureDetector
+ScrollView
+FlatList
+Pressable
+TouchableOpacity
+Modal
+transparent View
+animated View
+drag/reorder overlay
+
+A transparent component may be physically sitting ABOVE the Delete
+button.
+
+Use React Native Inspector/layout inspection where possible.
+
+Temporarily give the Delete button/container a very high:
+
+zIndex
+elevation
+
+ONLY as a diagnostic.
+
+Also inspect parent:
+
+pointerEvents
+
+The Delete control itself must be touchable.
+
+==================================================
+5. REPLACE DELETE CONTROL TEMPORARILY
+==================================================
+
+To eliminate icon-component problems, temporarily replace the current
+Delete icon/button with a plain React Native Pressable:
+
+<Pressable
+  onPress={() => {
+    console.log("[DELETE-TRACE] BUTTON_PRESSED", page.id);
+    handleDeletePage(page.id);
+  }}
+  style={{
+    padding: 16,
+    minHeight: 48,
+    minWidth: 120,
+    alignItems: "center",
+    justifyContent: "center"
+  }}
+>
+  <Text>DELETE PAGE</Text>
+</Pressable>
+
+Do this on the actual Page Review screen.
+
+If this works:
+
+the original Delete UI component/touch layer is the problem.
+
+Fix the original component properly afterward.
+
+==================================================
+6. REMOVE CONFIRMATION DIALOG TEMPORARILY
+==================================================
+
+For diagnosis ONLY:
+
+temporarily bypass Alert.alert / custom confirmation modal.
+
+Tap:
+
+DELETE PAGE
+
+should immediately execute:
+
+removePage(page.id)
+
+This determines whether the bug is:
+
+Button
+vs
+Confirmation dialog
+vs
+State mutation.
+
+Once deletion works reliably, restore confirmation.
+
+==================================================
+7. TRACE THE COMPLETE DELETE PIPELINE
+==================================================
+
+Required logs:
+
+[DELETE-TRACE] BUTTON_PRESSED
+
+[DELETE-TRACE] HANDLER_ENTERED
+
+[DELETE-TRACE] PAGE_ID
+
+[DELETE-TRACE] PAGES_BEFORE
+
+[DELETE-TRACE] STORE_REMOVE_CALLED
+
+[DELETE-TRACE] PAGES_AFTER
+
+[DELETE-TRACE] PERSIST_STARTED
+
+[DELETE-TRACE] PERSIST_COMPLETED
+
+[DELETE-TRACE] UI_RERENDER
+
+Example:
+
+console.log("[DELETE-TRACE] PAGES_BEFORE",
+  pages.map(p => p.id)
+);
+
+const nextPages =
+  pages.filter(p => p.id !== pageId);
+
+console.log("[DELETE-TRACE] PAGES_AFTER",
+  nextPages.map(p => p.id)
+);
+
+==================================================
+8. VERIFY PAGE ID
+==================================================
+
+Check the selected page object.
+
+The Delete button MUST receive the actual stable page ID.
+
+Example:
+
+page.id
+
+Do NOT accidentally pass:
+
+pageNumber
+
+array index
+
+thumbnail URI
+
+selectedIndex
+
+undefined
+
+unless that is intentionally the authoritative identifier.
+
+Add:
+
+if (!pageId) {
+   console.error(
+      "[DELETE-TRACE] INVALID_PAGE_ID"
+   );
+   return;
+}
+
+==================================================
+9. CHECK FOR ID TYPE MISMATCH
+==================================================
+
+Specifically inspect whether IDs differ by type.
+
+Example bug:
+
+page.id = 123
+
+pageId = "123"
+
+Then:
+
+page.id !== pageId
+
+and nothing gets deleted.
+
+Normalize IDs if required.
+
+Example:
+
+String(page.id) !== String(pageId)
+
+But preferably use one consistent ID type throughout ScanPage.
+
+==================================================
+10. CHECK THE FILTER LOGIC
+==================================================
+
+The actual state mutation must effectively do:
+
+const nextPages = currentPages.filter(
+    page => page.id !== pageId
+);
+
+Then:
+
+setPages(nextPages);
+
+Do not accidentally use:
+
+page.id === pageId
+
+which retains only the selected page.
+
+Do not mutate:
+
+pages.splice(...)
+
+directly on Zustand/React state without producing a new array.
+
+Use immutable update.
+
+==================================================
+11. AUTHORITATIVE STATE
+==================================================
+
+This is critical.
+
+Determine where pages actually live.
+
+Possibilities:
+
+local useState
+Zustand
+Context
+Reducer
+AsyncStorage
+scanner native result
+route params
+derived state
+
+There must be ONE authoritative:
+
+ScanSession.pages
+
+The Delete button must modify THAT state.
+
+Do not delete from:
+
+displayPages
+
+thumbnailPages
+
+localPages
+
+filteredPages
+
+if the UI immediately regenerates those values from ScanSession.pages.
+
+==================================================
+12. CHECK FOR DUPLICATE PAGE STATE
+==================================================
+
+Search the scanner feature for every:
+
+useState(...pages...)
+
+setPages
+
+pages:
+
+scanPages
+
+capturedPages
+
+documentPages
+
+reviewPages
+
+If there are multiple independent page arrays, identify which one
+actually drives the review screen.
+
+Possible current bug:
+
+Delete updates local pages
+
+BUT
+
+useEffect reloads original pages from scanner store
+
+and deleted page immediately returns.
+
+Fix this architecture.
+
+Use one authoritative source.
+
+==================================================
+13. CHECK useEffect REHYDRATION
+==================================================
+
+Search the Page Review screen for:
+
+useEffect
+
+AsyncStorage load
+
+hydrate
+
+restoreSession
+
+loadScanSession
+
+setPages
+
+A likely bug is:
+
+Delete succeeds
+
+→ component rerenders
+
+→ useEffect runs
+
+→ old AsyncStorage session reloads
+
+→ deleted page returns.
+
+Ensure hydration happens only when appropriate.
+
+Do NOT rehydrate old scanner state after every pages change.
+
+==================================================
+14. ASYNCSTORAGE ORDER
+==================================================
+
+Correct sequence:
+
+current pages
+→ calculate nextPages
+→ update authoritative store
+→ UI rerenders
+→ persist nextPages
+
+Persistence must store NEXT state.
+
+Do not accidentally persist:
+
+old pages
+
+because of stale React closure.
+
+Example BAD:
+
+setPages(nextPages);
+
+await saveSession({
+   pages: pages
+});
+
+`pages` may still be OLD state.
+
+Correct:
+
+await saveSession({
+   ...session,
+   pages: nextPages
+});
+
+==================================================
+15. ZUSTAND CHECK
+==================================================
+
+If using Zustand:
+
+inspect removePage implementation.
+
+Correct concept:
+
+removePage: (pageId) =>
+  set((state) => ({
+    pages: state.pages
+      .filter((page) => page.id !== pageId)
+      .map((page, index) => ({
+         ...page,
+         pageNumber: index + 1
+      })),
+
+    pdfUri: null,
+    pdfDirty: true
+  }))
+
+Do not read stale `pages` outside the Zustand setter.
+
+==================================================
+16. SELECTED PAGE STATE
+==================================================
+
+After deleting the selected page:
+
+update selected page safely.
+
+Example:
+
+3 pages
+
+currently viewing Page 2
+
+delete Page 2
+
+remaining:
+
+Page 1
+Page 2 (old Page 3)
+
+selected index should become:
+
+min(oldIndex, nextPages.length - 1)
+
+Do not leave selectedPageId pointing to a deleted page.
+
+That can make it look like deletion failed.
+
+==================================================
+17. FLATLIST KEY
+==================================================
+
+Check FlatList / map rendering.
+
+DO NOT use only:
+
+key={index}
+
+for scanner pages.
+
+Use:
+
+key={page.id}
+
+or:
+
+keyExtractor={(item) => item.id}
+
+Otherwise React may reuse the visual page component after deletion
+and make the deleted page appear to remain.
+
+This is a VERY IMPORTANT check.
+
+==================================================
+18. THUMBNAIL LIST
+==================================================
+
+If review thumbnails use FlatList:
+
+data MUST come directly from current authoritative pages.
+
+Example:
+
+<FlatList
+    data={pages}
+    keyExtractor={(item) => item.id}
+    ...
+/>
+
+Do not use cached initialPages.
+
+==================================================
+19. PAGE PREVIEW
+==================================================
+
+The large selected-page preview must derive from:
+
+pages[selectedIndex]
+
+or a valid selectedPageId lookup.
+
+Do not keep a completely separate selectedPage object containing the
+deleted page.
+
+After deletion:
+
+recalculate selected page.
+
+==================================================
+20. RESTORE DELETE CONFIRMATION
+==================================================
+
+ONLY AFTER direct deletion works:
+
+restore:
+
+Delete Page?
+
+This page will be removed from the scanned invoice.
+
+CANCEL
+DELETE
+
+Confirm DELETE callback must call:
+
+handleDeletePage(page.id)
+
+Test both:
+
+Cancel → page remains
+
+Delete → page disappears.
+
+==================================================
+21. INVALIDATE PDF
+==================================================
+
+When deletion succeeds:
+
+pdfUri = null
+
+pdfDirty = true
+
+The existing PDF must not remain valid.
+
+==================================================
+22. FILE CLEANUP MUST NOT BLOCK DELETION
+==================================================
+
+Do NOT perform filesystem deletion before UI/state deletion.
+
+Correct:
+
+1. Remove page from state
+2. Persist new session
+3. Update UI
+4. In background/best-effort clean temporary page files
+
+If filesystem cleanup fails:
+
+DO NOT restore deleted page.
+
+Log cleanup warning only.
+
+==================================================
+23. DO NOT NAVIGATE ON DELETE
+==================================================
+
+Delete should NOT:
+
+router.back()
+
+router.replace()
+
+router.push()
+
+or recreate scanner route.
+
+It should remain on Page Review.
+
+==================================================
+24. TEST WITH EXACT 3-PAGE CASE
+==================================================
+
+Mandatory:
+
+Scan:
+
+A
+B
+C
+
+Verify:
+
+pages = [A,B,C]
+
+Delete B.
+
+Logs must prove:
+
+BUTTON_PRESSED B
+
+HANDLER_ENTERED B
+
+PAGES_BEFORE [A,B,C]
+
+PAGES_AFTER [A,C]
+
+STORE_REMOVE_CALLED
+
+PERSIST_COMPLETED
+
+UI_RERENDER [A,C]
+
+Visible UI must show exactly:
+
+Page 1 = A
+Page 2 = C
+
+==================================================
+25. DELETE FIRST PAGE
+==================================================
+
+A
+B
+C
+
+Delete A.
+
+Expected:
+
+B
+C
+
+renumber:
+
+1
+2
+
+selected page becomes B.
+
+==================================================
+26. DELETE LAST PAGE
+==================================================
+
+A
+B
+C
+
+Delete C.
+
+Expected:
+
+A
+B
+
+No blank preview.
+
+==================================================
+27. DELETE ONLY PAGE
+==================================================
+
+A
+
+Delete A.
+
+Expected:
+
+pages.length = 0
+
+Show:
+
+No pages scanned
+
+SCAN PAGE
+
+CREATE PDF disabled.
+
+No crash.
+
+==================================================
+28. DELETE AFTER REORDER
+==================================================
+
+A
+B
+C
+
+Reorder:
+
+C
+A
+B
+
+Delete A.
+
+Expected:
+
+C
+B
+
+Do not delete based on stale array index.
+
+==================================================
+29. DELETE AFTER ROTATE/CROP
+==================================================
+
+Scan A/B.
+
+Crop or rotate B.
+
+Then Delete B.
+
+It must still delete B by stable page ID.
+
+==================================================
+30. DELETE AFTER PDF CREATED
+==================================================
+
+A
+B
+C
+
+Create PDF.
+
+Back to Review.
+
+Delete B.
+
+Expected:
+
+pages [A,C]
+
+pdfUri null
+
+pdfDirty true
+
+Old 3-page PDF cannot be submitted.
+
+==================================================
+31. NAVIGATION PERSISTENCE
+==================================================
+
+A
+B
+C
+
+Delete B.
+
+Back.
+
+Return to scanner review.
+
+Expected:
+
+A
+C
+
+B must NOT return.
+
+==================================================
+32. APP RESTART PERSISTENCE
+==================================================
+
+If scanner sessions intentionally survive restart:
+
+A
+B
+C
+
+Delete B.
+
+Close/reload app.
+
+Restore scan session.
+
+Expected:
+
+A
+C
+
+If B returns:
+
+AsyncStorage persistence is still broken.
+
+==================================================
+33. TEMPORARY DEBUG DISPLAY
+==================================================
+
+During debugging add a DEVELOPMENT-ONLY small status:
+
+Pages: 3
+
+After delete it MUST immediately become:
+
+Pages: 2
+
+This helps distinguish:
+
+state deletion
+
+from
+
+visual preview caching.
+
+Remove this debug display when finished.
+
+==================================================
+34. DO NOT USE UNIT TESTS ALONE
+==================================================
+
+A unit test for:
+
+removePage()
+
+is insufficient.
+
+The bug is in the actual user interaction.
+
+Test:
+
+ACTUAL PAGE REVIEW COMPONENT
++
+ACTUAL DELETE BUTTON
++
+ACTUAL STORE.
+
+Add a component/integration test that presses the visible DELETE PAGE
+control.
+
+==================================================
+35. DO NOT REPORT PASS UNLESS BUTTON INTERACTION
+IS VERIFIED
+==================================================
+
+Do NOT say:
+
+DELETE PAGE PASS
+
+just because:
+
+TypeScript compiles
+
+unit test passes
+
+filter function works
+
+handler exists.
+
+Report PASS only when the actual UI button invokes the actual store
+mutation in an integration test/runtime verification.
+
+If native physical-device tapping cannot be tested in Replit say:
+
+PHYSICAL DEVICE TEST PENDING USER ACTION
+
+==================================================
+36. LIKELY ROOT CAUSES TO CHECK IN ORDER
+==================================================
+
+Check these in this order:
+
+1. Replit modified wrong scanner component
+2. Button onPress never fires
+3. Overlay intercepting touch
+4. Confirmation callback broken
+5. Wrong/undefined page ID
+6. Page ID type mismatch
+7. Delete changes wrong/local state
+8. Duplicate pages state exists
+9. AsyncStorage rehydrates deleted page
+10. Stale closure persists old pages
+11. FlatList uses index as key
+12. selectedPage remains stale
+13. filesystem cleanup throws before state update
+
+DO NOT skip directly to #13.
+
+==================================================
+37. FILES THAT MAY BE CHANGED
+==================================================
+
+Only change files directly related to:
+
+Page Review
+
+Delete button/component
+
+Scanner store
+
+Scanner session persistence
+
+Scanner temporary-file cleanup
+
+Tests for Delete Page.
+
+If login/auth/backend/cloud files appear in git diff:
+
+DO NOT COMMIT THEM.
+
+==================================================
+38. FINAL VERIFICATION
+==================================================
+
+Run:
+
+Mobile TypeScript
+
+Mobile scanner tests
+
+Mobile component/integration tests
+
+Expo Doctor
+
+git diff --check
+
+Verify no unrelated files changed.
+
+==================================================
+39. FINAL REPORT
+==================================================
+
+Return exactly:
+
+DELETE PAGE ROOT CAUSE:
+<exact cause>
+
+ACTUAL DELETE COMPONENT:
+<file path + component>
+
+BUTTON onPress FIRES:
+YES/NO
+
+PAGE ID RECEIVED:
+<example>
+
+AUTHORITATIVE PAGE STORE:
+<store/file>
+
+PAGES BEFORE:
+[A,B,C]
+
+PAGES AFTER DELETE B:
+[A,C]
+
+ASYNCSTORAGE AFTER:
+[A,C]
+
+FLATLIST KEY:
+<actual key>
+
+SELECTED PAGE AFTER DELETE:
+<result>
+
+PDF INVALIDATED:
+YES/NO
+
+DELETE FIRST PAGE:
+PASS/FAIL
+
+DELETE MIDDLE PAGE:
+PASS/FAIL
+
+DELETE LAST PAGE:
+PASS/FAIL
+
+DELETE ONLY PAGE:
+PASS/FAIL
+
+DELETE AFTER REORDER:
+PASS/FAIL
+
+DELETE AFTER PDF:
+PASS/FAIL
+
+BACK/RETURN PERSISTENCE:
+PASS/FAIL
+
+APP RELOAD PERSISTENCE:
+PASS/FAIL
+
+ACTUAL UI INTEGRATION TEST:
+PASS/FAIL
+
+PHYSICAL DEVICE TEST:
+PASS/FAIL or
+PHYSICAL DEVICE TEST PENDING USER ACTION
+
+FILES MODIFIED:
+<exact files>
+
+AUTH FILES MODIFIED:
+NO
+
+BACKEND FILES MODIFIED:
+NO
+
+FINAL STATUS:
+DELETE PAGE FIXED / DELETE PAGE NOT FIXED
+
+If it is NOT proven fixed, DO NOT COMMIT.
+
+If proven fixed:
+
+git commit -m "fix: repair scanner page deletion state"
+
+Return commit SHA.
+
+STOP.

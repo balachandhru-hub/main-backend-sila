@@ -1,0 +1,3215 @@
+PROJECT: SILA ME
+PHASE: FINAL PO + SUPPLIER MASTER DATABASE ALIGNMENT AND EXCEL DATA MANAGEMENT
+
+OBJECTIVE
+
+Prepare the SILA ME master-data foundation required for the next operational flow:
+
+SUPPLIER MASTER
+        ↓
+PO MASTER
+        ↓
+INVOICE SCAN / OCR
+        ↓
+SUPPLIER MATCH
+        ↓
+OPEN PO SELECTION
+        ↓
+SAVE & CONTINUE
+        ↓
+GRN COMPARISON
+        ↓
+PHYSICAL RECEIVED QTY
+        ↓
+POST_GRN
+
+THIS TASK IS ONLY FOR:
+
+1. Inspecting and updating PO database tables.
+2. Creating/updating Supplier Master tables.
+3. Aligning existing GRN tables with the agreed structure where required.
+4. PO Excel Upload.
+5. PO Excel Download.
+6. PO Excel Template.
+7. Supplier Excel Upload.
+8. Supplier Excel Download.
+9. Supplier Excel Template.
+10. Import preview/validation/upsert.
+11. Preparing the same tables for GET_PO and GET_SUPPLIER integrations.
+12. Preparing Open PO queries required by Mobile.
+
+DO NOT implement Invoice Posting.
+
+DO NOT create separate Excel-only tables.
+
+Excel and APIs must ultimately maintain the SAME Supplier and PO master
+tables.
+
+
+============================================================
+1. INSPECT CURRENT IMPLEMENTATION FIRST
+============================================================
+
+Before changing anything inspect:
+
+purchase_orders / PurchaseOrder
+
+purchase_order_items / PurchaseOrderItem
+
+suppliers / Supplier
+
+supplier_aliases
+
+goods_receipts
+
+goods_receipt_items
+
+Invoice
+
+InvoiceLine
+
+existing EF entities
+
+DbContext
+
+migrations
+
+indexes
+
+foreign keys
+
+integration field mappings
+
+existing Excel import/export code
+
+existing PO APIs.
+
+
+Report before migration:
+
+PO Headers:
+<n>
+
+PO Items:
+<n>
+
+Suppliers:
+<n>
+
+GRN Headers:
+<n>
+
+GRN Items:
+<n>
+
+
+Do NOT drop/recreate populated tables.
+
+Do NOT truncate existing data.
+
+Reuse existing tables and columns where equivalent.
+
+
+============================================================
+2. CORE MASTER DATA RELATIONSHIP
+============================================================
+
+Target:
+
+Organization
+      ↓
+Entity
+      ↓
+Company Code
+      ↓
+Supplier
+      ↓
+Purchase Order
+      ↓
+Purchase Order Item
+
+
+Then operationally:
+
+Supplier
+   ↓
+Open PO
+   ↓
+Invoice
+   ↓
+GRN.
+
+
+============================================================
+3. PURCHASE ORDER HEADER TABLE
+============================================================
+
+Create/update:
+
+purchase_orders
+
+
+Required structure:
+
+id
+UUID
+PK
+
+
+organization_id
+UUID
+NOT NULL
+
+
+entity_code
+VARCHAR(50)
+NOT NULL
+
+
+purchase_order
+VARCHAR(35)
+NOT NULL
+
+
+purchase_order_type
+VARCHAR(20)
+NOT NULL
+
+
+supplier_id
+UUID
+NOT NULL
+FK → suppliers.id
+
+
+erp_supplier_id
+VARCHAR(50)
+NOT NULL
+
+
+supplier_name
+VARCHAR(255)
+NULL
+
+
+company_code
+VARCHAR(20)
+NOT NULL
+
+
+purchasing_organization
+VARCHAR(20)
+NULL
+
+
+purchasing_group
+VARCHAR(20)
+NULL
+
+
+document_currency
+VARCHAR(5)
+NOT NULL
+
+
+purchase_order_date
+DATE
+NULL
+
+
+payment_terms
+VARCHAR(30)
+NULL
+
+
+po_status
+VARCHAR(30)
+NOT NULL
+
+
+po_category
+VARCHAR(20)
+NULL
+
+
+total_net_amount
+DECIMAL(18,3)
+NULL
+
+
+total_tax_amount
+DECIMAL(18,3)
+NULL
+
+
+total_amount
+DECIMAL(18,3)
+NOT NULL
+
+
+total_ordered_quantity
+DECIMAL(18,3)
+NULL
+
+
+total_received_quantity
+DECIMAL(18,3)
+NULL
+
+
+source_system
+VARCHAR(30)
+NOT NULL
+
+
+source_configuration_id
+UUID
+NULL
+
+
+source_last_changed_at
+TIMESTAMP
+NULL
+
+
+last_synced_at
+TIMESTAMP
+NULL
+
+
+created_at
+TIMESTAMP
+NOT NULL
+
+
+updated_at
+TIMESTAMP
+NOT NULL
+
+
+============================================================
+4. PO HEADER UNIQUE KEY
+============================================================
+
+Unique business key:
+
+organization_id
++
+entity_code
++
+purchase_order
+
+
+PO Number is NOT assumed globally unique.
+
+
+============================================================
+5. PURCHASE ORDER ITEM TABLE
+============================================================
+
+Create/update:
+
+purchase_order_items
+
+
+Required structure:
+
+id
+UUID
+PK
+
+
+purchase_order_id
+UUID
+NOT NULL
+FK → purchase_orders.id
+
+
+organization_id
+UUID
+NOT NULL
+
+
+entity_code
+VARCHAR(50)
+NOT NULL
+
+
+purchase_order
+VARCHAR(35)
+NOT NULL
+
+
+purchase_order_item
+VARCHAR(10)
+NOT NULL
+
+
+material
+VARCHAR(50)
+NULL
+
+
+material_description
+VARCHAR(500)
+NULL
+
+
+material_group
+VARCHAR(50)
+NULL
+
+
+plant
+VARCHAR(20)
+NULL
+
+
+storage_location
+VARCHAR(20)
+NULL
+
+
+item_category
+VARCHAR(20)
+NULL
+
+
+account_assignment_category
+VARCHAR(20)
+NULL
+
+
+ordered_quantity
+DECIMAL(18,3)
+NOT NULL
+
+
+order_uom
+VARCHAR(20)
+NOT NULL
+
+
+received_quantity
+DECIMAL(18,3)
+NOT NULL
+DEFAULT 0
+
+
+open_quantity
+DECIMAL(18,3)
+NOT NULL
+
+
+net_price
+DECIMAL(18,4)
+NULL
+
+
+price_quantity
+DECIMAL(18,3)
+NULL
+
+
+item_amount
+DECIMAL(18,3)
+NOT NULL
+
+
+tax_code
+VARCHAR(20)
+NOT NULL
+
+
+tax_amount
+DECIMAL(18,3)
+NULL
+
+
+gross_item_amount
+DECIMAL(18,3)
+NULL
+
+
+currency
+VARCHAR(5)
+NOT NULL
+
+
+goods_receipt_expected
+BOOLEAN
+NOT NULL
+
+
+invoice_expected
+BOOLEAN
+NOT NULL
+DEFAULT TRUE
+
+
+delivery_completed
+BOOLEAN
+NOT NULL
+DEFAULT FALSE
+
+
+deletion_indicator
+BOOLEAN
+NOT NULL
+DEFAULT FALSE
+
+
+item_status
+VARCHAR(30)
+NOT NULL
+
+
+source_last_changed_at
+TIMESTAMP
+NULL
+
+
+last_synced_at
+TIMESTAMP
+NULL
+
+
+created_at
+TIMESTAMP
+NOT NULL
+
+
+updated_at
+TIMESTAMP
+NOT NULL
+
+
+============================================================
+6. PO ITEM UNIQUE KEY
+============================================================
+
+Unique:
+
+organization_id
++
+entity_code
++
+purchase_order
++
+purchase_order_item
+
+
+============================================================
+7. FINAL PO MANDATORY BUSINESS FIELDS
+============================================================
+
+The following are mandatory.
+
+UPLOAD CONTEXT:
+
+Organization
+Entity
+
+
+PO HEADER:
+
+1. PurchaseOrder
+2. PurchaseOrderType
+3. SupplierId
+4. CompanyCode
+5. Currency
+6. TotalAmount
+7. POStatus
+
+
+PO ITEM:
+
+8. PurchaseOrderItem
+9. OrderQuantity
+10. UOM
+11. ItemAmount
+12. TaxCode
+13. GoodsReceiptExpected
+
+
+Additionally:
+
+Material OR MaterialDescription
+
+At least one MUST exist.
+
+
+Therefore the complete mandatory business context is:
+
+Organization
+Entity
+Company Code
+Supplier ID
+PO Number
+PO Item
+PO Type
+Order Quantity
+UOM
+Currency
+Item Amount
+Tax Code
+Total Amount
+PO Status
+GR Expected
+Material OR Description.
+
+
+============================================================
+8. MATERIAL / DESCRIPTION VALIDATION
+============================================================
+
+Do not require Material ID universally.
+
+Hospitality POs may contain descriptive/non-material-master items.
+
+Rule:
+
+Material != blank
+
+OR
+
+MaterialDescription != blank.
+
+
+If both are blank:
+
+PO_ITEM_IDENTIFICATION_REQUIRED.
+
+
+Message:
+
+"Material or Item Description is required."
+
+
+============================================================
+9. COMPANY CODE — MANDATORY
+============================================================
+
+CompanyCode is mandatory at PO Header level.
+
+Store:
+
+purchase_orders.company_code.
+
+
+Do not automatically infer CompanyCode from Entity unless an explicit
+Entity → CompanyCode mapping exists.
+
+
+If CompanyCode conflicts with selected/configured Entity:
+
+BLOCK:
+
+COMPANY_CODE_ENTITY_MISMATCH.
+
+
+Company Code will later be important for:
+
+ERP routing
+
+GRN posting
+
+Invoice posting
+
+financial validation.
+
+
+============================================================
+10. CURRENCY — MANDATORY
+============================================================
+
+Currency is mandatory.
+
+Store:
+
+purchase_orders.document_currency
+
+and:
+
+purchase_order_items.currency.
+
+
+Normalize:
+
+trim
+
+uppercase.
+
+
+Examples:
+
+AED
+USD
+EUR
+GBP
+CHF.
+
+
+Do not automatically assume AED for Dubai.
+
+
+For a standard single-currency PO:
+
+PO Item Currency must equal Header Currency.
+
+
+If not:
+
+PO_CURRENCY_MISMATCH.
+
+
+============================================================
+11. SUPPLIER ID — MANDATORY
+============================================================
+
+SupplierId is mandatory.
+
+PO must reference Supplier Master.
+
+
+Do NOT use Supplier Name as authoritative identity.
+
+
+Validate:
+
+Organization
++
+Entity
++
+SupplierId.
+
+
+If Supplier does not exist:
+
+BLOCK PO import:
+
+SUPPLIER_NOT_FOUND.
+
+
+Do NOT automatically create Supplier from PO Excel.
+
+
+============================================================
+12. PO TYPE — MANDATORY
+============================================================
+
+PurchaseOrderType is mandatory.
+
+
+Keep:
+
+purchase_order_type
+
+separate from:
+
+po_category.
+
+
+POCategory may represent:
+
+MATERIAL
+SERVICE
+MIXED.
+
+
+ERP PO document type may be something different.
+
+
+Do not force ERP document type into SILA category.
+
+
+============================================================
+13. PO STATUS — MANDATORY
+============================================================
+
+POStatus is mandatory.
+
+
+Normalize where appropriate into:
+
+OPEN
+
+PARTIALLY_RECEIVED
+
+CLOSED
+
+CANCELLED.
+
+
+Do not expose:
+
+CLOSED
+
+CANCELLED
+
+as Open PO choices in Mobile.
+
+
+============================================================
+14. GOODS RECEIPT EXPECTED — MANDATORY
+============================================================
+
+GoodsReceiptExpected is mandatory at item level.
+
+
+Excel accepted inputs:
+
+TRUE/FALSE
+
+YES/NO
+
+1/0.
+
+
+Normalize to boolean.
+
+
+If:
+
+GoodsReceiptExpected = FALSE
+
+the item cannot be used for material GRN.
+
+
+============================================================
+15. ORDER QUANTITY — MANDATORY
+============================================================
+
+OrderQuantity is mandatory.
+
+
+Must be decimal > 0 for normal receivable items.
+
+
+This is required to calculate:
+
+Open Quantity.
+
+
+Do not use Invoice Quantity as PO Order Quantity.
+
+
+============================================================
+16. QUANTITY MODEL
+============================================================
+
+Keep separately:
+
+ordered_quantity
+
+received_quantity
+
+open_quantity.
+
+
+Concept:
+
+OpenQuantity
+=
+OrderedQuantity
+-
+Confirmed Posted Receipt Quantity.
+
+
+Do not calculate Open Quantity from invoice quantity.
+
+
+These values will later support:
+
+PO Ordered Qty
+
+Previously Received Qty
+
+PO Open Qty
+
+Invoice Qty
+
+Physical Received Qty
+
+Accepted Qty
+
+Damaged Qty
+
+Rejected Qty.
+
+
+============================================================
+17. UOM — MANDATORY
+============================================================
+
+UOM is mandatory at PO item level.
+
+
+Normalize:
+
+trim
+uppercase.
+
+
+Do not guess UOM conversions.
+
+
+If Invoice UOM later differs from PO UOM and no configured conversion
+exists:
+
+GRN posting must block.
+
+
+============================================================
+18. ITEM AMOUNT — MANDATORY
+============================================================
+
+ItemAmount is mandatory.
+
+
+Store:
+
+purchase_order_items.item_amount
+
+DECIMAL(18,3).
+
+
+Never FLOAT/DOUBLE for financial values.
+
+
+============================================================
+19. TAX CODE — MANDATORY
+============================================================
+
+TaxCode is mandatory at item level.
+
+
+Store:
+
+purchase_order_items.tax_code.
+
+
+Do not store TaxCode only at PO Header because different lines may
+have different tax codes.
+
+
+============================================================
+20. TOTAL AMOUNT — MANDATORY
+============================================================
+
+TotalAmount is mandatory at PO Header.
+
+
+Store:
+
+purchase_orders.total_amount.
+
+
+If Excel contains repeated header values per item:
+
+all rows belonging to same PO must have the SAME TotalAmount.
+
+
+If conflicting:
+
+CONFLICTING_PO_TOTAL_AMOUNT.
+
+
+============================================================
+21. OPTIONAL PO FIELDS
+============================================================
+
+Support but do NOT make universally mandatory:
+
+SupplierName
+
+Material
+
+MaterialDescription
+
+MaterialGroup
+
+PurchaseOrderDate
+
+PurchasingOrganization
+
+PurchasingGroup
+
+PaymentTerms
+
+Plant
+
+StorageLocation
+
+ItemCategory
+
+AccountAssignmentCategory
+
+NetPrice
+
+PriceQuantity
+
+TaxAmount
+
+GrossItemAmount
+
+TotalNetAmount
+
+TotalTaxAmount
+
+InvoiceExpected
+
+DeliveryCompleted
+
+DeletionIndicator
+
+SourceLastChangedAt.
+
+
+============================================================
+22. PLANT / STORAGE LOCATION
+============================================================
+
+Plant and StorageLocation should NOT block PO Master import universally.
+
+
+However they may become mandatory at POST_GRN time depending on ERP
+configuration.
+
+
+Therefore distinguish:
+
+MASTER IMPORT VALIDATION
+
+from:
+
+GRN POSTING VALIDATION.
+
+
+If POST_GRN configuration requires Plant:
+
+PLANT_REQUIRED_FOR_GRN.
+
+
+If POST_GRN requires StorageLocation:
+
+STORAGE_LOCATION_REQUIRED_FOR_GRN.
+
+
+Never invent these values.
+
+
+============================================================
+23. SUPPLIER MASTER TABLE
+============================================================
+
+Create/update:
+
+suppliers.
+
+
+Structure:
+
+id
+UUID
+PK
+
+
+organization_id
+UUID
+NOT NULL
+
+
+entity_code
+VARCHAR(50)
+NOT NULL
+
+
+supplier_id
+VARCHAR(50)
+NOT NULL
+
+
+business_partner_id
+VARCHAR(50)
+NULL
+
+
+supplier_name
+VARCHAR(255)
+NOT NULL
+
+
+normalized_supplier_name
+VARCHAR(255)
+NOT NULL
+
+
+supplier_legal_name
+VARCHAR(255)
+NULL
+
+
+supplier_search_name
+VARCHAR(255)
+NULL
+
+
+tax_number
+VARCHAR(50)
+NULL
+
+
+trn
+VARCHAR(50)
+NULL
+
+
+country
+VARCHAR(100)
+NULL
+
+
+city
+VARCHAR(100)
+NULL
+
+
+postal_code
+VARCHAR(30)
+NULL
+
+
+street
+VARCHAR(500)
+NULL
+
+
+email
+VARCHAR(255)
+NULL
+
+
+phone
+VARCHAR(50)
+NULL
+
+
+purchasing_organization
+VARCHAR(20)
+NULL
+
+
+company_code
+VARCHAR(20)
+NULL
+
+
+currency
+VARCHAR(5)
+NULL
+
+
+payment_terms
+VARCHAR(30)
+NULL
+
+
+is_blocked
+BOOLEAN
+NOT NULL
+DEFAULT FALSE
+
+
+is_deleted
+BOOLEAN
+NOT NULL
+DEFAULT FALSE
+
+
+is_active
+BOOLEAN
+NOT NULL
+DEFAULT TRUE
+
+
+source_system
+VARCHAR(30)
+NOT NULL
+
+
+source_configuration_id
+UUID
+NULL
+
+
+source_last_changed_at
+TIMESTAMP
+NULL
+
+
+last_synced_at
+TIMESTAMP
+NULL
+
+
+created_at
+TIMESTAMP
+NOT NULL
+
+
+updated_at
+TIMESTAMP
+NOT NULL
+
+
+============================================================
+24. SUPPLIER UNIQUE KEY
+============================================================
+
+Unique:
+
+organization_id
++
+entity_code
++
+supplier_id.
+
+
+Supplier Name is NOT unique.
+
+
+============================================================
+25. SUPPLIER EXCEL MANDATORY FIELDS
+============================================================
+
+Supplier mandatory:
+
+SupplierId
+SupplierName.
+
+
+Organization and Entity come from selected upload context.
+
+
+Recommended optional:
+
+BusinessPartnerId
+
+SupplierLegalName
+
+TaxNumber
+
+TRN
+
+Country
+
+City
+
+PostalCode
+
+Street
+
+Email
+
+Phone
+
+PurchasingOrganization
+
+CompanyCode
+
+Currency
+
+PaymentTerms
+
+IsBlocked
+
+IsActive
+
+SourceLastChangedAt.
+
+
+============================================================
+26. SUPPLIER NAME NORMALIZATION
+============================================================
+
+Generate:
+
+NormalizedSupplierName.
+
+
+Safely normalize:
+
+case
+
+leading/trailing whitespace
+
+repeated whitespace
+
+common punctuation
+
+LLC / L.L.C formatting where safe.
+
+
+Do not over-normalize unrelated suppliers.
+
+
+SupplierId remains authoritative.
+
+
+============================================================
+27. SUPPLIER ALIAS TABLE
+============================================================
+
+Create/reuse:
+
+supplier_aliases.
+
+
+Fields:
+
+id
+
+supplier_id FK
+
+organization_id
+
+entity_code
+
+alias_name
+
+normalized_alias_name
+
+source
+
+confidence
+
+is_confirmed
+
+created_at
+
+created_by.
+
+
+Purpose:
+
+Invoice OCR may extract:
+
+ABC Foods Trading L.L.C.
+
+
+Supplier Master may contain:
+
+ABC FOOD TRADING LLC.
+
+
+Confirmed alias can resolve this later to:
+
+SupplierId 1000234.
+
+
+============================================================
+28. CLOUD SUPPLIER MASTER SCREEN
+============================================================
+
+Create/reuse:
+
+MASTER DATA
+→ SUPPLIERS.
+
+
+Top:
+
+Organization
+
+Entity
+
+
+Actions:
+
+UPLOAD EXCEL
+
+DOWNLOAD EXCEL
+
+DOWNLOAD TEMPLATE
+
+REFRESH.
+
+
+Table:
+
+Supplier ID
+
+Supplier Name
+
+Business Partner
+
+TRN
+
+Company Code
+
+Purchasing Organization
+
+Currency
+
+Country
+
+Status
+
+Source
+
+Last Synced.
+
+
+Search:
+
+Supplier ID
+
+Supplier Name
+
+TRN.
+
+
+============================================================
+29. CLOUD PURCHASE ORDER SCREEN
+============================================================
+
+Create/reuse:
+
+PURCHASING
+→ PURCHASE ORDERS.
+
+
+Top:
+
+Organization
+
+Entity
+
+
+Actions:
+
+UPLOAD EXCEL
+
+DOWNLOAD EXCEL
+
+DOWNLOAD TEMPLATE
+
+REFRESH.
+
+
+Show EXISTING DB records immediately.
+
+
+Do not require API Pull first.
+
+
+Table:
+
+PO Number
+
+PO Type
+
+Supplier ID
+
+Supplier Name
+
+Company Code
+
+PO Date
+
+Currency
+
+Total Amount
+
+Items
+
+Ordered Qty
+
+Received Qty
+
+Open Qty
+
+Status
+
+Source
+
+Last Synced.
+
+
+Search:
+
+PO Number
+
+Supplier ID
+
+Supplier Name.
+
+
+Filters:
+
+Entity
+
+Company Code
+
+Supplier
+
+PO Type
+
+PO Status
+
+Currency
+
+Open/Closed.
+
+
+============================================================
+30. PO DETAIL
+============================================================
+
+PO detail header:
+
+PO Number
+
+PO Type
+
+Supplier ID
+
+Supplier Name
+
+Company Code
+
+Purchasing Organization
+
+Purchasing Group
+
+Currency
+
+PO Date
+
+Total Net Amount
+
+Tax Amount
+
+Total Amount
+
+PO Status
+
+Source
+
+Last Synced.
+
+
+ITEMS table:
+
+PO Item
+
+Material
+
+Description
+
+Plant
+
+Storage Location
+
+UOM
+
+Ordered Qty
+
+Received Qty
+
+Open Qty
+
+Net Price
+
+Item Amount
+
+Tax Code
+
+Tax Amount
+
+GR Expected
+
+Invoice Expected
+
+Item Status.
+
+
+============================================================
+31. PO EXCEL TEMPLATE
+============================================================
+
+Provide:
+
+DOWNLOAD PO TEMPLATE.
+
+
+Use real XLSX.
+
+
+Workbook:
+
+SHEET 1:
+PO_HEADERS
+
+
+Mandatory columns:
+
+PurchaseOrder *
+PurchaseOrderType *
+SupplierId *
+CompanyCode *
+Currency *
+TotalAmount *
+POStatus *
+
+
+Optional:
+
+SupplierName
+PurchaseOrderDate
+PurchasingOrganization
+PurchasingGroup
+PaymentTerms
+POCategory
+TotalNetAmount
+TotalTaxAmount
+SourceLastChangedAt.
+
+
+SHEET 2:
+PO_ITEMS
+
+
+Mandatory:
+
+PurchaseOrder *
+PurchaseOrderItem *
+OrderQuantity *
+UOM *
+Currency *
+ItemAmount *
+TaxCode *
+GoodsReceiptExpected *
+
+
+Conditional:
+
+Material **
+MaterialDescription **
+
+
+** At least one required.
+
+
+Optional:
+
+MaterialGroup
+Plant
+StorageLocation
+ItemCategory
+AccountAssignmentCategory
+ReceivedQuantity
+OpenQuantity
+NetPrice
+PriceQuantity
+TaxAmount
+GrossItemAmount
+InvoiceExpected
+DeliveryCompleted
+DeletionIndicator
+ItemStatus
+SourceLastChangedAt.
+
+
+SHEET 3:
+
+INSTRUCTIONS.
+
+
+Clearly identify:
+
+* MANDATORY
+
+** ONE OF THESE REQUIRED.
+
+
+============================================================
+32. PO EXCEL UPLOAD CONTEXT
+============================================================
+
+Before upload require:
+
+Organization
+[ FIVE Hotels and Resorts ]
+
+Entity
+[ Dubai / Spain / NewYork / Zurich ]
+
+
+Then:
+
+[ UPLOAD PO EXCEL ].
+
+
+Server applies selected:
+
+OrganizationId
+
+EntityCode.
+
+
+Do not rely on arbitrary Excel values for tenant context.
+
+
+============================================================
+33. PO EXCEL UPLOAD FLOW
+============================================================
+
+UPLOAD
+    ↓
+Parse XLSX
+    ↓
+Validate Workbook
+    ↓
+Validate Supplier
+    ↓
+Validate Header
+    ↓
+Validate Items
+    ↓
+Calculate/Validate Quantities
+    ↓
+Preview
+    ↓
+CONFIRM
+    ↓
+Transactional Upsert
+    ↓
+Refresh PO Screen.
+
+
+Selecting a file MUST NOT immediately update DB.
+
+
+============================================================
+34. PO IMPORT PREVIEW
+============================================================
+
+Show:
+
+File Name
+
+Organization
+
+Entity
+
+
+PO Headers:
+<n>
+
+PO Items:
+<n>
+
+
+NEW:
+<n>
+
+UPDATE:
+<n>
+
+UNCHANGED:
+<n>
+
+WARNING:
+<n>
+
+ERROR:
+<n>.
+
+
+Tabs:
+
+NEW
+
+UPDATES
+
+UNCHANGED
+
+WARNINGS
+
+ERRORS.
+
+
+============================================================
+35. PO ROW-LEVEL VALIDATION
+============================================================
+
+Validate mandatory fields individually.
+
+
+Error examples:
+
+PO_NUMBER_REQUIRED
+
+PO_ITEM_REQUIRED
+
+PO_TYPE_REQUIRED
+
+SUPPLIER_ID_REQUIRED
+
+SUPPLIER_NOT_FOUND
+
+COMPANY_CODE_REQUIRED
+
+CURRENCY_REQUIRED
+
+ORDER_QUANTITY_REQUIRED
+
+INVALID_ORDER_QUANTITY
+
+UOM_REQUIRED
+
+ITEM_AMOUNT_REQUIRED
+
+TAX_CODE_REQUIRED
+
+TOTAL_AMOUNT_REQUIRED
+
+PO_STATUS_REQUIRED
+
+GR_EXPECTED_REQUIRED
+
+PO_ITEM_IDENTIFICATION_REQUIRED
+
+PO_CURRENCY_MISMATCH
+
+COMPANY_CODE_ENTITY_MISMATCH
+
+CONFLICTING_PO_TOTAL_AMOUNT.
+
+
+Show:
+
+Sheet
+
+Row
+
+PO Number
+
+PO Item
+
+Field
+
+Error Code
+
+Message.
+
+
+============================================================
+36. RECEIVED / OPEN QTY ON INITIAL LOAD
+============================================================
+
+For initial PO master load:
+
+ReceivedQuantity may be provided.
+
+
+Default:
+
+ReceivedQuantity = 0
+
+if not supplied.
+
+
+Validate:
+
+ReceivedQuantity >= 0.
+
+
+Normally:
+
+ReceivedQuantity <= OrderedQuantity
+
+unless configured legitimate over-receipt handling exists.
+
+
+If OpenQuantity not provided:
+
+calculate:
+
+OpenQuantity =
+OrderedQuantity - ReceivedQuantity.
+
+
+If OpenQuantity provided:
+
+validate consistency.
+
+
+Do not blindly trust inconsistent spreadsheet quantities.
+
+
+============================================================
+37. FUTURE GRN OWNERSHIP OF RECEIVED QTY
+============================================================
+
+Once SILA GRN transaction history becomes authoritative:
+
+Excel must NOT freely overwrite:
+
+ReceivedQuantity
+
+OpenQuantity.
+
+
+These should be derived/reconciled from:
+
+POSTED GRN
+
+and/or:
+
+ERP GET_GRN.
+
+
+Design field ownership accordingly now.
+
+
+============================================================
+38. PO DUPLICATE / UPSERT
+============================================================
+
+Header key:
+
+Organization
++
+Entity
++
+PurchaseOrder.
+
+
+Item key:
+
+Organization
++
+Entity
++
+PurchaseOrder
++
+PurchaseOrderItem.
+
+
+Existing:
+
+UPDATE approved fields.
+
+
+Missing:
+
+INSERT.
+
+
+Re-uploading same Excel must NOT create duplicates.
+
+
+============================================================
+39. SUPPLIER EXCEL TEMPLATE
+============================================================
+
+Provide:
+
+DOWNLOAD SUPPLIER TEMPLATE.
+
+
+Workbook:
+
+SUPPLIERS
+
+
+Mandatory:
+
+SupplierId *
+SupplierName *
+
+
+Optional:
+
+BusinessPartnerId
+SupplierLegalName
+TaxNumber
+TRN
+Country
+City
+PostalCode
+Street
+Email
+Phone
+PurchasingOrganization
+CompanyCode
+Currency
+PaymentTerms
+IsBlocked
+IsActive
+SourceLastChangedAt.
+
+
+Second sheet:
+
+INSTRUCTIONS.
+
+
+============================================================
+40. SUPPLIER EXCEL UPLOAD
+============================================================
+
+Require:
+
+Organization
+
+Entity
+
+before upload.
+
+
+Flow:
+
+Upload
+↓
+Parse
+↓
+Validate
+↓
+Preview
+↓
+Confirm
+↓
+Transactional Upsert
+↓
+Refresh Supplier Master.
+
+
+Do not mutate DB during preview.
+
+
+============================================================
+41. SUPPLIER DUPLICATE / UPSERT
+============================================================
+
+Key:
+
+Organization
++
+Entity
++
+SupplierId.
+
+
+Existing:
+
+UPDATE.
+
+
+Missing:
+
+INSERT.
+
+
+Same workbook re-upload:
+
+must be idempotent.
+
+
+============================================================
+42. SUPPLIER MUST EXIST BEFORE PO
+============================================================
+
+PO SupplierId must resolve to Supplier Master.
+
+
+Example:
+
+Supplier Master:
+
+SupplierId:
+1000234
+
+SupplierName:
+ABC FOOD TRADING LLC.
+
+
+PO:
+
+SupplierId:
+1000234.
+
+
+PASS.
+
+
+If PO Supplier:
+
+9999999
+
+does not exist:
+
+BLOCK:
+
+SUPPLIER_NOT_FOUND.
+
+
+Do not automatically create Supplier.
+
+
+============================================================
+43. EXCEL DOWNLOAD
+============================================================
+
+PO Download:
+
+real XLSX.
+
+
+Sheets:
+
+PO_HEADERS
+
+PO_ITEMS.
+
+
+Supplier Download:
+
+SUPPLIERS.
+
+
+Download current DB data according to:
+
+Organization
+
+Entity
+
+filters/search where appropriate.
+
+
+Do not export:
+
+passwords
+
+tokens
+
+integration secrets
+
+credential references
+
+internal authentication information.
+
+
+============================================================
+44. EXCEL FORMAT RULES
+============================================================
+
+Use XLSX.
+
+Do not generate CSV disguised as XLSX.
+
+
+Dates:
+
+Excel-compatible date cells.
+
+
+Amounts:
+
+numeric/decimal.
+
+
+Quantities:
+
+numeric/decimal.
+
+
+Booleans:
+
+TRUE/FALSE.
+
+
+Currency:
+
+text code.
+
+
+PO Number and PO Item:
+
+preserve leading zeros if source/business format requires them.
+
+
+============================================================
+45. API + EXCEL SAME TABLES
+============================================================
+
+Critical architecture:
+
+GET_SUPPLIER API
+       ↓
+API Mapping
+       ↓
+SupplierImportModel
+       ↓
+ISupplierImportService
+       ↓
+suppliers
+
+
+Excel Supplier
+       ↓
+Excel Parser
+       ↓
+SupplierImportModel
+       ↓
+SAME ISupplierImportService
+       ↓
+suppliers.
+
+
+And:
+
+GET_PO API
+       ↓
+API Mapping
+       ↓
+PurchaseOrderImportModel
+       ↓
+IPurchaseOrderImportService
+       ↓
+purchase_orders
+purchase_order_items
+
+
+Excel PO
+       ↓
+Excel Parser
+       ↓
+PurchaseOrderImportModel
+       ↓
+SAME IPurchaseOrderImportService
+       ↓
+purchase_orders
+purchase_order_items.
+
+
+Do NOT create separate persistence behavior for API and Excel.
+
+
+============================================================
+46. INTEGRATION FIELD MAPPING
+============================================================
+
+Update existing:
+
+IntegrationTargetFieldRegistry.
+
+
+GET_PO must be able to map actual source API fields to approved:
+
+PurchaseOrder fields
+
+PurchaseOrderItem fields.
+
+
+GET_SUPPLIER must map source fields to:
+
+Supplier fields.
+
+
+Do not expose arbitrary DB tables.
+
+
+============================================================
+47. SOURCE TRACKING
+============================================================
+
+Source values:
+
+SAP_API
+
+EXCEL_UPLOAD
+
+MANUAL
+
+or approved equivalents.
+
+
+Maintain:
+
+source_system
+
+source_configuration_id
+
+source_last_changed_at
+
+last_synced_at.
+
+
+If useful maintain:
+
+last_updated_source.
+
+
+Do not let source tracking overwrite historical integration provenance.
+
+
+============================================================
+48. OPEN PO QUERY — REQUIRED
+============================================================
+
+Prepare backend service:
+
+GetOpenPurchaseOrdersForSupplier.
+
+
+Inputs:
+
+OrganizationId
+
+EntityCode
+
+SupplierId.
+
+
+Backend must scope organization/entity from authenticated context where
+appropriate.
+
+
+Return ONLY POs belonging to selected Supplier.
+
+
+============================================================
+49. OPEN PO ELIGIBILITY
+============================================================
+
+PO is OPEN for Mobile receiving only when:
+
+Supplier exists
+
+PO is not CANCELLED
+
+PO is not CLOSED
+
+and at least one item:
+
+GoodsReceiptExpected = TRUE
+
+DeletionIndicator = FALSE
+
+DeliveryCompleted = FALSE
+
+OpenQuantity > 0.
+
+
+Service-only/non-GR items must not make PO eligible for material GRN.
+
+
+============================================================
+50. OPEN PO RESPONSE
+============================================================
+
+Prepare response suitable for Mobile:
+
+PurchaseOrderId
+
+PurchaseOrder
+
+PurchaseOrderType
+
+SupplierId
+
+SupplierName
+
+CompanyCode
+
+PurchaseOrderDate
+
+Currency
+
+TotalAmount
+
+OpenItemCount
+
+POStatus.
+
+
+Do not expose integration credentials.
+
+
+============================================================
+51. OPEN PO ITEM RESPONSE
+============================================================
+
+For selected PO return:
+
+PurchaseOrderItemId
+
+PurchaseOrder
+
+PurchaseOrderItem
+
+Material
+
+MaterialDescription
+
+Plant
+
+StorageLocation
+
+OrderQuantity
+
+ReceivedQuantity
+
+OpenQuantity
+
+UOM
+
+Currency
+
+ItemAmount
+
+TaxCode
+
+GoodsReceiptExpected
+
+ItemStatus.
+
+
+This will be consumed by next Mobile GRN phase.
+
+
+============================================================
+52. GRN HEADER TABLE ALIGNMENT
+============================================================
+
+Create/reuse:
+
+goods_receipts.
+
+
+Ensure it supports:
+
+id
+organization_id
+entity_code
+property_id
+operating_unit_id
+sila_grn_number
+invoice_id
+purchase_order_id
+purchase_order
+supplier_id
+erp_supplier_id
+supplier_name
+invoice_number
+document_date
+posting_date
+delivery_note
+header_text
+grn_status
+posting_status
+erp_material_document
+erp_material_document_year
+movement_type
+integration_configuration_id
+idempotency_key
+erp_response_code
+failure_code
+failure_message
+created_by
+created_at
+submitted_at
+posted_at
+last_synced_at
+updated_at.
+
+
+Do not remove existing valid fields/data.
+
+
+============================================================
+53. GRN ITEM TABLE ALIGNMENT
+============================================================
+
+Create/reuse:
+
+goods_receipt_items.
+
+
+Ensure it supports:
+
+id
+goods_receipt_id
+purchase_order_item_id
+invoice_line_id
+purchase_order
+purchase_order_item
+material
+material_description
+plant
+storage_location
+batch
+movement_type
+po_ordered_quantity
+previously_received_quantity
+po_open_quantity
+invoice_quantity
+invoice_uom
+physical_received_quantity
+accepted_quantity
+damaged_quantity
+rejected_quantity
+entry_uom
+quantity_in_base_uom
+base_uom
+erp_material_document_item
+line_status
+created_at
+updated_at.
+
+
+These fields are preparation for the next Mobile GRN phase.
+
+
+Do NOT implement invoice posting.
+
+
+============================================================
+54. MIGRATION SAFETY
+============================================================
+
+Use additive safe migrations.
+
+
+For existing populated tables:
+
+do NOT blindly add NOT NULL fields without considering existing rows.
+
+
+Use staged migration where required:
+
+1. Add nullable column.
+2. Safely backfill only known values.
+3. Validate.
+4. Add NOT NULL constraint when valid.
+
+
+Never invent:
+
+SupplierId
+
+CompanyCode
+
+Currency
+
+TaxCode
+
+PO Type
+
+or other business values for historical records.
+
+
+If historical data prevents mandatory constraint:
+
+report exact blocker.
+
+
+Do not destroy records.
+
+
+============================================================
+55. PO IMPORT TEST
+============================================================
+
+Create/use Development test data.
+
+
+Supplier:
+
+SupplierId:
+1000234
+
+SupplierName:
+ABC FOOD TRADING LLC.
+
+
+PO Header:
+
+PurchaseOrder:
+4500012345
+
+PurchaseOrderType:
+MATERIAL
+
+SupplierId:
+1000234
+
+CompanyCode:
+FIVE_DXB
+
+Currency:
+AED
+
+TotalAmount:
+997.50
+
+POStatus:
+OPEN.
+
+
+Items:
+
+ITEM 10
+
+Material:
+SALMON001
+
+Description:
+Salmon
+
+OrderQuantity:
+10
+
+UOM:
+KG
+
+Currency:
+AED
+
+ItemAmount:
+500.00
+
+TaxCode:
+TAX5
+
+GoodsReceiptExpected:
+TRUE.
+
+
+ITEM 20
+
+Description:
+Tomato
+
+OrderQuantity:
+20
+
+UOM:
+KG
+
+Currency:
+AED
+
+ItemAmount:
+497.50
+
+TaxCode:
+TAX5
+
+GoodsReceiptExpected:
+TRUE.
+
+
+Note:
+
+Item 20 demonstrates that Description can satisfy identification when
+Material is absent.
+
+
+============================================================
+56. MANDATORY FIELD TESTS
+============================================================
+
+Test missing individually:
+
+PurchaseOrder
+
+PurchaseOrderItem
+
+PurchaseOrderType
+
+SupplierId
+
+CompanyCode
+
+Currency
+
+OrderQuantity
+
+UOM
+
+ItemAmount
+
+TaxCode
+
+TotalAmount
+
+POStatus
+
+GoodsReceiptExpected
+
+Material + MaterialDescription both missing.
+
+
+Each must fail with correct row-level validation.
+
+
+============================================================
+57. UNKNOWN SUPPLIER TEST
+============================================================
+
+PO SupplierId:
+
+9999999.
+
+
+Supplier Master has no 9999999.
+
+
+Expected:
+
+SUPPLIER_NOT_FOUND.
+
+
+No PO created.
+
+
+============================================================
+58. CURRENCY TEST
+============================================================
+
+Header:
+
+AED.
+
+
+Item:
+
+USD.
+
+
+Expected:
+
+PO_CURRENCY_MISMATCH
+
+unless a future explicitly supported multi-currency PO model allows it.
+
+
+Do not silently change USD to AED.
+
+
+============================================================
+59. COMPANY CODE TEST
+============================================================
+
+Selected Entity:
+
+Dubai.
+
+
+Configured/validated Company Code:
+
+FIVE_DXB.
+
+
+Workbook:
+
+CompanyCode:
+OTHER_ENTITY.
+
+
+If Entity/Company mapping exists and conflicts:
+
+COMPANY_CODE_ENTITY_MISMATCH.
+
+
+Do not silently replace value.
+
+
+============================================================
+60. DUPLICATE TEST
+============================================================
+
+Upload identical PO workbook twice.
+
+
+Expected:
+
+one PO Header
+
+same PO Items
+
+no duplicates.
+
+
+Second import:
+
+UNCHANGED
+
+or valid UPDATE only.
+
+
+============================================================
+61. UPDATE TEST
+============================================================
+
+Existing:
+
+ItemAmount:
+500.
+
+
+Excel:
+
+ItemAmount:
+510.
+
+
+Preview:
+
+UPDATE.
+
+
+Commit.
+
+
+Expected:
+
+existing item becomes 510.
+
+
+No second item created.
+
+
+============================================================
+62. DOWNLOAD ROUND TRIP
+============================================================
+
+After import:
+
+Download PO Excel.
+
+
+Verify:
+
+PO_HEADERS
+
+PO_ITEMS
+
+contain actual DB data.
+
+
+Download Supplier Excel.
+
+
+Verify Supplier data.
+
+
+No hidden/internal credentials.
+
+
+============================================================
+63. OPEN PO TEST
+============================================================
+
+Supplier:
+
+1000234.
+
+
+PO Item:
+
+Ordered:
+10
+
+Received:
+2
+
+Open:
+8.
+
+
+Expected:
+
+GetOpenPurchaseOrdersForSupplier(1000234)
+
+returns PO.
+
+
+When:
+
+Received:
+10
+
+Open:
+0
+
+and no other open items exist:
+
+
+PO no longer appears as OPEN.
+
+
+============================================================
+64. CLOUD UI REQUIREMENTS
+============================================================
+
+Use existing SILA ME design:
+
+pure white background
+
+SILA blue/light-blue borders
+
+dark navy/charcoal text
+
+blue primary buttons
+
+clean enterprise data grids.
+
+
+No dark admin screens.
+
+No gradients.
+
+
+============================================================
+65. DO NOT MODIFY
+============================================================
+
+Do NOT modify:
+
+Mobile Scanner
+
+Mobile OCR
+
+Backend OCR
+
+PDF Generation
+
+Re-read
+
+Invoice Save business flow
+
+SharePoint PDF routing
+
+POST_GRN execution
+
+Inventory posting
+
+Invoice Posting
+
+authentication behavior.
+
+
+This task is master data/database/Excel/open-PO preparation.
+
+
+============================================================
+66. BALA ACCOUNT PROTECTION
+============================================================
+
+Do not modify:
+
+bala@chervic.in.
+
+
+Verify before/after:
+
+same UserId
+
+same normalized email
+
+password hash equality unchanged
+
+status unchanged
+
+application access unchanged
+
+roles unchanged
+
+authorization unchanged
+
+scope unchanged.
+
+
+Never print password hash.
+
+
+============================================================
+67. FINAL DATABASE REPORT
+============================================================
+
+Return final actual schema for:
+
+purchase_orders
+
+purchase_order_items
+
+suppliers
+
+supplier_aliases
+
+goods_receipts
+
+goods_receipt_items.
+
+
+For every column report:
+
+Column
+
+DB Type
+
+Nullable
+
+Default
+
+PK/FK
+
+Index/Unique.
+
+
+============================================================
+68. FINAL ACCEPTANCE
+============================================================
+
+Task is complete only when:
+
+1. Supplier Master DB is ready.
+2. Supplier Excel template works.
+3. Supplier Excel preview works.
+4. Supplier Excel upload works.
+5. Supplier Excel download works.
+6. PO Header DB is aligned.
+7. PO Item DB is aligned.
+8. PO Excel template works.
+9. PO Excel preview works.
+10. PO Excel upload works.
+11. PO Excel download works.
+12. All mandatory fields are validated.
+13. Currency is mandatory.
+14. Company Code is mandatory.
+15. Supplier ID is validated against Supplier Master.
+16. Material OR Description rule works.
+17. Duplicate PO protection works.
+18. API and Excel use same target tables.
+19. API and Excel use same upsert services.
+20. Existing PO records are visible.
+21. Existing Supplier records are visible.
+22. Open PO query by Supplier works.
+23. Open quantities are available for next Mobile GRN phase.
+24. GRN tables support agreed future transaction fields.
+25. Existing production data is preserved.
+26. Invoice Posting has NOT been implemented.
+
+
+============================================================
+69. FINAL REPORT
+============================================================
+
+Return:
+
+SILA ME MASTER DATA FOUNDATION
+
+DATABASE BEFORE:
+PO HEADERS: <n>
+PO ITEMS: <n>
+SUPPLIERS: <n>
+GRNS: <n>
+
+PO DB UPDATED:
+PASS/FAIL
+
+PO HEADER:
+PASS/FAIL
+
+PO ITEMS:
+PASS/FAIL
+
+SUPPLIER MASTER:
+PASS/FAIL
+
+SUPPLIER ALIAS:
+PASS/FAIL
+
+GRN HEADER ALIGNED:
+PASS/FAIL
+
+GRN ITEMS ALIGNED:
+PASS/FAIL
+
+ORGANIZATION CONTEXT:
+PASS/FAIL
+
+ENTITY CONTEXT:
+PASS/FAIL
+
+PO NUMBER MANDATORY:
+PASS/FAIL
+
+PO ITEM MANDATORY:
+PASS/FAIL
+
+PO TYPE MANDATORY:
+PASS/FAIL
+
+SUPPLIER ID MANDATORY:
+PASS/FAIL
+
+SUPPLIER MASTER VALIDATION:
+PASS/FAIL
+
+COMPANY CODE MANDATORY:
+PASS/FAIL
+
+CURRENCY MANDATORY:
+PASS/FAIL
+
+ORDER QTY MANDATORY:
+PASS/FAIL
+
+UOM MANDATORY:
+PASS/FAIL
+
+ITEM AMOUNT MANDATORY:
+PASS/FAIL
+
+TAX CODE MANDATORY:
+PASS/FAIL
+
+TOTAL AMOUNT MANDATORY:
+PASS/FAIL
+
+PO STATUS MANDATORY:
+PASS/FAIL
+
+GR EXPECTED MANDATORY:
+PASS/FAIL
+
+MATERIAL OR DESCRIPTION:
+PASS/FAIL
+
+PO EXCEL TEMPLATE:
+PASS/FAIL
+
+PO EXCEL PREVIEW:
+PASS/FAIL
+
+PO EXCEL UPLOAD:
+PASS/FAIL
+
+PO EXCEL DOWNLOAD:
+PASS/FAIL
+
+SUPPLIER EXCEL TEMPLATE:
+PASS/FAIL
+
+SUPPLIER EXCEL PREVIEW:
+PASS/FAIL
+
+SUPPLIER EXCEL UPLOAD:
+PASS/FAIL
+
+SUPPLIER EXCEL DOWNLOAD:
+PASS/FAIL
+
+PO DUPLICATE PROTECTION:
+PASS/FAIL
+
+SUPPLIER DUPLICATE PROTECTION:
+PASS/FAIL
+
+API/EXCEL SAME PO TABLES:
+PASS/FAIL
+
+API/EXCEL SAME SUPPLIER TABLE:
+PASS/FAIL
+
+API/EXCEL SAME PO UPSERT:
+PASS/FAIL
+
+API/EXCEL SAME SUPPLIER UPSERT:
+PASS/FAIL
+
+OPEN PO QUERY:
+PASS/FAIL
+
+OPEN PO FILTER BY SUPPLIER:
+PASS/FAIL
+
+OPEN PO ITEM DATA:
+PASS/FAIL
+
+EXISTING DATA PRESERVED:
+PASS/FAIL
+
+DATABASE AFTER:
+PO HEADERS: <n>
+PO ITEMS: <n>
+SUPPLIERS: <n>
+GRNS: <n>
+
+MIGRATION:
+<actual migration name>
+
+API TESTS:
+x/x
+
+CLOUD TYPECHECK:
+PASS/FAIL
+
+CLOUD BUILD:
+PASS/FAIL
+
+MOBILE MODIFIED:
+NO
+
+OCR MODIFIED:
+NO
+
+POST_GRN MODIFIED:
+NO
+
+INVOICE POSTING IMPLEMENTED:
+NO
+
+BALA USER MODIFIED:
+NO
+
+FINAL STATUS:
+PASS / BLOCKED / FAIL
+
+
+============================================================
+70. COMMIT
+============================================================
+
+Only after DB migration + Excel round-trip + duplicate + Open PO
+verification:
+
+git commit -m "feat: finalize po supplier master and excel data foundation"
+
+DO NOT PUSH.
+
+STOP.
+
+NEXT PHASE WILL BE:
+
+Mobile Invoice
+→ OCR
+→ Supplier Master Match
+→ Supplier ID
+→ Open PO Dropdown
+→ Select/Validate PO
+→ Save & Continue
+→ GRN Comparison
+→ Physical Received Quantity
+→ Submit GRN
+→ POST_GRN
+→ ERP Material Document.
+
+DO NOT START THE NEXT PHASE IN THIS TASK.

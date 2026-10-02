@@ -1,0 +1,1500 @@
+PROJECT: SILA ME
+TASK: FIX BACKEND OCR EFFECTIVENESS — OCR IS CALLED BUT EXTRACTION IS POOR
+
+WE NOW HAVE RUNTIME EVIDENCE.
+
+Actual Mobile diagnostic:
+
+OCR DIAGNOSTICS · DEVELOPMENT
+
+Fallback:
+FALLBACK_EXECUTED
+
+Trigger:
+MANUAL_REREAD
+
+Backend:
+REVIEW_REQUIRED
+
+Backend Fields:
+3
+
+Backend Confidence:
+0.86
+
+Lines:
+0
+
+Config:
+v1
+
+Threshold:
+0.75
+
+Final:
+PARTIAL
+
+Missing:
+supplierName
+purchaseOrderNumber
+invoiceGross
+
+
+============================================================
+1. IMPORTANT CONCLUSION
+============================================================
+
+DO NOT spend this task proving whether MANUAL_REREAD calls backend.
+
+It does.
+
+The backend is being executed.
+
+The problem is now:
+
+BACKEND OCR / DOCUMENT UNDERSTANDING IS NOT EFFECTIVE ENOUGH.
+
+It failed to reliably return:
+
+Supplier Name
+Purchase Order Number
+Invoice Gross Amount
+
+and returned:
+
+0 invoice lines.
+
+These are major failures for an invoice that visibly contains these
+values.
+
+We need to identify whether failure occurs in:
+
+A. PDF → image/text conversion
+
+B. OCR text recognition
+
+C. OCR layout reconstruction
+
+D. invoice field parser
+
+E. line-item/table parser
+
+F. response mapping
+
+G. persistence.
+
+DO NOT guess.
+
+Prove each stage using the SAME failing invoice.
+
+
+============================================================
+2. USE THE EXACT FAILING DOCUMENT
+============================================================
+
+Find the DocumentId associated with:
+
+Request:
+ocr-1789508780026-sayp2627
+
+If request correlation is stored/logged, trace it.
+
+Use the exact PDF/document that produced this result.
+
+Do NOT test only synthetic text.
+
+Do NOT declare success from unit-test strings.
+
+The failing real document is the primary regression case.
+
+If the request cannot be traced to a document, fix correlation
+persistence first.
+
+
+============================================================
+3. DEVELOPMENT OCR INSPECTOR
+============================================================
+
+For Development only, create a safe OCR diagnostic artifact/view for
+this document.
+
+We need to inspect what the backend actually recognized.
+
+Provide:
+
+DocumentId
+
+Page Count
+
+PDF Type:
+DIGITAL_TEXT / IMAGE_ONLY / MIXED
+
+Embedded Text Characters
+
+OCR Engine
+
+OCR Executed:
+YES/NO
+
+OCR Characters Per Page
+
+OCR Lines Per Page
+
+OCR Confidence if available.
+
+For Development ONLY, provide an explicit expandable:
+
+RAW OCR TEXT
+
+for the currently selected test document.
+
+Do not enable raw financial-document text logging in Production.
+
+We need to SEE whether the OCR engine actually recognized:
+
+supplier name
+
+PO label/value
+
+Grand Total / Invoice Total
+
+line-item text.
+
+
+============================================================
+4. FIRST DECISION — OCR OR PARSER?
+============================================================
+
+For the failing invoice inspect raw recognized text.
+
+CASE A:
+
+Raw OCR text DOES NOT contain visually obvious:
+
+Supplier Name
+PO Number
+Invoice Total
+Line Items.
+
+Then:
+
+OCR TEXT RECOGNITION is the problem.
+
+Fix OCR/image preprocessing.
+
+CASE B:
+
+Raw OCR text DOES contain:
+
+Supplier Name
+PO Number
+Invoice Total
+Line Items
+
+but structured result misses them.
+
+Then:
+
+OCR is working.
+
+INVOICE PARSER / TABLE EXTRACTION is the problem.
+
+Fix parser/scoring/layout logic.
+
+CASE C:
+
+Structured backend extraction contains them but Mobile doesn't.
+
+Then:
+
+RESPONSE MAPPING / MERGE is the problem.
+
+Do not change OCR unnecessarily.
+
+Final report MUST identify which case applies.
+
+
+============================================================
+5. IDENTIFY THE REAL OCR ENGINE
+============================================================
+
+Report the exact backend implementation.
+
+I do NOT want:
+
+"BUILT_IN_ADVANCED"
+
+as the answer.
+
+Report:
+
+PDF RENDERING ENGINE:
+<actual library>
+
+TEXT RECOGNITION ENGINE:
+<actual OCR library/service>
+
+LAYOUT ENGINE:
+<actual implementation>
+
+INVOICE FIELD EXTRACTION:
+<actual implementation>
+
+TABLE/LINE EXTRACTION:
+<actual implementation>
+
+
+If the current backend has no genuine image text-recognition engine
+and merely attempts PDF embedded text + regex:
+
+STOP treating it as Advanced OCR.
+
+Implement a real backend OCR path.
+
+
+============================================================
+6. IMAGE-ONLY PDF SUPPORT IS MANDATORY
+============================================================
+
+Mobile scanner PDFs are commonly image-only PDFs.
+
+For every PDF page:
+
+determine whether meaningful embedded text exists.
+
+If not:
+
+render the PDF page to a high-quality image suitable for OCR.
+
+Do NOT OCR a low-resolution thumbnail.
+
+Recommended OCR rendering target:
+
+approximately 250–300 DPI
+
+or equivalent high-resolution page rasterization.
+
+Preserve aspect ratio.
+
+Avoid unnecessary JPEG recompression.
+
+Then perform actual text recognition.
+
+
+============================================================
+7. IMAGE PREPROCESSING
+============================================================
+
+For difficult camera/scanner invoices, support an OCR preprocessing
+pipeline.
+
+Do not destructively replace the original PDF.
+
+Generate OCR working images only.
+
+Evaluate:
+
+orientation detection
+
+rotation correction
+
+deskew
+
+perspective correction if scanner did not already handle it
+
+grayscale
+
+contrast normalization
+
+adaptive thresholding where beneficial
+
+denoise
+
+sharpening where beneficial
+
+background/shadow normalization
+
+upscaling only when source resolution is insufficient.
+
+
+Do NOT blindly apply every transformation.
+
+Create candidate preprocessing profiles.
+
+Example:
+
+ORIGINAL
+
+GRAYSCALE_CONTRAST
+
+ADAPTIVE_THRESHOLD
+
+DESKEWED_ENHANCED.
+
+
+OCR the most appropriate candidate or compare quality.
+
+
+============================================================
+8. OCR QUALITY SCORING
+============================================================
+
+Score OCR output using invoice-specific evidence.
+
+Examples:
+
+character count
+
+word count
+
+numeric token count
+
+currency token count
+
+presence of:
+
+INVOICE
+
+TAX INVOICE
+
+PO
+
+PURCHASE ORDER
+
+TOTAL
+
+VAT
+
+QTY
+
+DESCRIPTION
+
+AMOUNT.
+
+
+If OCR result has high generic confidence but almost no invoice
+structure, do not call it GOOD merely because OCR library confidence
+is high.
+
+
+============================================================
+9. MULTI-PASS OCR ONLY WHEN REQUIRED
+============================================================
+
+Do not make every invoice unnecessarily slow.
+
+PASS 1:
+
+normal high-resolution page OCR.
+
+Evaluate quality.
+
+If quality GOOD:
+
+continue.
+
+If quality POOR:
+
+perform enhanced preprocessing and second OCR pass.
+
+Compare outputs.
+
+Select/merge stronger OCR result.
+
+Do not run expensive passes when first pass is already good.
+
+
+============================================================
+10. PRESERVE LAYOUT
+============================================================
+
+Advanced invoice OCR requires more than plain concatenated text.
+
+Preserve where available:
+
+Page
+
+Block
+
+Line
+
+Word
+
+Bounding Box
+
+OCR Confidence.
+
+Create normalized model conceptually:
+
+OcrDocument
+
+Pages[]
+
+Blocks[]
+
+Lines[]
+
+Words[].
+
+Each token/line should retain spatial information where OCR engine
+provides it.
+
+This is especially important for:
+
+Supplier header
+
+PO
+
+totals
+
+invoice tables.
+
+
+============================================================
+11. SUPPLIER NAME — FIX
+============================================================
+
+Current failing document missed:
+
+supplierName.
+
+Supplier name frequently has NO:
+
+"Supplier Name:"
+
+label.
+
+Use first-page layout.
+
+Strong candidates:
+
+top 25–35% of Page 1
+
+company-name-like lines
+
+logo-adjacent OCR text
+
+lines near:
+
+TRN
+VAT Registration
+Address
+Telephone
+Email.
+
+Recognize legal suffixes:
+
+LLC
+L.L.C
+LTD
+LIMITED
+TRADING
+TRADING LLC
+FZE
+FZCO
+PJSC
+PVT LTD
+SDN BHD
+GMBH
+INC
+CORP.
+
+
+Use Supplier Master fuzzy validation where enabled.
+
+Example:
+
+OCR:
+ABC F00D TRADlNG L.L.C
+
+Supplier Master:
+ABC FOOD TRADING LLC
+
+should become a strong supplier candidate.
+
+
+Do not confuse:
+
+Bill To
+Ship To
+Customer
+Buyer
+
+with supplier.
+
+
+============================================================
+12. PURCHASE ORDER — FIX
+============================================================
+
+Current failing document missed:
+
+purchaseOrderNumber.
+
+Search raw OCR and layout for:
+
+PO
+P.O.
+PO #
+PO No
+PO No.
+P.O. No.
+Purchase Order
+Purchase Order No
+Purchase Order Number
+Customer PO
+Customer P.O.
+Your PO
+Buyer PO
+Order Ref
+Order Reference
+Purchase Ref.
+
+
+Support:
+
+label and value same line
+
+label and value next line
+
+label in left column / value in right column
+
+table header metadata.
+
+Support:
+
+4500012345
+
+PO-100245
+
+DXB/PO/2026/0021.
+
+
+Use current SILA PO master as validation.
+
+If OCR candidate resembles a real PO available for:
+
+same organization
+
+and preferably same supplier,
+
+increase confidence significantly.
+
+
+Do NOT modify Phase 3 PO matching business logic.
+
+
+============================================================
+13. GROSS AMOUNT — FIX
+============================================================
+
+Current failing document missed:
+
+invoiceGross.
+
+This is unacceptable if a clearly printed invoice total exists.
+
+Generate amount candidates from ALL pages.
+
+Strong labels:
+
+GRAND TOTAL
+
+INVOICE TOTAL
+
+TOTAL AMOUNT
+
+TOTAL INCLUDING VAT
+
+TOTAL INCL VAT
+
+AMOUNT DUE
+
+TOTAL DUE
+
+NET PAYABLE
+
+TOTAL PAYABLE
+
+BALANCE DUE.
+
+
+Lower-priority:
+
+TOTAL.
+
+
+Negative labels:
+
+SUBTOTAL
+
+SUB TOTAL
+
+VAT
+
+TAX
+
+DISCOUNT
+
+UNIT PRICE
+
+LINE TOTAL
+
+PREVIOUS BALANCE.
+
+
+Use layout proximity:
+
+label ↔ amount on same line
+
+label left / amount right
+
+label above / amount below.
+
+
+Do NOT simply select largest number.
+
+
+============================================================
+14. FINANCIAL RECONCILIATION SHOULD HELP
+============================================================
+
+When candidate amounts exist:
+
+evaluate:
+
+Net + Tax ≈ Gross
+
+Subtotal - Discount + Charges + Tax ≈ Gross.
+
+Example:
+
+Net:
+950.00
+
+VAT:
+47.50
+
+Grand Total candidate:
+997.50.
+
+This strongly validates:
+
+997.50
+
+as invoiceGross.
+
+
+Do NOT manufacture gross amount solely from arithmetic if printed
+gross is absent.
+
+Arithmetic is validation evidence.
+
+
+============================================================
+15. LINES = 0 MUST BE INVESTIGATED
+============================================================
+
+Current diagnostic:
+
+Lines 0.
+
+Determine WHY.
+
+Inspect whether raw OCR contains table text.
+
+If OCR text contains line items but parser returns zero:
+
+fix table extraction.
+
+Invoice line extraction should understand layouts such as:
+
+ITEM | DESCRIPTION | QTY | UOM | RATE | AMOUNT
+
+SKU | DESCRIPTION | QUANTITY | UNIT PRICE | VAT | TOTAL
+
+DESCRIPTION | QTY | PRICE | TOTAL.
+
+
+Do not assume fixed column names/order.
+
+
+============================================================
+16. SPATIAL TABLE EXTRACTION
+============================================================
+
+If bounding boxes exist:
+
+identify table header row.
+
+Infer column X ranges.
+
+Group words into rows by Y position.
+
+Map values to columns by X position.
+
+Support wrapped descriptions.
+
+Example:
+
+10  Atlantic Salmon       5 KG  100.00  500.00
+    Norwegian Origin
+
+must become ONE invoice line.
+
+
+Do not rely only on newline-separated regex.
+
+
+============================================================
+17. MULTI-PAGE TABLES
+============================================================
+
+If invoice has multiple pages:
+
+detect repeated table header.
+
+Continue line extraction.
+
+Exclude:
+
+page header
+
+page footer
+
+subtotal
+
+VAT
+
+grand total
+
+bank details
+
+terms and conditions.
+
+
+============================================================
+18. MINIMUM DETAILED EXTRACTION
+============================================================
+
+Backend Advanced OCR should attempt:
+
+HEADER
+
+Supplier Name
+Supplier TRN
+Invoice Number
+Invoice Date
+PO Number
+Currency
+Net
+Tax
+Gross.
+
+
+LINES
+
+Line Number
+SKU
+Description
+PO Item
+Quantity
+UOM
+Unit Price
+Net
+Tax
+Gross.
+
+
+Do not return:
+
+fields=3
+
+and consider the Advanced OCR implementation satisfactory without
+explaining why remaining visible data was unavailable.
+
+
+============================================================
+19. DO NOT TRUST OVERALL CONFIDENCE 0.86
+============================================================
+
+Current diagnostic says:
+
+Backend confidence:
+0.86
+
+while simultaneously missing:
+
+Supplier
+PO
+Gross
+
+and:
+
+Lines=0.
+
+
+That overall confidence is misleading.
+
+Fix overall confidence calculation.
+
+
+Tier-1 missing fields must heavily penalize overall confidence.
+
+Line extraction failure must affect confidence when detailed line
+extraction is enabled.
+
+
+Example:
+
+Supplier missing
+PO missing
+Gross missing
+Lines expected but 0
+
+must NOT produce an apparently healthy:
+
+0.86.
+
+
+Calculate separate metrics:
+
+TextRecognitionConfidence
+
+HeaderExtractionCompleteness
+
+HeaderExtractionConfidence
+
+Tier1Completeness
+
+LineExtractionCompleteness
+
+FinancialValidationConfidence
+
+OverallExtractionConfidence.
+
+
+============================================================
+20. BACKEND SUCCESS CRITERIA
+============================================================
+
+For invoices where these values visibly exist:
+
+Backend should not return SUCCESS unless it has at minimum:
+
+Supplier
+
+Invoice Number
+
+PO if document contains one
+
+Gross Amount.
+
+
+If DetailedLineExtractionEnabled and invoice visibly contains lines:
+
+0 lines should force:
+
+REVIEW_REQUIRED
+
+and diagnostic:
+
+LINE_EXTRACTION_FAILED.
+
+
+============================================================
+21. RE-READ SHOULD BE DEEP EXTRACTION
+============================================================
+
+MANUAL_REREAD is working.
+
+Keep it.
+
+But Re-read should use the strongest backend extraction path:
+
+high-resolution PDF processing
+
+real OCR
+
+enhanced OCR fallback when needed
+
+layout-aware extraction
+
+supplier validation
+
+PO validation
+
+financial reconciliation
+
+line extraction.
+
+
+Do not merely rerun the same weak parser.
+
+
+============================================================
+22. AUTOMATIC FALLBACK STILL MUST BE TESTED
+============================================================
+
+Current evidence proves:
+
+MANUAL_REREAD.
+
+It does NOT prove:
+
+AUTO FALLBACK.
+
+
+After fixing backend effectiveness, perform another test:
+
+Mobile OCR intentionally misses:
+
+PO
+
+and/or:
+
+Amount.
+
+
+With:
+
+Automatic Backend OCR Fallback = ON
+
+
+Expected diagnostic:
+
+Fallback:
+FALLBACK_EXECUTED
+
+Trigger:
+AUTO_FALLBACK
+
+
+Backend:
+SUCCESS/PARTIAL
+
+
+This must happen without user pressing Re-read.
+
+
+============================================================
+23. DEVELOPMENT DIAGNOSTICS — EXPAND
+============================================================
+
+Update Mobile Development OCR Diagnostics to show:
+
+Request
+
+Mobile:
+SUCCESS/PARTIAL
+
+Mobile Tier-1:
+x/4
+
+Fallback:
+NOT_REQUIRED /
+FALLBACK_EXECUTED /
+DISABLED /
+FAILED
+
+Trigger:
+AUTO_FALLBACK /
+MANUAL_REREAD
+
+Backend OCR Engine:
+<short engine name>
+
+PDF:
+DIGITAL / IMAGE / MIXED
+
+Pages:
+<n>
+
+OCR Text:
+<n> chars
+
+Backend Header:
+x/y
+
+Backend Tier-1:
+x/4
+
+Backend Lines:
+<n>
+
+Text Confidence:
+<n>
+
+Header Completeness:
+<n>
+
+Overall Confidence:
+<n>
+
+Final Tier-1:
+x/4
+
+Final:
+SUCCESS/PARTIAL/REVIEW_REQUIRED.
+
+
+Do not display confidential raw OCR text in normal Mobile UI.
+
+
+============================================================
+24. CLOUD OCR DEBUGGING
+============================================================
+
+In Development Cloud Invoice Extraction History, provide:
+
+Request ID
+
+Trigger
+
+OCR Engine
+
+PDF Type
+
+Pages
+
+OCR Character Count
+
+Header Fields
+
+Tier-1 Fields
+
+Lines
+
+Text Confidence
+
+Extraction Confidence
+
+Reconciliation
+
+Duration.
+
+
+For Development only provide:
+
+VIEW OCR TEXT
+
+and:
+
+VIEW EXTRACTION JSON.
+
+
+This will make OCR debugging practical.
+
+
+============================================================
+25. REAL REGRESSION TEST
+============================================================
+
+Use the SAME failing invoice.
+
+BEFORE:
+
+Backend:
+REVIEW_REQUIRED
+
+Fields:
+3
+
+Confidence:
+0.86
+
+Lines:
+0
+
+Missing:
+
+supplierName
+purchaseOrderNumber
+invoiceGross.
+
+
+AFTER:
+
+report:
+
+Supplier:
+FOUND/NOT FOUND
+
+Invoice:
+FOUND/NOT FOUND
+
+PO:
+FOUND/NOT FOUND
+
+Gross:
+FOUND/NOT FOUND
+
+Header fields:
+<n>
+
+Lines:
+<n>
+
+Financial reconciliation:
+PASS/FAIL/NOT_POSSIBLE.
+
+
+Do NOT report PASS unless the actual failing document improved.
+
+
+============================================================
+26. AUTOMATED FIXTURE TESTS
+============================================================
+
+Also maintain automated fixtures for:
+
+supplier in logo/header
+
+supplier with LLC
+
+PO same line
+
+PO next line
+
+PO alphanumeric
+
+PO vs TRN
+
+Grand Total
+
+Amount Due
+
+Subtotal vs Grand Total
+
+Net + VAT = Gross
+
+simple line table
+
+wrapped description
+
+multi-page lines
+
+image-only PDF
+
+rotated invoice
+
+low-contrast invoice.
+
+
+============================================================
+27. PERFORMANCE
+============================================================
+
+Do not sacrifice Mobile usability.
+
+Backend OCR may be deeper than Mobile OCR but should remain efficient.
+
+Measure:
+
+PDF processing time
+
+OCR time
+
+parsing time
+
+total duration.
+
+
+Cache OCR output by:
+
+Document hash/version.
+
+
+On Re-read of unchanged PDF:
+
+reuse good raw OCR if available.
+
+Rerun:
+
+parser
+candidate scoring
+supplier validation
+PO validation
+financial reconciliation.
+
+
+If previous OCR quality was POOR:
+
+allow force-enhanced OCR pass.
+
+
+============================================================
+28. DO NOT ADD EXTERNAL AI JUST TO MASK THE ISSUE
+============================================================
+
+First identify current OCR engine and root cause.
+
+Do not automatically add:
+
+OpenAI
+
+Claude
+
+Gemini
+
+or other LLM
+
+to read invoices.
+
+
+OCR/text recognition and deterministic invoice extraction should be
+fixed first.
+
+
+If current backend genuinely has no production-quality OCR engine,
+report that clearly rather than pretending the parser is an OCR engine.
+
+
+============================================================
+29. PERSISTENCE
+============================================================
+
+Once Advanced OCR produces detailed extraction:
+
+persist into existing:
+
+Invoice
+
+InvoiceLine
+
+invoice_ext_data
+
+ExtractionRun/history.
+
+
+Re-read must not create duplicate Invoice.
+
+
+Do not overwrite manually verified fields without existing merge/
+confirmation rules.
+
+
+============================================================
+30. DOWNSTREAM POSTING
+============================================================
+
+Remember the business objective.
+
+Detailed backend extraction becomes:
+
+Invoice business data
+
+after user verification.
+
+
+That data will later be used for:
+
+Invoice
+↔ PO
+↔ GRN
+
+comparison and invoice posting.
+
+
+Therefore line extraction cannot remain an optional cosmetic feature.
+
+
+Do NOT implement new invoice-posting logic in this task.
+
+Just ensure the verified detailed invoice data is complete and
+persisted for posting readiness.
+
+
+============================================================
+31. DO NOT MODIFY
+============================================================
+
+Do not modify:
+
+scanner capture
+
+PDF generation
+
+SharePoint routing
+
+GRN quantity logic
+
+inventory posting
+
+authentication
+
+bala@chervic.in.
+
+
+============================================================
+32. FINAL REPORT
+============================================================
+
+Return:
+
+SILA ME BACKEND OCR EFFECTIVENESS
+
+FAILING REQUEST:
+ocr-1789508780026-sayp2627
+
+FAILING DOCUMENT FOUND:
+YES/NO
+
+PDF TYPE:
+DIGITAL_TEXT / IMAGE_ONLY / MIXED
+
+PDF PAGES:
+<n>
+
+PDF RENDERING ENGINE:
+<actual>
+
+TEXT RECOGNITION ENGINE:
+<actual>
+
+LAYOUT ENGINE:
+<actual>
+
+FIELD EXTRACTION ENGINE:
+<actual>
+
+TABLE EXTRACTION ENGINE:
+<actual>
+
+RAW OCR CONTAINS SUPPLIER:
+YES/NO
+
+RAW OCR CONTAINS PO:
+YES/NO
+
+RAW OCR CONTAINS GROSS TOTAL:
+YES/NO
+
+RAW OCR CONTAINS LINE ITEMS:
+YES/NO
+
+ROOT FAILURE STAGE:
+PDF_RENDERING /
+TEXT_RECOGNITION /
+LAYOUT /
+FIELD_EXTRACTION /
+TABLE_EXTRACTION /
+RESPONSE_MAPPING /
+MULTIPLE
+
+BEFORE:
+
+Supplier:
+FAIL
+
+PO:
+FAIL
+
+Gross:
+FAIL
+
+Lines:
+0
+
+Backend Confidence:
+0.86
+
+
+AFTER:
+
+Supplier:
+PASS/FAIL
+
+Invoice Number:
+PASS/FAIL
+
+PO:
+PASS/FAIL
+
+Gross:
+PASS/FAIL
+
+Net:
+PASS/FAIL
+
+Tax:
+PASS/FAIL
+
+Currency:
+PASS/FAIL
+
+Header Fields:
+<n>
+
+Lines:
+<n>
+
+Financial Reconciliation:
+PASS/FAIL/NOT_POSSIBLE
+
+Text Recognition Confidence:
+<n>
+
+Tier-1 Completeness:
+<n>/4
+
+Header Completeness:
+<n>
+
+Overall Extraction Confidence:
+<n>
+
+MANUAL REREAD:
+PASS/FAIL
+
+AUTO FALLBACK:
+PASS/FAIL
+
+DETAILED DATA PERSISTED:
+PASS/FAIL
+
+INVOICE LINES PERSISTED:
+PASS/FAIL
+
+API TESTS:
+x/x
+
+MOBILE TYPECHECK:
+PASS/FAIL
+
+CLOUD BUILD:
+PASS/FAIL
+
+SCANNER MODIFIED:
+NO
+
+PDF GENERATION MODIFIED:
+NO
+
+SHAREPOINT ROUTING MODIFIED:
+NO
+
+GRN MODIFIED:
+NO
+
+BALA USER MODIFIED:
+NO
+
+FINAL STATUS:
+
+BACKEND OCR EFFECTIVE /
+BACKEND OCR STILL INSUFFICIENT /
+BLOCKED BY OCR ENGINE
+
+
+============================================================
+33. COMMIT
+============================================================
+
+Only if the REAL failing invoice improves:
+
+git commit -m "fix: improve backend invoice ocr effectiveness"
+
+DO NOT PUSH.
+
+STOP.

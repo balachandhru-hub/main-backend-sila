@@ -1,0 +1,1339 @@
+PROJECT: SILA ME
+TASK: PROVE AND FIX MOBILE → BACKEND ADVANCED OCR FALLBACK
+
+CURRENT PROBLEM
+
+On Mobile, after scanning an invoice, I still frequently see:
+
+"Some invoice details could not be read automatically. We've filled in
+what we found — please review the highlighted fields."
+
+I am NOT convinced that Backend Advanced OCR is actually being called.
+
+I am also NOT convinced that, even if it is called, its returned
+extraction is being applied to the Mobile form.
+
+DO NOT make speculative OCR improvements first.
+
+FIRST TRACE THE ACTUAL RUNTIME FLOW END-TO-END.
+
+We need definitive proof for:
+
+1. Did Mobile OCR run?
+2. What did Mobile OCR extract?
+3. Was Mobile OCR classified SUFFICIENT or INSUFFICIENT?
+4. What configuration caused that decision?
+5. Was Backend Advanced OCR triggered?
+6. Was the actual scanned PDF sent/read?
+7. Did backend OCR actually recognize text?
+8. What detailed fields did backend extract?
+9. What confidence did each field receive?
+10. Was the backend response returned to Mobile?
+11. Did Mobile merge/apply the backend result?
+12. Why is the partial-extraction warning still being shown?
+
+
+============================================================
+1. DO NOT ASSUME CURRENT IMPLEMENTATION WORKS
+============================================================
+
+Inspect the real code.
+
+Search for:
+
+advanced-extract
+basic-extract
+AutomaticBackendFallbackEnabled
+AlwaysBackendOnReread
+MinimumMobileConfidence
+RequireSupplierName
+RequireInvoiceNumber
+RequirePurchaseOrderNumber
+RequireInvoiceAmount
+InvoiceOcrConfiguration
+BasicOcr
+AdvancedOcr
+Re-read Invoice
+RereadInvoice
+REVIEW_REQUIRED
+PARTIAL
+Some invoice details could not be read automatically
+We've filled in what we found
+highlighted fields
+
+Trace the exact runtime component rendering that message.
+
+Report:
+
+MESSAGE SOURCE FILE:
+<file>
+
+MESSAGE CONDITION:
+<exact condition>
+
+Do not modify anything until this is known.
+
+
+============================================================
+2. CREATE ONE OCR CORRELATION ID
+============================================================
+
+Every invoice-reading attempt must receive:
+
+OcrRequestId / CorrelationId.
+
+Example:
+
+OCR-<guid>
+
+Use the SAME correlation ID across:
+
+Mobile OCR
+sufficiency evaluation
+backend fallback
+document upload
+backend OCR
+extraction
+response
+Mobile merge.
+
+This will allow one invoice scan to be traced end-to-end.
+
+
+============================================================
+3. MOBILE TRACE
+============================================================
+
+Add Development-safe logs:
+
+[OCR-FLOW] REQUEST=<id> MOBILE_OCR_STARTED
+
+[OCR-FLOW] REQUEST=<id> MOBILE_OCR_COMPLETED
+
+[OCR-FLOW] REQUEST=<id> MOBILE_RESULT
+Supplier=FOUND/MISSING
+InvoiceNumber=FOUND/MISSING
+PO=FOUND/MISSING
+Amount=FOUND/MISSING
+
+Do not log sensitive actual values unless development configuration
+explicitly permits it.
+
+Then:
+
+[OCR-FLOW] REQUEST=<id> SUFFICIENCY_EVALUATION
+
+Log:
+
+RequiredFields
+MinimumConfidence
+AutomaticBackendFallbackEnabled
+
+Then:
+
+[OCR-FLOW] REQUEST=<id> MOBILE_SUFFICIENT
+
+or
+
+[OCR-FLOW] REQUEST=<id> MOBILE_INSUFFICIENT
+
+with reason.
+
+Example:
+
+MOBILE_INSUFFICIENT
+Reason=PO_MISSING,AMOUNT_CONFIDENCE_LOW
+
+
+============================================================
+4. PROVE CONFIGURATION IS ACTUALLY LOADED
+============================================================
+
+Do not assume Cloud OCR Configuration is being respected.
+
+When evaluating the Mobile result, log safe effective configuration:
+
+[OCR-FLOW] REQUEST=<id> EFFECTIVE_CONFIG
+Organization=<safe-id>
+AutoBackendFallback=TRUE
+MinimumConfidence=0.75
+RequireSupplier=TRUE
+RequireInvoiceNumber=TRUE
+RequirePO=TRUE
+RequireAmount=TRUE
+AlwaysBackendOnReread=TRUE
+DetailedLineExtraction=TRUE
+
+Determine whether configuration comes from:
+
+database
+
+API
+
+hardcoded Mobile constants
+
+default values.
+
+Backend/database configuration must be authoritative.
+
+If Cloud saves configuration but Mobile/backend fallback never reads
+it, FIX THAT.
+
+
+============================================================
+5. FALLBACK DECISION
+============================================================
+
+If:
+
+Mobile = INSUFFICIENT
+
+AND
+
+AutomaticBackendFallbackEnabled = TRUE
+
+then there MUST be:
+
+[OCR-FLOW] REQUEST=<id> BACKEND_FALLBACK_TRIGGERED
+
+If this log does not occur:
+
+the fallback implementation is broken.
+
+Fix it.
+
+
+============================================================
+6. DO NOT SHOW PARTIAL WARNING YET
+============================================================
+
+CRITICAL UX FIX.
+
+When:
+
+Mobile OCR = INSUFFICIENT
+
+AND:
+
+Backend automatic fallback = enabled
+
+do NOT immediately display:
+
+"Some invoice details could not be read automatically..."
+
+Instead show:
+
+"Improving invoice extraction..."
+
+with loading indicator.
+
+The user should not see the final review warning until backend OCR has
+finished or failed.
+
+
+============================================================
+7. PROVE API CALL
+============================================================
+
+When fallback is triggered:
+
+log:
+
+[OCR-FLOW] REQUEST=<id> BACKEND_API_CALL_STARTED
+
+Include safe metadata:
+
+DocumentId
+PDF source
+PDF size
+Page count if known.
+
+Do NOT log PDF bytes.
+
+Then perform the actual authenticated request.
+
+Log:
+
+[OCR-FLOW] REQUEST=<id> BACKEND_API_RESPONSE
+HTTP=<status>
+DurationMs=<n>
+
+
+If API call throws:
+
+[OCR-FLOW] REQUEST=<id> BACKEND_API_FAILED
+ErrorCode=<safe-code>
+
+
+Do not silently catch and fall back to Mobile warning.
+
+
+============================================================
+8. VERIFY THE CORRECT ENDPOINT
+============================================================
+
+Identify the actual endpoint used.
+
+Expected one of:
+
+POST /api/v1/invoices/advanced-extract
+
+or
+
+POST /api/v1/documents/{documentId}/advanced-extract
+
+or the actual equivalent implemented in the project.
+
+Report:
+
+BACKEND OCR ENDPOINT:
+<exact endpoint>
+
+METHOD:
+<method>
+
+INPUT:
+PDF / DOCUMENT ID / OTHER
+
+Do not create another duplicate endpoint unless current implementation
+is genuinely missing.
+
+
+============================================================
+9. PROVE BACKEND RECEIVES DOCUMENT
+============================================================
+
+At backend entry:
+
+[ADV-OCR] REQUEST=<id> REQUEST_RECEIVED
+
+Safely log:
+
+DocumentId
+OrganizationId
+UserId
+FileSize
+ContentType.
+
+Validate:
+
+file/document exists
+
+size > 0
+
+PDF header valid
+
+%PDF
+
+document belongs to authenticated organization.
+
+If invalid:
+
+return explicit error.
+
+Do not silently return PARTIAL.
+
+
+============================================================
+10. PROVE PDF CAN ACTUALLY BE READ
+============================================================
+
+Log:
+
+[ADV-OCR] REQUEST=<id> PDF_INSPECTION
+
+Pages=<n>
+
+EmbeddedTextAvailable=YES/NO
+
+EmbeddedTextLength=<n>
+
+ImageBasedPages=<n>.
+
+
+For digital PDF:
+
+use embedded text.
+
+For scanned/image PDF:
+
+actual OCR MUST run.
+
+A successful PDF open is NOT successful OCR.
+
+
+============================================================
+11. CRITICAL SCANNED PDF CHECK
+============================================================
+
+Our Mobile scanner produces image-based PDFs frequently.
+
+Therefore verify that backend Advanced OCR actually handles:
+
+IMAGE-ONLY PDF.
+
+If:
+
+EmbeddedTextLength = 0
+
+backend MUST:
+
+render/extract page images
+
+→ run configured OCR text-recognition engine
+
+→ obtain actual OCR text.
+
+Log:
+
+[ADV-OCR] REQUEST=<id> OCR_REQUIRED=TRUE
+
+[ADV-OCR] REQUEST=<id> OCR_STARTED
+
+[ADV-OCR] REQUEST=<id> OCR_PAGE_COMPLETED
+Page=1
+TextLength=<n>
+Confidence=<if available>
+
+[ADV-OCR] REQUEST=<id> OCR_COMPLETED
+Pages=<n>
+TotalTextLength=<n>
+
+
+If current "advanced OCR" only parses embedded PDF text:
+
+THIS IS THE ROOT CAUSE.
+
+Fix it.
+
+
+============================================================
+12. PROVE OCR ENGINE IS REAL
+============================================================
+
+Identify the actual backend text-recognition implementation.
+
+Report:
+
+BACKEND OCR ENGINE:
+<exact library/service/provider>
+
+Examples could be:
+
+built-in OCR library
+Tesseract
+configured OCR provider
+external document extraction provider
+other.
+
+Do NOT report:
+
+BUILT_IN_ADVANCED
+
+unless there is an actual text recognition engine behind that name.
+
+We need the actual implementation.
+
+Report:
+
+TEXT RECOGNITION ENGINE:
+<actual engine>
+
+INVOICE EXTRACTION ENGINE:
+<actual parser/service>
+
+These are different responsibilities.
+
+
+============================================================
+13. QUALITY GATE RAW OCR
+============================================================
+
+After OCR, calculate safe quality indicators:
+
+Page count
+
+Total OCR characters
+
+Meaningful lines
+
+Numeric tokens
+
+Currency tokens
+
+Invoice keywords
+
+PO keywords
+
+Total keywords.
+
+
+Example:
+
+[ADV-OCR] REQUEST=<id> OCR_QUALITY
+Characters=3284
+Lines=87
+InvoiceKeywords=4
+POKeywords=2
+TotalKeywords=6
+Quality=GOOD
+
+
+If OCR returns:
+
+20 characters
+
+for a clear full-page invoice,
+
+do NOT proceed as if extraction succeeded.
+
+Return:
+
+OCR_TEXT_INSUFFICIENT
+
+and diagnose the recognition engine.
+
+
+============================================================
+14. PROVE HEADER EXTRACTION
+============================================================
+
+After raw text exists:
+
+run Advanced Invoice Extraction.
+
+Log safe field presence:
+
+[ADV-OCR] REQUEST=<id> HEADER_EXTRACTION
+
+Supplier=FOUND
+SupplierConfidence=0.94
+
+InvoiceNumber=FOUND
+InvoiceConfidence=0.97
+
+PO=FOUND
+POConfidence=0.95
+
+InvoiceDate=FOUND
+DateConfidence=0.90
+
+Currency=FOUND
+CurrencyConfidence=0.96
+
+NetAmount=FOUND
+NetConfidence=0.93
+
+TaxAmount=FOUND
+TaxConfidence=0.91
+
+GrossAmount=FOUND
+GrossConfidence=0.98
+
+
+Do not log confidential values by default.
+
+
+============================================================
+15. PROVE LINE EXTRACTION
+============================================================
+
+Log:
+
+[ADV-OCR] REQUEST=<id> LINE_EXTRACTION
+
+LinesDetected=<n>
+LinesAccepted=<n>
+LinesLowConfidence=<n>
+
+Also:
+
+FinancialReconciliation=PASS/FAIL/NOT_POSSIBLE.
+
+
+Backend Advanced OCR must attempt detailed extraction, not only the
+four Mobile fields.
+
+
+============================================================
+16. BACKEND RESPONSE
+============================================================
+
+Backend response must contain detailed extraction.
+
+Before response:
+
+[ADV-OCR] REQUEST=<id> RESPONSE_READY
+
+Status=SUCCESS/PARTIAL/REVIEW_REQUIRED/FAILED
+HeaderFieldsFound=<n>
+Lines=<n>
+OverallConfidence=<n>
+
+
+Return field-level confidence/provenance.
+
+
+============================================================
+17. MOBILE RESPONSE TRACE
+============================================================
+
+When Mobile receives backend result:
+
+[OCR-FLOW] REQUEST=<id> BACKEND_RESULT_RECEIVED
+
+Status=<status>
+Supplier=FOUND/MISSING
+InvoiceNumber=FOUND/MISSING
+PO=FOUND/MISSING
+Amount=FOUND/MISSING
+Lines=<n>
+
+
+If this log never occurs despite backend success:
+
+fix API/client response handling.
+
+
+============================================================
+18. PROVE MOBILE MERGE
+============================================================
+
+Next log:
+
+[OCR-FLOW] REQUEST=<id> MERGE_STARTED
+
+For Tier-1 fields log only provenance/confidence:
+
+Supplier:
+Selected=BACKEND/MOBILE/MANUAL
+Confidence=<n>
+
+InvoiceNumber:
+Selected=BACKEND/MOBILE/MANUAL
+Confidence=<n>
+
+PO:
+Selected=BACKEND/MOBILE/MANUAL
+Confidence=<n>
+
+Amount:
+Selected=BACKEND/MOBILE/MANUAL
+Confidence=<n>
+
+
+Then:
+
+[OCR-FLOW] REQUEST=<id> FORM_UPDATED
+
+
+Verify React Hook Form / state actually receives new values.
+
+Inspect:
+
+reset()
+setValue()
+ScanSession
+Zustand/Context
+navigation params
+rehydration.
+
+A successful backend response that never reaches form state is a FAIL.
+
+
+============================================================
+19. FINAL SUFFICIENCY MUST RUN AGAIN
+============================================================
+
+After backend merge:
+
+RE-EVALUATE extraction quality.
+
+Do not keep the old:
+
+Mobile OCR = INSUFFICIENT
+
+state.
+
+Run:
+
+finalResult =
+EvaluateMergedExtraction(...)
+
+
+Then log:
+
+[OCR-FLOW] REQUEST=<id> FINAL_EVALUATION
+
+Supplier=PASS/FAIL
+InvoiceNumber=PASS/FAIL
+PO=PASS/FAIL
+Amount=PASS/FAIL
+
+FINAL_STATUS=SUCCESS/PARTIAL/REVIEW_REQUIRED.
+
+
+This is critical.
+
+The current warning may be caused by stale Mobile OCR status even after
+backend extraction succeeded.
+
+
+============================================================
+20. WARNING MUST USE FINAL RESULT
+============================================================
+
+The message:
+
+"Some invoice details could not be read automatically. We've filled in
+what we found — please review the highlighted fields."
+
+MUST be based on:
+
+FINAL MERGED RESULT
+
+NOT:
+
+initial Mobile OCR result.
+
+
+If final Tier-1 result is sufficient:
+
+show:
+
+"Invoice details extracted. Please verify before continuing."
+
+
+If exactly one required field still missing/low confidence:
+
+show:
+
+"We found most invoice details. Please review the highlighted field."
+
+
+If multiple required fields still need review:
+
+show:
+
+"Some key invoice details need your review."
+
+
+If backend genuinely failed:
+
+show:
+
+"Advanced invoice reading couldn't complete. Please review the
+highlighted fields or try Re-read Invoice."
+
+
+============================================================
+21. RE-READ MUST PROVE BACKEND CALL
+============================================================
+
+Pressing:
+
+RE-READ INVOICE
+
+must ALWAYS produce:
+
+[OCR-FLOW] REQUEST=<new-id> REREAD_CLICKED
+
+then:
+
+BACKEND_API_CALL_STARTED
+
+then backend:
+
+REQUEST_RECEIVED
+OCR_STARTED / EMBEDDED_TEXT_USED
+OCR_COMPLETED
+HEADER_EXTRACTION
+LINE_EXTRACTION
+RESPONSE_READY
+
+then Mobile:
+
+BACKEND_RESULT_RECEIVED
+MERGE_STARTED
+FORM_UPDATED
+FINAL_EVALUATION.
+
+
+If any stage missing:
+
+fix it.
+
+
+============================================================
+22. RE-READ MUST NOT CALL ONLY MOBILE OCR
+============================================================
+
+Inspect current button handler.
+
+If it currently calls:
+
+Mobile ML Kit
+
+basic-extract
+
+local parser
+
+only,
+
+change it.
+
+RE-READ must call:
+
+Backend Advanced OCR.
+
+Configuration:
+
+AlwaysBackendOnReread = TRUE
+
+should be the default.
+
+
+============================================================
+23. PERSIST DETAILED RESULT
+============================================================
+
+When Backend Advanced OCR succeeds:
+
+persist detailed extraction into existing:
+
+Invoice
+InvoiceLine
+invoice_ext_data
+ExtractionRun/history
+
+as appropriate.
+
+Verify DB after one extraction.
+
+Report:
+
+Invoice header fields populated=<n>
+Invoice lines populated=<n>
+invoice_ext_data populated=YES/NO
+Extraction history created=YES/NO.
+
+
+============================================================
+24. DO NOT CREATE DUPLICATE INVOICE
+============================================================
+
+Auto fallback and Re-read must operate on the SAME:
+
+Document
+Invoice.
+
+Do not create new Invoice each time OCR runs.
+
+Re-read creates:
+
+new ExtractionRun/version
+
+not duplicate Invoice.
+
+
+============================================================
+25. CREATE DEVELOPMENT OCR DEBUG PANEL
+============================================================
+
+For Development only, add a small expandable section on Mobile Invoice
+Review:
+
+OCR DIAGNOSTICS
+
+Mobile OCR:
+SUFFICIENT / INSUFFICIENT
+
+Backend Fallback:
+TRIGGERED / NOT REQUIRED / DISABLED / FAILED
+
+Backend OCR:
+SUCCESS / PARTIAL / FAILED
+
+Provider:
+<provider>
+
+Supplier:
+Mobile / Backend / Manual
+
+Invoice:
+Mobile / Backend / Manual
+
+PO:
+Mobile / Backend / Manual
+
+Amount:
+Mobile / Backend / Manual
+
+Backend Lines:
+<n>
+
+Request ID:
+<id>
+
+
+DO NOT show this panel in Production.
+
+This will let us immediately know whether backend OCR ran.
+
+
+============================================================
+26. CLOUD OCR MONITORING
+============================================================
+
+In Cloud Invoice Detail / Extraction History show:
+
+Trigger:
+AUTO_FALLBACK / MANUAL_REREAD
+
+Mobile OCR:
+SUFFICIENT / INSUFFICIENT
+
+Backend OCR:
+SUCCESS / PARTIAL / FAILED
+
+Backend OCR Provider
+
+Pages
+
+Header Fields Found
+
+Lines Extracted
+
+Overall Confidence
+
+Processing Time
+
+Extraction Timestamp
+
+Request/Correlation ID.
+
+
+This makes backend effectiveness measurable.
+
+
+============================================================
+27. OCR CONFIGURATION VALIDATION
+============================================================
+
+Open:
+
+Administration
+→ Document Extraction
+→ Invoice OCR Configuration.
+
+Verify actual saved effective values.
+
+For current test set:
+
+Enable Mobile Basic OCR:
+ON
+
+Automatic Backend OCR Fallback:
+ON
+
+Minimum Mobile Confidence:
+0.75
+
+Required:
+Supplier Name = ON
+Invoice Number = ON
+PO Number = ON
+Invoice Amount = ON
+
+Always Backend on Re-read:
+ON
+
+Detailed Line Extraction:
+ON
+
+Supplier Master Validation:
+ON
+
+PO Validation:
+ON
+
+Financial Reconciliation:
+ON.
+
+
+Save.
+
+Reload page.
+
+Verify settings persist.
+
+Then verify backend/mobile reads same values.
+
+
+============================================================
+28. TEST WITH INTENTIONALLY INSUFFICIENT MOBILE RESULT
+============================================================
+
+Create an automated/integration test where Mobile Basic result is:
+
+Supplier:
+FOUND 0.90
+
+Invoice:
+FOUND 0.92
+
+PO:
+MISSING
+
+Amount:
+MISSING.
+
+
+Expected trace:
+
+MOBILE_INSUFFICIENT
+
+BACKEND_FALLBACK_TRIGGERED
+
+BACKEND_API_CALL_STARTED
+
+REQUEST_RECEIVED
+
+OCR_STARTED
+
+OCR_COMPLETED
+
+HEADER_EXTRACTION
+
+RESPONSE_READY
+
+BACKEND_RESULT_RECEIVED
+
+MERGE_STARTED
+
+FORM_UPDATED
+
+FINAL_EVALUATION.
+
+
+No step may be skipped.
+
+
+============================================================
+29. TEST BACKEND EFFECTIVENESS
+============================================================
+
+Use representative invoice PDFs already available in Development/test
+data if permitted.
+
+For each invoice compare:
+
+MOBILE ONLY
+
+versus
+
+MOBILE + BACKEND.
+
+
+Report only field-presence/confidence statistics, not confidential
+values.
+
+Example:
+
+Invoice 1:
+
+                 Mobile     Backend
+Supplier         PASS       PASS
+Invoice No       PASS       PASS
+PO               FAIL       PASS
+Amount           FAIL       PASS
+Lines            N/A        14
+
+Invoice 2:
+
+Supplier         FAIL       PASS
+Invoice No       PASS       PASS
+PO               PASS       PASS
+Amount           FAIL       PASS.
+
+
+Calculate:
+
+Tier-1 completion before backend
+
+Tier-1 completion after backend.
+
+
+============================================================
+30. IMPORTANT — DETERMINE WHETHER BACKEND IS ACTUALLY EFFECTIVE
+============================================================
+
+At completion explicitly answer:
+
+A. IS BACKEND OCR BEING CALLED?
+YES/NO
+
+B. IS THE PDF REACHING BACKEND?
+YES/NO
+
+C. IS REAL OCR RUNNING ON IMAGE PDF?
+YES/NO
+
+D. WHAT OCR ENGINE IS ACTUALLY RUNNING?
+<exact implementation>
+
+E. IS RAW OCR TEXT USEFUL?
+YES/NO + safe quality metrics
+
+F. IS ADVANCED PARSER EXTRACTING FIELDS?
+YES/NO
+
+G. ARE LINE ITEMS BEING EXTRACTED?
+YES/NO
+
+H. IS MOBILE RECEIVING BACKEND RESULT?
+YES/NO
+
+I. IS MOBILE APPLYING BACKEND RESULT?
+YES/NO
+
+J. IS FINAL WARNING USING MERGED RESULT?
+YES/NO
+
+K. IS RE-READ DEFINITELY USING BACKEND?
+YES/NO.
+
+
+============================================================
+31. DO NOT MASK FAILURES
+============================================================
+
+Do not convert backend exceptions into generic:
+
+PARTIAL
+
+without recording actual failure.
+
+Use explicit internal error codes such as:
+
+BACKEND_OCR_NOT_TRIGGERED
+
+BACKEND_OCR_API_FAILED
+
+PDF_NOT_AVAILABLE
+
+PDF_INVALID
+
+OCR_ENGINE_UNAVAILABLE
+
+OCR_TEXT_INSUFFICIENT
+
+EXTRACTION_FAILED
+
+MOBILE_RESPONSE_MAPPING_FAILED
+
+FORM_UPDATE_FAILED
+
+CONFIGURATION_DISABLED.
+
+
+UI remains user-friendly, but diagnostics must preserve the actual
+reason.
+
+
+============================================================
+32. REGRESSION
+============================================================
+
+Run:
+
+API build
+
+API tests
+
+Cloud typecheck/build
+
+Mobile typecheck
+
+OCR tests
+
+SharePoint routing tests
+
+GRN tests.
+
+
+Do not change:
+
+scanner capture
+PDF generation
+SharePoint routing
+GRN logic
+inventory logic
+bala@chervic.in.
+
+
+============================================================
+33. FINAL REPORT
+============================================================
+
+Return exactly:
+
+SILA ME OCR END-TO-END DIAGNOSTIC
+
+WARNING MESSAGE SOURCE:
+<file/component>
+
+WARNING MESSAGE CONDITION:
+<condition>
+
+MOBILE OCR:
+PASS/FAIL
+
+MOBILE OCR SUFFICIENCY:
+PASS/FAIL
+
+EFFECTIVE OCR CONFIG LOADED:
+PASS/FAIL
+
+AUTO BACKEND FALLBACK ENABLED:
+YES/NO
+
+BACKEND FALLBACK TRIGGERED:
+YES/NO
+
+BACKEND API CALLED:
+YES/NO
+
+BACKEND ENDPOINT:
+<endpoint>
+
+PDF RECEIVED:
+YES/NO
+
+PDF SIZE:
+<safe size>
+
+PDF PAGES:
+<n>
+
+IMAGE-ONLY PDF SUPPORTED:
+YES/NO
+
+ACTUAL TEXT RECOGNITION ENGINE:
+<exact engine>
+
+OCR ACTUALLY EXECUTED:
+YES/NO
+
+RAW OCR QUALITY:
+GOOD/PARTIAL/POOR
+
+RAW OCR CHARACTERS:
+<n>
+
+ADVANCED EXTRACTION ENGINE:
+<exact implementation>
+
+SUPPLIER:
+PASS/FAIL
+
+INVOICE NUMBER:
+PASS/FAIL
+
+PO NUMBER:
+PASS/FAIL
+
+AMOUNT:
+PASS/FAIL
+
+LINE ITEMS:
+<n>
+
+FINANCIAL RECONCILIATION:
+PASS/FAIL/NOT_POSSIBLE
+
+BACKEND RESULT RETURNED TO MOBILE:
+YES/NO
+
+MOBILE MERGE:
+PASS/FAIL
+
+FORM UPDATED:
+YES/NO
+
+FINAL SUFFICIENCY RE-EVALUATED:
+YES/NO
+
+WARNING BASED ON FINAL MERGED RESULT:
+YES/NO
+
+RE-READ CALLS BACKEND:
+YES/NO
+
+DETAILED INVOICE DATA PERSISTED:
+YES/NO
+
+INVOICE LINES PERSISTED:
+YES/NO
+
+EXTRACTION HISTORY:
+YES/NO
+
+TIER-1 COMPLETION BEFORE BACKEND:
+<n>/4
+
+TIER-1 COMPLETION AFTER BACKEND:
+<n>/4
+
+ROOT CAUSE:
+<exact root cause(s)>
+
+FIXES MADE:
+<exact changes>
+
+API TESTS:
+x/x
+
+CLOUD BUILD:
+PASS/FAIL
+
+MOBILE TYPECHECK:
+PASS/FAIL
+
+SCANNER MODIFIED:
+NO
+
+PDF GENERATION MODIFIED:
+NO
+
+SHAREPOINT ROUTING MODIFIED:
+NO
+
+GRN MODIFIED:
+NO
+
+BALA USER MODIFIED:
+NO
+
+FINAL VERDICT:
+
+BACKEND OCR IS:
+NOT CALLED /
+CALLED BUT NOT RECOGNIZING /
+RECOGNIZING BUT EXTRACTION POOR /
+EXTRACTING BUT MOBILE NOT APPLYING /
+WORKING END-TO-END
+
+Do not answer "implemented" without this evidence.
+
+============================================================
+34. COMMIT
+============================================================
+
+Only after identifying and fixing the real problem:
+
+git commit -m "fix: verify and complete backend invoice ocr fallback"
+
+DO NOT PUSH.
+
+STOP.
