@@ -137,6 +137,12 @@
 .sila-user-menu__copy strong { font-size: 12px; font-weight: 600; }
 .sila-user-menu__copy span { color: var(--sila-muted); font-size: 11px; }
 .sila-content { width: min(100%, 1440px); margin: 0 auto; padding: 34px 40px 56px; }
+html.sila-embed .sila-sidebar,
+html.sila-embed .sila-header,
+html.sila-embed [data-testid="banner-customer-context"],
+html.sila-embed [data-testid="banner-support-session"] { display: none; }
+html.sila-embed .sila-main { width: 100%; }
+html.sila-embed .sila-content { width: 100%; max-width: none; padding: 8px 4px 32px; }
 .sila-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 22px; margin-bottom: 28px; }
 .sila-page-header__copy { min-width: 0; }
 .sila-page-header__eyebrow { margin: 0 0 8px; color: var(--sila-blue); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }

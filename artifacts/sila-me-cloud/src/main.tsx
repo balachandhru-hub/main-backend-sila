@@ -9,6 +9,13 @@ import { installTenantRouteFetch, resolveCustomerRouteSlug } from '@/lib/tenant-
 
 import './index.css';
 
+if (new URLSearchParams(window.location.search).get('embed') === '1') {
+  sessionStorage.setItem('sila-embed', '1');
+}
+if (sessionStorage.getItem('sila-embed') === '1') {
+  document.documentElement.classList.add('sila-embed');
+}
+
 installTenantRouteFetch();
 setRouteSlug(resolveCustomerRouteSlug());
 
