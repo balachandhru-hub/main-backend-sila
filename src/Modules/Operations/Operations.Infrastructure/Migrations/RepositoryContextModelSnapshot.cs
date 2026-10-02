@@ -105,6 +105,11 @@ namespace Operations.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
+                    b.Property<string>("ApiKeyHeader")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("api_key_header");
+
                     b.Property<string>("AuthenticationType")
                         .IsRequired()
                         .HasColumnType("nvarchar(40)")
@@ -133,6 +138,16 @@ namespace Operations.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("entity_code");
+
+                    b.Property<string>("HeadersJson")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("headers_json");
+
+                    b.Property<string>("HttpMethod")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)")
+                        .HasColumnName("http_method");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit")
@@ -181,10 +196,20 @@ namespace Operations.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("page_size");
 
+                    b.Property<string>("PayloadFormat")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)")
+                        .HasColumnName("payload_format");
+
                     b.Property<string>("ProcessType")
                         .IsRequired()
                         .HasColumnType("nvarchar(30)")
                         .HasColumnName("process_type");
+
+                    b.Property<string>("ProtectedApiKey")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("protected_api_key");
 
                     b.Property<string>("ProtectedBearerToken")
                         .HasColumnType("nvarchar(max)")
@@ -206,6 +231,10 @@ namespace Operations.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(20)")
                         .HasColumnName("protocol");
+
+                    b.Property<string>("RequestBody")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("request_body");
 
                     b.Property<string>("ResourcePath")
                         .HasMaxLength(1000)
@@ -229,6 +258,11 @@ namespace Operations.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(20)")
                         .HasColumnName("status");
+
+                    b.Property<string>("SystemName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("system_name");
 
                     b.Property<DateTime?>("TestedAt")
                         .HasColumnType("datetime2")

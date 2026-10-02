@@ -10,6 +10,9 @@ namespace Operations.Application.Features.Commands.UpdateIntegration
     {
         public Guid OrganizationId { get; set; }
         public Guid UserId { get; set; }
+
+        /// <summary>Buyer or Supplier, from the caller's token.</summary>
+        public string OrganizationType { get; set; } = string.Empty;
         public Guid ConfigurationId { get; set; }
         public IntegrationConfigurationInputDto Request { get; set; } = new();
     }

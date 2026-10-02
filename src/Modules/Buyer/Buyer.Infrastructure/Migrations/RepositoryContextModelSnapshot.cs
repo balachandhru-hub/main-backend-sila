@@ -716,6 +716,14 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("outlet_name");
 
+                    b.Property<Guid?>("PropertyId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("property_id");
+
+                    b.Property<string>("StorageLocation")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("storage_location");
+
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
@@ -780,6 +788,71 @@ namespace Buyer.Infrastructure.Migrations
                         .HasDatabaseName("ix_buyer_outlet_user_mapping_user_id");
 
                     b.ToTable("buyer_outlet_user_mapping", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.BuyerProperty", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BuyerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("buyer_id");
+
+                    b.Property<string>("CompanyCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("company_code");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid?>("MasterApprovalFlowId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("master_approval_flow_id");
+
+                    b.Property<string>("PlantCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("plant_code");
+
+                    b.Property<string>("PropertyName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("property_name");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_buyer_property");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_buyer_property_is_active");
+
+                    b.HasIndex("BuyerId", "PlantCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_buyer_property_buyer_id_plant_code");
+
+                    b.ToTable("buyer_property", "buyersystem");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.BuyerRegistration", b =>
@@ -898,6 +971,67 @@ namespace Buyer.Infrastructure.Migrations
                         .HasDatabaseName("ix_buyer_supplier_mapping_is_active");
 
                     b.ToTable("buyer_supplier_mapping", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.CatalogMaterialMapping", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BuyerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("buyer_id");
+
+                    b.Property<Guid>("CatalogId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("catalog_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("MaterialCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("material_code");
+
+                    b.Property<Guid>("MaterialId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("material_id");
+
+                    b.Property<string>("Sku")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("sku");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_catalog_material_mapping");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_catalog_material_mapping_is_active");
+
+                    b.HasIndex("BuyerId", "CatalogId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_catalog_material_mapping_buyer_id_catalog_id");
+
+                    b.ToTable("catalog_material_mapping", "buyersystem");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.ContractAttachment", b =>
@@ -1836,6 +1970,156 @@ namespace Buyer.Infrastructure.Migrations
                     b.ToTable("message_thread", "buyersystem");
                 });
 
+            modelBuilder.Entity("Buyer.Domain.Entities.PersonalWishlist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BuyerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("buyer_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("owner_user_id");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_personal_wishlist");
+
+                    b.HasIndex("BuyerId")
+                        .HasDatabaseName("ix_personal_wishlist_buyer_id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_personal_wishlist_is_active");
+
+                    b.HasIndex("OwnerUserId")
+                        .HasDatabaseName("ix_personal_wishlist_owner_user_id");
+
+                    b.ToTable("personal_wishlist", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PersonalWishlistItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CatalogId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("catalog_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Currency")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("currency");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("description");
+
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)")
+                        .HasColumnName("discount_percent");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("PersonalWishlistId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("personal_wishlist_id");
+
+                    b.Property<decimal?>("Price")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("price");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("product_name");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("Sku")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("sku");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_id");
+
+                    b.Property<string>("SupplierName")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("supplier_name");
+
+                    b.Property<string>("UnitOfMeasure")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("unit_of_measure");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_personal_wishlist_item");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_personal_wishlist_item_is_active");
+
+                    b.HasIndex("PersonalWishlistId")
+                        .HasDatabaseName("ix_personal_wishlist_item_personal_wishlist_id");
+
+                    b.ToTable("personal_wishlist_item", "buyersystem");
+                });
+
             modelBuilder.Entity("Buyer.Domain.Entities.PredefinedContract", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2393,9 +2677,9 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
 
-                    b.Property<Guid>("WishlistId")
+                    b.Property<Guid>("WeeklyBucketId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("wishlist_id");
+                        .HasColumnName("weekly_bucket_id");
 
                     b.HasKey("Id")
                         .HasName("pk_purchase_document_integration");
@@ -2403,11 +2687,222 @@ namespace Buyer.Infrastructure.Migrations
                     b.HasIndex("IsActive")
                         .HasDatabaseName("ix_purchase_document_integration_is_active");
 
-                    b.HasIndex("WishlistId", "IntegrationType", "SupplierOrganizationId")
+                    b.HasIndex("WeeklyBucketId", "IntegrationType", "SupplierOrganizationId")
                         .IsUnique()
-                        .HasDatabaseName("ix_purchase_document_integration_wishlist_id_integration_type_supplier_organization_id");
+                        .HasDatabaseName("ix_purchase_document_integration_weekly_bucket_id_integration_type_supplier_organization_id");
 
                     b.ToTable("purchase_document_integration", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PurchaseOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BucketCode")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("bucket_code");
+
+                    b.Property<Guid>("BuyerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("buyer_id");
+
+                    b.Property<Guid>("BuyerOrganizationId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("buyer_organization_id");
+
+                    b.Property<string>("CompanyCode")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("company_code");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Currency")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("currency");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("order_date");
+
+                    b.Property<string>("PlantCode")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("plant_code");
+
+                    b.Property<string>("PoNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("po_number");
+
+                    b.Property<string>("SourceSystem")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("source_system");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("source_type");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_id");
+
+                    b.Property<string>("SupplierName")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("supplier_name");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("total_amount");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("WeeklyBucketId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("weekly_bucket_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_purchase_order");
+
+                    b.HasIndex("BuyerId")
+                        .HasDatabaseName("ix_purchase_order_buyer_id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_purchase_order_is_active");
+
+                    b.HasIndex("SupplierId")
+                        .HasDatabaseName("ix_purchase_order_supplier_id");
+
+                    b.HasIndex("WeeklyBucketId", "SupplierId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_purchase_order_weekly_bucket_id_supplier_id")
+                        .HasFilter("[weekly_bucket_id] IS NOT NULL");
+
+                    b.ToTable("purchase_order", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PurchaseOrderItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CatalogId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("catalog_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Currency")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("currency");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)")
+                        .HasColumnName("discount_percent");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<decimal>("LineAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("line_amount");
+
+                    b.Property<int>("LineNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("line_number");
+
+                    b.Property<string>("MaterialCode")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("material_code");
+
+                    b.Property<Guid?>("OutletId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("outlet_id");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("product_name");
+
+                    b.Property<Guid>("PurchaseOrderId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("purchase_order_id");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("Sku")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("sku");
+
+                    b.Property<string>("StorageLocation")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("storage_location");
+
+                    b.Property<string>("UnitOfMeasure")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("unit_of_measure");
+
+                    b.Property<decimal?>("UnitPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("unit_price");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_purchase_order_item");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_purchase_order_item_is_active");
+
+                    b.HasIndex("PurchaseOrderId")
+                        .HasDatabaseName("ix_purchase_order_item_purchase_order_id");
+
+                    b.ToTable("purchase_order_item", "buyersystem");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.RFQ", b =>
@@ -3733,7 +4228,7 @@ namespace Buyer.Infrastructure.Migrations
                     b.ToTable("verification_template_question_option", "buyersystem");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.Wishlist", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucket", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -3744,13 +4239,10 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("approval_name");
 
-                    b.Property<string>("BuyerErpDocumentNumber")
+                    b.Property<string>("BucketCode")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("buyer_erp_document_number");
-
-                    b.Property<string>("BuyerErpDocumentType")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("buyer_erp_document_type");
+                        .HasColumnName("bucket_code");
 
                     b.Property<Guid>("BuyerId")
                         .HasColumnType("uniqueidentifier")
@@ -3760,13 +4252,14 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("buyer_organization_id");
 
+                    b.Property<string>("CompanyCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("company_code");
+
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by");
-
-                    b.Property<string>("Currency")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("currency");
 
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("datetime2")
@@ -3776,17 +4269,17 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("date_updated");
 
-                    b.Property<string>("DeliveryInstruction")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("delivery_instruction");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("description");
-
                     b.Property<DateTime?>("FinalApprovedOn")
                         .HasColumnType("datetime2")
                         .HasColumnName("final_approved_on");
+
+                    b.Property<Guid?>("FrozenBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("frozen_by");
+
+                    b.Property<DateTime?>("FrozenOn")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("frozen_on");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit")
@@ -3800,68 +4293,46 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("master_approval_flow_id");
 
-                    b.Property<Guid>("OutletId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("outlet_id");
+                    b.Property<string>("PlantCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("plant_code");
 
-                    b.Property<DateTime?>("RequiredDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("required_date");
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("property_id");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("status");
 
-                    b.Property<Guid?>("SubmittedBy")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("submitted_by");
-
-                    b.Property<DateTime?>("SubmittedOn")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("submitted_on");
-
-                    b.Property<string>("SupplierErpDocumentNumber")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("supplier_erp_document_number");
-
-                    b.Property<string>("SupplierErpDocumentType")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("supplier_erp_document_type");
-
-                    b.Property<string>("SupplierName")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("supplier_name");
-
-                    b.Property<Guid?>("SupplierOrganizationId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("supplier_organization_id");
-
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
 
-                    b.Property<string>("WishlistName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("wishlist_name");
+                    b.Property<int>("WeekNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("week_number");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int")
+                        .HasColumnName("year");
 
                     b.HasKey("Id")
-                        .HasName("pk_wishlist");
-
-                    b.HasIndex("BuyerId")
-                        .HasDatabaseName("ix_wishlist_buyer_id");
+                        .HasName("pk_weekly_bucket");
 
                     b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_wishlist_is_active");
+                        .HasDatabaseName("ix_weekly_bucket_is_active");
 
-                    b.HasIndex("OutletId")
-                        .HasDatabaseName("ix_wishlist_outlet_id");
+                    b.HasIndex("BuyerId", "PropertyId", "Year", "WeekNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_weekly_bucket_buyer_id_property_id_year_week_number");
 
-                    b.ToTable("wishlist", "buyersystem");
+                    b.ToTable("weekly_bucket", "buyersystem");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.WishlistApprovalFlow", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucketApprovalFlow", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -3915,23 +4386,23 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
 
-                    b.Property<Guid>("WishlistId")
+                    b.Property<Guid>("WeeklyBucketId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("wishlist_id");
+                        .HasColumnName("weekly_bucket_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_wishlist_approval_flow");
+                        .HasName("pk_weekly_bucket_approval_flow");
 
                     b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_wishlist_approval_flow_is_active");
+                        .HasDatabaseName("ix_weekly_bucket_approval_flow_is_active");
 
-                    b.HasIndex("WishlistId")
-                        .HasDatabaseName("ix_wishlist_approval_flow_wishlist_id");
+                    b.HasIndex("WeeklyBucketId")
+                        .HasDatabaseName("ix_weekly_bucket_approval_flow_weekly_bucket_id");
 
-                    b.ToTable("wishlist_approval_flow", "buyersystem");
+                    b.ToTable("weekly_bucket_approval_flow", "buyersystem");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.WishlistApprovalUserMapping", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucketApprovalUserMapping", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -3979,23 +4450,23 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("user_id");
 
-                    b.Property<Guid>("WishlistApprovalFlowId")
+                    b.Property<Guid>("WeeklyBucketApprovalFlowId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("wishlist_approval_flow_id");
+                        .HasColumnName("weekly_bucket_approval_flow_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_wishlist_approval_user_mapping");
+                        .HasName("pk_weekly_bucket_approval_user_mapping");
 
                     b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_wishlist_approval_user_mapping_is_active");
+                        .HasDatabaseName("ix_weekly_bucket_approval_user_mapping_is_active");
 
-                    b.HasIndex("WishlistApprovalFlowId")
-                        .HasDatabaseName("ix_wishlist_approval_user_mapping_wishlist_approval_flow_id");
+                    b.HasIndex("WeeklyBucketApprovalFlowId")
+                        .HasDatabaseName("ix_weekly_bucket_approval_user_mapping_weekly_bucket_approval_flow_id");
 
-                    b.ToTable("wishlist_approval_user_mapping", "buyersystem");
+                    b.ToTable("weekly_bucket_approval_user_mapping", "buyersystem");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.WishlistAudit", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucketAudit", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -4035,28 +4506,42 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
 
-                    b.Property<Guid>("WishlistId")
+                    b.Property<Guid>("WeeklyBucketId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("wishlist_id");
+                        .HasColumnName("weekly_bucket_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_wishlist_audit");
+                        .HasName("pk_weekly_bucket_audit");
 
                     b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_wishlist_audit_is_active");
+                        .HasDatabaseName("ix_weekly_bucket_audit_is_active");
 
-                    b.HasIndex("WishlistId")
-                        .HasDatabaseName("ix_wishlist_audit_wishlist_id");
+                    b.HasIndex("WeeklyBucketId")
+                        .HasDatabaseName("ix_weekly_bucket_audit_weekly_bucket_id");
 
-                    b.ToTable("wishlist_audit", "buyersystem");
+                    b.ToTable("weekly_bucket_audit", "buyersystem");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.WishlistItem", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucketItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
+
+                    b.Property<decimal>("ApprovedQuantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("approved_quantity");
+
+                    b.Property<string>("AvailabilityStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("availability_status");
+
+                    b.Property<Guid>("CatalogId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("catalog_id");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
@@ -4074,58 +4559,236 @@ namespace Buyer.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("date_updated");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("description");
+
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)")
+                        .HasColumnName("discount_percent");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
-                    b.Property<string>("MaterialCode")
+                    b.Property<string>("LineStatus")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("line_status");
+
+                    b.Property<string>("MaterialCode")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("material_code");
 
-                    b.Property<Guid>("MaterialId")
+                    b.Property<Guid?>("MaterialId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("material_id");
 
-                    b.Property<string>("MaterialName")
+                    b.Property<string>("OriginalProductName")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("original_product_name");
+
+                    b.Property<Guid>("OutletId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("outlet_id");
+
+                    b.Property<decimal?>("Price")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("price");
+
+                    b.Property<string>("ProductName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("material_name");
+                        .HasColumnName("product_name");
 
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("quantity");
+                    b.Property<decimal>("RequestedQuantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("requested_quantity");
 
-                    b.Property<DateTime?>("RequiredDate")
+                    b.Property<Guid>("RequestorUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("requestor_user_id");
+
+                    b.Property<string>("Sku")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("sku");
+
+                    b.Property<decimal?>("StockInHand")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("stock_in_hand");
+
+                    b.Property<string>("StorageLocation")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("storage_location");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_id");
+
+                    b.Property<string>("SupplierName")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("supplier_name");
+
+                    b.Property<decimal?>("SupplierStock")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("supplier_stock");
+
+                    b.Property<DateTime?>("SupplierStockRefreshedOn")
                         .HasColumnType("datetime2")
-                        .HasColumnName("required_date");
+                        .HasColumnName("supplier_stock_refreshed_on");
 
                     b.Property<string>("UnitOfMeasure")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("unit_of_measure");
 
-                    b.Property<decimal?>("UnitPrice")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("unit_price");
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("WeeklyBucketId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("weekly_bucket_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_weekly_bucket_item");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_weekly_bucket_item_is_active");
+
+                    b.HasIndex("WeeklyBucketId")
+                        .HasDatabaseName("ix_weekly_bucket_item_weekly_bucket_id");
+
+                    b.ToTable("weekly_bucket_item", "buyersystem");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucketRecommendation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<decimal?>("AvailableStock")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("available_stock");
+
+                    b.Property<Guid>("CatalogId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("catalog_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Currency")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("currency");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_created");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("date_updated");
+
+                    b.Property<Guid?>("DecidedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("decided_by");
+
+                    b.Property<DateTime?>("DecidedOn")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("decided_on");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("description");
+
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)")
+                        .HasColumnName("discount_percent");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<decimal?>("Price")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("price");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("product_name");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("RecommendationNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("recommendation_number");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("int")
+                        .HasColumnName("sequence");
+
+                    b.Property<string>("Sku")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("sku");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("supplier_id");
+
+                    b.Property<string>("SupplierName")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("supplier_name");
+
+                    b.Property<string>("UnitOfMeasure")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("unit_of_measure");
 
                     b.Property<Guid>("UpdatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
 
-                    b.Property<Guid>("WishlistId")
+                    b.Property<Guid>("WeeklyBucketId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("wishlist_id");
+                        .HasColumnName("weekly_bucket_id");
+
+                    b.Property<Guid>("WeeklyBucketItemId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("weekly_bucket_item_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_wishlist_item");
+                        .HasName("pk_weekly_bucket_recommendation");
 
                     b.HasIndex("IsActive")
-                        .HasDatabaseName("ix_wishlist_item_is_active");
+                        .HasDatabaseName("ix_weekly_bucket_recommendation_is_active");
 
-                    b.HasIndex("WishlistId")
-                        .HasDatabaseName("ix_wishlist_item_wishlist_id");
+                    b.HasIndex("WeeklyBucketId")
+                        .HasDatabaseName("ix_weekly_bucket_recommendation_weekly_bucket_id");
 
-                    b.ToTable("wishlist_item", "buyersystem");
+                    b.HasIndex("WeeklyBucketItemId")
+                        .HasDatabaseName("ix_weekly_bucket_recommendation_weekly_bucket_item_id");
+
+                    b.ToTable("weekly_bucket_recommendation", "buyersystem");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.ApprovalFlowUserMapping", b =>
@@ -4188,6 +4851,18 @@ namespace Buyer.Infrastructure.Migrations
                     b.Navigation("Outlet");
                 });
 
+            modelBuilder.Entity("Buyer.Domain.Entities.BuyerProperty", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
+                        .WithMany()
+                        .HasForeignKey("BuyerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_buyer_property_buyer_business_profile_buyer_id");
+
+                    b.Navigation("BuyerBusinessProfile");
+                });
+
             modelBuilder.Entity("Buyer.Domain.Entities.BuyerSupplierMapping", b =>
                 {
                     b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
@@ -4196,6 +4871,18 @@ namespace Buyer.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_buyer_supplier_mapping_buyer_business_profile_buyer_id");
+
+                    b.Navigation("BuyerBusinessProfile");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.CatalogMaterialMapping", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
+                        .WithMany()
+                        .HasForeignKey("BuyerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_catalog_material_mapping_buyer_business_profile_buyer_id");
 
                     b.Navigation("BuyerBusinessProfile");
                 });
@@ -4345,6 +5032,30 @@ namespace Buyer.Infrastructure.Migrations
                     b.Navigation("RFQ");
                 });
 
+            modelBuilder.Entity("Buyer.Domain.Entities.PersonalWishlist", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
+                        .WithMany()
+                        .HasForeignKey("BuyerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_personal_wishlist_buyer_business_profile_buyer_id");
+
+                    b.Navigation("BuyerBusinessProfile");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PersonalWishlistItem", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.PersonalWishlist", "PersonalWishlist")
+                        .WithMany()
+                        .HasForeignKey("PersonalWishlistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_personal_wishlist_item_personal_wishlist_personal_wishlist_id");
+
+                    b.Navigation("PersonalWishlist");
+                });
+
             modelBuilder.Entity("Buyer.Domain.Entities.PredefinedContract", b =>
                 {
                     b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
@@ -4424,6 +5135,30 @@ namespace Buyer.Infrastructure.Migrations
                         .HasConstraintName("fk_predefined_material_approval_flow_user_mapping_approval_flow_predefined_material_mapping_approval_flow_predefined_material_id");
 
                     b.Navigation("ApprovalFlowPredefinedMaterialMapping");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PurchaseOrder", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
+                        .WithMany()
+                        .HasForeignKey("BuyerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_purchase_order_buyer_business_profile_buyer_id");
+
+                    b.Navigation("BuyerBusinessProfile");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PurchaseOrderItem", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.PurchaseOrder", "PurchaseOrder")
+                        .WithMany("Items")
+                        .HasForeignKey("PurchaseOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_purchase_order_item_purchase_order_purchase_order_id");
+
+                    b.Navigation("PurchaseOrder");
                 });
 
             modelBuilder.Entity("Buyer.Domain.Entities.RFQ", b =>
@@ -4588,73 +5323,81 @@ namespace Buyer.Infrastructure.Migrations
                     b.Navigation("BuyerBusinessProfile");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.Wishlist", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucket", b =>
                 {
                     b.HasOne("Buyer.Domain.Entities.BuyerBusinessProfile", "BuyerBusinessProfile")
                         .WithMany()
                         .HasForeignKey("BuyerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_wishlist_buyer_business_profile_buyer_id");
-
-                    b.HasOne("Buyer.Domain.Entities.BuyerOutlet", "Outlet")
-                        .WithMany()
-                        .HasForeignKey("OutletId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired()
-                        .HasConstraintName("fk_wishlist_buyer_outlet_outlet_id");
+                        .HasConstraintName("fk_weekly_bucket_buyer_business_profile_buyer_id");
 
                     b.Navigation("BuyerBusinessProfile");
-
-                    b.Navigation("Outlet");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.WishlistApprovalFlow", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucketApprovalFlow", b =>
                 {
-                    b.HasOne("Buyer.Domain.Entities.Wishlist", "Wishlist")
+                    b.HasOne("Buyer.Domain.Entities.WeeklyBucket", "WeeklyBucket")
                         .WithMany()
-                        .HasForeignKey("WishlistId")
+                        .HasForeignKey("WeeklyBucketId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_wishlist_approval_flow_wishlist_wishlist_id");
+                        .HasConstraintName("fk_weekly_bucket_approval_flow_weekly_bucket_weekly_bucket_id");
 
-                    b.Navigation("Wishlist");
+                    b.Navigation("WeeklyBucket");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.WishlistApprovalUserMapping", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucketApprovalUserMapping", b =>
                 {
-                    b.HasOne("Buyer.Domain.Entities.WishlistApprovalFlow", "WishlistApprovalFlow")
+                    b.HasOne("Buyer.Domain.Entities.WeeklyBucketApprovalFlow", "WeeklyBucketApprovalFlow")
                         .WithMany()
-                        .HasForeignKey("WishlistApprovalFlowId")
+                        .HasForeignKey("WeeklyBucketApprovalFlowId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_wishlist_approval_user_mapping_wishlist_approval_flow_wishlist_approval_flow_id");
+                        .HasConstraintName("fk_weekly_bucket_approval_user_mapping_weekly_bucket_approval_flow_weekly_bucket_approval_flow_id");
 
-                    b.Navigation("WishlistApprovalFlow");
+                    b.Navigation("WeeklyBucketApprovalFlow");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.WishlistAudit", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucketAudit", b =>
                 {
-                    b.HasOne("Buyer.Domain.Entities.Wishlist", "Wishlist")
+                    b.HasOne("Buyer.Domain.Entities.WeeklyBucket", "WeeklyBucket")
                         .WithMany()
-                        .HasForeignKey("WishlistId")
+                        .HasForeignKey("WeeklyBucketId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_wishlist_audit_wishlist_wishlist_id");
+                        .HasConstraintName("fk_weekly_bucket_audit_weekly_bucket_weekly_bucket_id");
 
-                    b.Navigation("Wishlist");
+                    b.Navigation("WeeklyBucket");
                 });
 
-            modelBuilder.Entity("Buyer.Domain.Entities.WishlistItem", b =>
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucketItem", b =>
                 {
-                    b.HasOne("Buyer.Domain.Entities.Wishlist", "Wishlist")
+                    b.HasOne("Buyer.Domain.Entities.WeeklyBucket", "WeeklyBucket")
                         .WithMany()
-                        .HasForeignKey("WishlistId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .HasForeignKey("WeeklyBucketId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_wishlist_item_wishlist_wishlist_id");
+                        .HasConstraintName("fk_weekly_bucket_item_weekly_bucket_weekly_bucket_id");
 
-                    b.Navigation("Wishlist");
+                    b.Navigation("WeeklyBucket");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.WeeklyBucketRecommendation", b =>
+                {
+                    b.HasOne("Buyer.Domain.Entities.WeeklyBucket", "WeeklyBucket")
+                        .WithMany()
+                        .HasForeignKey("WeeklyBucketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_weekly_bucket_recommendation_weekly_bucket_weekly_bucket_id");
+
+                    b.Navigation("WeeklyBucket");
+                });
+
+            modelBuilder.Entity("Buyer.Domain.Entities.PurchaseOrder", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

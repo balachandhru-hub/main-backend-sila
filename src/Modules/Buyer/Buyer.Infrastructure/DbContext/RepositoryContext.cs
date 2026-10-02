@@ -69,13 +69,20 @@ namespace Buyer.Infrastructure.DbContext
         public DbSet<ContractAttachment> ContractAttachment {get;set;}
         public DbSet<BuyerOutlet> BuyerOutlet { get; set; }
         public DbSet<BuyerOutletUserMapping> BuyerOutletUserMapping { get; set; }
-        public DbSet<Wishlist> Wishlist { get; set; }
-        public DbSet<WishlistItem> WishlistItem { get; set; }
-        public DbSet<WishlistApprovalFlow> WishlistApprovalFlow { get; set; }
-        public DbSet<WishlistApprovalUserMapping> WishlistApprovalUserMapping { get; set; }
-        public DbSet<WishlistAudit> WishlistAudit { get; set; }
+        public DbSet<BuyerProperty> BuyerProperty { get; set; }
+        public DbSet<CatalogMaterialMapping> CatalogMaterialMapping { get; set; }
+        public DbSet<PersonalWishlist> PersonalWishlist { get; set; }
+        public DbSet<PersonalWishlistItem> PersonalWishlistItem { get; set; }
+        public DbSet<WeeklyBucket> WeeklyBucket { get; set; }
+        public DbSet<WeeklyBucketItem> WeeklyBucketItem { get; set; }
+        public DbSet<WeeklyBucketRecommendation> WeeklyBucketRecommendation { get; set; }
+        public DbSet<WeeklyBucketApprovalFlow> WeeklyBucketApprovalFlow { get; set; }
+        public DbSet<WeeklyBucketApprovalUserMapping> WeeklyBucketApprovalUserMapping { get; set; }
+        public DbSet<WeeklyBucketAudit> WeeklyBucketAudit { get; set; }
         public DbSet<ErpIntegrationConfiguration> ErpIntegrationConfiguration { get; set; }
         public DbSet<PurchaseDocumentIntegration> PurchaseDocumentIntegration { get; set; }
+        public DbSet<PurchaseOrder> PurchaseOrder { get; set; }
+        public DbSet<PurchaseOrderItem> PurchaseOrderItem { get; set; }
 
 
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
@@ -134,26 +141,30 @@ namespace Buyer.Infrastructure.DbContext
             _ = modelBuilder.Entity<BuyerOutlet>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<BuyerOutletUserMapping>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<BuyerOutletUserMapping>().HasIndex(a => a.UserId);
-            _ = modelBuilder.Entity<Wishlist>().HasIndex(a => a.IsActive);
-            _ = modelBuilder.Entity<WishlistItem>().HasIndex(a => a.IsActive);
-            _ = modelBuilder.Entity<WishlistApprovalFlow>().HasIndex(a => a.IsActive);
-            _ = modelBuilder.Entity<WishlistApprovalUserMapping>().HasIndex(a => a.IsActive);
-            _ = modelBuilder.Entity<WishlistAudit>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<BuyerProperty>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<BuyerProperty>().HasIndex(a => new { a.BuyerId, a.PlantCode }).IsUnique();
+            _ = modelBuilder.Entity<CatalogMaterialMapping>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<CatalogMaterialMapping>().HasIndex(a => new { a.BuyerId, a.CatalogId }).IsUnique();
+            _ = modelBuilder.Entity<PersonalWishlist>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<PersonalWishlist>().HasIndex(a => a.OwnerUserId);
+            _ = modelBuilder.Entity<PersonalWishlistItem>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<WeeklyBucket>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<WeeklyBucket>().HasIndex(a => new { a.BuyerId, a.PropertyId, a.Year, a.WeekNumber }).IsUnique();
+            _ = modelBuilder.Entity<WeeklyBucketItem>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<WeeklyBucketRecommendation>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<WeeklyBucketRecommendation>().HasIndex(a => a.WeeklyBucketItemId);
+            _ = modelBuilder.Entity<WeeklyBucketApprovalFlow>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<WeeklyBucketApprovalUserMapping>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<WeeklyBucketAudit>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<ErpIntegrationConfiguration>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<PurchaseDocumentIntegration>().HasIndex(a => a.IsActive);
             _ = modelBuilder.Entity<PurchaseDocumentIntegration>()
-                .HasIndex(a => new { a.WishlistId, a.IntegrationType, a.SupplierOrganizationId })
+                .HasIndex(a => new { a.WeeklyBucketId, a.IntegrationType, a.SupplierOrganizationId })
                 .IsUnique();
-            _ = modelBuilder.Entity<WishlistItem>()
-                .HasOne(x => x.Wishlist)
-                .WithMany()
-                .HasForeignKey(x => x.WishlistId)
-                .OnDelete(DeleteBehavior.NoAction);
-            _ = modelBuilder.Entity<Wishlist>()
-                .HasOne(x => x.Outlet)
-                .WithMany()
-                .HasForeignKey(x => x.OutletId)
-                .OnDelete(DeleteBehavior.NoAction);
+            _ = modelBuilder.Entity<PurchaseOrder>().HasIndex(a => a.IsActive);
+            _ = modelBuilder.Entity<PurchaseOrder>().HasIndex(a => a.SupplierId);
+            _ = modelBuilder.Entity<PurchaseOrder>().HasIndex(a => new { a.WeeklyBucketId, a.SupplierId }).IsUnique();
+            _ = modelBuilder.Entity<PurchaseOrderItem>().HasIndex(a => a.IsActive);
 
             _ = modelBuilder.HasSequence<long>(
                 Common.PREDEFINED_CONTRACT_NUMBER_SEQUENCE,

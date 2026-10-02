@@ -7,6 +7,7 @@ using Buyer.Infrastructure.Contracts.IServices;
 using Buyer.Infrastructure.DbContext;
 using SharedKernel.LoggerServices;
 using Buyer.Application.Services;
+using Buyer.Application.Services.Integration;
 using Buyer.Application.Features.Queries.GetOrganizationProfile;
 using Buyer.Infrastructure.Contracts.IRepository;
 using Buyer.Infrastructure.Repository;
@@ -146,6 +147,8 @@ namespace Buyer.API.Extensions
             _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
             _ = services.AddScoped<ISupplierApiClient, SupplierApiClient>();
             _ = services.AddScoped<IAesEncryption, AesEncryption>();
+            _ = services.AddScoped<IOperationsIntegrationClient, OperationsIntegrationClient>();
+            _ = services.AddScoped<IStockInHandProvider, ErpStockInHandProvider>();
             _ = services.AddControllers();
 
         }

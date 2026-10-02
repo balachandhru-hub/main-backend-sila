@@ -31,7 +31,7 @@ namespace Buyer.Application.Features.Queries.GetOutletUsers
                 throw new NotFoundCustomException("Buyer not found.", "The signed-in organization does not have a buyer profile.");
             }
 
-            List<Guid> outletIds = (await _repository.Wishlist.ListOutletsAsync(buyer.Id, cancellationToken))
+            List<Guid> outletIds = (await _repository.WeeklyBucket.ListOutletsAsync(buyer.Id, cancellationToken))
                 .Select(outlet => outlet.Id)
                 .ToList();
             List<BuyerOutletUserMapping> mappings = await _repository.BuyerOutletUserMapping

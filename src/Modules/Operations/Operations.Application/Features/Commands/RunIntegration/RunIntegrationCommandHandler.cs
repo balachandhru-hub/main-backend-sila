@@ -18,15 +18,18 @@ namespace Operations.Application.Features.Commands.RunIntegration
         private readonly IRepositoryWrapper _repository;
         private readonly ILoggerManager _logger;
         private readonly IIntegrationHttpExecutor _executor;
+        private readonly ISupplierCatalogSyncClient _catalogSync;
 
         public RunIntegrationCommandHandler(
             IRepositoryWrapper repository,
             ILoggerManager logger,
-            IIntegrationHttpExecutor executor)
+            IIntegrationHttpExecutor executor,
+            ISupplierCatalogSyncClient catalogSync)
         {
             _repository = repository;
             _logger = logger;
             _executor = executor;
+            _catalogSync = catalogSync;
         }
 
         public async Task<IntegrationExecutionResponseDto> Handle(RunIntegrationCommand request, CancellationToken cancellationToken)
@@ -54,9 +57,9 @@ namespace Operations.Application.Features.Commands.RunIntegration
             _repository.ApiIntegrationExecution.Create(execution);
             try
             {
-                if (configuration.ProcessType is not (IntegrationProcessType.GET_PO or IntegrationProcessType.GET_SUPPLIER))
+                if (IntegrationProcessCatalog.Find(configuration.ProcessType)?.CanPull != true)
                 {
-                    throw new IntegrationException("PROCESS_NOT_IMPLEMENTED", "Only inbound purchase-order and supplier pulls can be run.");
+                    throw new IntegrationException("PROCESS_NOT_IMPLEMENTED", "This API type is called by the application; it cannot be pulled.");
                 }
 
                 List<ApiFieldMapping> mappings = await _repository.ApiFieldMapping
@@ -88,7 +91,11 @@ namespace Operations.Application.Features.Commands.RunIntegration
                 }
 
                 DateTime? maxWatermark = watermark;
-                foreach (JsonElement record in _executor.ReadRecords(payload))
+                // Stock and catalog records are not stored in this service: the stock is only checked,
+                // and the catalog belongs to the Supplier service.
+                List<JsonElement> records = _executor.ReadRecords(payload);
+                bool handledElsewhere = await RunStockOrCatalogAsync(configuration, mappings, records, execution, cancellationToken);
+                foreach (JsonElement record in handledElsewhere ? new List<JsonElement>() : records)
                 {
                     execution.RecordsRead++;
                     try
@@ -154,6 +161,65 @@ namespace Operations.Application.Features.Commands.RunIntegration
 
             _logger.LogInfo($"Integration run completed. ConfigurationId: {configuration.Id}, Status: {execution.Status}, Read: {execution.RecordsRead}, Created: {execution.RecordsCreated}, Updated: {execution.RecordsUpdated}, Failed: {execution.RecordsFailed}");
             return ResponseBuilder.Execution(execution);
+        }
+
+        /// <returns>True when the records belonged to a stock or catalog API and were dealt with here.</returns>
+        private async Task<bool> RunStockOrCatalogAsync(
+            ApiIntegrationConfiguration configuration,
+            List<ApiFieldMapping> mappings,
+            List<JsonElement> records,
+            ApiIntegrationExecution execution,
+            CancellationToken cancellationToken)
+        {
+            if (configuration.ProcessType is not (IntegrationProcessType.GET_STOCK or IntegrationProcessType.GET_CATALOG or IntegrationProcessType.GET_CATALOG_STOCK))
+            {
+                return false;
+            }
+
+            List<CatalogSyncItemDto> items = new List<CatalogSyncItemDto>();
+            foreach (JsonElement record in records)
+            {
+                execution.RecordsRead++;
+                try
+                {
+                    if (configuration.ProcessType == IntegrationProcessType.GET_STOCK)
+                    {
+                        // Stock in hand is read live when it is needed; a pull only proves the API and its mapping.
+                        _ = IntegrationStockWorkflow.ReadStock(mappings, record);
+                    }
+                    else
+                    {
+                        items.Add(IntegrationStockWorkflow.ReadCatalogItem(configuration.ProcessType, mappings, record));
+                    }
+                }
+                catch (InvalidOperationException exception)
+                {
+                    execution.RecordsFailed++;
+                    execution.ErrorMessageSafe = "One or more records could not be read.";
+                    _logger.LogError($"Integration record could not be read. ConfigurationId: {configuration.Id}, Record: {execution.RecordsRead}, Error: {exception.Message}");
+                }
+            }
+
+            if (configuration.ProcessType == IntegrationProcessType.GET_STOCK || items.Count == 0)
+            {
+                return true;
+            }
+
+            CatalogSyncResultDto result = await _catalogSync.SyncAsync(new CatalogSyncRequestDto
+            {
+                OrganizationId = configuration.OrganizationId,
+                Mode = configuration.ProcessType == IntegrationProcessType.GET_CATALOG ? CatalogSyncRequestDto.MODE_CATALOG : CatalogSyncRequestDto.MODE_STOCK,
+                Items = items
+            }, cancellationToken);
+            execution.RecordsCreated += result.Created;
+            execution.RecordsUpdated += result.Updated;
+            if (result.Skipped > 0)
+            {
+                execution.RecordsFailed += result.Skipped;
+                execution.ErrorMessageSafe = "Some SKUs are not in the catalog.";
+            }
+
+            return true;
         }
 
         private static ApiIntegrationExecution NewExecution(ApiIntegrationConfiguration configuration, RunIntegrationCommand request)

@@ -45,6 +45,9 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                     Price = catalog.Price,
                     Currency = catalog.Currency,
                     UnitOfMeasure = catalog.UnitOfMeasure,
+                    Sku = catalog.Sku,
+                    AvailableStock = catalog.AvailableStock,
+                    DiscountPercent = catalog.DiscountPercent,
 
                 
 
@@ -238,6 +241,9 @@ namespace Supplier.Application.Features.Queries.BuyerCatalog
                         Description = catalog.Description,
                         Price = catalog.Price,
                         UnitOfMeasure = catalog.UnitOfMeasure,
+                        Sku = catalog.Sku,
+                        AvailableStock = catalog.AvailableStock,
+                        DiscountPercent = catalog.DiscountPercent,
                         Segment = catalog.Segment,
                         Family = catalog.Family,
                         Class = catalog.Class,

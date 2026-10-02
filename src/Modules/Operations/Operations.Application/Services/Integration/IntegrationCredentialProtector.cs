@@ -43,7 +43,8 @@ namespace Operations.Application.Services.Integration
 
             bool configured = !string.IsNullOrWhiteSpace(configuration.ProtectedPassword)
                 || !string.IsNullOrWhiteSpace(configuration.ProtectedClientSecret)
-                || !string.IsNullOrWhiteSpace(configuration.ProtectedBearerToken);
+                || !string.IsNullOrWhiteSpace(configuration.ProtectedBearerToken)
+                || !string.IsNullOrWhiteSpace(configuration.ProtectedApiKey);
             return configured ? "Configured" : "Missing";
         }
     }

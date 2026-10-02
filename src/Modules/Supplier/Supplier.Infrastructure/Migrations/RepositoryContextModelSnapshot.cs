@@ -545,6 +545,11 @@ namespace Supplier.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
+                    b.Property<decimal?>("AvailableStock")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("available_stock");
+
                     b.Property<string>("CatalogName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -593,6 +598,11 @@ namespace Supplier.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)")
+                        .HasColumnName("discount_percent");
+
                     b.Property<long?>("Family")
                         .HasColumnType("bigint")
                         .HasColumnName("family");
@@ -624,6 +634,10 @@ namespace Supplier.Infrastructure.Migrations
                     b.Property<string>("SegmentTitle")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("segment_title");
+
+                    b.Property<string>("Sku")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("sku");
 
                     b.Property<Guid>("SupplierId")
                         .HasColumnType("uniqueidentifier")

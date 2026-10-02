@@ -58,6 +58,8 @@ namespace Identity.Application.Features.Queries.GetOrganizationUser
                     Common.BUYER_ADMINISTRATOR,
                     Common.SUPPLIER_ADMINISTRATOR,
                     Common.BUYER_USER,
+                    Common.OUTLET_MANAGER,
+                    Common.STORE_MANAGER,
                     Common.SUPPLIER_USER
                 }.AsQueryable();
             }
@@ -67,7 +69,9 @@ namespace Identity.Application.Features.Queries.GetOrganizationUser
                 allowedRoles = new[]
                 {
                     Common.BUYER_ADMINISTRATOR,
-                    Common.BUYER_USER
+                    Common.BUYER_USER,
+                    Common.OUTLET_MANAGER,
+                    Common.STORE_MANAGER
                 }.AsQueryable();
             }
             else if (loggedInRole == Common.BUYER_ADMINISTRATOR)
@@ -75,7 +79,9 @@ namespace Identity.Application.Features.Queries.GetOrganizationUser
                 _logger.LogInfo("LoggedInRole is BUYER_ADMINISTRATOR. Fetching roles for buyer organization.");
                 allowedRoles = new[]
                 {
-                    Common.BUYER_USER
+                    Common.BUYER_USER,
+                    Common.OUTLET_MANAGER,
+                    Common.STORE_MANAGER
                 }.AsQueryable();
             }
             else if (loggedInRole == Common.SUPPLIER_NETWORK_ADMIN)

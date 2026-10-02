@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 using SharedKernel.Models;
 
 namespace Supplier.Domain.Entities
@@ -38,6 +39,20 @@ namespace Supplier.Domain.Entities
         public bool IsPunchOut { get; set; }
 
         public string? PunchOutUrl { get; set; }
+
+        /// <summary>
+        /// Supplier's own product code.
+        /// </summary>
+        public string? Sku { get; set; }
+
+        /// <summary>
+        /// Stock the supplier can deliver, in the catalog unit of measure. Null when the supplier does not publish stock.
+        /// </summary>
+        [Precision(18, 4)]
+        public decimal? AvailableStock { get; set; }
+
+        [Precision(9, 4)]
+        public decimal? DiscountPercent { get; set; }
         public SupplierCatalog()
         {
         }

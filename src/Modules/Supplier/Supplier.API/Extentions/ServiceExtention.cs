@@ -63,6 +63,7 @@ namespace Supplier.API.Extensions
             _ = services.AddScoped<IMetadataApiClient, MetadataApiClient>();
             _ = services.AddScoped<IIdentityApiClient, IdentityApiClient>();
             _ =services.AddScoped<IBuyerApiClient, BuyerApiClient>();
+            _ = services.AddScoped<IOperationsApiClient, OperationsApiClient>();
             _ =services.AddScoped<IBcryptHashing,BcryptHashing>();
            
             _ = services.AddControllers();

@@ -887,5 +887,129 @@ namespace Buyer.Infrastructure.ApiClients
 
             return result?.FirstOrDefault();
         }
+
+        // Current price and stock of the given catalog products, in one call.
+        public async Task<List<BuyerCatalogItemDto>> GetBuyerCatalogStock(
+            List<Guid> catalogIds,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo($"Fetching product catalog stock. CatalogIds: {catalogIds.Count}");
+
+            string? supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+
+            HttpRequestMessage request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"{supplierUrl}/api/v1/supplier/buyer-catalog/stock");
+            request.Content = JsonContent.Create(new { catalogIds });
+
+            // Get access token from current request cookie
+            string? accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            HttpResponseMessage response;
+            try
+            {
+                response = await _httpClient.SendAsync(request, cancellationToken);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError($"Supplier service did not answer the stock request. Error: {ex.Message}");
+
+                throw new FailedDependencyCustomException(
+                    "Supplier stock could not be read.",
+                    "The Supplier service did not answer. The stock and prices were not refreshed. Try again.");
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to fetch product catalog stock. CatalogIds: {catalogIds.Count}, Status Code: {response.StatusCode}");
+
+                throw new FailedDependencyCustomException(
+                    "Supplier stock could not be read.",
+                    $"The Supplier service answered {(int)response.StatusCode}. The stock and prices were not refreshed. Try again.");
+            }
+
+            List<BuyerCatalogItemDto>? result = await response.Content.ReadFromJsonAsync<List<BuyerCatalogItemDto>>(
+                cancellationToken: cancellationToken);
+
+            _logger.LogInfo($"Product catalog stock fetched. Count: {result?.Count ?? 0}");
+
+            return result ?? new List<BuyerCatalogItemDto>();
+        }
+
+        // Alternative products that can supply the quantity, cheapest first.
+        public async Task<List<BuyerCatalogItemDto>> GetBuyerCatalogAlternatives(
+            Guid catalogId,
+            decimal quantity,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInfo($"Fetching product catalog alternatives. CatalogId: {catalogId}, Quantity: {quantity}");
+
+            string? supplierUrl = _configuration[Common.SUPPLIER_SERVICE_BASE_URL];
+            string quantityText = quantity.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            HttpRequestMessage request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{supplierUrl}/api/v1/supplier/buyer-catalog/{catalogId}/alternatives?quantity={quantityText}");
+
+            // Get access token from current request cookie
+            string? accessToken = _httpContextAccessor.HttpContext?
+                .Request
+                .Cookies[Common.ACCESS_TOKEN];
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Add(
+                    "Cookie",
+                    $"{Common.ACCESS_TOKEN}={accessToken}");
+            }
+
+            HttpResponseMessage response;
+            try
+            {
+                response = await _httpClient.SendAsync(request, cancellationToken);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError($"Supplier service did not answer the alternatives request. CatalogId: {catalogId}, Error: {ex.Message}");
+
+                throw new FailedDependencyCustomException(
+                    "Alternative products could not be read.",
+                    "The Supplier service did not answer. No recommendation was created. Try again.");
+            }
+
+            // The product is no longer in the catalog, so it has no alternatives.
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _logger.LogInfo($"Product catalog item not found while reading alternatives. CatalogId: {catalogId}");
+                return new List<BuyerCatalogItemDto>();
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    $"Failed to fetch product catalog alternatives. CatalogId: {catalogId}, Status Code: {response.StatusCode}");
+
+                throw new FailedDependencyCustomException(
+                    "Alternative products could not be read.",
+                    $"The Supplier service answered {(int)response.StatusCode}. No recommendation was created. Try again.");
+            }
+
+            List<BuyerCatalogItemDto>? result = await response.Content.ReadFromJsonAsync<List<BuyerCatalogItemDto>>(
+                cancellationToken: cancellationToken);
+
+            _logger.LogInfo($"Product catalog alternatives fetched. CatalogId: {catalogId}, Count: {result?.Count ?? 0}");
+
+            return result ?? new List<BuyerCatalogItemDto>();
+        }
     }
 }

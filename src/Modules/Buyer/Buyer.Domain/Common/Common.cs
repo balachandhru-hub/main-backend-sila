@@ -24,6 +24,7 @@ namespace Buyer.Domain.Common
                 public static readonly string REVERIFICATION_STATUS = "RE_VERIFICATION";
                 public static readonly string IDENTITY_SERVICE_BASE_URL = "InterCallService:IdentityUrl";
                 public static readonly string SUPPLIER_SERVICE_BASE_URL = "InterCallService:SupplierUrl";
+                public static readonly string OPERATIONS_SERVICE_BASE_URL = "InterCallService:OperationsUrl";
                 public static readonly string ACCESS_TOKEN = "access_token";
                 public static readonly string METADATA_DOCUMENT_TYPE = "DOCUMENT_TYPE";
                 public static readonly string RFQ_OPEN_STATUS = "Open";
@@ -39,6 +40,7 @@ namespace Buyer.Domain.Common
                 public const string DRAFT = "DRAFT";
                 public static Guid SUPPLIER_ADMIN_ROLE_ID = new Guid("735bb267-fec0-489f-8249-d3d65b3857ea");
                 public static Guid BUYER_ADMIN_ROLE_ID = new Guid("c95f5a1b-4aec-4647-9328-895a58193ec4");
+                public static Guid STORE_MANAGER_ROLE_ID = new Guid("b054de41-7da1-4b96-a2aa-d8387bfb0ef0");
                 public const string DEFAULT_TEMPLATE = "DEFAULT_TEMPLATE";
                 public const string BUYER = "BUYER";
                 public const string RADIO_BUTTON = "Radio";
@@ -134,19 +136,33 @@ namespace Buyer.Domain.Common
                         ("LATER", "30+ days", 31, int.MaxValue),
                 };
 
-                public const string WISHLIST_APPROVAL_TYPE = "WISHLIST";
-                public const string WISHLIST_DRAFT = "DRAFT";
-                public const string WISHLIST_SUBMITTED = "SUBMITTED";
-                public const string WISHLIST_PENDING_APPROVAL = "PENDING_APPROVAL";
-                public const string WISHLIST_APPROVED = "APPROVED";
-                public const string WISHLIST_ERP_PROCESSING = "ERP_PROCESSING";
-                public const string WISHLIST_ERP_PO_CREATED = "ERP_PO_CREATED";
-                public const string WISHLIST_SUPPLIER_PO_PROCESSING = "SUPPLIER_PO_PROCESSING";
-                public const string WISHLIST_COMPLETED = "COMPLETED";
-                public const string WISHLIST_REJECTED = "REJECTED";
-                public const string WISHLIST_ERP_FAILED = "ERP_FAILED";
-                public const string WISHLIST_SUPPLIER_PO_FAILED = "SUPPLIER_PO_FAILED";
-                public const string WISHLIST_CANCELLED = "CANCELLED";
+                // ---- Weekly bucket
+                /// <summary>MasterApprovalFlow.Type of the flow a property uses for its weekly bucket.</summary>
+                public const string WEEKLY_BUCKET_APPROVAL_TYPE = "WEEKLY_BUCKET";
+                /// <summary>Whole weeks added to the ISO week of today (UTC) to get the business week.</summary>
+                public static readonly string WEEKLY_BUCKET_WEEK_NUMBER_OFFSET = "WeeklyBucket:WeekNumberOffset";
+                public const string WEEKLY_BUCKET_OPEN = "OPEN";
+                public const string WEEKLY_BUCKET_PENDING_APPROVAL = "PENDING_APPROVAL";
+                public const string WEEKLY_BUCKET_APPROVED = "APPROVED";
+                public const string WEEKLY_BUCKET_PO_CREATED = "PO_CREATED";
+                public const string WEEKLY_BUCKET_PO_FAILED = "PO_FAILED";
+                public const string WEEKLY_BUCKET_REJECTED = "REJECTED";
+
+                public const string AVAILABILITY_AVAILABLE = "AVAILABLE";
+                public const string AVAILABILITY_PARTIAL = "PARTIAL";
+                public const string AVAILABILITY_UNAVAILABLE = "UNAVAILABLE";
+                public const string AVAILABILITY_UNKNOWN = "UNKNOWN";
+
+                public const string LINE_REQUESTED = "REQUESTED";
+                public const string LINE_RECOMMENDATION_PENDING = "RECOMMENDATION_PENDING";
+                public const string LINE_RECOMMENDATION_APPROVED = "RECOMMENDATION_APPROVED";
+                public const string LINE_EXCLUDED = "EXCLUDED";
+
+                public const string RECOMMENDATION_PENDING = "PENDING";
+                public const string RECOMMENDATION_APPROVED = "APPROVED";
+                public const string RECOMMENDATION_REJECTED = "REJECTED";
+                /// <summary>Recommendation numbers are R1, R2, ... running per bucket.</summary>
+                public const string RECOMMENDATION_NUMBER_PREFIX = "R";
 
                 public const string INTEGRATION_BUYER_ERP = "BUYER_ERP";
                 public const string INTEGRATION_SUPPLIER_ERP = "SUPPLIER_ERP";
@@ -157,6 +173,9 @@ namespace Buyer.Domain.Common
                 public const string INTEGRATION_UNKNOWN = "UNKNOWN";
 
                 public const string ERP_OPERATION_PO_CREATE = "PO_CREATE";
+                public const string PURCHASE_ORDER_CREATED = "CREATED";
+                public const string PURCHASE_ORDER_SOURCE_WEEKLY_BUCKET = "WEEKLY_BUCKET";
+                public const string INTEGRATION_PROCESS_POST_PO = "POST_PO";
                 public const string ERP_DOCUMENT_PO = "PO";
                 public const string ERP_DOCUMENT_PR = "PR";
                 public const string PAYLOAD_JSON = "JSON";
@@ -183,6 +202,14 @@ namespace Buyer.Domain.Common
                 public const string AUDIT_SUPPLIER_FAILED = "SUPPLIER_INTEGRATION_FAILED";
                 public const string AUDIT_RETRY = "RETRY";
                 public const string AUDIT_CANCELLED = "CANCELLED";
+                public const string AUDIT_FROZEN = "FROZEN";
+                public const string AUDIT_ITEM_ADDED = "ITEM_ADDED";
+                public const string AUDIT_QUANTITY_CHANGED = "QUANTITY_CHANGED";
+                public const string AUDIT_ITEM_REMOVED = "ITEM_REMOVED";
+                public const string AUDIT_INVENTORY_REFRESHED = "INVENTORY_REFRESHED";
+                public const string AUDIT_RECOMMENDATION_CREATED = "RECOMMENDATION_CREATED";
+                public const string AUDIT_RECOMMENDATION_APPROVED = "RECOMMENDATION_APPROVED";
+                public const string AUDIT_RECOMMENDATION_REJECTED = "RECOMMENDATION_REJECTED";
                 public const string IDEMPOTENCY_HEADER = "Idempotency-Key";
         }
 }

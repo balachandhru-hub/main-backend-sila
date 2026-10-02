@@ -38,7 +38,7 @@ namespace Operations.Application.Features.Commands.CreateIntegration
                 OrganizationId = request.OrganizationId,
                 Status = IntegrationConfigurationStatus.DRAFT
             };
-            await IntegrationConfigurationRules.ApplyAsync(_repository, _logger, _credentials, configuration, request.Request, cancellationToken);
+            await IntegrationConfigurationRules.ApplyAsync(_repository, _logger, _credentials, configuration, request.Request, request.OrganizationType, cancellationToken);
             _repository.ApiIntegrationConfiguration.Create(configuration);
             AuditTrail.Add(_repository, request.OrganizationId, null, request.UserId, "INTEGRATION_CREATED", "ApiIntegrationConfiguration", configuration.Id, configuration.Name);
             await _repository.SaveAsync();

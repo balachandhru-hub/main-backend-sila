@@ -64,15 +64,22 @@ namespace Buyer.Infrastructure.Repository
         private IContractTemplateRepository _contractTemplateRepository;
         private IContractDetailsRepository _contractDetailsRepository;
         private IContractAttachmentRepository _contractAttachmentRepository;
-        private IWishlistRepository _wishlistRepository;
-        private IWishlistItemRepository _wishlistItemRepository;
-        private IWishlistApprovalFlowRepository _wishlistApprovalFlowRepository;
-        private IWishlistApprovalUserMappingRepository _wishlistApprovalUserMappingRepository;
-        private IWishlistAuditRepository _wishlistAuditRepository;
+        private IWeeklyBucketRepository _weeklyBucketRepository;
+        private IWeeklyBucketItemRepository _weeklyBucketItemRepository;
+        private IWeeklyBucketRecommendationRepository _weeklyBucketRecommendationRepository;
+        private IWeeklyBucketApprovalFlowRepository _weeklyBucketApprovalFlowRepository;
+        private IWeeklyBucketApprovalUserMappingRepository _weeklyBucketApprovalUserMappingRepository;
+        private IWeeklyBucketAuditRepository _weeklyBucketAuditRepository;
+        private IBuyerPropertyRepository _buyerPropertyRepository;
+        private ICatalogMaterialMappingRepository _catalogMaterialMappingRepository;
+        private IPersonalWishlistRepository _personalWishlistRepository;
+        private IPersonalWishlistItemRepository _personalWishlistItemRepository;
         private IBuyerOutletRepository _buyerOutletRepository;
         private IBuyerOutletUserMappingRepository _buyerOutletUserMappingRepository;
         private IErpIntegrationRepository _erpIntegrationRepository;
         private IPurchaseDocumentIntegrationRepository _purchaseDocumentIntegrationRepository;
+        private IPurchaseOrderRepository _purchaseOrderRepository;
+        private IPurchaseOrderItemRepository _purchaseOrderItemRepository;
 
         public RepositoryWrapper(RepositoryContext repositoryContext, IUserIdentityService userIdentityService, IConfiguration configuration, ILoggerManager logger)
         {
@@ -641,59 +648,114 @@ namespace Buyer.Infrastructure.Repository
                 return _contractAttachmentRepository;
             }
         }
-        public IWishlistRepository Wishlist
+        public IWeeklyBucketRepository WeeklyBucket
         {
             get
             {
-                if (_wishlistRepository == null)
+                if (_weeklyBucketRepository == null)
                 {
-                    _wishlistRepository = new WishlistRepository(_context);
+                    _weeklyBucketRepository = new WeeklyBucketRepository(_context);
                 }
-                return _wishlistRepository;
+                return _weeklyBucketRepository;
             }
         }
-        public IWishlistItemRepository WishlistItem
+        public IWeeklyBucketItemRepository WeeklyBucketItem
         {
             get
             {
-                if (_wishlistItemRepository == null)
+                if (_weeklyBucketItemRepository == null)
                 {
-                    _wishlistItemRepository = new WishlistItemRepository(_context);
+                    _weeklyBucketItemRepository = new WeeklyBucketItemRepository(_context);
                 }
-                return _wishlistItemRepository;
+                return _weeklyBucketItemRepository;
             }
         }
-        public IWishlistApprovalFlowRepository WishlistApprovalFlow
+        public IWeeklyBucketRecommendationRepository WeeklyBucketRecommendation
         {
             get
             {
-                if (_wishlistApprovalFlowRepository == null)
+                if (_weeklyBucketRecommendationRepository == null)
                 {
-                    _wishlistApprovalFlowRepository = new WishlistApprovalFlowRepository(_context);
+                    _weeklyBucketRecommendationRepository = new WeeklyBucketRecommendationRepository(_context);
                 }
-                return _wishlistApprovalFlowRepository;
+                return _weeklyBucketRecommendationRepository;
             }
         }
-        public IWishlistApprovalUserMappingRepository WishlistApprovalUserMapping
+        public IWeeklyBucketApprovalFlowRepository WeeklyBucketApprovalFlow
         {
             get
             {
-                if (_wishlistApprovalUserMappingRepository == null)
+                if (_weeklyBucketApprovalFlowRepository == null)
                 {
-                    _wishlistApprovalUserMappingRepository = new WishlistApprovalUserMappingRepository(_context);
+                    _weeklyBucketApprovalFlowRepository = new WeeklyBucketApprovalFlowRepository(_context);
                 }
-                return _wishlistApprovalUserMappingRepository;
+                return _weeklyBucketApprovalFlowRepository;
             }
         }
-        public IWishlistAuditRepository WishlistAudit
+        public IWeeklyBucketApprovalUserMappingRepository WeeklyBucketApprovalUserMapping
         {
             get
             {
-                if (_wishlistAuditRepository == null)
+                if (_weeklyBucketApprovalUserMappingRepository == null)
                 {
-                    _wishlistAuditRepository = new WishlistAuditRepository(_context);
+                    _weeklyBucketApprovalUserMappingRepository = new WeeklyBucketApprovalUserMappingRepository(_context);
                 }
-                return _wishlistAuditRepository;
+                return _weeklyBucketApprovalUserMappingRepository;
+            }
+        }
+        public IWeeklyBucketAuditRepository WeeklyBucketAudit
+        {
+            get
+            {
+                if (_weeklyBucketAuditRepository == null)
+                {
+                    _weeklyBucketAuditRepository = new WeeklyBucketAuditRepository(_context);
+                }
+                return _weeklyBucketAuditRepository;
+            }
+        }
+        public IBuyerPropertyRepository BuyerProperty
+        {
+            get
+            {
+                if (_buyerPropertyRepository == null)
+                {
+                    _buyerPropertyRepository = new BuyerPropertyRepository(_context);
+                }
+                return _buyerPropertyRepository;
+            }
+        }
+        public ICatalogMaterialMappingRepository CatalogMaterialMapping
+        {
+            get
+            {
+                if (_catalogMaterialMappingRepository == null)
+                {
+                    _catalogMaterialMappingRepository = new CatalogMaterialMappingRepository(_context);
+                }
+                return _catalogMaterialMappingRepository;
+            }
+        }
+        public IPersonalWishlistRepository PersonalWishlist
+        {
+            get
+            {
+                if (_personalWishlistRepository == null)
+                {
+                    _personalWishlistRepository = new PersonalWishlistRepository(_context);
+                }
+                return _personalWishlistRepository;
+            }
+        }
+        public IPersonalWishlistItemRepository PersonalWishlistItem
+        {
+            get
+            {
+                if (_personalWishlistItemRepository == null)
+                {
+                    _personalWishlistItemRepository = new PersonalWishlistItemRepository(_context);
+                }
+                return _personalWishlistItemRepository;
             }
         }
         public IBuyerOutletRepository BuyerOutlet
@@ -738,6 +800,28 @@ namespace Buyer.Infrastructure.Repository
                     _purchaseDocumentIntegrationRepository = new PurchaseDocumentIntegrationRepository(_context);
                 }
                 return _purchaseDocumentIntegrationRepository;
+            }
+        }
+        public IPurchaseOrderRepository PurchaseOrder
+        {
+            get
+            {
+                if (_purchaseOrderRepository == null)
+                {
+                    _purchaseOrderRepository = new PurchaseOrderRepository(_context);
+                }
+                return _purchaseOrderRepository;
+            }
+        }
+        public IPurchaseOrderItemRepository PurchaseOrderItem
+        {
+            get
+            {
+                if (_purchaseOrderItemRepository == null)
+                {
+                    _purchaseOrderItemRepository = new PurchaseOrderItemRepository(_context);
+                }
+                return _purchaseOrderItemRepository;
             }
         }
 

@@ -12,6 +12,9 @@ public class GetSupplierCatalogDto
     public string Currency { get; set; }
 
     public string UnitOfMeasure { get; set; }
+    public string? Sku { get; set; }
+    public decimal? AvailableStock { get; set; }
+    public decimal? DiscountPercent { get; set; }
     public long? Segment {get;set;}
     public string? SegmentTitle {get;set;}
     public long? Family {get;set;}

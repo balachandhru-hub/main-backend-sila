@@ -24,6 +24,7 @@ namespace Supplier.Domain.Common
         public static readonly string QUOTATION_STATUS = "DRAFT";
         public static readonly string PERCENTAGE = "PERCENTAGE";
         public static readonly string BUYER_SERVICE_BASE_URL = "InterCallService:BuyerUrl";
+        public static readonly string OPERATIONS_SERVICE_BASE_URL = "InterCallService:OperationsUrl";
         public static readonly string UNVERIFIED_STATUS = "UNVERIFIED";
         public const string SUBMITTED = "SUBMITTED";
         public const string DRAFT = "DRAFT";

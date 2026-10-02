@@ -37,6 +37,8 @@ namespace Identity.Domain.Common
                 public const string BUYER_ADMINISTRATOR = "BUYER_ADMINISTRATOR";
                 public const string SUPPLIER_ADMINISTRATOR = "SUPPLIER_ADMINISTRATOR";
                 public const string BUYER_USER = "BUYER_USER";
+                public const string OUTLET_MANAGER = "OUTLET_MANAGER";
+                public const string STORE_MANAGER = "STORE_MANAGER";
                 public const string SUPPLIER_USER = "SUPPLIER_USER";
                 public static readonly Guid PLATFORM_ADMINISTRATOR_ID = Guid.Parse("113d8ead-40c2-425a-bc60-5989e6cdabca");
 

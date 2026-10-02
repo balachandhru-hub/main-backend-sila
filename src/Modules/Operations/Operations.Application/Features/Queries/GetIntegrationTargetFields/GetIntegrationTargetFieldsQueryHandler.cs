@@ -25,8 +25,16 @@ namespace Operations.Application.Features.Queries.GetIntegrationTargetFields
 
         public async Task<List<IntegrationTargetFieldResponseDto>> Handle(GetIntegrationTargetFieldsQuery request, CancellationToken cancellationToken)
         {
-            _logger.LogInfo($"Fetching integration target fields. OrganizationId: {request.OrganizationId}");
-            return await Task.FromResult(IntegrationTargetFieldRegistry.Fields);
+            _logger.LogInfo($"Fetching integration target fields. OrganizationId: {request.OrganizationId}, ProcessType: {request.ProcessType}");
+
+            List<IntegrationTargetFieldResponseDto> fields = request.ProcessType == null
+                ? IntegrationTargetFieldRegistry.Fields
+                : IntegrationTargetFieldRegistry.Fields
+                    .Where(field => IntegrationProcessCatalog.OwnsTarget(request.ProcessType.Value, field.TargetField))
+                    .ToList();
+
+            _logger.LogInfo($"Integration target fields fetched. Count: {fields.Count}");
+            return await Task.FromResult(fields);
         }
     }
 }

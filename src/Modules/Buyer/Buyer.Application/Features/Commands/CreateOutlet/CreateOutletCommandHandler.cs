@@ -1,5 +1,3 @@
-using Buyer.Domain.Common;
-using Buyer.Domain.Dtos;
 using Buyer.Domain.Entities;
 using Buyer.Infrastructure.Contracts.IRepository;
 using MediatR;
@@ -25,6 +23,7 @@ namespace Buyer.Application.Features.Commands.CreateOutlet
 
             if (string.IsNullOrWhiteSpace(request.Request.OutletName))
             {
+                _logger.LogError("Outlet name is missing.");
                 throw new BadRequestCustomException("Outlet name is required.", "Enter an outlet name.");
             }
 
@@ -36,7 +35,7 @@ namespace Buyer.Application.Features.Commands.CreateOutlet
                 throw new NotFoundCustomException("Buyer not found.", "The signed-in organization does not have a buyer profile.");
             }
 
-            await ValidateApprovalFlowAsync(_repository, _logger, request.Request.MasterApprovalFlowId, buyer.Id);
+            await ValidatePropertyAsync(_repository, _logger, request.Request.PropertyId, buyer.Id, cancellationToken);
 
             BuyerOutlet outlet = new BuyerOutlet
             {
@@ -49,7 +48,8 @@ namespace Buyer.Application.Features.Commands.CreateOutlet
                 AddressLine1 = request.Request.AddressLine1,
                 City = request.Request.City,
                 Country = request.Request.Country,
-                MasterApprovalFlowId = request.Request.MasterApprovalFlowId
+                PropertyId = request.Request.PropertyId,
+                StorageLocation = request.Request.StorageLocation?.Trim()
             };
             _repository.BuyerOutlet.Create(outlet);
             await _repository.SaveAsync();
@@ -58,29 +58,24 @@ namespace Buyer.Application.Features.Commands.CreateOutlet
             return outlet.Id;
         }
 
-        // An outlet's approval flow must be an active WISHLIST flow of the same buyer.
-        internal static async Task ValidateApprovalFlowAsync(
+        // An outlet's property must be a property of the same buyer.
+        internal static async Task ValidatePropertyAsync(
             IRepositoryWrapper repository,
             ILoggerManager logger,
-            Guid? masterApprovalFlowId,
-            Guid buyerId)
+            Guid? propertyId,
+            Guid buyerId,
+            CancellationToken cancellationToken)
         {
-            if (masterApprovalFlowId == null || masterApprovalFlowId == Guid.Empty)
+            if (propertyId == null || propertyId == Guid.Empty)
             {
                 return;
             }
 
-            MasterApprovalFlow? flow = await repository.MasterApprovalFlow.FindFirstByConditionAsync(
-                x => x.Id == masterApprovalFlowId && x.BuyerId == buyerId && x.IsActive);
-            if (flow == null)
+            BuyerProperty? property = await repository.WeeklyBucket.GetPropertyAsync(propertyId.Value, buyerId, cancellationToken);
+            if (property == null)
             {
-                logger.LogError($"Approval flow not found. ApprovalFlowId: {masterApprovalFlowId}, BuyerId: {buyerId}");
-                throw new NotFoundCustomException("Approval flow not found.", "The approval flow does not belong to this buyer organization.");
-            }
-
-            if (!string.Equals(flow.Type, Common.WISHLIST_APPROVAL_TYPE, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new BadRequestCustomException("Approval flow type is not Wishlist.", "Select an approval configuration of type WISHLIST.");
+                logger.LogError($"Property not found. PropertyId: {propertyId}, BuyerId: {buyerId}");
+                throw new NotFoundCustomException("Property not found.", "Select a property that belongs to this buyer organization.");
             }
         }
     }

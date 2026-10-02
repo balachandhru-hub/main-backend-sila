@@ -53,7 +53,7 @@ namespace Operations.Application.Features.Commands.TestIntegration
                 httpStatus = (int)response.StatusCode;
 
                 // A POST-only endpoint answers a probe with 405: it is reachable and the credentials were accepted.
-                success = response.IsSuccessStatusCode || (configuration.ProcessType == IntegrationProcessType.POST_GRN && httpStatus == 405);
+                success = response.IsSuccessStatusCode || (IntegrationProcessCatalog.Find(configuration.ProcessType)?.IsPush == true && httpStatus == 405);
                 message = success ? "API connection succeeded." : $"The API returned HTTP {httpStatus}.";
                 errorCode = success ? null : "REMOTE_HTTP_ERROR";
             }

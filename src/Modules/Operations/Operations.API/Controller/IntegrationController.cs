@@ -50,13 +50,14 @@ namespace Operations.API.Controllers
         [ApiAuthorization(Name = "OPERATIONS_VIEW_INTEGRATION")]
         [SwaggerOperation("GetIntegrationTargetFields")]
         [SwaggerResponse(200, type: typeof(List<IntegrationTargetFieldResponseDto>))]
-        public async Task<IActionResult> GetIntegrationTargetFields()
+        public async Task<IActionResult> GetIntegrationTargetFields([FromQuery] IntegrationProcessType? processType)
         {
-            _logger.LogDebug($"Fetching integration target fields.");
+            _logger.LogDebug($"Fetching integration target fields. ProcessType: {processType}");
             List<IntegrationTargetFieldResponseDto> result = await _mediator.Send(new GetIntegrationTargetFieldsQuery
             {
                 OrganizationId = GetOrganizationId(),
-                UserId = GetUserId()
+                UserId = GetUserId(),
+                ProcessType = processType
             });
             _logger.LogDebug($"Integration target fields fetched. Count: {result.Count}");
             return Ok(result);
@@ -127,6 +128,7 @@ namespace Operations.API.Controllers
             {
                 OrganizationId = GetOrganizationId(),
                 UserId = GetUserId(),
+                OrganizationType = GetOrganizationType(),
                 Request = request
             });
             _logger.LogDebug($"Integration created. ConfigurationId: {result.Id}");
@@ -163,6 +165,7 @@ namespace Operations.API.Controllers
             {
                 OrganizationId = GetOrganizationId(),
                 UserId = GetUserId(),
+                OrganizationType = GetOrganizationType(),
                 ConfigurationId = configurationId,
                 Request = request
             });

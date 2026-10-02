@@ -100,6 +100,23 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 }
             }
 
+            if (request.Catalog.AvailableStock.HasValue && request.Catalog.AvailableStock.Value < 0)
+            {
+                _logger.LogError("Available stock cannot be negative.");
+                throw new BadRequestCustomException(
+                    "Available stock cannot be negative.",
+                    "Enter zero or a positive available stock.");
+            }
+
+            if (request.Catalog.DiscountPercent.HasValue &&
+                (request.Catalog.DiscountPercent.Value < 0 || request.Catalog.DiscountPercent.Value > 100))
+            {
+                _logger.LogError("Discount percent must be between 0 and 100.");
+                throw new BadRequestCustomException(
+                    "Invalid discount percent.",
+                    "Discount percent must be between 0 and 100.");
+            }
+
             SupplierCatalogEntity catalog = new()
             {
                 Id = Guid.NewGuid(),
@@ -109,6 +126,9 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 Price = request.Catalog.Price,
                Currency = request.Catalog.Currency,
                 UnitOfMeasure = request.Catalog.UnitOfMeasure,
+                Sku = request.Catalog.Sku,
+                AvailableStock = request.Catalog.AvailableStock,
+                DiscountPercent = request.Catalog.DiscountPercent,
                    Segment = request.Catalog.Segment,
                 SegmentTitle = request.Catalog.SegmentTitle,
 

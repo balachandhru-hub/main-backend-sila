@@ -33,7 +33,7 @@ namespace Operations.Application.Features.Commands.UpdateIntegration
             _logger.LogInfo($"Updating integration. ConfigurationId: {request.ConfigurationId}, OrganizationId: {request.OrganizationId}, UserId: {request.UserId}");
 
             ApiIntegrationConfiguration configuration = await IntegrationConfigurationRules.GetTrackedAsync(_repository, _logger, request.ConfigurationId, request.OrganizationId);
-            await IntegrationConfigurationRules.ApplyAsync(_repository, _logger, _credentials, configuration, request.Request, cancellationToken);
+            await IntegrationConfigurationRules.ApplyAsync(_repository, _logger, _credentials, configuration, request.Request, request.OrganizationType, cancellationToken);
             if (configuration.Status != IntegrationConfigurationStatus.ACTIVE)
             {
                 configuration.Status = IntegrationConfigurationStatus.DRAFT;

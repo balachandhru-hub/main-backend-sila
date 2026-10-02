@@ -57,15 +57,22 @@ namespace Buyer.Infrastructure.Contracts.IRepository
         IContractTemplateRepository ContractTemplate { get; }
         IContractDetailsRepository ContractDetails { get; }
         IContractAttachmentRepository ContractAttachment { get; }
-        IWishlistRepository Wishlist { get; }
-        IWishlistItemRepository WishlistItem { get; }
-        IWishlistApprovalFlowRepository WishlistApprovalFlow { get; }
-        IWishlistApprovalUserMappingRepository WishlistApprovalUserMapping { get; }
-        IWishlistAuditRepository WishlistAudit { get; }
+        IWeeklyBucketRepository WeeklyBucket { get; }
+        IWeeklyBucketItemRepository WeeklyBucketItem { get; }
+        IWeeklyBucketRecommendationRepository WeeklyBucketRecommendation { get; }
+        IWeeklyBucketApprovalFlowRepository WeeklyBucketApprovalFlow { get; }
+        IWeeklyBucketApprovalUserMappingRepository WeeklyBucketApprovalUserMapping { get; }
+        IWeeklyBucketAuditRepository WeeklyBucketAudit { get; }
+        IBuyerPropertyRepository BuyerProperty { get; }
+        ICatalogMaterialMappingRepository CatalogMaterialMapping { get; }
+        IPersonalWishlistRepository PersonalWishlist { get; }
+        IPersonalWishlistItemRepository PersonalWishlistItem { get; }
         IBuyerOutletRepository BuyerOutlet { get; }
         IBuyerOutletUserMappingRepository BuyerOutletUserMapping { get; }
         IErpIntegrationRepository ErpIntegration { get; }
         IPurchaseDocumentIntegrationRepository PurchaseDocumentIntegration { get; }
+        IPurchaseOrderRepository PurchaseOrder { get; }
+        IPurchaseOrderItemRepository PurchaseOrderItem { get; }
         bool Save();
         Task<bool> SaveAsync();
     }

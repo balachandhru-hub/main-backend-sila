@@ -105,6 +105,23 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
                 }
             }
 
+            if (request.Catalog.AvailableStock.HasValue && request.Catalog.AvailableStock.Value < 0)
+            {
+                _logger.LogError("Available stock cannot be negative.");
+                throw new BadRequestCustomException(
+                    "Available stock cannot be negative.",
+                    "Enter zero or a positive available stock.");
+            }
+
+            if (request.Catalog.DiscountPercent.HasValue &&
+                (request.Catalog.DiscountPercent.Value < 0 || request.Catalog.DiscountPercent.Value > 100))
+            {
+                _logger.LogError("Discount percent must be between 0 and 100.");
+                throw new BadRequestCustomException(
+                    "Invalid discount percent.",
+                    "Discount percent must be between 0 and 100.");
+            }
+
             // Update catalog fields
             if (!string.IsNullOrWhiteSpace(request.Catalog.CatalogName))
             {
@@ -179,6 +196,21 @@ namespace Supplier.Application.Features.Commands.SupplierCatalog
             {
                 _logger.LogInfo($"Updating Catalog Punch-Out URL to: {request.Catalog.PunchOutUrl}");
                 catalog.PunchOutUrl = request.Catalog.PunchOutUrl;
+            }
+            if (request.Catalog.Sku != null)
+            {
+                _logger.LogInfo($"Updating Catalog Sku to: {request.Catalog.Sku}");
+                catalog.Sku = request.Catalog.Sku;
+            }
+            if (request.Catalog.AvailableStock.HasValue)
+            {
+                _logger.LogInfo($"Updating Catalog Available Stock to: {request.Catalog.AvailableStock.Value}");
+                catalog.AvailableStock = request.Catalog.AvailableStock.Value;
+            }
+            if (request.Catalog.DiscountPercent.HasValue)
+            {
+                _logger.LogInfo($"Updating Catalog Discount Percent to: {request.Catalog.DiscountPercent.Value}");
+                catalog.DiscountPercent = request.Catalog.DiscountPercent.Value;
             }
             _repositoryWrapper.SupplierCatalog.Update(catalog);
 

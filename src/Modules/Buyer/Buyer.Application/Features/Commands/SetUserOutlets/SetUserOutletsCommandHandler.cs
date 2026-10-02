@@ -47,7 +47,7 @@ namespace Buyer.Application.Features.Commands.SetUserOutlets
             }
 
             List<Guid> requestedOutletIds = (request.Request.OutletIds ?? new List<Guid>()).Distinct().ToList();
-            List<Guid> buyerOutletIds = (await _repository.Wishlist.ListOutletsAsync(buyer.Id, cancellationToken))
+            List<Guid> buyerOutletIds = (await _repository.WeeklyBucket.ListOutletsAsync(buyer.Id, cancellationToken))
                 .Select(outlet => outlet.Id)
                 .ToList();
             if (requestedOutletIds.Any(outletId => !buyerOutletIds.Contains(outletId)))

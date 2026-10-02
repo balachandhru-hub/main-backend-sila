@@ -13,5 +13,8 @@ namespace Buyer.Domain.Dto
         public decimal? Price { get; set; }
         public string? Currency { get; set; }
         public string? UnitOfMeasure { get; set; }
+        public string? Sku { get; set; }
+        public decimal? AvailableStock { get; set; }
+        public decimal? DiscountPercent { get; set; }
     }
 }

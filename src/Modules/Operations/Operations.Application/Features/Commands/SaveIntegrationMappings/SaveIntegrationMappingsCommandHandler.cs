@@ -31,11 +31,12 @@ namespace Operations.Application.Features.Commands.SaveIntegrationMappings
             List<FieldMappingInputDto> inputs = request.Mappings;
             bool invalid = inputs.Any(input => string.IsNullOrWhiteSpace(input.SourceField) || string.IsNullOrWhiteSpace(input.TargetField)
                 || !IntegrationTargetFieldRegistry.Contains(input.TargetField.Trim())
+                || !IntegrationProcessCatalog.OwnsTarget(configuration.ProcessType, input.TargetField.Trim())
                 || input.SourceField.Trim().Contains(' ') || input.SourceField.Length > 250);
             if (invalid)
             {
                 _logger.LogError($"Integration mapping is invalid. ConfigurationId: {configuration.Id}");
-                throw new BadRequestCustomException("Invalid field mapping.", "Every mapping must use a registered target field and a valid source field.");
+                throw new BadRequestCustomException("Invalid field mapping.", "Every mapping must use a target field of this API type and a valid source field.");
             }
 
             bool Has(string target) => inputs.Any(input => input.TargetField.Trim().Equals(target, StringComparison.OrdinalIgnoreCase));
@@ -50,6 +51,15 @@ namespace Operations.Application.Features.Commands.SaveIntegrationMappings
             {
                 _logger.LogError($"Required supplier mappings are missing. ConfigurationId: {configuration.Id}");
                 throw new BadRequestCustomException("Required mapping is missing.", "Supplier code and supplier name mappings are required for supplier imports.");
+            }
+
+            // The stock and catalog API types name their required fields in the process catalog.
+            string[] requiredTargets = IntegrationProcessCatalog.Find(configuration.ProcessType)?.RequiredTargets ?? Array.Empty<string>();
+            List<string> missingTargets = requiredTargets.Where(target => !Has(target)).ToList();
+            if (missingTargets.Count > 0)
+            {
+                _logger.LogError($"Required mappings are missing. ConfigurationId: {configuration.Id}, Missing: {string.Join(", ", missingTargets)}");
+                throw new BadRequestCustomException("Required mapping is missing.", $"Map these fields: {string.Join(", ", missingTargets)}.");
             }
 
             if (inputs.GroupBy(input => input.TargetField.Trim(), StringComparer.OrdinalIgnoreCase).Any(group => group.Count() > 1))

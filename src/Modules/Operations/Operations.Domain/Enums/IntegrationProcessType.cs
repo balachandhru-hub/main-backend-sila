@@ -9,6 +9,12 @@ namespace Operations.Domain.Enums
         POST_GRN,
         GET_INVOICE,
         POST_INVOICE,
-        GET_STOCK
+        GET_STOCK,
+        GET_MATERIAL,
+        GET_CONTRACT,
+        POST_SUPPLIER,
+        GET_CATALOG,
+        GET_CATALOG_STOCK,
+        POST_SALES_ORDER
     }
 }

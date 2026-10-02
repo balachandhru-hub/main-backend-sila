@@ -58,5 +58,12 @@ CancellationToken cancellationToken = default);
         Task<BuyerCatalogItemDto?> GetBuyerCatalogById(
             Guid catalogId,
             CancellationToken cancellationToken = default);
+        Task<List<BuyerCatalogItemDto>> GetBuyerCatalogStock(
+            List<Guid> catalogIds,
+            CancellationToken cancellationToken = default);
+        Task<List<BuyerCatalogItemDto>> GetBuyerCatalogAlternatives(
+            Guid catalogId,
+            decimal quantity,
+            CancellationToken cancellationToken = default);
     }
 }

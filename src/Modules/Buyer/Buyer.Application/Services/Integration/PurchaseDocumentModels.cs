@@ -13,19 +13,32 @@ namespace Buyer.Application.Services.Integration
 
     public sealed class BuyerPurchaseLine
     {
+        /// <summary>
+        /// Item Master material code mapped to the catalog product.
+        /// </summary>
         public string MaterialCode { get; set; } = string.Empty;
         public string MaterialName { get; set; } = string.Empty;
+        public string? Sku { get; set; }
         public decimal Quantity { get; set; }
         public string? UnitOfMeasure { get; set; }
         public decimal? UnitPrice { get; set; }
         public string? Currency { get; set; }
+        public string? StorageLocation { get; set; }
     }
 
+    /// <summary>
+    /// One purchase order: the lines of one supplier of a weekly bucket.
+    /// </summary>
     public sealed class BuyerPurchaseDocumentRequest
     {
         public string IdempotencyKey { get; set; } = string.Empty;
-        public Guid WishlistId { get; set; }
+        public Guid WeeklyBucketId { get; set; }
+        public string BucketCode { get; set; } = string.Empty;
         public Guid BuyerOrganizationId { get; set; }
+        public string CompanyCode { get; set; } = string.Empty;
+        public string PlantCode { get; set; } = string.Empty;
+        public Guid SupplierId { get; set; }
+        public string? SupplierName { get; set; }
         public string DocumentType { get; set; } = string.Empty;
         public string? BuyerDocumentNumber { get; set; }
         public string? ShipTo { get; set; }

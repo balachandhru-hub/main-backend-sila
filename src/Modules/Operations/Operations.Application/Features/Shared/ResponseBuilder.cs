@@ -329,7 +329,13 @@ namespace Operations.Application.Features.Shared
                 Status = item.Status,
                 TestedAt = item.TestedAt,
                 CreatedAt = item.DateCreated,
-                UpdatedAt = item.DateUpdated
+                UpdatedAt = item.DateUpdated,
+                SystemName = item.SystemName,
+                HttpMethod = item.HttpMethod,
+                PayloadFormat = item.PayloadFormat,
+                RequestBody = item.RequestBody,
+                Headers = IntegrationConfigurationRules.ReadHeaders(item.HeadersJson),
+                ApiKeyHeader = item.ApiKeyHeader
             };
         }
 

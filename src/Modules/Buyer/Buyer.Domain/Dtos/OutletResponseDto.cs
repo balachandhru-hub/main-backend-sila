@@ -12,5 +12,10 @@ namespace Buyer.Domain.Dtos
         public string? Country { get; set; }
         public Guid? MasterApprovalFlowId { get; set; }
         public string? ApprovalName { get; set; }
+        public Guid? PropertyId { get; set; }
+        public string? PropertyName { get; set; }
+        public string? PlantCode { get; set; }
+        public string? CompanyCode { get; set; }
+        public string? StorageLocation { get; set; }
     }
 }

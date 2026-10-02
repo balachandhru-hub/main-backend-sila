@@ -40,6 +40,22 @@ namespace Operations.Application.Services.Integration
             Field("Supplier.Country", "Supplier", "string", false, "NONE", "TRIM"),
             Field("Supplier.Currency", "Supplier", "string", true, "NONE", "UPPER"),
             Field("Supplier.SourceLastChangedAt", "Supplier", "datetime", false, "NONE"),
+            Field("Stock.MaterialCode", "Material stock", "string", true, "NONE", "TRIM", "UPPER"),
+            Field("Stock.Quantity", "Material stock", "decimal", true, "NONE"),
+            Field("Stock.Plant", "Material stock", "string", false, "NONE", "TRIM", "UPPER"),
+            Field("Stock.StorageLocation", "Material stock", "string", false, "NONE", "TRIM", "UPPER"),
+            Field("Stock.Uom", "Material stock", "string", false, "NONE", "TRIM", "UPPER"),
+            Field("Catalog.Sku", "Product catalog", "string", true, "NONE", "TRIM"),
+            Field("Catalog.Name", "Product catalog", "string", true, "NONE", "TRIM"),
+            Field("Catalog.Price", "Product catalog", "decimal", true, "NONE"),
+            Field("Catalog.Currency", "Product catalog", "string", true, "NONE", "UPPER"),
+            Field("Catalog.UnitOfMeasure", "Product catalog", "string", true, "NONE", "TRIM", "UPPER"),
+            Field("Catalog.Description", "Product catalog", "string", false, "NONE", "TRIM"),
+            Field("Catalog.AvailableStock", "Product catalog", "decimal", false, "NONE"),
+            Field("Catalog.DiscountPercent", "Product catalog", "decimal", false, "NONE"),
+            Field("CatalogStock.Sku", "Product stock", "string", true, "NONE", "TRIM"),
+            Field("CatalogStock.AvailableStock", "Product stock", "decimal", true, "NONE"),
+            Field("CatalogStock.DiscountPercent", "Product stock", "decimal", false, "NONE"),
         };
 
         public static bool Contains(string target)

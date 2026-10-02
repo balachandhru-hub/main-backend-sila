@@ -31,5 +31,11 @@ namespace Operations.Domain.Dtos
         public DateTime? TestedAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public string? SystemName { get; set; }
+        public string HttpMethod { get; set; } = "GET";
+        public string PayloadFormat { get; set; } = "JSON";
+        public string? RequestBody { get; set; }
+        public Dictionary<string, string>? Headers { get; set; }
+        public string? ApiKeyHeader { get; set; }
     }
 }

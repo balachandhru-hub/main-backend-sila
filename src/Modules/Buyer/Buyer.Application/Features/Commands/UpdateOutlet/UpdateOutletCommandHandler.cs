@@ -24,6 +24,7 @@ namespace Buyer.Application.Features.Commands.UpdateOutlet
 
             if (string.IsNullOrWhiteSpace(request.Request.OutletName))
             {
+                _logger.LogError($"Outlet name is missing. OutletId: {request.OutletId}");
                 throw new BadRequestCustomException("Outlet name is required.", "Enter an outlet name.");
             }
 
@@ -35,16 +36,17 @@ namespace Buyer.Application.Features.Commands.UpdateOutlet
                 throw new NotFoundCustomException("Buyer not found.", "The signed-in organization does not have a buyer profile.");
             }
 
-            BuyerOutlet? outlet = await _repository.Wishlist.GetOutletAsync(request.OutletId, buyer.Id, cancellationToken);
+            BuyerOutlet? outlet = await _repository.WeeklyBucket.GetOutletAsync(request.OutletId, buyer.Id, cancellationToken);
             if (outlet == null)
             {
                 _logger.LogError($"Outlet not found. OutletId: {request.OutletId}, BuyerId: {buyer.Id}");
                 throw new NotFoundCustomException("Outlet not found.", "No outlet exists for this buyer organization.");
             }
 
-            await CreateOutletCommandHandler.ValidateApprovalFlowAsync(
-                _repository, _logger, request.Request.MasterApprovalFlowId, buyer.Id);
+            await CreateOutletCommandHandler.ValidatePropertyAsync(
+                _repository, _logger, request.Request.PropertyId, buyer.Id, cancellationToken);
 
+            // MasterApprovalFlowId of the outlet is left as stored: the approval flow now comes from the property.
             outlet.OutletName = request.Request.OutletName.Trim();
             outlet.OutletCode = request.Request.OutletCode;
             outlet.Description = request.Request.Description;
@@ -52,7 +54,8 @@ namespace Buyer.Application.Features.Commands.UpdateOutlet
             outlet.AddressLine1 = request.Request.AddressLine1;
             outlet.City = request.Request.City;
             outlet.Country = request.Request.Country;
-            outlet.MasterApprovalFlowId = request.Request.MasterApprovalFlowId;
+            outlet.PropertyId = request.Request.PropertyId;
+            outlet.StorageLocation = request.Request.StorageLocation?.Trim();
             _repository.BuyerOutlet.Update(outlet);
             await _repository.SaveAsync();
 

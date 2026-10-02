@@ -151,6 +151,7 @@ namespace Operations.API.Extensions
             _ = services.AddScoped<IMicrosoftGraphClient, MicrosoftGraphClient>();
             _ = services.AddScoped<IIntegrationCredentialProtector, IntegrationCredentialProtector>();
             _ = services.AddScoped<IIntegrationHttpExecutor, IntegrationHttpExecutor>();
+            _ = services.AddScoped<ISupplierCatalogSyncClient, SupplierCatalogSyncClient>();
             _ = services.AddScoped<IIntegrationSpreadsheetEngine, IntegrationSpreadsheetEngine>();
 
             _ = services.AddHttpClient(Common.HTTP_CLIENT_GRAPH, client => client.Timeout = TimeSpan.FromSeconds(30));

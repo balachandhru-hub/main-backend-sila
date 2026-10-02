@@ -33,6 +33,10 @@ namespace Operations.Domain.Entities
         [Column(TypeName = "nvarchar(20)")]
         public IntegrationProtocol Protocol { get; set; }
 
+        /// <summary>The external system the API belongs to, for example "SAP S/4".</summary>
+        [MaxLength(100)]
+        public string? SystemName { get; set; }
+
         [Required]
         [MaxLength(2000)]
         public string BaseUrl { get; set; } = string.Empty;
@@ -63,6 +67,29 @@ namespace Operations.Domain.Entities
         public string? TokenHeadersJson { get; set; }
 
         public string? TokenBodyJson { get; set; }
+
+        /// <summary>Header that carries the API key when the API signs in with one.</summary>
+        [MaxLength(100)]
+        public string? ApiKeyHeader { get; set; }
+
+        public string? ProtectedApiKey { get; set; }
+
+        /// <summary>Method of the call: GET for an API that is read, POST / PUT / PATCH for one the application sends to.</summary>
+        [MaxLength(10)]
+        public string HttpMethod { get; set; } = "GET";
+
+        /// <summary>Format of the body the application sends: JSON, SOAP or CXML.</summary>
+        [MaxLength(10)]
+        public string PayloadFormat { get; set; } = "JSON";
+
+        /// <summary>
+        /// Body template of an API the application sends to. Its {{tokens}} are replaced with the
+        /// document being sent. Empty means the application's standard JSON body.
+        /// </summary>
+        public string? RequestBody { get; set; }
+
+        /// <summary>Extra request headers, as a JSON object. Never credentials.</summary>
+        public string? HeadersJson { get; set; }
 
         public int TimeoutSeconds { get; set; } = 30;
 

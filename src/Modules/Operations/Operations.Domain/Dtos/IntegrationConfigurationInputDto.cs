@@ -27,5 +27,12 @@ namespace Operations.Domain.Dtos
         [Range(1, 1000)] public int? PageSize { get; set; } = 100;
         public string? WatermarkField { get; set; }
         public string? ScheduleCron { get; set; }
+        public string? SystemName { get; set; }
+        public string? HttpMethod { get; set; }
+        public string? PayloadFormat { get; set; }
+        public string? RequestBody { get; set; }
+        public Dictionary<string, string>? Headers { get; set; }
+        public string? ApiKeyHeader { get; set; }
+        public string? ApiKey { get; set; }
     }
 }

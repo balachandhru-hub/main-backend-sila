@@ -4,6 +4,9 @@ using SharedKernel.Models;
 
 namespace Buyer.Domain.Entities
 {
+    /// <summary>
+    /// One purchase order hand-off of a weekly bucket. There is one row per supplier of the bucket.
+    /// </summary>
     public class PurchaseDocumentIntegration : BaseModel
     {
         [Key]
@@ -11,11 +14,14 @@ namespace Buyer.Domain.Entities
         public Guid Id { get; set; }
 
         [Required]
-        public Guid WishlistId { get; set; }
+        public Guid WeeklyBucketId { get; set; }
 
         [Required]
         public Guid BuyerOrganizationId { get; set; }
 
+        /// <summary>
+        /// Supplier id of the bucket lines sent on this purchase order.
+        /// </summary>
         public Guid SupplierOrganizationId { get; set; }
 
         [Required]

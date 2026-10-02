@@ -154,6 +154,42 @@ namespace Supplier.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Update the SKU, available stock and discount of a catalog product
+        /// </summary>
+        [HttpPut]
+        [Route("api/v1/supplier/catalog/{catalogId}/stock")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "UPDATE_SUPPLIER_CATALOG")]
+        [SwaggerOperation("UpdateSupplierCatalogStock")]
+        [SwaggerResponse(200, type: typeof(SuccessResponseDto), description: "Stock updated successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Supplier catalog not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> UpdateSupplierCatalogStock(
+            [FromRoute] Guid catalogId,
+            [FromBody] UpdateSupplierCatalogStockDto request)
+        {
+            _logger.LogDebug($"Updating supplier catalog stock: {catalogId}");
+
+            await _mediator.Send(new UpdateSupplierCatalogStockCommand
+            {
+                Id = catalogId,
+                OrganizationId = GetOrganizationId(),
+                Stock = request
+            });
+
+            _logger.LogDebug($"Supplier catalog stock updated successfully: {catalogId}");
+
+            return Ok(new SuccessResponseDto
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Description = "Stock updated successfully.",
+                Id = catalogId.ToString()
+            });
+        }
+
         [HttpGet]
         [Route("api/v1/supplier/buyer-catalog")]
         [ValidateModelState]
@@ -219,6 +255,58 @@ namespace Supplier.API.Controllers
             var result = await _mediator.Send(query);
 
              _logger.LogDebug($"Supplier catalog fetched successfully for CatalogId: {catalogId}");
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Current stock and price of the given catalog products
+        /// </summary>
+        [HttpPost]
+        [Route("api/v1/supplier/buyer-catalog/stock")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_BUYER_CATALOG")]
+        [SwaggerOperation("GetBuyerCatalogStock")]
+        [SwaggerResponse(200, type: typeof(List<BuyerCatalogStockDto>), description: "Buyer catalog stock fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetBuyerCatalogStock(
+            [FromBody] GetBuyerCatalogStockQuery query)
+        {
+            _logger.LogDebug($"Fetching buyer catalog stock. CatalogIds: {query.CatalogIds?.Count ?? 0}");
+
+            List<BuyerCatalogStockDto> result = await _mediator.Send(query);
+
+            _logger.LogDebug($"Buyer catalog stock fetched successfully. Count: {result.Count}");
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Alternative products that can supply the quantity
+        /// </summary>
+        [HttpGet]
+        [Route("api/v1/supplier/buyer-catalog/{catalogId}/alternatives")]
+        [ValidateModelState]
+        [ApiAuthorization(Name = "GET_BUYER_CATALOG")]
+        [SwaggerOperation("GetBuyerCatalogAlternatives")]
+        [SwaggerResponse(200, type: typeof(List<BuyerCatalogStockDto>), description: "Buyer catalog alternatives fetched successfully")]
+        [SwaggerResponse(400, type: typeof(ErrorResponseDto), description: "Bad Request")]
+        [SwaggerResponse(404, type: typeof(ErrorResponseDto), description: "Buyer catalog not found")]
+        [SwaggerResponse(500, type: typeof(ErrorResponseDto), description: "Internal Server Error")]
+        public async Task<IActionResult> GetBuyerCatalogAlternatives(
+            [FromRoute] Guid catalogId,
+            [FromQuery] decimal quantity)
+        {
+            _logger.LogDebug($"Fetching buyer catalog alternatives for CatalogId: {catalogId}, Quantity: {quantity}");
+
+            GetBuyerCatalogAlternativesQuery query = new GetBuyerCatalogAlternativesQuery
+            {
+                CatalogId = catalogId,
+                Quantity = quantity
+            };
+
+            List<BuyerCatalogStockDto> result = await _mediator.Send(query);
+
+            _logger.LogDebug($"Buyer catalog alternatives fetched successfully for CatalogId: {catalogId}. Count: {result.Count}");
             return Ok(result);
         }
     }

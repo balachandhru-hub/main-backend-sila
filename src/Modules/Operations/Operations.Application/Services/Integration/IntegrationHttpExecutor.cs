@@ -18,8 +18,20 @@ namespace Operations.Application.Services.Integration
 
         string MetadataUrl(ApiIntegrationConfiguration configuration);
 
+        /// <summary>URL of the configured resource as it is, for a call that sends a document.</summary>
+        string ResourceUrl(ApiIntegrationConfiguration configuration);
+
+        /// <summary>
+        /// Sends a document exactly once. A document that may already have been created must not be
+        /// sent again automatically, so this call is never retried.
+        /// </summary>
+        Task<HttpResponseMessage> SendOnceAsync(ApiIntegrationConfiguration configuration, string url, HttpMethod method, string? body, IReadOnlyDictionary<string, string>? callHeaders, CancellationToken cancellationToken);
+
         /// <summary>Sends the request with the configured authentication, timeout and retries.</summary>
         Task<HttpResponseMessage> SendAsync(ApiIntegrationConfiguration configuration, string url, HttpMethod method, string? body, CancellationToken cancellationToken);
+
+        /// <summary>Same, with headers that belong to this one call (an idempotency key, a correlation id).</summary>
+        Task<HttpResponseMessage> SendAsync(ApiIntegrationConfiguration configuration, string url, HttpMethod method, string? body, IReadOnlyDictionary<string, string>? callHeaders, CancellationToken cancellationToken);
 
         List<IntegrationSchemaEntityDto> ParseMetadata(string xml);
 
@@ -64,24 +76,46 @@ namespace Operations.Application.Services.Integration
             return url;
         }
 
+        public string ResourceUrl(ApiIntegrationConfiguration configuration)
+        {
+            return Combine(configuration.BaseUrl, configuration.ResourcePath ?? string.Empty);
+        }
+
         public string MetadataUrl(ApiIntegrationConfiguration configuration)
         {
             return Combine(configuration.BaseUrl, "$metadata");
         }
 
-        public async Task<HttpResponseMessage> SendAsync(ApiIntegrationConfiguration configuration, string url, HttpMethod method, string? body, CancellationToken cancellationToken)
+        public Task<HttpResponseMessage> SendAsync(ApiIntegrationConfiguration configuration, string url, HttpMethod method, string? body, CancellationToken cancellationToken)
         {
+            return SendAsync(configuration, url, method, body, null, cancellationToken);
+        }
+
+        public Task<HttpResponseMessage> SendAsync(ApiIntegrationConfiguration configuration, string url, HttpMethod method, string? body, IReadOnlyDictionary<string, string>? callHeaders, CancellationToken cancellationToken)
+        {
+            return SendCoreAsync(configuration, url, method, body, callHeaders, Math.Max(1, configuration.RetryCount + 1), cancellationToken);
+        }
+
+        public Task<HttpResponseMessage> SendOnceAsync(ApiIntegrationConfiguration configuration, string url, HttpMethod method, string? body, IReadOnlyDictionary<string, string>? callHeaders, CancellationToken cancellationToken)
+        {
+            return SendCoreAsync(configuration, url, method, body, callHeaders, 1, cancellationToken);
+        }
+
+        private async Task<HttpResponseMessage> SendCoreAsync(ApiIntegrationConfiguration configuration, string url, HttpMethod method, string? body, IReadOnlyDictionary<string, string>? callHeaders, int attempts, CancellationToken cancellationToken)
+        {
+            Dictionary<string, string>? configuredHeaders = Features.Shared.IntegrationConfigurationRules.ReadHeaders(configuration.HeadersJson);
             HttpClient client = _httpClientFactory.CreateClient(Common.HTTP_CLIENT_INTEGRATIONS);
             client.Timeout = TimeSpan.FromSeconds(configuration.TimeoutSeconds <= 0 ? 30 : configuration.TimeoutSeconds);
-            int attempts = Math.Max(1, configuration.RetryCount + 1);
             for (int attempt = 1; attempt <= attempts; attempt++)
             {
                 using HttpRequestMessage request = new HttpRequestMessage(method, url);
                 request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                AddHeaders(request, configuredHeaders);
+                AddHeaders(request, callHeaders);
                 await AddAuthenticationAsync(configuration, request, client, cancellationToken);
                 if (body != null)
                 {
-                    request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+                    request.Content = new StringContent(body, Encoding.UTF8, MediaType(configuration.PayloadFormat));
                 }
 
                 try
@@ -269,6 +303,11 @@ namespace Operations.Application.Services.Integration
         {
             switch (configuration.AuthenticationType)
             {
+                case IntegrationAuthenticationType.API_KEY:
+                    request.Headers.TryAddWithoutValidation(
+                        string.IsNullOrWhiteSpace(configuration.ApiKeyHeader) ? Features.Shared.IntegrationConfigurationRules.DEFAULT_API_KEY_HEADER : configuration.ApiKeyHeader,
+                        _credentials.Unprotect(configuration.ProtectedApiKey));
+                    break;
                 case IntegrationAuthenticationType.BASIC:
                     request.Headers.Authorization = new AuthenticationHeaderValue("Basic",
                         Convert.ToBase64String(Encoding.UTF8.GetBytes($"{configuration.Username}:{_credentials.Unprotect(configuration.ProtectedPassword)}")));
@@ -308,6 +347,29 @@ namespace Operations.Application.Services.Integration
                     break;
                 }
             }
+        }
+
+        private static void AddHeaders(HttpRequestMessage request, IReadOnlyDictionary<string, string>? headers)
+        {
+            if (headers == null)
+            {
+                return;
+            }
+
+            foreach (KeyValuePair<string, string> header in headers)
+            {
+                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+        }
+
+        private static string MediaType(string? payloadFormat)
+        {
+            return payloadFormat switch
+            {
+                Features.Shared.IntegrationConfigurationRules.PAYLOAD_SOAP => "application/soap+xml",
+                Features.Shared.IntegrationConfigurationRules.PAYLOAD_CXML => "application/xml",
+                _ => "application/json"
+            };
         }
 
         private static string Combine(string baseUrl, string path)

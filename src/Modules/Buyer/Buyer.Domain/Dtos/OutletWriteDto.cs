@@ -11,8 +11,13 @@ namespace Buyer.Domain.Dtos
         public string? Country { get; set; }
 
         /// <summary>
-        /// Approval flow (type WISHLIST) used by every wishlist of this outlet.
+        /// Property (plant) the outlet belongs to.
         /// </summary>
-        public Guid? MasterApprovalFlowId { get; set; }
+        public Guid? PropertyId { get; set; }
+
+        /// <summary>
+        /// Storage location code of the outlet, for example J12.
+        /// </summary>
+        public string? StorageLocation { get; set; }
     }
 }

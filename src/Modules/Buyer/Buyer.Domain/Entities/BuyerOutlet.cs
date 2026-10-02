@@ -35,9 +35,19 @@ namespace Buyer.Domain.Entities
         public string? Country { get; set; }
 
         /// <summary>
-        /// Approval flow (type WISHLIST) used by every wishlist of this outlet.
-        /// The flow is a MasterApprovalFlow id; kept as a reference so an outlet can exist before its flow.
+        /// No longer used for approval: the weekly bucket takes its approval flow from the property.
+        /// The column is kept so existing outlet rows are unchanged.
         /// </summary>
         public Guid? MasterApprovalFlowId { get; set; }
+
+        /// <summary>
+        /// BuyerProperty id of the property this outlet belongs to. Kept as a reference, not a foreign key.
+        /// </summary>
+        public Guid? PropertyId { get; set; }
+
+        /// <summary>
+        /// Storage location code of the outlet, for example J12. Sent on each purchase order line.
+        /// </summary>
+        public string? StorageLocation { get; set; }
     }
 }
