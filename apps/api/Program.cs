@@ -180,6 +180,7 @@ builder.Services.AddScoped<InventoryLocationService>();
 builder.Services.AddScoped<InventoryWorkspaceService>();
 builder.Services.AddScoped<InternalTransferService>();
 builder.Services.AddScoped<MaterialLocationService>();
+builder.Services.AddScoped<StockCountService>();
 
 var app = builder.Build();
 app.UseForwardedHeaders(new ForwardedHeadersOptions
