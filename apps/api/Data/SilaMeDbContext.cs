@@ -905,5 +905,6 @@ public sealed partial class SilaMeDbContext(DbContextOptions<SilaMeDbContext> op
         ConfigureRecipeManagement(modelBuilder);
         ConfigureApprovalWorkflows(modelBuilder);
         ConfigureInventoryFoundation(modelBuilder);
+        ConfigureStockCount(modelBuilder);
     }
 }

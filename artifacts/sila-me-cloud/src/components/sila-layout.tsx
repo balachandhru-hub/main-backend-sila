@@ -31,6 +31,7 @@ const navigation: Array<{ label: string; items: NavItem[] }> = [
     { label: 'Goods Receipt', href: '/inventory/goods-receipt', icon: PackageCheck },
     { label: 'Goods Issue', href: '/inventory/goods-issue', icon: ReceiptText },
     { label: 'Stock Count', href: '/inventory/count', icon: ClipboardCheck },
+    { label: 'Shortage & Enquiries', href: '/inventory/shortages', icon: CircleHelp },
     { label: 'Waste & Damage', href: '/inventory/damage-waste', icon: X },
     { label: 'Inventory Transactions', href: '/inventory/transactions', icon: ListChecks },
   ] },

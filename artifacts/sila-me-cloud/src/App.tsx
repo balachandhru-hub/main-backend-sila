@@ -32,6 +32,7 @@ import { CompanyCodesPage, PropertyMasterPage } from '@/pages/operational-master
 import * as FutureRoutes from '@/pages/future-routes';
 import * as RecipeManagement from '@/pages/recipe-management';
 import * as InventoryFoundation from '@/pages/inventory-foundation';
+import * as StockCount from '@/pages/stock-count';
 import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 import { customerBasePath, resolveCustomerRouteSlug } from '@/lib/tenant-route';
 
@@ -128,14 +129,15 @@ function Router() {
         <Route path="/inventory/stock/:id" component={() => <FutureRoute><FutureRoutes.StockOverview /></FutureRoute>} />
         <Route path="/inventory/stock" component={() => <FutureRoute><FutureRoutes.StockOverview /></FutureRoute>} />
         <Route path="/inventory/goods-receipt" component={() => <FutureRoute><FutureRoutes.GoodsReceiptPlaceholder /></FutureRoute>} />
-        <Route path="/inventory/count/:id" component={() => <FutureRoute><FutureRoutes.InventoryCountDetail /></FutureRoute>} />
-        <Route path="/inventory/count" component={() => <FutureRoute><FutureRoutes.InventoryCount /></FutureRoute>} />
-        <Route path="/inventory/counts" component={() => <FutureRoute><FutureRoutes.InventoryCount /></FutureRoute>} />
+        <Route path="/inventory/count/:id" component={() => <Shell><StockCount.StockCountDetailPage /></Shell>} />
+        <Route path="/inventory/count" component={() => <Shell><StockCount.StockCountPage /></Shell>} />
+        <Route path="/inventory/counts" component={() => <Shell><StockCount.StockCountPage /></Shell>} />
+        <Route path="/inventory/shortages" component={() => <Shell><StockCount.ShortagePage /></Shell>} />
         <Route path="/inventory/goods-issue" component={() => <FutureRoute><FutureRoutes.GoodsIssue /></FutureRoute>} />
         <Route path="/inventory/damage-waste" component={() => <FutureRoute><FutureRoutes.DamageWriteOff /></FutureRoute>} />
         <Route path="/inventory/waste" component={() => <FutureRoute><FutureRoutes.DamageWriteOff /></FutureRoute>} />
         <Route path="/inventory/damage" component={() => <FutureRoute><FutureRoutes.DamageWriteOff /></FutureRoute>} />
-        <Route path="/inventory/transactions" component={() => <FutureRoute><FutureRoutes.InventoryTransactions /></FutureRoute>} />
+        <Route path="/inventory/transactions" component={() => <Shell><StockCount.InventoryTransactionsPage /></Shell>} />
         <Route path="/inventory/batches" component={() => <FutureRoute><FutureRoutes.BatchExpiry /></FutureRoute>} />
         <Route path="/inventory/adjustments" component={() => <FutureRoute><FutureRoutes.StockAdjustments /></FutureRoute>} />
         <Route path="/inventory" component={() => <Shell><InventoryFoundation.InventoryDashboardPage /></Shell>} />
